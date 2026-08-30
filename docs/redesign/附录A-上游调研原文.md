@@ -69,6 +69,32 @@
 
 ---
 
+<a id="sa-1-3"></a>
+### A.1.3 M0 §0.1 执行后的修正（fetch 上游之后才知道的事）
+
+审计是在**剥离了 dotfiles 的快照**上做的。`git fetch upstream master` 之后，
+上游自带的 15 个 dotfile 条目 / 109 个文件回来了，以下 6 条结论随之改变。
+
+| # | 审计时的说法 | fetch 之后的事实 | 影响 | 落在哪章 |
+|---|---|---|---|---|
+| **E1** | "仓库里没有 `.github/`，所以 CI 的定义只能是 `script/presubmit`" | `.github/workflows/ci.yml` **882 行 / 9 个 job**。**CI 才是绿色基线的定义**，presubmit 只是单平台本地子集 | 基线必须按 CI 的命令集建立（`--locked`、`NEXTEST_PROFILE=ci`、同样的 `RUSTFLAGS`、`WARPUI_USE_REAL_DISPLAY_IN_INTEGRATION_TESTS=1`），否则基线与门禁不是同一个东西 | [02 §7.9](02-现状审计.md#s7-9)、[07 §7.2.2](07-测试与验证策略.md#s7-2-2) |
+| **E2** | "全仓库没有迁移 / schema 测试" | Rust 侧确实没有，但 CI 有 **`database-migration` job**（`ci.yml:535-560`）：跑完 141 个迁移后 `diff -u old-schema.rs <(diesel print-schema ...)` | **强化**了 C10 的结论：删表声明会直接打红这个 job，删迁移又破坏旧 DB 可加载性——两头堵死，只能都不动 | [02 §7.15](02-现状审计.md#s7-15)、[07 §7.9.3](07-测试与验证策略.md#s7-9-3) |
+| **E3** | 两处"基线缺陷"：`script/lint_powershell:8` 与 `script/install_cargo_test_deps:9` 引用不存在的文件 | **两个文件上游都有**（`.PSScriptAnalyzerSettings.psd1`、`.github/workflows/ci.yml`）。不是缺陷，是快照剥离的假象 | `known-fail.txt` 不要预写这两项 | [02 §8.5](02-现状审计.md#s8-5)、[07 §7.2.2](07-测试与验证策略.md#s7-2-2) |
+| **E4** | `.gitignore` / `.github` 是否要从零起草——待 fetch 后决定 | 上游全都有，且还有 `.config/nextest.toml`、`.cargo/config.toml`、`.clippy.toml`、`.rustfmt.toml`、`.gitattributes` 等**直接定义构建与测试语义**的文件 | 决策树走完：**一律基于上游裁剪**，不从零起草 | [05 §2](05-阶段1-仓库与品牌.md#s2) |
+| **E5** | （未察觉） | **`.gitattributes` 有 LFS 规则**，`crates/input_classifier/models/onnx/bert_tiny_v{1,2,3}.onnx` 是 133 字节的 LFS 指针，真实对象在 warpdotdev 的 LFS 服务器 | fork 只带走指针、带不走对象。**M4 构建前必须解决**，否则 `crates/input_classifier` 构建失败 | [05 §2.1](05-阶段1-仓库与品牌.md#s2-1) |
+| **E6** | （未察觉） | **`.clippy.toml` 的 `disallowed-types` 禁用 `std::process::Command`**，要求用 `command::blocking::Command` | [04 §6](04-残余依赖与许可证架构.md#s6) 里"阶段 2 把 `crates/command` 换成 `std::process::Command`"的方案在阶段 1 的 clippy 门禁下过不了；阶段 2 不受此约束 | [02 §8.5](02-现状审计.md#s8-5) |
+
+**另有一条是设计文档自身的缺陷，不是审计错误**：
+
+| # | 问题 | 修正 |
+|---|---|---|
+| **E7** | 05 §1.2 原本写 `git reset --hard upstream/master` 后用 `git status` 验收快照真实性。**这是错的**——HEAD 未出生时 29 个快照条目全是 untracked，而 `reset --hard` 会**静默覆盖** untracked 文件，任何差异会被当场销毁，随后的 `git status` 必然为空，验收变成空转 | 改为：先用一次性索引（`GIT_INDEX_FILE=$TMP git read-tree` + `git diff`）做纯只读比对，再用 `git symbolic-ref` + `git reset --mixed`（不动工作区）建立 `main`，最后 `git checkout -- .` 取回 dotfiles。见 [05 §1.2](05-阶段1-仓库与品牌.md#s1-2) |
+
+**实际执行结果**：非 dotfile 差异 **0** 条，109 条差异全部是缺失的 dotfile，
+反向多出的只有 `docs/` 与 `todo.md`。**快照 ≡ `upstream/master` (`066ec71`) 剥离 dotfiles。**
+
+---
+
 <a id="sa-2"></a>
 ## A.2 覆盖矩阵
 
