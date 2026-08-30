@@ -1,0 +1,1 @@
+ 本地化改造-清理云模块+遥测数据上报：~/.claude/plans/mit-github-snoopy-goblet.md

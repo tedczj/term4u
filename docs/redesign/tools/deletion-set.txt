@@ -1,4 +1,11 @@
-app/src/server/telemetry
+app/src/server/telemetry/collector.rs
+app/src/server/telemetry/context.rs
+app/src/server/telemetry/context_provider.rs
+app/src/server/telemetry/rudder_message.rs
+app/src/server/telemetry/secret_redaction.rs
+app/src/server/telemetry/secret_redaction_tests.rs
+app/src/server/telemetry/mod_tests.rs
+app/src/server/telemetry/events_tests.rs
 app/src/server/telemetry_ext.rs
 app/src/server/cloud_objects
 app/src/server/experiments
@@ -51,3 +58,5 @@ crates/cloud_object_persistence
 crates/cloud_objects
 crates/firebase
 crates/voice_input
+crates/warp_tui/src/autoupdate.rs
+crates/warp_tui/src/autoupdate_tests.rs
