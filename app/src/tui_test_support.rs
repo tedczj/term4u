@@ -23,13 +23,11 @@ use crate::ai::blocklist::{
     BlocklistAIActionModel, BlocklistAIHistoryModel, BlocklistAIPermissions, PersistedAIInput,
     PersistedAIInputType, QueuedQueryModel,
 };
-use crate::ai::cloud_agent_settings::CloudAgentSettings;
-use crate::ai::cloud_environments::CloudEnvironmentCatalog;
-use crate::ai::connected_self_hosted_workers::ConnectedSelfHostedWorkersModel;
 use crate::ai::execution_profiles::profiles::AIExecutionProfilesModel;
 use crate::ai::harness_availability::HarnessAvailabilityModel;
 use crate::ai::llms::{LLMId, LLMPreferences};
 use crate::ai::mcp::templatable_manager::TemplatableMCPServerManager;
+use crate::ai::orchestration::settings::OrchestrationSettings;
 use crate::ai::request_usage_model::AIRequestUsageModel;
 use crate::auth::AuthStateProvider;
 use crate::auth::auth_manager::AuthManager;
@@ -41,8 +39,6 @@ use crate::server::experiments::ServerExperiments;
 use crate::server::ids::ServerId;
 use crate::server::server_api::ServerApiProvider;
 use crate::server::sync_queue::SyncQueue;
-#[cfg(feature = "voice_input")]
-use crate::server::voice_transcriber::ServerVoiceTranscriber;
 use crate::settings::manager::SettingsManager;
 use crate::settings::{
     AISettings, PrivacySettings, TuiVoiceSettings, init_and_register_user_preferences,
@@ -62,8 +58,6 @@ use crate::terminal::shell::{Shell, ShellType};
 use crate::terminal::{History, HistoryEntry, HistoryEvent};
 use crate::tui_onboarding_markers::TuiOnboardingMarkers;
 use crate::user_config::WarpConfig;
-#[cfg(feature = "voice_input")]
-use crate::voice::transcriber::VoiceTranscriber;
 use crate::workspaces::team::{MembershipRole, Team, TeamMember};
 use crate::workspaces::user_workspaces::UserWorkspaces;
 use crate::workspaces::workspace::Workspace;
@@ -333,7 +327,7 @@ pub fn register_tui_session_view_test_singletons(app: &mut warpui::App) {
     });
     app.update(AISettings::register_and_subscribe_to_events);
     app.update(TuiVoiceSettings::register);
-    CloudAgentSettings::register(app);
+    OrchestrationSettings::register(app);
     app.add_singleton_model(ApiKeyManager::new);
 
     app.add_singleton_model(|_| NetworkStatus::new());
@@ -351,13 +345,11 @@ pub fn register_tui_session_view_test_singletons(app: &mut warpui::App) {
     });
     app.add_singleton_model(SyncQueue::mock);
     app.add_singleton_model(CloudModel::mock);
-    app.add_singleton_model(CloudEnvironmentCatalog::new);
     app.add_singleton_model(|_| crate::appearance::Appearance::mock());
 
     app.add_singleton_model(|_| TemplatableMCPServerManager::default());
     app.add_singleton_model(LLMPreferences::new);
-    app.add_singleton_model(HarnessAvailabilityModel::new);
-    app.add_singleton_model(ConnectedSelfHostedWorkersModel::new);
+    app.add_singleton_model(HarnessAvailabilityModel::new_offline);
     app.add_singleton_model(BlocklistAIPermissions::new);
     app.add_singleton_model(|ctx| {
         AIExecutionProfilesModel::new(&LaunchMode::new_for_unit_test(), ctx)
@@ -366,14 +358,7 @@ pub fn register_tui_session_view_test_singletons(app: &mut warpui::App) {
         AIRequestUsageModel::new(ServerApiProvider::as_ref(ctx).get_ai_client(), ctx)
     });
     #[cfg(feature = "voice_input")]
-    {
-        app.add_singleton_model(voice_input::VoiceInput::new);
-        app.add_singleton_model(|ctx| {
-            VoiceTranscriber::new(Arc::new(ServerVoiceTranscriber::new(
-                ServerApiProvider::as_ref(ctx).get(),
-            )))
-        });
-    }
+    app.add_singleton_model(voice_input::VoiceInput::new);
     app.add_singleton_model(|_| {
         crate::ai::document::ai_document_model::AIDocumentModel::new_for_test()
     });
@@ -404,7 +389,6 @@ pub fn register_tui_session_view_test_singletons(app: &mut warpui::App) {
         crate::changelog_model::ChangelogModel::new(ServerApiProvider::as_ref(ctx).get())
     });
     app.add_singleton_model(|_| ai::project_context::model::ProjectContextModel::default());
-    app.update(crate::settings::TuiAutoupdateSettings::register);
     app.update(crate::settings::TuiThemeSettings::register);
     app.update(crate::settings::CodeSettings::register);
     app.update(crate::settings::FontSettings::register);

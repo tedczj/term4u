@@ -3,7 +3,7 @@ use std::collections::{HashMap, VecDeque};
 use warp_graphql::ai::AgentTaskState;
 
 use super::LocalTaskUpdate;
-use crate::ai::ambient_agents::AmbientAgentTaskId;
+use crate::ai::agent_tasks::AmbientAgentTaskId;
 use crate::server::server_api::ai::TaskStatusUpdate;
 
 /// Serializes and coalesces model-owned task updates independently per task.

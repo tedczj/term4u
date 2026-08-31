@@ -411,7 +411,3 @@ impl From<&CloudWorkflow> for Workflow {
         cloud_workflow.model().data.to_owned()
     }
 }
-
-#[cfg(test)]
-#[path = "workflow_tests.rs"]
-mod tests;

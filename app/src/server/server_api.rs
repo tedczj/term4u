@@ -17,7 +17,6 @@ pub mod tui_onboarding;
 pub mod workspace;
 
 use std::ops::Deref;
-use std::path::Path;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -40,43 +39,30 @@ use team::TeamClient;
 #[cfg(feature = "tui")]
 use tui_onboarding::TuiOnboardingClient;
 use url::Url;
-use warp_core::context_flag::ContextFlag;
-use warp_core::telemetry::TelemetryEvent;
 use warp_errors::{AnyhowErrorExt, ErrorExt, register_error, report_error};
 use warp_managed_secrets::client::ManagedSecretsClient;
 use warp_server_client::HttpStatusError;
-use warp_server_client::auth::{AuthClientImpl, AuthEvent, EXPERIMENT_ID_HEADER};
+use warp_server_client::auth::{AuthEvent, EXPERIMENT_ID_HEADER};
 use warp_server_client::base_client::{
     AmbientHeaderPolicy, AuthenticatedGraphqlConfig, BaseClient, GraphqlRoutingConfig,
     TEAM_UID_HEADER,
 };
-use warp_server_client::iap::{IapManager, IapState};
-use warp_server_client::network_logging::NetworkLogModel;
 use warpui::r#async::BoxFuture;
 use warpui::{Entity, ModelContext, SingletonEntity};
 use workspace::WorkspaceClient;
 
 use super::experiments::{ServerExperiment, ServerExperiments};
-use crate::ai::ambient_agents::AmbientAgentTaskId;
+use crate::ai::agent_tasks::AmbientAgentTaskId;
 use crate::ai::get_relevant_files::api::{GetRelevantFiles, GetRelevantFilesResponse};
 use crate::ai::predict::generate_ai_input_suggestions::GenerateAIInputSuggestionsRequest;
 use crate::ai::predict::generate_am_query_suggestions::GenerateAMQuerySuggestionsRequest;
 use crate::ai::predict::predict_am_queries::{PredictAMQueriesRequest, PredictAMQueriesResponse};
 use crate::ai::predict::{generate_ai_input_suggestions, generate_am_query_suggestions};
-use crate::ai::voice::transcribe::{TranscribeRequest, TranscribeResponse};
-use crate::auth::auth_manager::AuthManager;
 use crate::auth::auth_state::AuthState;
 use crate::server::team_scope::RequestTeamScope;
-use crate::server::telemetry::TelemetryApi;
-use crate::settings::PrivacySettingsSnapshot;
 use crate::{ChannelState, settings_view};
 
 pub const FETCH_CHANNEL_VERSIONS_TIMEOUT: std::time::Duration = Duration::from_secs(60);
-#[derive(Serialize)]
-struct AgentTipShownAnalyticsRequest {
-    tip: String,
-}
-
 /// We use a special error code header `X-Warp-Error-Code` to allow the server to send
 /// more specific error code information, so that the client can discern between different
 /// errors with the same error code.
@@ -372,65 +358,6 @@ impl ErrorExt for AIApiError {
 }
 register_error!(AIApiError);
 
-#[derive(thiserror::Error, Debug)]
-pub enum TranscribeError {
-    #[error("Request failed due to lack of Voice quota.")]
-    QuotaLimit,
-
-    #[error("Warp is currently overloaded. Please try again later.")]
-    ServerOverloaded,
-
-    #[error("Internal error occurred at transport layer.")]
-    Transport(#[source] reqwest::Error),
-
-    #[error("Failed with status code {0}")]
-    ErrorStatus(http::StatusCode),
-
-    #[error("Failed to deserialize JSON.")]
-    Deserialization(#[source] DeserializationError),
-
-    #[error(transparent)]
-    Other(#[from] anyhow::Error),
-}
-
-impl TranscribeError {
-    fn from_json_error(err: reqwest::Error) -> Self {
-        if err.is_decode() {
-            #[cfg(not(target_family = "wasm"))]
-            {
-                use std::error::Error as _;
-                let mut source = err.source();
-                while let Some(underlying) = source {
-                    if underlying.is::<hyper::Error>() {
-                        return TranscribeError::Transport(err);
-                    }
-                    source = underlying.source();
-                }
-            }
-            return TranscribeError::Deserialization(DeserializationError::Transport(err));
-        }
-        TranscribeError::Transport(err)
-    }
-}
-
-impl ErrorExt for TranscribeError {
-    fn is_actionable(&self) -> bool {
-        match self {
-            TranscribeError::Transport(error) => error.is_actionable(),
-            TranscribeError::ErrorStatus(status) => {
-                !status.is_server_error() && *status != http::StatusCode::TOO_MANY_REQUESTS
-            }
-            TranscribeError::Other(error) => error.is_actionable(),
-            TranscribeError::Deserialization(error) => match error {
-                DeserializationError::Json(_) => true,
-                DeserializationError::Transport(error) => error.is_actionable(),
-            },
-            TranscribeError::QuotaLimit | TranscribeError::ServerOverloaded => false,
-        }
-    }
-}
-register_error!(TranscribeError);
-
 /// An API wrapper struct with methods to requests to warp-server.
 ///
 /// Prefer NOT adding new methods directly on this struct; instead, add to one of the existing
@@ -438,47 +365,16 @@ register_error!(TranscribeError);
 /// with disparate types of calls, and allows you to mock methods in tests.
 pub struct ServerApi {
     base_client: Arc<BaseClient>,
-    // TODO(jeff): Make `TelemetryApi` another type of client, and move it off `ServerApi`.
-    telemetry_api: TelemetryApi,
     last_server_time: Arc<Mutex<Option<ServerTime>>>,
 }
 
 impl ServerApi {
-    fn new(
-        auth_state: Arc<AuthState>,
-        event_sender: async_channel::Sender<AuthEvent>,
-        agent_source: Option<ai::AgentSource>,
-        iap_state: Option<Arc<IapState>>,
-        ctx: &mut ModelContext<ServerApiProvider>,
-    ) -> Self {
-        let mut client = http_client::Client::new();
-        let iap_token_provider = iap_state.map(|state| {
-            client.set_iap_token_provider(state.clone());
-            state as Arc<dyn http_client::iap::IapTokenProvider>
-        });
-        let mut telemetry_api = TelemetryApi::new();
-        if ContextFlag::NetworkLogConsole.is_enabled() {
-            NetworkLogModel::handle(ctx).update(ctx, |model, model_ctx| {
-                model.install_on_clients([&mut client, &mut telemetry_api.client], model_ctx);
-            });
-        }
-        Self::new_with_parts(
-            Arc::new(client),
-            auth_state,
-            event_sender,
-            agent_source,
-            iap_token_provider,
-            telemetry_api,
-        )
-    }
-
     fn new_with_parts(
         client: Arc<http_client::Client>,
         auth_state: Arc<AuthState>,
         event_sender: async_channel::Sender<AuthEvent>,
         agent_source: Option<ai::AgentSource>,
         iap_token_provider: Option<Arc<dyn http_client::iap::IapTokenProvider>>,
-        telemetry_api: TelemetryApi,
     ) -> Self {
         let graphql_routing = GraphqlRoutingConfig {
             #[cfg(feature = "agent_mode_evals")]
@@ -499,9 +395,20 @@ impl ServerApi {
 
         Self {
             base_client,
-            telemetry_api,
             last_server_time: Arc::new(Mutex::new(None)),
         }
+    }
+
+    #[cfg(feature = "offline_hard")]
+    fn new_offline_legacy() -> Self {
+        let (event_sender, _) = async_channel::unbounded();
+        Self::new_with_parts(
+            Arc::new(http_client::Client::new()),
+            Arc::new(AuthState::new_offline()),
+            event_sender,
+            None,
+            None,
+        )
     }
 
     #[cfg(any(test, all(feature = "tui", feature = "test-util")))]
@@ -510,7 +417,7 @@ impl ServerApi {
         let auth_state = Arc::new(AuthState::new_for_test());
         let client = Arc::new(http_client::Client::new_for_test());
 
-        Self::new_with_parts(client, auth_state, tx, None, None, TelemetryApi::new())
+        Self::new_with_parts(client, auth_state, tx, None, None)
     }
 
     #[cfg(all(test, feature = "skip_login"))]
@@ -528,7 +435,6 @@ impl ServerApi {
             event_sender,
             None,
             None,
-            TelemetryApi::new(),
         )
     }
 
@@ -574,7 +480,7 @@ impl ServerApi {
     /// responsible for reading the stream and handling reconnection.
     ///
     /// The stream is served by warp-server-rtc (not the main warp-server pool),
-    /// so the URL is built from `ChannelState::rtc_http_url()` rather than
+    /// so the URL is built from `ChannelState::rtc_http_url().unwrap_or_default()` rather than
     /// `server_root_url()`.
     pub async fn stream_agent_events(
         &self,
@@ -594,7 +500,7 @@ impl ServerApi {
             .join("&");
         let url = format!(
             "{}/api/v1/agent/events/stream?{run_ids_param}&since={since_sequence}",
-            ChannelState::rtc_http_url()
+            ChannelState::rtc_http_url().unwrap_or_default()
         );
 
         let mut request = self.base_client.http_client().get(&url);
@@ -632,7 +538,7 @@ impl ServerApi {
         };
         let url = format!(
             "{}/api/v1/agent/events/stream?ancestor_run_id={}&since={since_sequence}{include_self_param}",
-            ChannelState::rtc_http_url(),
+            ChannelState::rtc_http_url().unwrap_or_default(),
             urlencoding::encode(ancestor_run_id),
         );
 
@@ -667,7 +573,7 @@ impl ServerApi {
             .join("&");
         let url = format!(
             "{}/api/v1/agent/events/stream?{run_ids_param}&since={since_sequence}",
-            ChannelState::rtc_http_url()
+            ChannelState::rtc_http_url().unwrap_or_default()
         );
 
         let mut request = self.base_client.http_client().get(&url);
@@ -696,7 +602,11 @@ impl ServerApi {
             .await
             .context("Failed to get access token for API request")?;
 
-        let url = format!("{}/api/v1/{}", ChannelState::server_root_url(), path);
+        let url = format!(
+            "{}/api/v1/{}",
+            ChannelState::server_root_url().unwrap_or_default(),
+            path
+        );
 
         let mut request = self.base_client.http_client().post(&url).json(body);
         if let Some(token) = auth_token.as_bearer_token() {
@@ -801,7 +711,11 @@ impl ServerApi {
             .await
             .context("Failed to get access token for API request")?;
 
-        let url = format!("{}/api/v1/{}", ChannelState::server_root_url(), path);
+        let url = format!(
+            "{}/api/v1/{}",
+            ChannelState::server_root_url().unwrap_or_default(),
+            path
+        );
 
         let mut request = self.base_client.http_client().put(&url).json(body);
         if let Some(token) = auth_token.as_bearer_token() {
@@ -854,7 +768,11 @@ impl ServerApi {
             .await
             .context("Failed to get access token for API request")?;
 
-        let url = format!("{}/api/v1/{}", ChannelState::server_root_url(), path);
+        let url = format!(
+            "{}/api/v1/{}",
+            ChannelState::server_root_url().unwrap_or_default(),
+            path
+        );
 
         let mut request = self.base_client.http_client().delete(&url);
         if let Some(token) = auth_token.as_bearer_token() {
@@ -887,7 +805,11 @@ impl ServerApi {
             .await
             .context("Failed to get access token for API request")?;
 
-        let url = format!("{}/api/v1/{}", ChannelState::server_root_url(), path);
+        let url = format!(
+            "{}/api/v1/{}",
+            ChannelState::server_root_url().unwrap_or_default(),
+            path
+        );
 
         let mut request = self.base_client.http_client().patch(&url).json(body);
         if let Some(token) = auth_token.as_bearer_token() {
@@ -915,7 +837,10 @@ impl ServerApi {
     pub async fn notify_login(&self) {
         match self.get_or_refresh_access_token().await {
             Ok(auth_token) => {
-                let url = format!("{}/client/login", ChannelState::server_root_url());
+                let url = format!(
+                    "{}/client/login",
+                    ChannelState::server_root_url().unwrap_or_default()
+                );
                 let mut request = self.base_client.http_client().post(&url);
                 if let Some(token) = auth_token.as_bearer_token() {
                     request = request.bearer_auth(token);
@@ -944,94 +869,6 @@ impl ServerApi {
         }
     }
 
-    /// Synchronously sends a [`TelemetryEvent`] to the Rudderstack API. Prefer not to call this
-    /// directly, use the macros defined in crate::server::telemetry::macros. If telemetry is
-    /// disabled, this is a no-op.
-    pub async fn send_telemetry_event(
-        &self,
-        event: impl TelemetryEvent,
-        settings_snapshot: PrivacySettingsSnapshot,
-    ) -> Result<()> {
-        let user_id = self.user_id();
-        let anonymous_id = self.anonymous_id();
-        self.telemetry_api
-            .send_telemetry_event(user_id, anonymous_id, event, settings_snapshot)
-            .await
-    }
-
-    pub async fn send_agent_tip_shown_analytics_event(&self, tip: String) -> Result<()> {
-        let auth_token = self
-            .get_or_refresh_access_token()
-            .await
-            .context("Failed to get access token for API request")?;
-        let url = format!(
-            "{}/analytics/agent-tip-shown",
-            ChannelState::server_root_url()
-        );
-        let mut request = self
-            .base_client
-            .http_client()
-            .post(&url)
-            .json(&AgentTipShownAnalyticsRequest { tip });
-        if let Some(token) = auth_token.as_bearer_token() {
-            request = request.bearer_auth(token);
-        }
-
-        for (name, value) in self.ambient_agent_headers().await? {
-            request = request.header(name, value);
-        }
-
-        let response = request
-            .send()
-            .await
-            .with_context(|| format!("Failed to send API request to {url}"))?;
-
-        if response.status().is_success() {
-            Ok(())
-        } else {
-            self.observe_iap_challenge(&response);
-            Err(Self::error_from_response(response).await)
-        }
-    }
-
-    /// Drains all queued [`TelemetryEvent`]s into Rudderstack requests containing the corresponding
-    /// batch of events. Events are queued using the [`send_telemetry_from_ctx`] or
-    /// [`send_telemetry_from_app_ctx`] macros. If telemetry is disabled for the user, this flushes
-    /// the UI framework event queue and does nothing with them (no request is made).
-    ///
-    /// Returns the number of events that were flushed.
-    pub async fn flush_telemetry_events(
-        &self,
-        settings_snapshot: PrivacySettingsSnapshot,
-    ) -> Result<usize> {
-        self.telemetry_api.flush_events(settings_snapshot).await
-    }
-
-    /// Sends a batched Rudder request containing events written to the file at `path`. This is a
-    /// no-op if telemetry is disabled.
-    pub async fn flush_persisted_events_to_rudder(
-        &self,
-        path: &Path,
-        settings_snapshot: PrivacySettingsSnapshot,
-    ) -> Result<()> {
-        self.telemetry_api
-            .flush_persisted_events_to_rudder(path, settings_snapshot)
-            .await
-    }
-
-    /// Writes all queued [`TelemetryEvent`]s to a file, limiting the number of written
-    /// events to `max_events`. Events are queued using the [`send_telemetry_from_ctx`] or
-    /// [`send_telemetry_from_app_ctx`] macros. If telemetry is disabled, no events are written to
-    /// disk.
-    pub fn persist_telemetry_events(
-        &self,
-        max_event_count: usize,
-        settings_snapshot: PrivacySettingsSnapshot,
-    ) -> Result<()> {
-        self.telemetry_api
-            .flush_and_persist_events(max_event_count, settings_snapshot)
-    }
-
     /// Hits the /ai/generate_input_suggestions endpoint to get the predicted next action, based on past context.
     pub async fn generate_ai_input_suggestions(
         &self,
@@ -1043,7 +880,7 @@ impl ServerApi {
 
         let mut request_builder = self.base_client.http_client().post(format!(
             "{}/ai/generate_input_suggestions",
-            ChannelState::server_root_url()
+            ChannelState::server_root_url().unwrap_or_default()
         ));
         if let Some(team_uid) = team_scope.team_uid() {
             request_builder = request_builder.header(TEAM_UID_HEADER, team_uid.uid());
@@ -1072,7 +909,7 @@ impl ServerApi {
 
         let mut request_builder = self.base_client.http_client().post(format!(
             "{}/ai/relevant_files",
-            ChannelState::server_root_url()
+            ChannelState::server_root_url().unwrap_or_default()
         ));
         if let Some(token) = auth_token.as_bearer_token() {
             request_builder = request_builder.bearer_auth(token);
@@ -1104,12 +941,12 @@ impl ServerApi {
             if #[cfg(feature = "agent_mode_evals")] {
                 let url = format!(
                     "{}/agent-mode-evals/generate_am_query_suggestions",
-                    ChannelState::server_root_url()
+                    ChannelState::server_root_url().unwrap_or_default()
                 );
             } else {
                 let url = format!(
                     "{}/ai/generate_am_query_suggestions",
-                    ChannelState::server_root_url()
+                    ChannelState::server_root_url().unwrap_or_default()
                 );
             }
         }
@@ -1140,7 +977,7 @@ impl ServerApi {
         let auth_token = self.get_or_refresh_access_token().await?;
         let mut request_builder = self.base_client.http_client().post(format!(
             "{}/ai/predict_am_queries",
-            ChannelState::server_root_url()
+            ChannelState::server_root_url().unwrap_or_default()
         ));
         if let Some(team_uid) = team_scope.team_uid() {
             request_builder = request_builder.header(TEAM_UID_HEADER, team_uid.uid());
@@ -1160,64 +997,6 @@ impl ServerApi {
         Ok(response)
     }
 
-    /// Hits the /ai/transcribe endpoint to get the transcription for the given audio.
-    pub async fn transcribe(
-        &self,
-        request: &TranscribeRequest,
-        team_scope: RequestTeamScope,
-    ) -> Result<TranscribeResponse, TranscribeError> {
-        let auth_token = self.get_or_refresh_access_token().await?;
-
-        let mut request_builder = self
-            .base_client
-            .http_client()
-            .post(format!("{}/ai/transcribe", ChannelState::server_root_url()));
-        if let Some(team_uid) = team_scope.team_uid() {
-            request_builder = request_builder.header(TEAM_UID_HEADER, team_uid.uid());
-        }
-        let response = if let Some(token) = auth_token.as_bearer_token() {
-            request_builder.bearer_auth(token)
-        } else {
-            request_builder
-        }
-        .json(request)
-        .send()
-        .await;
-
-        match response {
-            Ok(res) => {
-                if res.status().is_success() {
-                    match res.json::<TranscribeResponse>().await {
-                        Ok(output_response) => Ok(output_response),
-                        Err(e) => {
-                            log::warn!("Failed to deserialize response: {e:?}");
-                            Err(TranscribeError::from_json_error(e))
-                        }
-                    }
-                } else if res.status() == http::StatusCode::TOO_MANY_REQUESTS {
-                    if res
-                        .headers()
-                        .get(WARP_ERROR_CODE_HEADER)
-                        .and_then(|v| v.to_str().ok())
-                        == Some(WARP_ERROR_CODE_OUT_OF_CREDITS)
-                    {
-                        Err(TranscribeError::QuotaLimit)
-                    } else {
-                        Err(TranscribeError::ServerOverloaded)
-                    }
-                } else {
-                    let status = res.status();
-                    log::warn!("Non-success status code received: {status}");
-                    Err(TranscribeError::ErrorStatus(status))
-                }
-            }
-            Err(e) => {
-                log::warn!("Error while sending request: {e:?}");
-                Err(TranscribeError::Transport(e))
-            }
-        }
-    }
-
     fn set_server_time(&self, server_time: ServerTime) {
         let mut last_server_time = self.last_server_time.lock();
         *last_server_time = Some(server_time);
@@ -1233,7 +1012,10 @@ impl ServerApi {
             return Ok(cached);
         }
 
-        let time_endpoint = format!("{}/current_time", ChannelState::server_root_url());
+        let time_endpoint = format!(
+            "{}/current_time",
+            ChannelState::server_root_url().unwrap_or_default()
+        );
         log::info!("Sending server time request to {}", &time_endpoint);
         let res = self
             .base_client
@@ -1279,7 +1061,7 @@ impl ServerApi {
         include_changelogs: bool,
         is_daily: bool,
     ) -> Result<ChannelVersions> {
-        let mut url = Url::parse(&ChannelState::server_root_url())
+        let mut url = Url::parse(&ChannelState::server_root_url().unwrap_or_default())
             .expect("Should not fail to parse server root URL");
         if is_daily {
             url.set_path("/client_version/daily");
@@ -1328,12 +1110,34 @@ impl ServerApi {
 /// A singleton entity that provides access to the global [`ServerApi`] instance,
 /// or any of its implemented trait objects.
 pub struct ServerApiProvider {
-    server_api: Arc<ServerApi>,
-    auth_client: Arc<dyn AuthClient>,
+    backend: Backend,
+}
+
+enum Backend {
+    #[cfg(not(feature = "offline_hard"))]
+    Cloud {
+        server_api: Arc<ServerApi>,
+        auth_client: Arc<dyn AuthClient>,
+    },
+    Offline {
+        offline: Arc<crate::server::offline_api::OfflineApi>,
+        legacy_server_api: Arc<ServerApi>,
+    },
+}
+
+macro_rules! backend_client {
+    ($provider:expr, $trait:path) => {
+        match &$provider.backend {
+            #[cfg(not(feature = "offline_hard"))]
+            Backend::Cloud { server_api, .. } => server_api.clone() as Arc<dyn $trait>,
+            Backend::Offline { offline, .. } => offline.clone() as Arc<dyn $trait>,
+        }
+    };
 }
 
 impl ServerApiProvider {
     /// Constructs a new ServerApiProvider.
+    #[cfg(not(feature = "offline_hard"))]
     #[cfg_attr(target_family = "wasm", allow(unused_variables))]
     pub fn new(
         auth_state: Arc<AuthState>,
@@ -1386,8 +1190,19 @@ impl ServerApiProvider {
         let server_api = Arc::new(server_api);
         let auth_client = Arc::new(AuthClientImpl::new(server_api.base_client.clone()));
         Self {
-            server_api,
-            auth_client,
+            backend: Backend::Cloud {
+                server_api,
+                auth_client,
+            },
+        }
+    }
+
+    pub fn new_offline() -> Self {
+        Self {
+            backend: Backend::Offline {
+                offline: Arc::new(crate::server::offline_api::OfflineApi::new()),
+                legacy_server_api: Arc::new(ServerApi::new_offline_legacy()),
+            },
         }
     }
 
@@ -1407,78 +1222,96 @@ impl ServerApiProvider {
     /// Constructs a new SeverApiProvider for tests.
     #[cfg(any(test, all(feature = "tui", feature = "test-util")))]
     pub fn new_for_test() -> Self {
-        let server_api = Arc::new(ServerApi::new_for_test());
-        let auth_client = Arc::new(AuthClientImpl::new(server_api.base_client.clone()));
-        Self {
-            server_api,
-            auth_client,
+        cfg_if::cfg_if! {
+            if #[cfg(feature = "offline_hard")] {
+                Self::new_offline()
+            } else {
+                let server_api = Arc::new(ServerApi::new_for_test());
+                let auth_client = Arc::new(AuthClientImpl::new(server_api.base_client.clone()));
+                Self {
+                    backend: Backend::Cloud {
+                        server_api,
+                        auth_client,
+                    },
+                }
+            }
         }
     }
 
-    /// Returns a handle to the underlying [`ServerApi`] object.
-    /// Prefer retrieving a specific trait object related to the methods you're calling.
     pub fn get(&self) -> Arc<ServerApi> {
-        self.server_api.clone()
+        match &self.backend {
+            #[cfg(not(feature = "offline_hard"))]
+            Backend::Cloud { server_api, .. } => server_api.clone(),
+            Backend::Offline {
+                legacy_server_api, ..
+            } => legacy_server_api.clone(),
+        }
     }
 
     pub fn get_auth_client(&self) -> Arc<dyn AuthClient> {
-        self.auth_client.clone()
+        match &self.backend {
+            #[cfg(not(feature = "offline_hard"))]
+            Backend::Cloud { auth_client, .. } => auth_client.clone(),
+            Backend::Offline { offline, .. } => offline.clone(),
+        }
     }
 
     pub fn get_referrals_client(&self) -> Arc<dyn ReferralsClient> {
-        self.server_api.clone()
+        backend_client!(self, ReferralsClient)
     }
 
     pub fn get_block_client(&self) -> Arc<dyn BlockClient> {
-        self.server_api.clone()
+        backend_client!(self, BlockClient)
     }
 
     pub fn get_workspace_client(&self) -> Arc<dyn WorkspaceClient> {
-        self.server_api.clone()
+        backend_client!(self, WorkspaceClient)
     }
 
     pub fn get_team_client(&self) -> Arc<dyn TeamClient> {
-        self.server_api.clone()
+        backend_client!(self, TeamClient)
     }
+
     #[cfg(feature = "tui")]
     pub fn get_tui_onboarding_client(&self) -> Arc<dyn TuiOnboardingClient> {
-        self.server_api.clone()
+        backend_client!(self, TuiOnboardingClient)
     }
 
     pub fn get_ai_client(&self) -> Arc<dyn AIClient> {
-        self.server_api.clone()
+        backend_client!(self, AIClient)
     }
 
     pub fn get_cloud_objects_client(&self) -> Arc<dyn ObjectClient> {
-        self.server_api.clone()
+        backend_client!(self, ObjectClient)
     }
-
     pub fn get_integrations_client(&self) -> Arc<dyn integrations::IntegrationsClient> {
-        self.server_api.clone()
+        backend_client!(self, integrations::IntegrationsClient)
     }
 
     pub fn get_managed_secrets_client(&self) -> Arc<dyn ManagedSecretsClient> {
-        self.server_api.clone()
+        backend_client!(self, ManagedSecretsClient)
     }
 
     #[cfg_attr(target_family = "wasm", expect(dead_code))]
     pub fn get_managed_mcp_client(&self) -> Arc<dyn ManagedMcpClient> {
-        self.server_api.clone()
+        backend_client!(self, ManagedMcpClient)
     }
 
     pub fn get_factory_client(&self) -> Arc<dyn FactoryClient> {
-        self.server_api.clone()
+        backend_client!(self, FactoryClient)
     }
 
-    /// Returns the shared HTTP client. This client is wired into network logging
-    /// and includes standard Warp request headers.
     pub fn get_http_client(&self) -> Arc<http_client::Client> {
-        self.server_api.owned_http_client()
+        match &self.backend {
+            #[cfg(not(feature = "offline_hard"))]
+            Backend::Cloud { server_api, .. } => server_api.owned_http_client(),
+            Backend::Offline { offline, .. } => offline.owned_http_client(),
+        }
     }
 
     #[cfg_attr(target_family = "wasm", expect(dead_code))]
     pub fn get_harness_support_client(&self) -> Arc<dyn harness_support::HarnessSupportClient> {
-        self.server_api.clone()
+        backend_client!(self, harness_support::HarnessSupportClient)
     }
 }
 

@@ -121,16 +121,15 @@ impl AuthSecretFtuxDropdown {
         ctx.subscribe_to_model(
             &HarnessAvailabilityModel::handle(ctx),
             |me, _, event, ctx| match event {
-                HarnessAvailabilityEvent::AuthSecretsLoaded
-                | HarnessAvailabilityEvent::AuthSecretCreated { .. }
-                | HarnessAvailabilityEvent::AuthSecretDeleted { .. }
-                | HarnessAvailabilityEvent::AuthSecretsFetchFailed => {
+                HarnessAvailabilityEvent::SecretsLoaded
+                | HarnessAvailabilityEvent::SecretCreated { .. }
+                | HarnessAvailabilityEvent::SecretDeleted { .. }
+                | HarnessAvailabilityEvent::SecretsFetchFailed => {
                     me.refresh_menu(ctx);
                     ctx.notify();
                 }
-                HarnessAvailabilityEvent::Changed
-                | HarnessAvailabilityEvent::AuthSecretCreationFailed { .. }
-                | HarnessAvailabilityEvent::AuthSecretDeletionFailed { .. } => {}
+                HarnessAvailabilityEvent::SecretCreationFailed { .. }
+                | HarnessAvailabilityEvent::SecretDeletionFailed { .. } => {}
             },
         );
 

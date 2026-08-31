@@ -64,6 +64,7 @@ sysinfo.workspace = true
 nix = { workspace = true, features = ["user", "signal"] }
 
 [features]
+offline_hard = ["warp/offline_hard", "warp_core/offline_hard"]
 run_on_linux = []
 drag_tabs_to_windows = ["warp/drag_tabs_to_windows"]
 default = ["run_on_linux"]

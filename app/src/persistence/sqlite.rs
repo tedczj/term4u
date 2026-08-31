@@ -68,7 +68,7 @@ use super::{
     PersistenceScope, StartedCommandMetadata, WriterHandles, schema,
 };
 use crate::ai::agent::conversation::AIConversationId;
-use crate::ai::ambient_agents::AmbientAgentTaskId;
+use crate::ai::agent_tasks::AmbientAgentTaskId;
 use crate::ai::mcp::templatable_installation::VariableValue;
 use crate::ai::mcp::{TemplatableMCPServer, TemplatableMCPServerInstallation};
 use crate::ai::persisted_workspace::EnablementState;
@@ -274,50 +274,6 @@ unsafe fn init_logging() {
             // Sentry shouldn't panic, but to be safe, make sure we don't unwind across the FFI
             // boundary.
             let _ = panic::catch_unwind(|| {
-                // We report SQLite errors to Sentry in a more-structured format so that they have
-                // better grouping (all are under the same Sentry issue, with details for the specific
-                // error kind). Warning and debug SQLite messages are logged - with the default
-                // sentry_log configuration, warnings are added as breadcrumbs to other events and
-                // debug messages are ignored.
-                // In local builds without crash reporting, all SQLite messages get logged locally.
-
-                #[cfg(feature = "crash_reporting")]
-                if level == log::Level::Error {
-                    use std::sync::atomic::{AtomicU64, Ordering};
-
-                    // Each bit represents a primary SQLite error code (0-63). Primary codes are
-                    // the least-significant byte of the extended code; real error codes are ≤ 28.
-                    static REPORTED_PRIMARY_CODES: AtomicU64 = AtomicU64::new(0);
-                    let primary_code = (primary_error_code as u64).min(63);
-                    let bit = 1u64 << primary_code;
-                    if REPORTED_PRIMARY_CODES.fetch_or(bit, Ordering::Relaxed) & bit == 0 {
-                        // First occurrence of this primary error code — report to Sentry.
-                        sentry::with_scope(
-                            |scope| {
-                                let mut context = std::collections::BTreeMap::new();
-                                context.insert("message".to_string(), err_message.into());
-                                context.insert("code".to_string(), err_code.into());
-                                context.insert(
-                                    "code_description".to_string(),
-                                    sqlite3::code_to_str(err_code).into(),
-                                );
-                                scope.set_context(
-                                    "sqlite",
-                                    sentry::protocol::Context::Other(context),
-                                );
-                            },
-                            || {
-                                sentry::capture_message(
-                                    "Sqlite Error",
-                                    sentry_log::convert_log_level(level),
-                                )
-                            },
-                        );
-                        // The structured Sentry event is the record; skip the redundant log line.
-                        return;
-                    }
-                }
-
                 log::log!(
                     level,
                     "SQLite error {} ({}): {}",
@@ -364,19 +320,11 @@ pub(super) fn init_db(scope: &PersistenceScope) -> Result<SqliteConnection> {
             "Encountered an error while creating parent directories for sqlite database: {err:#}"
         );
     }
-    if matches!(scope, PersistenceScope::RemoteServerDaemon { .. }) {
-        ensure_owner_only_dir(db_parent)?;
-    }
-
     if matches!(scope, PersistenceScope::App) {
         migrate_old_sqlite_into_secure_container_if_needed(&db_path);
     }
 
-    let conn = setup_database(&db_path)?;
-    if matches!(scope, PersistenceScope::RemoteServerDaemon { .. }) {
-        ensure_owner_only_file(&db_path)?;
-    }
-    Ok(conn)
+    setup_database(&db_path)
 }
 
 fn migrate_old_sqlite_into_secure_container_if_needed(db_path: &Path) {
@@ -454,9 +402,6 @@ pub fn database_file_path_for_scope(scope: &PersistenceScope) -> PathBuf {
     match scope {
         PersistenceScope::App => app_database_file_path(),
         PersistenceScope::Tui => tui_database_file_path(),
-        PersistenceScope::RemoteServerDaemon { identity_key } => {
-            remote_server_daemon_database_file_path(identity_key)
-        }
     }
 }
 
@@ -478,43 +423,6 @@ fn app_database_file_path() -> PathBuf {
 
 fn tui_database_file_path() -> PathBuf {
     warp_core::paths::tui_state_dir().join(WARP_SQLITE_FILE_NAME)
-}
-
-fn remote_server_daemon_database_file_path(identity_key: &str) -> PathBuf {
-    let data_dir = remote_server::setup::remote_server_daemon_data_dir(identity_key);
-    let expanded_data_dir = shellexpand::tilde(&data_dir).into_owned();
-    PathBuf::from(expanded_data_dir).join(WARP_SQLITE_FILE_NAME)
-}
-
-#[cfg(unix)]
-fn ensure_owner_only_dir(path: &Path) -> Result<()> {
-    use std::fs::Permissions;
-    use std::os::unix::fs::PermissionsExt;
-
-    std::fs::set_permissions(path, Permissions::from_mode(0o700))
-        .with_context(|| format!("setting permissions on directory {}", path.display()))
-}
-
-#[cfg(not(unix))]
-fn ensure_owner_only_dir(_path: &Path) -> Result<()> {
-    Ok(())
-}
-
-#[cfg(unix)]
-fn ensure_owner_only_file(path: &Path) -> Result<()> {
-    use std::fs::Permissions;
-    use std::os::unix::fs::PermissionsExt;
-
-    if path.exists() {
-        std::fs::set_permissions(path, Permissions::from_mode(0o600))
-            .with_context(|| format!("setting permissions on file {}", path.display()))?;
-    }
-    Ok(())
-}
-
-#[cfg(not(unix))]
-fn ensure_owner_only_file(_path: &Path) -> Result<()> {
-    Ok(())
 }
 
 pub(super) fn remove(sender: SyncSender<ModelEvent>) {

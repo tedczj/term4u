@@ -34,7 +34,7 @@ use warpui::{
 use crate::ai::active_agent_views_model::ActiveAgentViewsModel;
 use crate::ai::agent::api::ServerConversationToken;
 use crate::ai::agent::conversation::{AIConversationId, ConversationStatus};
-use crate::ai::ambient_agents::{
+use crate::ai::agent_tasks::{
     AgentSource, AmbientAgentLiveSessionState, AmbientAgentTask, AmbientAgentTaskId,
     AmbientAgentTaskState,
 };
@@ -43,13 +43,12 @@ use crate::ai::blocklist::orchestration_topology::orchestration_aware_conversati
 use crate::ai::blocklist::{
     BlocklistAIHistoryEvent, BlocklistAIHistoryModel, ConversationStatusUpdate,
 };
-use crate::ai::cloud_environments::CloudAmbientAgentEnvironment;
 use crate::ai::conversation_navigation::ConversationNavigationData;
 use crate::auth::AuthStateProvider;
 use crate::auth::auth_manager::{AuthManager, AuthManagerEvent};
 use crate::cloud_object::CloudObjectLookup as _;
+use crate::cloud_object::agent_environment::CloudAmbientAgentEnvironment;
 use crate::network::{NetworkStatus, NetworkStatusEvent, NetworkStatusKind};
-use crate::server::cloud_objects::update_manager::{UpdateManager, UpdateManagerEvent};
 use crate::server::ids::{ServerId, SyncId};
 use crate::server::retry_strategies::{
     OUT_OF_BAND_REQUEST_RETRY_STRATEGY, PERIODIC_POLL_RETRY_STRATEGY, is_transient_http_error,
@@ -62,7 +61,6 @@ use crate::ui_components::icons::Icon;
 use crate::workspace::{RestoreConversationLayout, WorkspaceAction};
 
 const POLLING_INTERVAL: Duration = Duration::from_secs(30);
-const RTC_TASK_REFRESH_THROTTLE: Duration = Duration::from_secs(5);
 const INITIAL_TASK_AMOUNT: i32 = 100;
 
 /// How long to skip refetching a task that just failed with a transient error
@@ -165,34 +163,6 @@ impl InitialConversationLoadState {
             | InitialConversationLoadState::WaitingForCloud
             | InitialConversationLoadState::LoadingCloud => false,
         }
-    }
-}
-
-/// Tracks the cooldown window for RTC-triggered task-list refreshes. Pending events keep
-/// the earliest timestamp in the burst because `updated_after` is a lower bound; using the
-/// latest timestamp could skip tasks that changed earlier in the same window.
-#[derive(Default)]
-enum RtcTaskRefreshThrottleState {
-    #[default]
-    Idle,
-    CoolingDown {
-        pending_timestamp: Option<DateTime<Utc>>,
-        timer_abort_handle: AbortHandle,
-    },
-}
-
-fn record_earliest_rtc_task_refresh_timestamp(
-    pending_timestamp: &mut Option<DateTime<Utc>>,
-    timestamp: DateTime<Utc>,
-) {
-    match pending_timestamp {
-        Some(existing_timestamp) if timestamp < *existing_timestamp => {
-            *existing_timestamp = timestamp;
-        }
-        None => {
-            *pending_timestamp = Some(timestamp);
-        }
-        Some(_) => {}
     }
 }
 
@@ -640,7 +610,6 @@ pub struct AgentConversationsModel {
     /// the meaning of each variant. Tasks that have been successfully fetched live in `tasks`
     /// and are absent from this map.
     task_fetch_state: HashMap<AmbientAgentTaskId, TaskFetchState>,
-    rtc_task_refresh_throttle_state: RtcTaskRefreshThrottleState,
     /// Earliest RTC timestamp received while no list surface was open.
     /// On next `register_view_open`, triggers a single `fetch_tasks_updated_after`.
     dirty_since: Option<DateTime<Utc>>,
@@ -692,7 +661,6 @@ impl AgentConversationsModel {
                 active_data_consumers_per_window: HashMap::new(),
                 initial_load_state: InitialConversationLoadState::Loaded,
                 task_fetch_state: HashMap::new(),
-                rtc_task_refresh_throttle_state: RtcTaskRefreshThrottleState::default(),
                 dirty_since: None,
             };
         }
@@ -717,12 +685,6 @@ impl AgentConversationsModel {
             me.sync_conversations(ctx);
         });
 
-        // Subscribe to UpdateManager for RTC task updates
-        if FeatureFlag::AmbientAgentsRTC.is_enabled() {
-            let update_manager = UpdateManager::handle(ctx);
-            ctx.subscribe_to_model(&update_manager, Self::handle_update_manager_event);
-        }
-
         let mut model = Self {
             tasks: HashMap::new(),
             conversations: HashMap::new(),
@@ -731,7 +693,6 @@ impl AgentConversationsModel {
             active_data_consumers_per_window: HashMap::new(),
             initial_load_state: InitialConversationLoadState::LoadingLocal,
             task_fetch_state: HashMap::new(),
-            rtc_task_refresh_throttle_state: RtcTaskRefreshThrottleState::default(),
             dirty_since: None,
         };
 
@@ -805,97 +766,6 @@ impl AgentConversationsModel {
             self.fetch_ambient_agent_tasks_and_cloud_convo_metadata(ctx);
         }
     }
-
-    fn handle_update_manager_event(
-        &mut self,
-        _: ModelHandle<UpdateManager>,
-        event: &UpdateManagerEvent,
-        ctx: &mut ModelContext<Self>,
-    ) {
-        let UpdateManagerEvent::AmbientTaskUpdated { task_id, timestamp } = event else {
-            return;
-        };
-
-        let has_list_consumers = self
-            .active_data_consumers_per_window
-            .values()
-            .any(|views| !views.is_empty());
-        if has_list_consumers {
-            // (a) If management view or conversation list is open, throttled list-fetch.
-            self.handle_rtc_for_list_views(*timestamp, ctx);
-        } else {
-            let has_open_tab = ActiveAgentViewsModel::as_ref(ctx)
-                .get_terminal_view_id_for_ambient_task(*task_id)
-                .is_some();
-            if has_open_tab {
-                // (b) If this task has an open tab (any window), force a re-fetch.
-                self.async_fetch_task(task_id, ctx);
-            } else {
-                // (c) No list surface open: record earliest timestamp for flush on next view open.
-                record_earliest_rtc_task_refresh_timestamp(&mut self.dirty_since, *timestamp);
-            }
-        }
-    }
-
-    // Handle RTC invalidations for list views, respecting the refresh throttling.
-    fn handle_rtc_for_list_views(
-        &mut self,
-        timestamp: DateTime<Utc>,
-        ctx: &mut ModelContext<Self>,
-    ) {
-        match std::mem::take(&mut self.rtc_task_refresh_throttle_state) {
-            RtcTaskRefreshThrottleState::Idle => {
-                self.fetch_tasks_updated_after(timestamp, ctx);
-                self.start_rtc_task_refresh_throttle_timer(ctx);
-            }
-            RtcTaskRefreshThrottleState::CoolingDown {
-                mut pending_timestamp,
-                timer_abort_handle,
-            } => {
-                record_earliest_rtc_task_refresh_timestamp(&mut pending_timestamp, timestamp);
-                self.rtc_task_refresh_throttle_state = RtcTaskRefreshThrottleState::CoolingDown {
-                    pending_timestamp,
-                    timer_abort_handle,
-                };
-            }
-        }
-    }
-
-    fn start_rtc_task_refresh_throttle_timer(&mut self, ctx: &mut ModelContext<Self>) {
-        let future_handle = ctx.spawn(
-            async move {
-                Timer::after(RTC_TASK_REFRESH_THROTTLE).await;
-            },
-            |model, _, ctx| {
-                let pending_timestamp =
-                    match std::mem::take(&mut model.rtc_task_refresh_throttle_state) {
-                        RtcTaskRefreshThrottleState::Idle => None,
-                        RtcTaskRefreshThrottleState::CoolingDown {
-                            pending_timestamp, ..
-                        } => pending_timestamp,
-                    };
-
-                if let Some(timestamp) = pending_timestamp {
-                    model.fetch_tasks_updated_after(timestamp, ctx);
-                    model.start_rtc_task_refresh_throttle_timer(ctx);
-                }
-            },
-        );
-        self.rtc_task_refresh_throttle_state = RtcTaskRefreshThrottleState::CoolingDown {
-            pending_timestamp: None,
-            timer_abort_handle: future_handle.abort_handle(),
-        };
-    }
-
-    fn abort_rtc_task_refresh_throttle(&mut self) {
-        if let RtcTaskRefreshThrottleState::CoolingDown {
-            timer_abort_handle, ..
-        } = std::mem::take(&mut self.rtc_task_refresh_throttle_state)
-        {
-            timer_abort_handle.abort();
-        }
-    }
-
     /// Fetch tasks updated after the given timestamp (minus 1 second buffer since server uses `>` not `>=`).
     fn fetch_tasks_updated_after(
         &mut self,
@@ -1287,22 +1157,6 @@ impl AgentConversationsModel {
     pub(crate) fn insert_task_for_test(&mut self, task: AmbientAgentTask) {
         self.tasks.insert(task.task_id, task);
     }
-
-    pub(crate) fn mark_task_execution_ended(
-        &mut self,
-        task_id: AmbientAgentTaskId,
-        ctx: &mut ModelContext<Self>,
-    ) {
-        let Some(task) = self.tasks.get_mut(&task_id) else {
-            return;
-        };
-        let was_active = task.has_active_execution();
-        task.is_sandbox_running = false;
-        if was_active {
-            ctx.emit(AgentConversationsModelEvent::TasksUpdated);
-        }
-    }
-
     /// Returns normalized, owned entries for agent management/navigation surfaces.
     pub fn get_entries(
         &self,
@@ -1744,7 +1598,7 @@ impl AgentConversationsModel {
         session_id_str: String,
         ctx: &mut ModelContext<Self>,
     ) {
-        use crate::ai::ambient_agents::AmbientAgentTaskState;
+        use crate::ai::agent_tasks::AmbientAgentTaskState;
         if let Some(task) = self.tasks.get_mut(task_id) {
             task.session_id = Some(session_id_str);
             task.is_sandbox_running = true;
@@ -2106,14 +1960,9 @@ impl AgentConversationsModel {
         self.tasks.clear();
         self.conversations.clear();
         self.abort_existing_poll();
-        self.abort_rtc_task_refresh_throttle();
         self.active_data_consumers_per_window.clear();
         self.task_fetch_state.clear();
         self.dirty_since = None;
         self.initial_load_state = InitialConversationLoadState::WaitingForCloud;
     }
 }
-
-#[cfg(test)]
-#[path = "agent_conversations_model_tests.rs"]
-mod tests;

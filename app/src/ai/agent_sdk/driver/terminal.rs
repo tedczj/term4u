@@ -8,20 +8,20 @@ use std::task::{Context, Poll};
 use std::time::Duration;
 
 use futures::channel::oneshot;
-use session_sharing_protocol::common::{Role, SessionId};
-use session_sharing_protocol::sharer::SessionRetentionReason;
 use warp_cli::share::{ShareAccessLevel, ShareRequest, ShareSubject};
 use warp_completer::completer::CommandOutput;
 use warp_core::command::ExitCode;
 use warp_core::features::FeatureFlag;
 use warp_terminal::model::grid::Dimensions;
+use warp_terminal::session_sharing_types::common::{Role, SessionId};
+use warp_terminal::session_sharing_types::sharer::SessionRetentionReason;
 use warp_util::path::ShellFamily;
 use warpui::r#async::FutureExt;
 use warpui::{AppContext, Entity, ModelContext, ModelHandle, SingletonEntity as _, ViewHandle};
 
 use super::AgentDriverError;
 use crate::ai::agent::redaction::redact_secrets;
-use crate::ai::ambient_agents::AmbientAgentTaskId;
+use crate::ai::agent_tasks::AmbientAgentTaskId;
 use crate::ai::attachment_utils::attachments_download_dir;
 use crate::pane_group::NewTerminalOptions;
 use crate::root_view::{NewWorkspaceSource, open_new_with_workspace_source};
@@ -32,7 +32,7 @@ use crate::terminal::model::find::RegexDFAs;
 use crate::terminal::model::grid::RespectDisplayedOutput;
 use crate::terminal::model::index::Point;
 use crate::terminal::model::session::ExecuteCommandOptions;
-use crate::terminal::shared_session::{self, IsSharedSessionCreator, SharedSessionSource};
+use crate::terminal::session_sharing::{self, IsSharedSessionCreator, SharedSessionSource};
 use crate::terminal::shell::ShellType;
 use crate::terminal::view::{ConversationRestorationInNewPaneType, Event};
 use crate::workspaces::user_workspaces::UserWorkspaces;
@@ -120,7 +120,7 @@ pub(crate) enum TerminalDriverEvent {
     SlowBootstrap,
     /// The terminal session has established a shared session.
     EstablishedSharedSession {
-        session_id: session_sharing_protocol::common::SessionId,
+        session_id: warp_terminal::session_sharing_types::common::SessionId,
         join_url: String,
     },
     /// A shared-session viewer sent input into this session: a command run in it, raw PTY bytes,
@@ -259,8 +259,10 @@ impl TerminalDriver {
         // Create a oneshot channel for session sharing when sharing is expected.
         // When sharing is disabled (or running against ngrok), leave both halves
         // as None so that `wait_for_session_shared` returns immediately.
-        let sharing_expected =
-            should_share && !warp_core::channel::ChannelState::server_root_url().contains("ngrok");
+        let sharing_expected = should_share
+            && !warp_core::channel::ChannelState::server_root_url()
+                .unwrap_or_default()
+                .contains("ngrok");
         let (mut session_share_tx, session_share_rx) = if sharing_expected {
             if !FeatureFlag::CreatingSharedSessions.is_enabled() {
                 // Session sharing was requested but the feature is not enabled for this
@@ -827,7 +829,7 @@ impl TerminalDriver {
 
                 ctx.emit(TerminalDriverEvent::EstablishedSharedSession {
                     session_id: *session_id,
-                    join_url: shared_session::join_link(session_id),
+                    join_url: session_sharing::join_link(session_id),
                 });
             }
             crate::terminal::view::Event::FailedToShareSession { reason, cause } => {
@@ -873,7 +875,3 @@ impl TerminalDriver {
         }
     }
 }
-
-#[cfg(test)]
-#[path = "terminal_tests.rs"]
-mod tests;

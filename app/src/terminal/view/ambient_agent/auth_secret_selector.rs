@@ -19,10 +19,10 @@ use warpui::{
 };
 
 use crate::ai::auth_secret_types::auth_secret_types_for_harness;
-use crate::ai::cloud_agent_settings::CloudAgentSettings;
 use crate::ai::harness_availability::{
     AuthSecretFetchState, HarnessAvailabilityEvent, HarnessAvailabilityModel,
 };
+use crate::ai::orchestration::settings::OrchestrationSettings;
 use crate::menu::{Event as MenuEvent, Menu, MenuItem, MenuItemFields, MenuVariant};
 use crate::terminal::input::{MenuPositioning, MenuPositioningProvider};
 use crate::terminal::view::ambient_agent::delete_auth_secret_confirmation_dialog::{
@@ -167,20 +167,20 @@ impl AuthSecretSelector {
         ctx.subscribe_to_model(
             &HarnessAvailabilityModel::handle(ctx),
             |me, _, event, ctx| match event {
-                HarnessAvailabilityEvent::AuthSecretsLoaded
-                | HarnessAvailabilityEvent::AuthSecretCreated { .. }
-                | HarnessAvailabilityEvent::AuthSecretsFetchFailed => {
+                HarnessAvailabilityEvent::SecretsLoaded
+                | HarnessAvailabilityEvent::SecretCreated { .. }
+                | HarnessAvailabilityEvent::SecretsFetchFailed => {
                     me.refresh_menu(ctx);
                     me.refresh_button(ctx);
                 }
-                HarnessAvailabilityEvent::AuthSecretDeleted {
+                HarnessAvailabilityEvent::SecretDeleted {
                     harness,
                     name,
                     owner,
                 } => {
                     me.handle_secret_deleted(*harness, name.clone(), owner.clone(), ctx);
                 }
-                HarnessAvailabilityEvent::AuthSecretDeletionFailed {
+                HarnessAvailabilityEvent::SecretDeletionFailed {
                     harness,
                     name,
                     owner,
@@ -194,8 +194,7 @@ impl AuthSecretSelector {
                         ctx,
                     );
                 }
-                HarnessAvailabilityEvent::Changed
-                | HarnessAvailabilityEvent::AuthSecretCreationFailed { .. } => {}
+                HarnessAvailabilityEvent::SecretCreationFailed { .. } => {}
             },
         );
 
@@ -233,7 +232,7 @@ impl AuthSecretSelector {
             return;
         }
         let harness = self.ambient_agent_model.as_ref(ctx).selected_harness();
-        let saved_name = CloudAgentSettings::as_ref(ctx)
+        let saved_name = OrchestrationSettings::as_ref(ctx)
             .last_selected_auth_secret
             .value()
             .get(harness.config_name())
@@ -373,7 +372,7 @@ impl AuthSecretSelector {
     ) {
         let removed_pending = self.pending_deletes.remove(&(harness, name.clone(), owner));
 
-        CloudAgentSettings::handle(ctx).update(ctx, |settings, ctx| {
+        OrchestrationSettings::handle(ctx).update(ctx, |settings, ctx| {
             let mut map = settings.last_selected_auth_secret.value().clone();
             if remove_persisted_auth_secret_selection_if_deleted(&mut map, harness, &name) {
                 report_if_error!(settings.last_selected_auth_secret.set_value(map, ctx));
@@ -705,7 +704,7 @@ impl TypedActionView for AuthSecretSelector {
                     model.set_harness_auth_secret_name(Some(name.clone()), ctx);
                 });
                 // Persist the selection per-harness and mark FTUX completed.
-                CloudAgentSettings::handle(ctx).update(ctx, |settings, ctx| {
+                OrchestrationSettings::handle(ctx).update(ctx, |settings, ctx| {
                     settings.mark_harness_auth_ftux_completed(harness, ctx);
                     let mut map = settings.last_selected_auth_secret.value().clone();
                     map.insert(harness.config_name().to_string(), name);
@@ -719,7 +718,7 @@ impl TypedActionView for AuthSecretSelector {
                     model.set_harness_auth_secret_name(None, ctx);
                 });
                 // Clear the persisted selection for this harness.
-                CloudAgentSettings::handle(ctx).update(ctx, |settings, ctx| {
+                OrchestrationSettings::handle(ctx).update(ctx, |settings, ctx| {
                     let mut map = settings.last_selected_auth_secret.value().clone();
                     map.remove(harness.config_name());
                     report_if_error!(settings.last_selected_auth_secret.set_value(map, ctx));

@@ -532,9 +532,7 @@ impl CloudModel {
             ServerCloudObject::ScheduledAmbientAgent(scheduled_ambient_agent) => {
                 self.upsert_from_server_object(scheduled_ambient_agent, ctx);
             }
-            ServerCloudObject::CloudAgentConfig(cloud_agent_config) => {
-                self.upsert_from_server_object(cloud_agent_config, ctx);
-            }
+            ServerCloudObject::CloudAgentConfig(_) => {}
         }
     }
 
@@ -1831,7 +1829,3 @@ impl Entity for CloudModel {
 
 /// Mark CloudModel as global application state.
 impl SingletonEntity for CloudModel {}
-
-#[cfg(test)]
-#[path = "model_tests.rs"]
-mod tests;

@@ -7,12 +7,10 @@ use url::Url;
 use warp_core::features::FeatureFlag;
 use warp_core::{safe_anyhow, safe_error};
 use warp_errors::{ErrorExt, report_error};
-use warpui::actions::StandardAction;
 use warpui::elements::{
     ChildAnchor, ChildView, Container, Fill, HighlightedHyperlink, MouseStateHandle,
     OffsetPositioning, ParentAnchor, ParentElement, ParentOffsetBounds, Stack,
 };
-use warpui::keymap::FixedBinding;
 use warpui::ui_components::components::{Coords, UiComponentStyles};
 use warpui::{
     AppContext, Element, Entity, FocusContext, SingletonEntity, TypedActionView, View, ViewContext,
@@ -29,44 +27,8 @@ use crate::auth::auth_view_body::AuthViewBody;
 use crate::modal::Modal;
 use crate::root_view::unthemed_window_border;
 use crate::server::server_api::auth::UserAuthenticationError;
-use crate::util::bindings::CustomAction;
-
-pub fn init(app: &mut AppContext) {
-    use warpui::keymap::macros::*;
-
-    app.register_fixed_bindings([
-        // Bindings for paste require the StandardAction and CustomAction binding to work on all platforms.
-        FixedBinding::custom(
-            CustomAction::Paste,
-            AuthViewAction::PasteAuthUrl,
-            "Paste",
-            id!(AuthView::ui_name()),
-        ),
-        FixedBinding::standard(
-            StandardAction::Paste,
-            AuthViewAction::PasteAuthUrl,
-            id!(AuthView::ui_name()),
-        ),
-    ]);
-
-    // For linux and Windows, default paste binding is ctrl+shift+v for PTY reasons.
-    // This can be confusing for users in some cases (and we might want
-    // to solve it in a more general way later). In the meantime, we
-    // add a basic ctrl+v binding for the auth view, since there is no
-    // terminal to interact with yet.
-    #[cfg(any(target_os = "linux", target_os = "freebsd", target_os = "windows"))]
-    app.register_fixed_bindings([FixedBinding::new(
-        "cmdorctrl-v",
-        AuthViewAction::PasteAuthUrl,
-        id!(AuthView::ui_name()),
-    )]);
-}
-
 #[derive(Clone, Debug)]
 pub enum AuthViewAction {
-    /// Triggered when the user attempts to paste something while the auth view
-    /// modal is visible.
-    PasteAuthUrl,
     DismissErrorNotification,
 }
 
@@ -389,12 +351,6 @@ impl TypedActionView for AuthView {
 
     fn handle_action(&mut self, action: &AuthViewAction, ctx: &mut ViewContext<Self>) {
         match action {
-            AuthViewAction::PasteAuthUrl => {
-                self.last_login_failure_reason = None;
-                self.update_auth_body(ctx, |body, ctx| body.handle_paste(ctx));
-
-                ctx.notify();
-            }
             AuthViewAction::DismissErrorNotification => {
                 self.dismiss_error_notification(ctx);
             }

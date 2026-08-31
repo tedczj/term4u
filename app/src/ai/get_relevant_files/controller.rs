@@ -14,8 +14,6 @@ use warp_core::features::FeatureFlag;
 use warp_errors::report_error;
 use warpui::{AppContext, Entity, ModelContext, ModelHandle, SingletonEntity};
 
-#[cfg(not(target_family = "wasm"))]
-use crate::ai::agent::SearchCodebaseFailureReason;
 use crate::ai::agent::{AIAgentActionId, SearchCodebaseResult};
 use crate::ai::blocklist::SessionContext;
 use crate::ai::get_relevant_files::api::{FileContext as FileContextRequest, GetRelevantFiles};
@@ -23,8 +21,7 @@ use crate::ai::outline::{OutlineStatus, RepoOutlines};
 use crate::server::server_api::{AIApiError, ServerApiProvider};
 use crate::server::team_scope::RequestTeamScope;
 use crate::{TelemetryEvent, send_telemetry_from_ctx};
-#[cfg_attr(not(target_family = "wasm"), path = "remote_search/native.rs")]
-#[cfg_attr(target_family = "wasm", path = "remote_search/wasm.rs")]
+#[path = "remote_search/wasm.rs"]
 mod remote_search;
 
 #[derive(Debug)]
@@ -371,11 +368,6 @@ impl GetRelevantFilesController {
             action_id.clone(),
             ctx,
         ) {
-            #[cfg(not(target_family = "wasm"))]
-            remote_search::RemoteSearchRequest::Pending(abort_handle) => {
-                self.pending_requests
-                    .insert(action_id, RequestHandle::AbortHandle(abort_handle));
-            }
             remote_search::RemoteSearchRequest::Ready(result) => {
                 ctx.emit(GetRelevantFilesControllerEvent::Success {
                     action_id,
@@ -408,28 +400,6 @@ impl GetRelevantFilesController {
             }
         };
     }
-
-    #[cfg(not(target_family = "wasm"))]
-    fn handle_remote_search_result(
-        &mut self,
-        search_result: anyhow::Result<SearchCodebaseResult>,
-        action_id: AIAgentActionId,
-        ctx: &mut ModelContext<Self>,
-    ) {
-        if self.pending_requests.remove(&action_id).is_none() {
-            return;
-        }
-
-        let result = search_result.unwrap_or_else(|e| SearchCodebaseResult::Failed {
-            reason: SearchCodebaseFailureReason::ClientError,
-            message: e.to_string(),
-        });
-        ctx.emit(GetRelevantFilesControllerEvent::Success {
-            action_id,
-            result: GetRelevantFilesControllerResult::SearchResult(result),
-        });
-    }
-
     /// Returns the path to the root directory for a codebase search where pwd is `directory`.
     pub fn root_directory_for_search(&self, directory: &Path, app: &AppContext) -> Option<PathBuf> {
         let mut start = None;

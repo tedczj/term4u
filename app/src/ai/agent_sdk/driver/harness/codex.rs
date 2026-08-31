@@ -33,8 +33,8 @@ use crate::ai::agent::conversation::AIConversationId;
 use crate::ai::agent_sdk::setup_observability::{
     OzRunTimelineEvent, SetupClientEventReporter, SetupStep,
 };
-use crate::ai::ambient_agents::AmbientAgentTaskId;
-use crate::ai::ambient_agents::task::HarnessModelConfig;
+use crate::ai::agent_tasks::AmbientAgentTaskId;
+use crate::ai::agent_tasks::task::HarnessModelConfig;
 use crate::ai::mcp::JSONTransportType;
 use crate::server::server_api::ServerApi;
 use crate::server::server_api::harness_support::{HarnessSupportClient, upload_to_target};
@@ -975,7 +975,3 @@ fn write_codex_mcp_servers(
         }
     }
 }
-
-#[cfg(test)]
-#[path = "codex_tests.rs"]
-mod tests;

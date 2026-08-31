@@ -207,6 +207,9 @@ impl SingletonEntity for TuiLoginModel {}
 /// Registers the [`TuiLoginModel`], mounts the TUI immediately, and shows an
 /// explicit welcome screen when the user isn't already logged in.
 pub(crate) fn init(mount: TuiMountFn, ctx: &mut AppContext) {
+    #[cfg(feature = "offline_hard")]
+    let initial_phase = TuiLoginPhase::LoggedIn;
+    #[cfg(not(feature = "offline_hard"))]
     let initial_phase = initial_login_phase(AuthStateProvider::as_ref(ctx).get());
     let logged_in = matches!(&initial_phase, TuiLoginPhase::LoggedIn);
     ctx.add_singleton_model(move |_| TuiLoginModel {
@@ -215,14 +218,20 @@ pub(crate) fn init(mount: TuiMountFn, ctx: &mut AppContext) {
         telemetry: TuiOnboardingTelemetry::new(logged_in),
     });
     ctx.add_singleton_model(TuiMcpManager::new);
+    #[cfg(feature = "offline_hard")]
+    ctx.add_singleton_model(TuiUserInfoManager::new_offline);
+    #[cfg(not(feature = "offline_hard"))]
     ctx.add_singleton_model(TuiUserInfoManager::new);
+    #[cfg(feature = "offline_hard")]
+    ctx.add_singleton_model(|_| TuiOnboardingMarkers::new_offline());
+    #[cfg(not(feature = "offline_hard"))]
     let onboarding_markers = ctx.add_singleton_model(TuiOnboardingMarkers::new);
 
-    // Keep the auth subscription alive for the full process lifetime so a
-    // logged-in TUI can complete device authorization again after logout.
+    #[cfg(not(feature = "offline_hard"))]
     ctx.subscribe_to_model(&AuthManager::handle(ctx), |_, event, ctx| {
         handle_auth_manager_event(event, ctx);
     });
+    #[cfg(not(feature = "offline_hard"))]
     if logged_in {
         onboarding_markers.update(ctx, |markers, ctx| {
             markers.load_current_account(ctx);

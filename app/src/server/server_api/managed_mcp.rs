@@ -29,6 +29,18 @@ pub trait ManagedMcpClient: 'static + Send + Sync {
 
 #[cfg_attr(not(target_family = "wasm"), async_trait)]
 #[cfg_attr(target_family = "wasm", async_trait(?Send))]
+impl ManagedMcpClient for crate::server::offline_api::OfflineApi {
+    async fn create_managed_mcp_client_config(
+        &self,
+        uid: String,
+    ) -> Result<CreateManagedMcpClientConfigOutput> {
+        let _ = uid;
+        Err(Self::unavailable("managed MCP API"))
+    }
+}
+
+#[cfg_attr(not(target_family = "wasm"), async_trait)]
+#[cfg_attr(target_family = "wasm", async_trait(?Send))]
 impl ManagedMcpClient for ServerApi {
     async fn create_managed_mcp_client_config(
         &self,

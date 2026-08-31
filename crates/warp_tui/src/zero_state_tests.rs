@@ -23,12 +23,11 @@ use warpui_core::elements::tui::{
 use warpui_core::{App, AppContext};
 
 use super::{
-    ANIMATION_PANEL_COLS, LEFT_COLUMN_COLS, ZeroStateSectionVisibility, autoupdate_status_label,
-    build_zero_state_layout, build_zero_state_overlay, build_zero_state_stack_layout,
-    changelog_bullets_from_changelog, custom_endpoint_status_label, mcp_status_label,
-    render_bottom_section, render_first_run_top_section,
+    ANIMATION_PANEL_COLS, LEFT_COLUMN_COLS, ZeroStateSectionVisibility, build_zero_state_layout,
+    build_zero_state_overlay, build_zero_state_stack_layout, changelog_bullets_from_changelog,
+    custom_endpoint_status_label, mcp_status_label, render_bottom_section,
+    render_first_run_top_section,
 };
-use crate::autoupdate::TuiAutoupdateStatus;
 use crate::tui_builder::TuiUiBuilder;
 use crate::zero_state_animation::{
     WarpLogoStyles, ZeroStateAnimationConfig, ZeroStateAnimationElement,
@@ -101,22 +100,6 @@ fn changelog_bullets_use_only_the_first_three_tui_updates() {
 #[test]
 fn changelog_bullets_are_empty_when_only_other_surfaces_have_updates() {
     assert!(changelog_bullets_from_changelog(&changelog(Vec::new())).is_empty());
-}
-
-#[test]
-fn failed_autoupdate_status_has_visible_label() {
-    assert_eq!(
-        autoupdate_status_label(TuiAutoupdateStatus::Failed),
-        Some("automatic update failed")
-    );
-}
-
-#[test]
-fn homebrew_update_status_shows_the_upgrade_command() {
-    assert_eq!(
-        autoupdate_status_label(TuiAutoupdateStatus::UpdateAvailable),
-        Some("update available — run brew upgrade --cask warp-agent-cli")
-    );
 }
 
 #[test]
@@ -584,7 +567,6 @@ fn zero_state_animation_is_centered_in_remaining_space_and_hidden_when_space_is_
 fn zero_state_path_header_not_truncated_at_wide_terminal() {
     App::test((), |mut app| async move {
         register_tui_session_view_test_singletons(&mut app);
-        app.update(crate::autoupdate::TuiAutoupdater::register);
 
         app.read(|app_ctx| {
             // A path definitely longer than LEFT_COLUMN_COLS (48).
@@ -691,7 +673,6 @@ fn login_line_falls_back_to_validated_user_id() {
 fn zero_state_path_header_wraps_without_losing_content_at_narrow_terminal() {
     App::test((), |mut app| async move {
         register_tui_session_view_test_singletons(&mut app);
-        app.update(crate::autoupdate::TuiAutoupdater::register);
 
         app.read(|app_ctx| {
             let long_cwd = "/home/user/work/projects/my-organisation/very-long-repo-name";

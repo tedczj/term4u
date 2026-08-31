@@ -21,7 +21,6 @@ use warp::tui_export::{AIConversationAutoexecuteMode, Appearance, ServerConversa
 use warp::{TuiLoginEvent, TuiLoginModel, TuiLoginPhase};
 use warp_core::channel::ChannelState;
 use warp_core::settings::Setting as _;
-use warp_core::telemetry::TelemetryEvent as _;
 use warp_errors::report_error;
 use warpui::SingletonEntity as _;
 use warpui_core::platform::{TerminationMode, WindowStyle};
@@ -140,9 +139,6 @@ fn parse_resume_token(token: String) -> Result<ServerConversationToken> {
 
 /// Boots the headless Warp app and mounts the transcript-capable TUI session.
 pub fn run() -> Result<()> {
-    // Protect this managed version before any worker dispatch or resource
-    // access. The guard stays alive until this process exits.
-    let _version_lease = crate::autoupdate::VersionLease::acquire_for_current_process()?;
     // If this process was re-exec'd as a Warp worker (e.g. the terminal
     // server), dispatch that instead of starting another TUI — otherwise the
     // worker re-exec would recursively launch TUIs.
@@ -219,17 +215,14 @@ pub fn run() -> Result<()> {
     };
     let exit_summary = TuiExitSummaryHandle::default();
     let exit_summary_for_app = exit_summary.clone();
-    let result = warp::run_tui(
-        args.api_key,
-        Box::new(move |ctx| {
-            init(
-                resume_token,
-                default_autoexecute_mode,
-                exit_summary_for_app,
-                ctx,
-            )
-        }),
-    );
+    let result = warp::run_tui(Box::new(move |ctx| {
+        init(
+            resume_token,
+            default_autoexecute_mode,
+            exit_summary_for_app,
+            ctx,
+        )
+    }));
     if result.is_ok()
         && let Some(token) = exit_summary.token()
     {
@@ -253,10 +246,6 @@ fn init(
     // cross-surface binding validators) before any input can be dispatched.
     crate::keybindings::init(ctx);
 
-    // Kick off the background auto-updater (its polling loop only runs for
-    // release builds installed via the managed versioned layout; see the
-    // `autoupdate` module docs).
-    crate::autoupdate::TuiAutoupdater::register(ctx);
     crate::zero_state_animation::ZeroStateAnimationConfig::register(ctx);
 
     // Honor an explicit TUI theme or match the host terminal automatically.

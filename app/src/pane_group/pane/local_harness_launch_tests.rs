@@ -13,7 +13,7 @@ use super::{
     validate_local_harness_shell,
 };
 use crate::ai::agent_sdk::driver::OZ_MESSAGE_LISTENER_MANAGED_EXTERNALLY_ENV;
-use crate::ai::ambient_agents::task::{HarnessConfig, normalize_orchestrator_agent_name};
+use crate::ai::agent_tasks::task::{HarnessConfig, normalize_orchestrator_agent_name};
 use crate::ai::local_harness_setup::LOCAL_CODEX_HARNESS_DISABLED_MESSAGE;
 use crate::server::server_api::ai::MockAIClient;
 use crate::terminal::shell::ShellType;
@@ -175,7 +175,7 @@ fn local_child_task_config_records_supported_third_party_harnesses() {
     for harness in [Harness::Claude, Harness::OpenCode, Harness::Codex] {
         assert_eq!(
             local_child_task_config(harness, None),
-            Some(crate::ai::ambient_agents::task::AgentConfigSnapshot {
+            Some(crate::ai::agent_tasks::task::AgentConfigSnapshot {
                 harness: Some(HarnessConfig::from_harness_type(harness)),
                 ..Default::default()
             }),
@@ -188,7 +188,7 @@ fn local_child_task_config_stamps_orchestrator_name() {
     for harness in [Harness::Claude, Harness::OpenCode, Harness::Codex] {
         assert_eq!(
             local_child_task_config(harness, Some("frontend-tests".to_string())),
-            Some(crate::ai::ambient_agents::task::AgentConfigSnapshot {
+            Some(crate::ai::agent_tasks::task::AgentConfigSnapshot {
                 name: Some("frontend-tests".to_string()),
                 harness: Some(HarnessConfig::from_harness_type(harness)),
                 ..Default::default()
@@ -201,7 +201,7 @@ fn local_child_task_config_stamps_orchestrator_name() {
 fn local_child_task_config_trims_whitespace_only_name() {
     assert_eq!(
         local_child_task_config(Harness::Claude, Some("  frontend-tests  ".to_string())),
-        Some(crate::ai::ambient_agents::task::AgentConfigSnapshot {
+        Some(crate::ai::agent_tasks::task::AgentConfigSnapshot {
             name: Some("frontend-tests".to_string()),
             harness: Some(HarnessConfig::from_harness_type(Harness::Claude)),
             ..Default::default()
@@ -209,7 +209,7 @@ fn local_child_task_config_trims_whitespace_only_name() {
     );
     assert_eq!(
         local_child_task_config(Harness::Claude, Some("   ".to_string())),
-        Some(crate::ai::ambient_agents::task::AgentConfigSnapshot {
+        Some(crate::ai::agent_tasks::task::AgentConfigSnapshot {
             name: None,
             harness: Some(HarnessConfig::from_harness_type(Harness::Claude)),
             ..Default::default()

@@ -8,7 +8,6 @@ use warpui::elements::{
     MouseStateHandle, ParentElement, Radius, Shrinkable,
 };
 use warpui::fonts::Weight;
-use warpui::keymap::FixedBinding;
 use warpui::ui_components::button::ButtonVariant;
 use warpui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
 use warpui::{
@@ -62,22 +61,6 @@ pub struct AuthOverrideWarningBody {
     mouse_state_handles: MouseStateHandles,
     confirmation_step: AuthOverrideConfirmationStep,
 }
-
-pub fn init(app: &mut AppContext) {
-    use warpui::keymap::macros::*;
-
-    app.register_fixed_bindings([FixedBinding::new(
-        "enter",
-        AuthOverrideWarningBodyAction::Close,
-        id!("AuthOverrideWarningBody"),
-    )]);
-    app.register_fixed_bindings([FixedBinding::new(
-        "escape",
-        AuthOverrideWarningBodyAction::Close,
-        id!("AuthOverrideWarningBody"),
-    )]);
-}
-
 impl AuthOverrideWarningBody {
     pub fn new() -> Self {
         AuthOverrideWarningBody {

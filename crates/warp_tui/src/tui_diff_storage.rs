@@ -20,7 +20,6 @@ use warp::tui_export::{
 use warp_files::FileModel;
 use warp_util::content_version::ContentVersion;
 use warp_util::file::{FileId, FileSaveError};
-use warp_util::standardized_path::StandardizedPath;
 use warpui::{AppContext, Entity, ModelContext, ModelHandle, SingletonEntity};
 
 /// Derives the final file content for a diff from its base content and deltas.
@@ -111,11 +110,9 @@ fn register_file(
 ) -> Result<FileId, FileSaveError> {
     match session_type {
         DiffSessionType::Local => Ok(file_model.register_file_path(Path::new(path), false, ctx)),
-        DiffSessionType::Remote(host_id) => {
-            let standardized = StandardizedPath::try_new(path)
-                .map_err(|_| FileSaveError::RemoteError(format!("Invalid remote path: {path}")))?;
-            Ok(file_model.register_remote_file(host_id.clone(), standardized))
-        }
+        DiffSessionType::Remote(_) => Err(FileSaveError::RemoteError(format!(
+            "Remote file writes are unavailable in term4u: {path}"
+        ))),
     }
 }
 

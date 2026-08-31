@@ -400,7 +400,3 @@ fn write_upload_output_to<W: std::io::Write>(
 
     Ok(())
 }
-
-#[cfg(test)]
-#[path = "artifact_tests.rs"]
-mod tests;

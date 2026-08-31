@@ -39,7 +39,7 @@ impl ProviderCommandRunner {
         ctx: &mut ModelContext<Self>,
     ) -> anyhow::Result<()> {
         // Construct the OAuth connect URL
-        let server_url = ChannelState::server_root_url();
+        let server_url = ChannelState::server_root_url().unwrap_or_default();
 
         let mut use_team_auth = team;
         if !team && !personal {

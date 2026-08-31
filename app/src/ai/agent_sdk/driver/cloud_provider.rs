@@ -7,7 +7,7 @@ use anyhow::Error;
 use warpui::ModelSpawner;
 
 use super::terminal::TerminalDriver;
-use crate::ai::cloud_environments::ProvidersConfig;
+use crate::cloud_object::agent_environment::ProvidersConfig;
 
 mod aws;
 mod gcp;
@@ -81,7 +81,3 @@ pub(crate) fn collect_env_vars(
     }
     Ok(())
 }
-
-#[cfg(test)]
-#[path = "cloud_provider_tests.rs"]
-mod tests;

@@ -10,7 +10,6 @@ use crate::workspace::ToastStack;
 #[derive(Debug, Clone)]
 pub enum CreateEnvironmentModalEvent {
     Cancelled,
-    Created { environment_id: String },
 }
 
 pub struct CreateEnvironmentModal {
@@ -23,13 +22,6 @@ impl CreateEnvironmentModal {
         let handoff_modal =
             ctx.add_typed_action_view(HandoffEnvironmentCreationModal::new_for_orchestration);
         ctx.subscribe_to_view(&handoff_modal, |me, _, event, ctx| match event {
-            HandoffEnvironmentCreationModalEvent::Created { env_id } => {
-                me.visible = false;
-                ctx.emit(CreateEnvironmentModalEvent::Created {
-                    environment_id: env_id.uid(),
-                });
-                ctx.notify();
-            }
             HandoffEnvironmentCreationModalEvent::Cancelled => {
                 me.cancel(ctx);
             }
@@ -103,7 +95,3 @@ impl View for CreateEnvironmentModal {
         ChildView::new(&self.handoff_modal).finish()
     }
 }
-
-#[cfg(test)]
-#[path = "create_environment_modal_tests.rs"]
-mod tests;

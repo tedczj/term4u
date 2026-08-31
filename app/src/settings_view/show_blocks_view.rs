@@ -86,11 +86,15 @@ impl UserOwnedBlock {
         let mut url = if self.id.len() == 22 {
             format!(
                 "{}/block/{}",
-                ChannelState::server_root_url(),
+                ChannelState::server_root_url().unwrap_or_default(),
                 self.id.as_str()
             )
         } else {
-            format!("{}/{}", ChannelState::server_root_url(), self.id.as_str())
+            format!(
+                "{}/{}",
+                ChannelState::server_root_url().unwrap_or_default(),
+                self.id.as_str()
+            )
         };
 
         // If this is a preview build, ensure the link routes to a preview build.

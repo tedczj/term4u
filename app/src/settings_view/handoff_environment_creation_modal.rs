@@ -1,5 +1,4 @@
 use pathfinder_color::ColorU;
-use warp_errors::report_error;
 use warpui::elements::{
     Align, ChildView, ClippedScrollStateHandle, ClippedScrollable, CrossAxisAlignment, Dismiss,
     Element, Flex, MouseStateHandle, ParentElement, ScrollbarWidth,
@@ -10,14 +9,11 @@ use warpui::{
     ViewHandle,
 };
 
-use crate::ai::ambient_agents::github_auth_url::{AuthSource, GithubAuthRedirectTarget};
-use crate::ai::cloud_environments;
 use crate::appearance::Appearance;
 use crate::modal::MODAL_BACKDROP_OPACITY;
-use crate::server::cloud_objects::update_manager::UpdateManager;
-use crate::server::ids::{ClientId, SyncId};
 use crate::settings_view::update_environment_form::{
-    EnvironmentFormInitArgs, UpdateEnvironmentForm, UpdateEnvironmentFormEvent,
+    AuthSource, EnvironmentFormInitArgs, GithubAuthRedirectTarget, UpdateEnvironmentForm,
+    UpdateEnvironmentFormEvent,
 };
 use crate::ui_components::buttons::icon_button;
 use crate::ui_components::dialog::{Dialog, dialog_styles};
@@ -33,7 +29,6 @@ enum HandoffEnvironmentCreationModalContext {
 
 #[derive(Debug, Clone)]
 pub(crate) enum HandoffEnvironmentCreationModalEvent {
-    Created { env_id: SyncId },
     Cancelled,
     CreationFailed { error_message: String },
 }
@@ -103,46 +98,9 @@ impl HandoffEnvironmentCreationModal {
         ctx: &mut ViewContext<Self>,
     ) {
         match event {
-            UpdateEnvironmentFormEvent::Created {
-                environment,
-                share_with_team,
-            } => {
-                let owner = if *share_with_team {
-                    cloud_environments::owner_for_new_environment(ctx)
-                } else {
-                    cloud_environments::owner_for_new_personal_environment(ctx)
-                };
-
-                let Some(owner) = owner else {
-                    report_error!("Unable to create environment: not logged in");
-                    ctx.emit(HandoffEnvironmentCreationModalEvent::CreationFailed {
-                        error_message: "Not logged in".to_string(),
-                    });
-                    return;
-                };
-
-                let client_id = ClientId::default();
-                let create_future =
-                    UpdateManager::handle(ctx).update(ctx, |update_manager, ctx| {
-                        update_manager.create_ambient_agent_environment_online(
-                            environment.clone(),
-                            client_id,
-                            owner,
-                            ctx,
-                        )
-                    });
-
-                ctx.spawn(create_future, |_me, result, ctx| match result {
-                    Ok(server_id) => {
-                        let env_id = SyncId::ServerId(server_id);
-                        ctx.emit(HandoffEnvironmentCreationModalEvent::Created { env_id });
-                    }
-                    Err(err) => {
-                        report_error!(&err);
-                        ctx.emit(HandoffEnvironmentCreationModalEvent::CreationFailed {
-                            error_message: err.to_string(),
-                        });
-                    }
+            UpdateEnvironmentFormEvent::Created { .. } => {
+                ctx.emit(HandoffEnvironmentCreationModalEvent::CreationFailed {
+                    error_message: "Cloud environments are unavailable in term4u".to_string(),
                 });
             }
             UpdateEnvironmentFormEvent::Cancelled => {

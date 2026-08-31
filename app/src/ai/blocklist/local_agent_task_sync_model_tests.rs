@@ -3,8 +3,8 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::Duration;
 
 use anyhow::anyhow;
-use session_sharing_protocol::common::SessionId;
 use warp_graphql::ai::{AgentTaskState, PlatformErrorCode};
+use warp_terminal::session_sharing_types::common::SessionId;
 use warpui::App;
 use warpui::r#async::FutureExt as _;
 
@@ -18,7 +18,7 @@ use crate::ai::agent::{
     AIAgentExchange, AIAgentExchangeId, AIAgentOutputStatus, FinishedAIAgentOutput,
     RenderableAIError, TransientNetworkErrorKind,
 };
-use crate::ai::ambient_agents::AmbientAgentTaskId;
+use crate::ai::agent_tasks::AmbientAgentTaskId;
 use crate::ai::llms::LLMId;
 use crate::server::server_api::ai::{AIClient, MockAIClient, TaskStatusUpdate};
 use crate::terminal::CLIAgent;

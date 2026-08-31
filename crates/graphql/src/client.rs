@@ -102,9 +102,10 @@ where
         .map(Cow::into_owned)
         .unwrap_or_default();
 
+    let server_root_url = ChannelState::server_root_url().unwrap_or_default();
     let graphql_endpoint = format!(
         "{}{}/graphql/v2?op={}",
-        ChannelState::server_root_url(),
+        server_root_url,
         options.path_prefix.unwrap_or_default(),
         &operation_name
     );

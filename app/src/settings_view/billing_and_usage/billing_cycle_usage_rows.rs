@@ -513,7 +513,7 @@ fn render_row_card(
         row.subject_uid.as_deref().map(|uid| {
             format!(
                 "{}/agents/{}",
-                ChannelState::oz_root_url(),
+                ChannelState::oz_root_url().unwrap_or_default(),
                 urlencoding::encode(uid)
             )
         })

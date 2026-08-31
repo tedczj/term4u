@@ -76,13 +76,17 @@ pub async fn connect_via_proxy(
     let target_port = target_uri.port_u16().unwrap_or(default_port);
 
     // 1. TCP connect to the proxy.
-    let stream = timeout(
-        PROXY_CONNECT_TIMEOUT,
-        TcpStream::connect((&*proxy.host, proxy.port)),
-    )
-    .await
-    .context("Timed out connecting to proxy")?
-    .with_context(|| format!("Failed to connect to proxy {}:{}", proxy.host, proxy.port))?;
+    cfg_if::cfg_if! {
+        if #[cfg(feature = "offline_hard")] {
+            let connect = connect_to_loopback_proxy(proxy);
+        } else {
+            let connect = TcpStream::connect((&*proxy.host, proxy.port));
+        }
+    }
+    let stream = timeout(PROXY_CONNECT_TIMEOUT, connect)
+        .await
+        .context("Timed out connecting to proxy")?
+        .with_context(|| format!("Failed to connect to proxy {}:{}", proxy.host, proxy.port))?;
 
     // 2. HTTP/1 handshake over the proxy TCP stream.
     let (mut sender, conn) = timeout(
@@ -138,6 +142,21 @@ pub async fn connect_via_proxy(
     })?;
 
     Ok(downcast.io.into_inner())
+}
+
+#[cfg(feature = "offline_hard")]
+async fn connect_to_loopback_proxy(proxy: &ProxyInfo) -> std::io::Result<TcpStream> {
+    let addresses =
+        offline_guard::loopback_addrs(&proxy.host, proxy.port).map_err(std::io::Error::other)?;
+    let mut last_error = None;
+    for address in addresses {
+        offline_guard::check_peer(&address).map_err(std::io::Error::other)?;
+        match TcpStream::connect(address).await {
+            Ok(stream) => return Ok(stream),
+            Err(error) => last_error = Some(error),
+        }
+    }
+    Err(last_error.unwrap_or_else(|| std::io::Error::other("No loopback proxy address available")))
 }
 
 /// Reads an environment variable by its canonical (uppercase) name, falling back to lowercase.

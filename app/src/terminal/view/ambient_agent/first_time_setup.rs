@@ -5,7 +5,6 @@
 
 use markdown_parser::{FormattedText, FormattedTextFragment, FormattedTextLine};
 use warp_core::ui::theme::{AnsiColorIdentifier, Fill};
-use warp_errors::report_error;
 use warpui::elements::new_scrollable::SingleAxisConfig;
 use warpui::elements::{
     Align, Border, ChildView, ClippedScrollStateHandle, ConstrainedBox, Container, CornerRadius,
@@ -15,14 +14,12 @@ use warpui::elements::{
 use warpui::fonts::{Properties, Weight};
 use warpui::{AppContext, Entity, SingletonEntity, TypedActionView, View, ViewContext, ViewHandle};
 
-use crate::ai::ambient_agents::github_auth_url::{AuthSource, GithubAuthRedirectTarget};
+use crate::ai::AIRequestUsageModel;
 use crate::ai::request_usage_model::AMBIENT_AGENT_TRIAL_CREDIT_THRESHOLD;
-use crate::ai::{AIRequestUsageModel, cloud_environments};
 use crate::appearance::Appearance;
-use crate::server::cloud_objects::update_manager::UpdateManager;
-use crate::server::ids::ClientId;
 use crate::settings_view::update_environment_form::{
-    EnvironmentFormInitArgs, UpdateEnvironmentForm, UpdateEnvironmentFormEvent,
+    AuthSource, EnvironmentFormInitArgs, GithubAuthRedirectTarget, UpdateEnvironmentForm,
+    UpdateEnvironmentFormEvent,
 };
 use crate::ui_components::blended_colors;
 
@@ -86,42 +83,9 @@ impl FirstTimeCloudAgentSetupView {
         ctx: &mut ViewContext<Self>,
     ) {
         match event {
-            UpdateEnvironmentFormEvent::Created {
-                environment,
-                share_with_team,
-            } => {
-                let owner = if *share_with_team {
-                    cloud_environments::owner_for_new_environment(ctx)
-                } else {
-                    cloud_environments::owner_for_new_personal_environment(ctx)
-                };
-
-                let Some(owner) = owner else {
-                    report_error!("Unable to create environment: not logged in");
-                    // Reset form before emitting cancelled event
-                    self.reset_form(ctx);
-                    ctx.emit(FirstTimeCloudAgentSetupViewEvent::Cancelled);
-                    return;
-                };
-
-                // Generate a client ID for tracking the environment
-                let client_id = ClientId::default();
-
-                // Create via UpdateManager
-                UpdateManager::handle(ctx).update(ctx, |update_manager, ctx| {
-                    update_manager.create_ambient_agent_environment(
-                        environment.clone(),
-                        client_id,
-                        owner,
-                        ctx,
-                    );
-                });
-
-                // Reset form after successful creation
+            UpdateEnvironmentFormEvent::Created { .. } => {
                 self.reset_form(ctx);
-
-                // Emit event with the ClientId - the environment now exists in CloudModel
-                ctx.emit(FirstTimeCloudAgentSetupViewEvent::EnvironmentCreated);
+                ctx.emit(FirstTimeCloudAgentSetupViewEvent::Cancelled);
             }
             UpdateEnvironmentFormEvent::Cancelled => {
                 // Reset form before emitting cancelled event

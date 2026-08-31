@@ -103,7 +103,7 @@ use crate::ai::agent::{
     SummarizationType, TodoOperation,
 };
 use crate::ai::agent_conversations_model::{AgentConversationsModel, AgentConversationsModelEvent};
-use crate::ai::ambient_agents::AmbientAgentTaskId;
+use crate::ai::agent_tasks::AmbientAgentTaskId;
 use crate::ai::blocklist::action_model::NewConversationDecision;
 use crate::ai::blocklist::agent_view::{AgentViewController, AgentViewEntryOrigin};
 use crate::ai::blocklist::block::keyboard_navigable_buttons::{
@@ -1130,7 +1130,7 @@ fn recording_artifact_view_url(
     let task_id = task_id?;
     Some(format!(
         "{}/runs/{task_id}?artifact={}",
-        ChannelState::oz_root_url(),
+        ChannelState::oz_root_url().unwrap_or_default(),
         urlencoding::encode(artifact_uid),
     ))
 }
@@ -7112,10 +7112,12 @@ impl TypedActionView for AIBlock {
                         continue;
                     };
                     let AIAgentActionResultType::UseComputer(
-                        crate::ai::agent::UseComputerResult::Success(computer_use::ActionResult {
-                            screenshot: Some(screenshot),
-                            ..
-                        }),
+                        crate::ai::agent::UseComputerResult::Success(
+                            interaction_types::ActionResult {
+                                screenshot: Some(screenshot),
+                                ..
+                            },
+                        ),
                     ) = &result.result
                     else {
                         continue;

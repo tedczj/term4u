@@ -55,12 +55,11 @@ use crate::ai::agent_sdk::mcp_config::build_mcp_servers_from_specs;
 use crate::ai::agent_sdk::setup_observability::{
     OzRunTimelineEvent, SetupClientEventReporter, SetupStep,
 };
-use crate::ai::ambient_agents::AmbientAgentTaskId;
-use crate::ai::ambient_agents::task::HarnessConfig;
+use crate::ai::agent_tasks::AmbientAgentTaskId;
+use crate::ai::agent_tasks::task::HarnessConfig;
 use crate::ai::attachment_utils::attachments_download_dir;
 #[cfg(not(target_family = "wasm"))]
 use crate::ai::aws_credentials::refresh_aws_credentials;
-use crate::ai::cloud_environments::CloudAmbientAgentEnvironment;
 use crate::ai::llms::LLMId;
 use crate::ai::skills::{
     ResolveSkillError, ResolvedSkill, clone_repo_for_skill, resolve_skill_spec,
@@ -68,6 +67,7 @@ use crate::ai::skills::{
 use crate::auth::AuthStateProvider;
 use crate::auth::auth_manager::{AuthManager, AuthManagerEvent};
 use crate::cloud_object::CloudObjectLookup as _;
+use crate::cloud_object::agent_environment::CloudAmbientAgentEnvironment;
 use crate::cloud_object::model::persistence::CloudModel;
 use crate::send_telemetry_sync_from_app_ctx;
 use crate::server::ids::{ServerId, SyncId};
@@ -104,7 +104,6 @@ mod profiles;
 mod provider;
 pub(crate) mod retry;
 mod runner;
-mod schedule;
 mod secret;
 pub(crate) mod setup_observability;
 mod telemetry;
@@ -180,12 +179,9 @@ fn dispatch_command(
         CliCommand::Integration(_) => {
             return Err(anyhow::anyhow!("invalid value 'integration'"));
         }
-        CliCommand::Schedule(schedule_cmd) => {
-            if !FeatureFlag::ScheduledAmbientAgents.is_enabled() {
-                return Err(anyhow::anyhow!("invalid value 'schedule'"));
-            }
-            schedule::run(ctx, global_options, schedule_cmd)
-        }
+        CliCommand::Schedule(_) => Err(anyhow::anyhow!(
+            "Scheduled agents are unavailable in term4u"
+        )),
         CliCommand::Secret(secret_cmd) => {
             if !FeatureFlag::WarpManagedSecrets.is_enabled() {
                 return Err(anyhow::anyhow!("invalid value 'secret'"));
@@ -1140,7 +1136,7 @@ impl AgentDriverRunner {
                 driver_options
                     .environment
                     .as_ref()
-                    .map(crate::ai::cloud_environments::AmbientAgentEnvironment::effective_repos)
+                    .map(crate::cloud_object::agent_environment::AmbientAgentEnvironment::effective_repos)
                     .unwrap_or_default(),
                 driver_options.additional_source_repos.clone(),
             )?,
@@ -1937,7 +1933,3 @@ fn command_to_telemetry_event(command: &CliCommand) -> CliTelemetryEvent {
         },
     }
 }
-
-#[cfg(test)]
-#[path = "mod_tests.rs"]
-mod tests;

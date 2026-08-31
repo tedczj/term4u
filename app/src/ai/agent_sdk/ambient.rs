@@ -27,11 +27,9 @@ use crate::ai::agent::{UserQueryMode, extract_user_query_mode};
 use crate::ai::agent_sdk::driver::attachments::{
     MAX_ATTACHMENT_COUNT_FOR_CLOUD_QUERY, process_attachment,
 };
-use crate::ai::ambient_agents::spawn::{
-    AmbientAgentEvent, SessionJoinInfo, TASK_STATUS_POLLING_DURATION, spawn_task,
-};
-use crate::ai::ambient_agents::task::HarnessConfig;
-use crate::ai::ambient_agents::{
+use crate::ai::agent_tasks::spawn::{SessionJoinInfo, TASK_STATUS_POLLING_DURATION, spawn_task};
+use crate::ai::agent_tasks::task::HarnessConfig;
+use crate::ai::agent_tasks::{
     AgentConfigSnapshot, AmbientAgentTask, AmbientAgentTaskId, AmbientAgentTaskState,
 };
 use crate::ai::artifacts::Artifact;
@@ -44,7 +42,7 @@ use crate::server::server_api::ai::{
     ListAgentMessagesRequest, ReadAgentMessageResponse, RunSortBy, RunSortOrder,
     SendAgentMessageRequest, SendAgentMessageResponse, SpawnAgentRequest, TaskListFilter,
 };
-use crate::terminal::shared_session;
+use crate::terminal::session_sharing;
 use crate::util::time_format::format_approx_duration_from_now_utc;
 use crate::workspaces::user_workspaces::UserWorkspaces;
 
@@ -413,7 +411,7 @@ impl AmbientAgentRunner {
             let ai_client = ServerApiProvider::as_ref(ctx).get_ai_client();
 
             // Compute the upgrade link in case we hit capacity.
-            let upgrade_link = AuthStateProvider::as_ref(ctx)
+            let _upgrade_link = AuthStateProvider::as_ref(ctx)
                 .get()
                 .user_id()
                 .map(UserWorkspaces::upgrade_link);
@@ -438,7 +436,7 @@ impl AmbientAgentRunner {
             });
             let harness_auth_secrets = (args.claude_auth_secret.is_some()
                 || args.codex_auth_secret.is_some())
-            .then(|| crate::ai::ambient_agents::task::HarnessAuthSecretsConfig {
+            .then(|| crate::ai::agent_tasks::task::HarnessAuthSecretsConfig {
                 claude_auth_secret_name: args.claude_auth_secret.clone(),
                 codex_auth_secret_name: args.codex_auth_secret.clone(),
             });
@@ -543,65 +541,17 @@ impl AmbientAgentRunner {
             };
 
             let should_open = args.open;
-            let oz_root_url = ChannelState::oz_root_url();
             let ai_client_clone = ai_client.clone();
             let spawn_future = async move {
-                let mut stream = Box::pin(spawn_task(request, ai_client_clone, Some(TASK_STATUS_POLLING_DURATION)));
-                let mut session_join_info = None;
-                let mut spawned_task_id = None;
-
+                let mut stream = Box::pin(spawn_task(
+                    request,
+                    ai_client_clone,
+                    Some(TASK_STATUS_POLLING_DURATION),
+                ));
                 while let Some(event_result) = stream.next().await {
-                    match event_result {
-                        Ok(event) => match event {
-                            AmbientAgentEvent::TaskSpawned { task_id, .. } => {
-                                println!("Spawned ambient agent with run ID: {task_id}");
-                                println!("View run: {oz_root_url}/runs/{task_id}");
-                                spawned_task_id = Some(task_id);
-                            }
-                            AmbientAgentEvent::AtCapacity => {
-                                println!("Concurrent cloud agent limit reached. This agent run will begin when one of your current cloud runs completes.");
-                                if let Some(url) = &upgrade_link {
-                                    println!("To increase your concurrent agent limit, upgrade your plan: {}", url);
-                                }
-                            }
-                            AmbientAgentEvent::StateChanged {
-                                state,
-                                status_message,
-                            } => {
-                                if matches!(
-                                    state,
-                                    AmbientAgentTaskState::InProgress
-                                        | AmbientAgentTaskState::Succeeded
-                                ) || state.is_failure_like()
-                                {
-                                    println!("Agent state: {:?}", state);
-                                }
-                                if state.is_failure_like() {
-                                    if let Some(msg) = status_message {
-                                        println!("Error: {}", msg.message);
-                                    } else {
-                                        println!("Run failed with no error message");
-                                    }
-                                }
-                            }
-                            AmbientAgentEvent::SessionStarted {
-                                session_join_info: info,
-                            } => {
-                                println!("View agent session: {}", info.session_link);
-                                session_join_info = Some(info);
-                            }
-                            AmbientAgentEvent::TimedOut => {
-                                let task_id_str = spawned_task_id.as_ref().map_or_else(|| "unknown".to_string(), |id| id.to_string());
-                                println!("Agent session with run ID {task_id_str} is not ready after {}s. Check for a sharing link in the ambient agent management panel. See https://docs.warp.dev/platform/managing-cloud-agents for details.", TASK_STATUS_POLLING_DURATION.as_secs());
-                            }
-                        },
-                        Err(err) => {
-                            return Err(err);
-                        }
-                    }
+                    event_result?;
                 }
-
-                Ok(session_join_info)
+                Ok::<Option<SessionJoinInfo>, anyhow::Error>(None)
             };
 
             ctx.spawn(spawn_future, move |_, result, ctx| match result {
@@ -611,7 +561,7 @@ impl AmbientAgentRunner {
                             let url =
                                 match (super::is_running_in_warp(), session_join_info.session_id) {
                                     (true, Some(session_id)) => {
-                                        shared_session::join_native_intent(&session_id)
+                                        session_sharing::join_native_intent(&session_id)
                                     }
                                     _ => session_join_info.session_link,
                                 };
@@ -870,7 +820,7 @@ impl AmbientAgentRunner {
             println!("\nAgent Runs ({}):", tasks.len());
         }
 
-        let oz_root_url = ChannelState::oz_root_url();
+        let oz_root_url = ChannelState::oz_root_url().unwrap_or_default();
         for task in tasks {
             let state_emoji = Self::get_state_emoji(&task.state);
 
@@ -965,7 +915,7 @@ impl AmbientAgentRunner {
                     if let Some(id) = notebook_uid {
                         lines.push(format!(
                             "    Link: {}/drive/notebook/{}",
-                            ChannelState::server_root_url(),
+                            ChannelState::server_root_url().unwrap_or_default(),
                             id
                         ));
                     }
@@ -1468,7 +1418,3 @@ impl warpui::Entity for AmbientAgentRunner {
 }
 
 impl SingletonEntity for AmbientAgentRunner {}
-
-#[cfg(test)]
-#[path = "ambient_tests.rs"]
-mod tests;

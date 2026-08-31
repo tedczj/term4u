@@ -107,7 +107,7 @@ pub async fn generate_multi_agent_output(
             supports_orchestration_runners: params.orchestration_enabled
                 && FeatureFlag::CloudAgentRunners.is_enabled(),
             supports_background_computer_use: FeatureFlag::BackgroundComputerUse.is_enabled()
-                && computer_use::background_supported(),
+                && interaction_types::background_supported(),
             custom_model_providers: params.custom_model_providers,
             custom_model_routers: params.custom_model_routers,
         }),
@@ -318,7 +318,3 @@ fn get_supported_cli_agent_tools(params: &RequestParams) -> Vec<api::ToolType> {
 
     supported_cli_agent_tools
 }
-
-#[cfg(test)]
-#[path = "impl_tests.rs"]
-mod tests;

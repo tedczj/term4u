@@ -3,14 +3,15 @@ use std::collections::HashSet;
 
 use lazy_static::lazy_static;
 use parking_lot::Mutex;
-use url::{Origin, ParseError, Url};
+#[cfg(not(feature = "offline_hard"))]
+use url::ParseError;
+use url::{Origin, Url};
 
 use super::Channel;
 use crate::AppId;
-use crate::channel::config::{
-    ChannelConfig, IapConfig, McpOAuthProviderConfig, OzConfig, RudderStackDestination,
-    WarpServerConfig,
-};
+use crate::channel::config::{ChannelConfig, ConnectivityMode, IapConfig, McpOAuthProviderConfig};
+#[cfg(not(feature = "offline_hard"))]
+use crate::channel::config::{OzConfig, WarpServerConfig};
 use crate::features::FeatureFlag;
 
 lazy_static! {
@@ -22,6 +23,16 @@ lazy_static! {
     static ref MOCK_SERVER: Mutex<mockito::ServerGuard> = Mutex::new(mockito::Server::new());
     static ref MOCK_SERVER_URL: String = MOCK_SERVER.lock().url();
     static ref APP_VERSION: Mutex<Option<&'static str>> = Mutex::new(None);
+}
+
+#[derive(Debug, thiserror::Error)]
+#[error("term4u is built offline-only; there is no {0}")]
+pub struct OfflineError(&'static str);
+
+impl OfflineError {
+    pub const fn new(capability: &'static str) -> Self {
+        Self(capability)
+    }
 }
 
 #[derive(Debug)]
@@ -38,17 +49,23 @@ impl ChannelState {
     pub fn init() -> Self {
         let channel = Channel::Oss;
         let app_id = AppId::new("dev", "warp", "WarpOss");
+        cfg_if::cfg_if! {
+            if #[cfg(feature = "offline_hard")] {
+                let connectivity = ConnectivityMode::Offline { allow_loopback: true };
+            } else {
+                let connectivity = ConnectivityMode::Cloud {
+                    server: WarpServerConfig::production(),
+                    oz: OzConfig::production(),
+                };
+            }
+        }
         Self {
             channel,
             additional_features: Default::default(),
             config: ChannelConfig {
                 app_id,
                 logfile_name: "".into(),
-                server_config: WarpServerConfig::production(),
-                oz_config: OzConfig::production(),
-                telemetry_config: None,
-                autoupdate_config: None,
-                crash_reporting_config: None,
+                connectivity,
                 mcp_static_config: None,
             },
         }
@@ -89,38 +106,49 @@ impl ChannelState {
         cfg!(debug_assertions) || matches!(Self::channel(), Channel::Local | Channel::Dev)
     }
 
+    #[cfg(not(feature = "offline_hard"))]
     pub fn override_server_root_url(url: impl Into<Cow<'static, str>>) -> Result<(), ParseError> {
         let url = url.into();
         Url::parse(&url)?;
-        CHANNEL_STATE.lock().config.server_config.server_root_url = url;
+        let mut state = CHANNEL_STATE.lock();
+        let ConnectivityMode::Cloud { server, .. } = &mut state.config.connectivity else {
+            return Ok(());
+        };
+        server.server_root_url = url;
         Ok(())
     }
 
+    #[cfg(not(feature = "offline_hard"))]
     pub fn override_ws_server_url(url: impl Into<Cow<'static, str>>) -> Result<(), ParseError> {
         let url = url.into();
         Url::parse(&url)?;
-        CHANNEL_STATE.lock().config.server_config.rtc_server_url = url;
+        let mut state = CHANNEL_STATE.lock();
+        let ConnectivityMode::Cloud { server, .. } = &mut state.config.connectivity else {
+            return Ok(());
+        };
+        server.rtc_server_url = url;
         Ok(())
     }
 
+    #[cfg(not(feature = "offline_hard"))]
     pub fn override_session_sharing_server_url(
         url: impl Into<Cow<'static, str>>,
     ) -> Result<(), ParseError> {
         let url = url.into();
         Url::parse(&url)?;
-        CHANNEL_STATE
-            .lock()
-            .config
-            .server_config
-            .session_sharing_server_url = Some(url);
+        let mut state = CHANNEL_STATE.lock();
+        let ConnectivityMode::Cloud { server, .. } = &mut state.config.connectivity else {
+            return Ok(());
+        };
+        server.session_sharing_server_url = Some(url);
         Ok(())
     }
 
     pub fn uses_staging_server() -> bool {
-        let Ok(url) = Url::parse(Self::server_root_url().as_ref()) else {
-            return false;
-        };
-        url.host_str() == Some("staging.warp.dev")
+        Self::server_root_url()
+            .ok()
+            .and_then(|url| Url::parse(&url).ok())
+            .is_some_and(|url| url.host_str() == Some("staging.warp.dev"))
     }
 
     /// Returns the canonical identifier for the application.
@@ -178,151 +206,146 @@ impl ChannelState {
         CHANNEL_STATE.lock().config.logfile_name.clone()
     }
 
-    pub fn telemetry_file_name() -> Cow<'static, str> {
-        CHANNEL_STATE
-            .lock()
-            .config
-            .telemetry_config
-            .as_ref()
-            .map(|tc| tc.telemetry_file_name.clone())
-            .unwrap_or_default()
+    pub const fn is_telemetry_available() -> bool {
+        false
     }
 
-    /// Returns whether this build has a telemetry config and can therefore ship
-    /// telemetry events. Builds like OpenWarp intentionally ship with
-    /// `telemetry_config: None`, in which case UI that controls telemetry
-    /// should be hidden since the toggle has no effect.
-    pub fn is_telemetry_available() -> bool {
-        CHANNEL_STATE.lock().config.telemetry_config.is_some()
+    pub const fn is_crash_reporting_available() -> bool {
+        false
     }
 
-    /// Returns whether this build has a crash reporting config and can therefore
-    /// ship crash reports. Builds like OpenWarp intentionally ship with
-    /// `crash_reporting_config: None`, in which case UI that controls crash
-    /// reporting should be hidden since the toggle has no effect.
-    pub fn is_crash_reporting_available() -> bool {
-        CHANNEL_STATE.lock().config.crash_reporting_config.is_some()
+    pub const fn show_autoupdate_menu_items() -> bool {
+        false
     }
 
-    pub fn releases_base_url() -> Cow<'static, str> {
-        CHANNEL_STATE
-            .lock()
-            .config
-            .autoupdate_config
-            .as_ref()
-            .map(|ac| ac.releases_base_url.clone())
-            .unwrap_or_default()
+    pub fn firebase_api_key() -> Result<Cow<'static, str>, OfflineError> {
+        cfg_if::cfg_if! {
+            if #[cfg(feature = "offline_hard")] {
+                Err(OfflineError("Firebase API key"))
+            } else {
+                let state = CHANNEL_STATE.lock();
+                match &state.config.connectivity {
+                    ConnectivityMode::Offline { .. } => Err(OfflineError("Firebase API key")),
+                    ConnectivityMode::Cloud { server, .. } => Ok(server.firebase_auth_api_key.clone()),
+                }
+            }
+        }
     }
 
-    pub fn firebase_api_key() -> Cow<'static, str> {
-        CHANNEL_STATE
-            .lock()
-            .config
-            .server_config
-            .firebase_auth_api_key
-            .clone()
+    pub fn iap_config() -> Result<Option<IapConfig>, OfflineError> {
+        cfg_if::cfg_if! {
+            if #[cfg(feature = "offline_hard")] {
+                Err(OfflineError("IAP configuration"))
+            } else {
+                let state = CHANNEL_STATE.lock();
+                match &state.config.connectivity {
+                    ConnectivityMode::Offline { .. } => Err(OfflineError("IAP configuration")),
+                    ConnectivityMode::Cloud { server, .. } => Ok(server.iap_config.clone()),
+                }
+            }
+        }
     }
 
-    pub fn iap_config() -> Option<IapConfig> {
-        CHANNEL_STATE.lock().config.server_config.iap_config.clone()
-    }
-
-    pub fn ws_server_url() -> Cow<'static, str> {
-        CHANNEL_STATE
-            .lock()
-            .config
-            .server_config
-            .rtc_server_url
-            .clone()
+    pub fn ws_server_url() -> Result<Cow<'static, str>, OfflineError> {
+        cfg_if::cfg_if! {
+            if #[cfg(feature = "offline_hard")] {
+                Err(OfflineError("WebSocket server URL"))
+            } else {
+                let state = CHANNEL_STATE.lock();
+                match &state.config.connectivity {
+                    ConnectivityMode::Offline { .. } => Err(OfflineError("WebSocket server URL")),
+                    ConnectivityMode::Cloud { server, .. } => Ok(server.rtc_server_url.clone()),
+                }
+            }
+        }
     }
 
     /// Returns the HTTP(S) root URL for the RTC server. Used for HTTP endpoints
     /// served by warp-server-rtc (e.g. the agent event SSE stream).
-    ///
-    /// Derived from [`ws_server_url`] by rewriting the scheme (`wss`→`https`,
-    /// `ws`→`http`) and stripping the path. Falls back to [`server_root_url`]
-    /// when the WS URL cannot be parsed or uses an unexpected scheme — this
-    /// keeps override paths (e.g. `WARP_WS_SERVER_URL=...`) working without a
-    /// separate override for the HTTP variant.
-    pub fn rtc_http_url() -> Cow<'static, str> {
+    pub fn rtc_http_url() -> Result<Cow<'static, str>, OfflineError> {
         cfg_if::cfg_if! {
             if #[cfg(feature = "test-util")] {
-                Cow::Owned(MOCK_SERVER_URL.clone())
+                Ok(Cow::Owned(MOCK_SERVER_URL.clone()))
+            } else if #[cfg(feature = "offline_hard")] {
+                Err(OfflineError("RTC HTTP URL"))
             } else {
-                match derive_http_origin_from_ws_url(&Self::ws_server_url()) {
-                    Some(origin) => Cow::Owned(origin),
+                let ws_url = Self::ws_server_url()?;
+                match derive_http_origin_from_ws_url(&ws_url) {
+                    Some(origin) => Ok(Cow::Owned(origin)),
                     None => Self::server_root_url(),
                 }
             }
         }
     }
 
-    pub fn session_sharing_server_url() -> Option<Cow<'static, str>> {
+    pub fn session_sharing_server_url() -> Result<Option<Cow<'static, str>>, OfflineError> {
         cfg_if::cfg_if! {
             if #[cfg(feature = "test-util")] {
-                Some(Cow::Borrowed("fake_session_sharing_url"))
+                Ok(Some(Cow::Borrowed("fake_session_sharing_url")))
+            } else if #[cfg(feature = "offline_hard")] {
+                Err(OfflineError("session-sharing server URL"))
             } else {
-                CHANNEL_STATE.lock().config.server_config.session_sharing_server_url.clone()
+                let state = CHANNEL_STATE.lock();
+                match &state.config.connectivity {
+                    ConnectivityMode::Offline { .. } => Err(OfflineError("session-sharing server URL")),
+                    ConnectivityMode::Cloud { server, .. } => Ok(server.session_sharing_server_url.clone()),
+                }
             }
         }
     }
 
-    pub fn oz_root_url() -> Cow<'static, str> {
-        CHANNEL_STATE.lock().config.oz_config.oz_root_url.clone()
+    pub fn oz_root_url() -> Result<Cow<'static, str>, OfflineError> {
+        cfg_if::cfg_if! {
+            if #[cfg(feature = "offline_hard")] {
+                Err(OfflineError("Oz root URL"))
+            } else {
+                let state = CHANNEL_STATE.lock();
+                match &state.config.connectivity {
+                    ConnectivityMode::Offline { .. } => Err(OfflineError("Oz root URL")),
+                    ConnectivityMode::Cloud { oz, .. } => Ok(oz.oz_root_url.clone()),
+                }
+            }
+        }
     }
 
-    pub fn server_root_url() -> Cow<'static, str> {
+    pub fn server_root_url() -> Result<Cow<'static, str>, OfflineError> {
         cfg_if::cfg_if! {
             if #[cfg(feature = "test-util")] {
-                Cow::Owned(MOCK_SERVER_URL.clone())
+                Ok(Cow::Owned(MOCK_SERVER_URL.clone()))
+            } else if #[cfg(feature = "offline_hard")] {
+                Err(OfflineError("server root URL"))
             } else {
-                CHANNEL_STATE.lock().config.server_config.server_root_url.clone()
+                let state = CHANNEL_STATE.lock();
+                match &state.config.connectivity {
+                    ConnectivityMode::Offline { .. } => Err(OfflineError("server root URL")),
+                    ConnectivityMode::Cloud { server, .. } => Ok(server.server_root_url.clone()),
+                }
             }
         }
     }
 
-    pub fn workload_audience_url() -> Cow<'static, str> {
-        let state = CHANNEL_STATE.lock();
-        match &state.config.oz_config.workload_audience_url {
-            Some(url) => url.clone(),
-            None => {
-                drop(state);
-                Self::server_root_url()
+    pub fn workload_audience_url() -> Result<Cow<'static, str>, OfflineError> {
+        cfg_if::cfg_if! {
+            if #[cfg(feature = "offline_hard")] {
+                Err(OfflineError("workload audience URL"))
+            } else {
+                let state = CHANNEL_STATE.lock();
+                match &state.config.connectivity {
+                    ConnectivityMode::Offline { .. } => Err(OfflineError("workload audience URL")),
+                    ConnectivityMode::Cloud { server, oz } => Ok(oz
+                        .workload_audience_url
+                        .clone()
+                        .unwrap_or_else(|| server.server_root_url.clone())),
+                }
             }
         }
     }
 
-    // Returns the origin url, with scheme, domain, and ports (if any)
-    pub fn server_root_domain() -> Origin {
-        Url::parse(&Self::server_root_url())
-            .expect("Server root URL should be valid")
-            .origin()
-    }
-
-    /// Returns the rudderstack destination for all events that don't contain user-generated content.
-    pub fn rudderstack_non_ugc_destination() -> RudderStackDestination {
-        let state = CHANNEL_STATE.lock();
-
-        state
-            .config
-            .telemetry_config
-            .as_ref()
-            .and_then(|tc| tc.rudderstack_config.as_ref())
-            .map(|rs| rs.non_ugc_destination())
-            .unwrap_or_default()
-    }
-
-    /// Returns the rudderstack destination for all events that contain user-generated content.
-    pub fn rudderstack_ugc_destination() -> RudderStackDestination {
-        let state = CHANNEL_STATE.lock();
-
-        state
-            .config
-            .telemetry_config
-            .as_ref()
-            .and_then(|tc| tc.rudderstack_config.as_ref())
-            .map(|rs| rs.ugc_destination())
-            .unwrap_or_default()
+    pub fn server_root_domain() -> Result<Origin, OfflineError> {
+        let url = Self::server_root_url()?;
+        Url::parse(&url)
+            .map(|url| url.origin())
+            .map_err(|_| OfflineError("valid server root domain"))
     }
 
     pub fn channel() -> Channel {
@@ -344,26 +367,6 @@ impl ChannelState {
     #[cfg(not(feature = "test-util"))]
     pub fn app_version() -> Option<&'static str> {
         option_env!("GIT_RELEASE_TAG")
-    }
-
-    pub fn sentry_url() -> Cow<'static, str> {
-        CHANNEL_STATE
-            .lock()
-            .config
-            .crash_reporting_config
-            .as_ref()
-            .map(|crc| crc.sentry_url.clone())
-            .unwrap_or_default()
-    }
-
-    pub fn show_autoupdate_menu_items() -> bool {
-        CHANNEL_STATE
-            .lock()
-            .config
-            .autoupdate_config
-            .as_ref()
-            .map(|ac| ac.show_autoupdate_menu_items)
-            .unwrap_or_default()
     }
 
     /// Returns the MCP OAuth provider config matching the given client ID, if any.
@@ -405,7 +408,7 @@ impl ChannelState {
 /// (`wss`→`https`, `ws`→`http`) and stripping the path, query, and fragment.
 /// Returns [`None`] when the input cannot be parsed as a URL or uses a scheme
 /// other than `ws` or `wss`.
-#[cfg(not(feature = "test-util"))]
+#[cfg(all(not(feature = "test-util"), not(feature = "offline_hard")))]
 fn derive_http_origin_from_ws_url(ws_url: &str) -> Option<String> {
     let url = Url::parse(ws_url).ok()?;
     let http_scheme = match url.scheme() {

@@ -12,7 +12,7 @@ use warpui::{EntityId, SingletonEntity, ViewContext, ViewHandle};
 
 use crate::ai::agent::RenderableAIError;
 use crate::ai::agent::conversation::{AIConversationId, ConversationStatus};
-use crate::ai::ambient_agents::AmbientAgentTaskId;
+use crate::ai::agent_tasks::AmbientAgentTaskId;
 use crate::ai::attachment_utils::attachments_download_dir;
 use crate::ai::blocklist::agent_view::AgentViewEntryOrigin;
 use crate::ai::blocklist::{
@@ -20,7 +20,7 @@ use crate::ai::blocklist::{
 };
 use crate::pane_group::{PaneGroup, PaneId};
 use crate::terminal::TerminalView;
-use crate::terminal::shared_session::IsSharedSessionCreator;
+use crate::terminal::session_sharing::IsSharedSessionCreator;
 use crate::workspaces::user_workspaces::{ResolvedTeamScope, UserWorkspaces};
 
 pub(crate) struct HiddenChildAgentConversation {

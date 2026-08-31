@@ -25,6 +25,17 @@ pub trait TuiOnboardingClient: 'static + Send + Sync {
 
 #[cfg_attr(not(target_family = "wasm"), async_trait)]
 #[cfg_attr(target_family = "wasm", async_trait(?Send))]
+impl TuiOnboardingClient for crate::server::offline_api::OfflineApi {
+    async fn get_tui_onboarding_markers(&self) -> Result<TuiOnboardingMarkersSnapshot> {
+        Ok(TuiOnboardingMarkersSnapshot {
+            first_zero_state_shown: false,
+            first_credit_gate_shown: false,
+        })
+    }
+}
+
+#[cfg_attr(not(target_family = "wasm"), async_trait)]
+#[cfg_attr(target_family = "wasm", async_trait(?Send))]
 impl TuiOnboardingClient for ServerApi {
     async fn get_tui_onboarding_markers(&self) -> Result<TuiOnboardingMarkersSnapshot> {
         let operation = TuiOnboardingMarkers::build(TuiOnboardingMarkersVariables {

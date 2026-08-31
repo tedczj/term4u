@@ -14,6 +14,7 @@ use warp_util::local_or_remote_path::LocalOrRemotePath;
 use warpui::fonts::FamilyId;
 use warpui::{AppContext, Entity, EntityId, ModelContext, ModelHandle, SingletonEntity};
 
+#[cfg(not(feature = "offline_hard"))]
 use crate::ai::agent_conversations_model::{AgentConversationsModel, AgentConversationsModelEvent};
 use crate::ai::blocklist::block::cli_controller::{CLISubagentController, CLISubagentEvent};
 use crate::ai::blocklist::{BlocklistAIHistoryEvent, BlocklistAIHistoryModel};
@@ -147,8 +148,7 @@ pub(super) fn subscribe_to_shared_dependencies<T>(
             }
         },
     );
-    // Recompute when task data is updated so commands gated on a conversation's task
-    // harness (e.g. /continue-locally) appear once the task fetch resolves.
+    #[cfg(not(feature = "offline_hard"))]
     ctx.subscribe_to_model(
         &AgentConversationsModel::handle(ctx),
         move |me, _, event, ctx| {

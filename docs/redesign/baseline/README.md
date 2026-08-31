@@ -1,7 +1,9 @@
 # baseline/ —— M0 基线快照目录
 
-> **当前状态：占位。** 本目录下除本文件外**尚无内容**——`docs/redesign/` 是设计
-> 文档，M0 尚未执行。下表列出 M0 完成时本目录应当包含的产物。
+> **当前状态：M0 已执行但受主机基础设施限制。** 已冻结环境、11,651 条测试清单、
+> ignored/class-a/class-b/class-c/deleted-tests 分类、首次构建与 presubmit 日志以及 git 依赖
+> 许可证。首次构建因本机只有 CommandLineTools、缺少 Metal 编译器而退出 101；全量测试链接
+> 又因 57 GiB 可用磁盘耗尽退出 101。失败均保留在日志与 `environment.txt`，未冒充测试通过。
 
 <a id="s1"></a>
 ## 一、M0 应产出的文件
@@ -43,7 +45,14 @@ FIRST_REAL_USE: 未发生
 > 详见 [08 §2.1](../08-实施顺序与里程碑.md#s2-1)。
 
 <a id="s3"></a>
-## 三、大文件的处理
+## 三、旧数据库样本
+
+本机无法在 M0 启动 `warp-oss` 生成新的真实数据目录（详见 `environment.txt`）。在解决
+Xcode/Metal 基础设施前，回归先使用仓库自带、由改造前版本生成的
+`crates/integration/tests/data/*.sqlite` fixtures；它们覆盖历史、标签页、设置、workflow、
+cwd 与恢复状态。不得把这项替代记录误写成 DB1–DB3 已通过。
+
+## 四、大文件的处理
 
 `legacy-datadir/` 可能有几十到几百 MB。**不要直接提交进 git。** 两个选择：
 

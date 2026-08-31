@@ -72,6 +72,58 @@ pub trait WorkspaceClient: 'static + Send + Sync {
 
 #[cfg_attr(not(target_family = "wasm"), async_trait)]
 #[cfg_attr(target_family = "wasm", async_trait(?Send))]
+impl WorkspaceClient for crate::server::offline_api::OfflineApi {
+    async fn generate_stripe_billing_portal_link(&self, team_uid: ServerId) -> Result<String> {
+        let _ = team_uid;
+        Err(Self::unavailable("workspace billing API"))
+    }
+
+    async fn update_usage_based_pricing_settings(
+        &self,
+        team_uid: ServerId,
+        usage_based_pricing_enabled: bool,
+        max_monthly_spend_cents: Option<u32>,
+    ) -> Result<WorkspacesMetadataResponse> {
+        let _ = (
+            team_uid,
+            usage_based_pricing_enabled,
+            max_monthly_spend_cents,
+        );
+        Err(Self::unavailable("workspace billing API"))
+    }
+
+    async fn refresh_ai_overages(&self) -> Result<AiOverages> {
+        Err(Self::unavailable("workspace billing API"))
+    }
+
+    async fn purchase_addon_credits(
+        &self,
+        team_uid: Option<ServerId>,
+        credits: i32,
+    ) -> Result<PurchaseAddonCreditsOutcome> {
+        let _ = (team_uid, credits);
+        Err(Self::unavailable("workspace billing API"))
+    }
+
+    async fn update_addon_credits_settings(
+        &self,
+        team_uid: ServerId,
+        auto_reload_enabled: Option<bool>,
+        max_monthly_spend_cents: Option<i32>,
+        selected_auto_reload_credit_denomination: Option<i32>,
+    ) -> Result<WorkspacesMetadataResponse> {
+        let _ = (
+            team_uid,
+            auto_reload_enabled,
+            max_monthly_spend_cents,
+            selected_auto_reload_credit_denomination,
+        );
+        Err(Self::unavailable("workspace billing API"))
+    }
+}
+
+#[cfg_attr(not(target_family = "wasm"), async_trait)]
+#[cfg_attr(target_family = "wasm", async_trait(?Send))]
 impl WorkspaceClient for ServerApi {
     async fn generate_stripe_billing_portal_link(&self, team_uid: ServerId) -> Result<String> {
         let variables = StripeBillingPortalVariables {

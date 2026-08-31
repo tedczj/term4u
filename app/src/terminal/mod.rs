@@ -66,9 +66,10 @@ pub mod rich_history;
 pub mod safe_mode_settings;
 mod secret_regex_updater;
 pub mod session_settings;
+#[path = "session_sharing_disabled.rs"]
+pub mod session_sharing;
 pub mod settings;
 mod share_block_modal;
-pub mod shared_session;
 mod shell_launch_state;
 pub mod universal_developer_input;
 

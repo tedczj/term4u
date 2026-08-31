@@ -55,7 +55,7 @@ use crate::editor::{
     SingleLineEditorOptions, TextOptions,
 };
 use crate::features::FeatureFlag;
-use crate::gpu_state::{GPUState, GPUStateEvent};
+use crate::gpu_state::GPUState;
 use crate::root_view::QuakeModePinPosition;
 use crate::search::command_search::settings::{
     CommandSearchSettings, ShowGlobalWorkflowsInUniversalSearch,
@@ -2697,13 +2697,6 @@ impl FeaturesPageView {
                 ),
                 ctx,
             );
-        });
-
-        ctx.subscribe_to_model(&GPUState::handle(ctx), |me, _, event, ctx| {
-            if matches!(event, GPUStateEvent::LowPowerGPUAvailable) {
-                me.page = Self::build_page(ctx);
-                ctx.notify();
-            }
         });
 
         let mut features_page_view = FeaturesPageView {

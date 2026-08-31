@@ -53,7 +53,6 @@ use parking_lot::Mutex;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use session_sharing_protocol::common::{AgentAttachment, ParticipantId, ServerConversationToken};
 use settings::{Setting as _, ToggleableSetting};
 use string_offset::{ByteOffset, CharOffset};
 use vec1::Vec1;
@@ -75,6 +74,9 @@ use warp_core::ui::theme::AnsiColorIdentifier;
 use warp_core::ui::theme::color::internal_colors;
 use warp_editor::editor::NavigationKey;
 use warp_errors::{report_error, report_if_error};
+use warp_terminal::session_sharing_types::common::{
+    AgentAttachment, ParticipantId, ServerConversationToken,
+};
 use warp_util::path::ShellFamily;
 pub use warpui::WindowId;
 use warpui::accessibility::{AccessibilityContent, ActionAccessibilityContent, WarpA11yRole};
@@ -124,10 +126,10 @@ use super::safe_mode_settings::{
     SafeModeSettings, SafeModeSettingsChangedEvent, get_secret_obfuscation_mode,
 };
 use super::session_settings::{SessionSettings, SessionSettingsChangedEvent};
+use super::session_sharing::SharedSessionStatus;
+use super::session_sharing::presence_manager::PresenceManager;
+use super::session_sharing::viewer::history_model::SharedSessionHistoryModel;
 use super::settings::{SpacingMode, TerminalSettings, TerminalSettingsChangedEvent};
-use super::shared_session::SharedSessionStatus;
-use super::shared_session::presence_manager::PresenceManager;
-use super::shared_session::viewer::history_model::SharedSessionHistoryModel;
 use super::shell::ShellType;
 use super::universal_developer_input::{
     UniversalDeveloperInputButtonBar, UniversalDeveloperInputButtonBarEvent,
@@ -158,7 +160,7 @@ use crate::ai::agent::{
 use crate::ai::agent_conversations_model::{
     AgentConversationNavigationSubject, AgentConversationsModel,
 };
-use crate::ai::ambient_agents::telemetry::HandoffEntryPoint;
+use crate::ai::agent_tasks::telemetry::HandoffEntryPoint;
 use crate::ai::attachment_utils::MAX_ATTACHMENT_SIZE_BYTES;
 use crate::ai::block_context::BlockContext;
 use crate::ai::blocklist::agent_view::shortcuts::AgentShortcutViewModel;
@@ -185,11 +187,6 @@ use crate::ai::blocklist::{
     QueuedQueryOrigin, SlashCommandRequest, ai_brand_color, ai_indicator_height,
     render_ai_agent_mode_icon, render_ai_follow_up_icon,
 };
-use crate::ai::cloud_agent_settings::CloudAgentSettings;
-use crate::ai::cloud_environments::CloudAmbientAgentEnvironment;
-use crate::ai::connected_self_hosted_workers::{
-    ConnectedSelfHostedWorkersEvent, ConnectedSelfHostedWorkersModel,
-};
 #[cfg(not(target_family = "wasm"))]
 use crate::ai::conversation_export::export_conversation_markdown;
 use crate::ai::document::ai_document_model::{AIDocumentId, AIDocumentVersion};
@@ -197,6 +194,7 @@ use crate::ai::execution_profiles::profiles::AIExecutionProfilesModel;
 use crate::ai::harness_availability::HarnessAvailabilityModel;
 use crate::ai::llms::{LLMPreferences, LLMPreferencesEvent};
 use crate::ai::mcp::TemplatableMCPServerManager;
+use crate::ai::orchestration::settings::OrchestrationSettings;
 use crate::ai::predict::next_command_model::{
     NextCommandModel, NextCommandModelEvent, NextCommandSuggestionState, ZeroStateSuggestionInfo,
     is_command_valid, is_next_command_enabled,
@@ -210,6 +208,7 @@ use crate::ai::skills::{SkillOpenOrigin, SkillTelemetryEvent};
 use crate::ai_assistant::execution_context::execution_context_for_session;
 use crate::appearance::{Appearance, AppearanceEvent};
 use crate::channel::{Channel, ChannelState};
+use crate::cloud_object::agent_environment::CloudAmbientAgentEnvironment;
 use crate::cloud_object::model::actions::ObjectActionType;
 use crate::cloud_object::model::generic_string_model::StringModel;
 use crate::cloud_object::model::persistence::CloudModel;
@@ -300,9 +299,7 @@ use crate::terminal::input::profiles::{InlineProfileSelectorEvent, InlineProfile
 use crate::terminal::input::prompts::{InlinePromptsMenuEvent, InlinePromptsMenuView};
 use crate::terminal::input::repos::{InlineReposMenuEvent, InlineReposMenuView};
 use crate::terminal::input::rewind::{RewindMenuEvent, RewindMenuView};
-use crate::terminal::input::skills::{
-    InlineSkillSelectorEvent, InlineSkillSelectorView, LOCAL_SKILLS_REMOTE_EXECUTION_ERROR_MESSAGE,
-};
+use crate::terminal::input::skills::{InlineSkillSelectorEvent, InlineSkillSelectorView};
 use crate::terminal::input::slash_command_model::{SlashCommandEntryState, SlashCommandModel};
 use crate::terminal::input::slash_commands::{
     CloudModeV2SlashCommandView, GuiSlashCommandDataSource, InlineSlashCommandView,
@@ -319,12 +316,12 @@ use crate::terminal::model::session::shell_quote_arg;
 use crate::terminal::package_installers::command_at_cursor_has_common_package_installer_prefix;
 use crate::terminal::prompt_render_helper::should_render_ps1_prompt;
 use crate::terminal::universal_developer_input::AtContextMenuDisabledReason;
+use crate::terminal::view::CodeDiffAction;
 use crate::terminal::view::ambient_agent::{
     AuthSecretFtuxView, AuthSecretFtuxViewEvent, AuthSecretSelector, AuthSecretSelectorEvent,
     HarnessSelector, HarnessSelectorEvent, HostSelector, HostSelectorEvent, NakedHeaderButtonTheme,
 };
 use crate::terminal::view::inline_banner::{PromptSuggestionsEvent, PromptSuggestionsView};
-use crate::terminal::view::{AIQueryRouting, CodeDiffAction, resolve_ai_query_routing};
 use crate::ui_components::blended_colors;
 use crate::ui_components::icons::Icon;
 use crate::user_config::WarpConfig;
@@ -1968,7 +1965,7 @@ enum TaskAttachmentUploadOutcome {
 async fn upload_pending_attachments_to_task(
     ai_client: Arc<dyn AIClient>,
     server_api: Arc<ServerApi>,
-    task_id: crate::ai::ambient_agents::AmbientAgentTaskId,
+    task_id: crate::ai::agent_tasks::AmbientAgentTaskId,
     pending_attachments: Vec<PendingAttachment>,
 ) -> anyhow::Result<Vec<TaskAttachmentUploadOutcome>> {
     let n = pending_attachments.len();
@@ -2588,7 +2585,7 @@ impl Input {
                 vm_for_events.update(ctx, |model, ctx| {
                     model.set_harness_auth_secret_name(Some(name.clone()), ctx);
                 });
-                CloudAgentSettings::handle(ctx).update(ctx, |settings, ctx| {
+                OrchestrationSettings::handle(ctx).update(ctx, |settings, ctx| {
                     settings.mark_harness_auth_ftux_completed(harness, ctx);
                     let mut map = settings.last_selected_auth_secret.value().clone();
                     map.insert(harness.config_name().to_string(), name);
@@ -2602,7 +2599,7 @@ impl Input {
             }
             AuthSecretFtuxViewEvent::Skipped { harness } => {
                 let harness = *harness;
-                CloudAgentSettings::handle(ctx).update(ctx, |settings, ctx| {
+                OrchestrationSettings::handle(ctx).update(ctx, |settings, ctx| {
                     settings.mark_harness_auth_ftux_completed(harness, ctx);
                 });
             }
@@ -2613,7 +2610,7 @@ impl Input {
 
     /// Wires an ambient agent view model into this input. This is the SINGLE wiring point,
     /// invoked by both `Input::new` (eager/composer, when a model is supplied at construction)
-    /// and the shared-session viewer's `SessionJoined` path (lazy, e.g. a raw `shared_session`
+    /// and the shared-session viewer's `SessionJoined` path (lazy, e.g. a raw `session_sharing`
     /// link that turns out to be a cloud run). Idempotent: a no-op when already wired. Builds the
     /// composer-only sub-views (host / auth-secret / FTUX selectors) only for a non-viewer, since
     /// a viewer of an existing run does not compose a new run.
@@ -2631,13 +2628,9 @@ impl Input {
             self.menu_positioning_provider.clone(),
             ctx,
         );
-        // Push the model down to the footer (parent -> child) so its environment selector
-        // reflects the cloud run. On this link-join path the footer captured `None` at
-        // construction, so it must be given the model now to render the environment chip.
         let footer_model = view_model.clone();
-        let footer_menu_positioning = self.menu_positioning_provider.clone();
         self.agent_input_footer.update(ctx, |footer, ctx| {
-            footer.set_ambient_agent_view_model(footer_model, footer_menu_positioning, ctx);
+            footer.set_ambient_agent_view_model(footer_model, ctx);
         });
         // Same parent -> child push for the agent status bar. It captured `None` at construction
         // on this link-join path, so without this it can't render the cloud-mode setup /
@@ -2696,16 +2689,6 @@ impl Input {
                 view_model.clone(),
                 self.menu_positioning_provider.clone(),
                 ctx,
-            );
-            // Re-render when connected workers change so the host selector shows/hides
-            // (it isn't mounted while hidden to drive this itself).
-            ctx.subscribe_to_model(
-                &ConnectedSelfHostedWorkersModel::handle(ctx),
-                |_me, _, event, ctx| {
-                    if matches!(event, ConnectedSelfHostedWorkersEvent::Changed) {
-                        ctx.notify();
-                    }
-                },
             );
             let (auth_secret_selector, auth_secret_ftux_view) = Self::build_auth_secret_selector(
                 view_model.clone(),
@@ -2924,8 +2907,7 @@ impl Input {
                 AgentInputFooterEvent::ModelSelectorOpened => {
                     me.close_overlays(false, ctx);
                 }
-                AgentInputFooterEvent::ModelSelectorClosed
-                | AgentInputFooterEvent::EnvironmentSelectorClosed => {
+                AgentInputFooterEvent::ModelSelectorClosed => {
                     me.focus_input_box(ctx);
                 }
                 AgentInputFooterEvent::ToggleInlineModelSelector { initial_tab } => {
@@ -2957,9 +2939,6 @@ impl Input {
                     ctx.dispatch_typed_action(&TerminalAction::PromptContextMenu {
                         position_offset_from_prompt: offset,
                     });
-                }
-                AgentInputFooterEvent::OpenEnvironmentManagementPane => {
-                    ctx.emit(Event::OpenEnvironmentManagementPane);
                 }
                 AgentInputFooterEvent::PluginInstalled(agent) => {
                     ctx.emit(Event::RegisterPluginListener(*agent));
@@ -4303,125 +4282,9 @@ impl Input {
             .as_ref()
             .map(AmbientAgentViewState::view_model)
     }
-
-    /// Shows a transient error toast for a follow-up submission that was blocked or redirected.
-    fn show_ephemeral_error_toast(&self, message: &str, ctx: &mut ViewContext<Self>) {
-        let window_id = ctx.window_id();
-        ToastStack::handle(ctx).update(ctx, |toast_stack, ctx| {
-            toast_stack.add_ephemeral_toast(
-                DismissibleToast::error(message.to_string()),
-                window_id,
-                ctx,
-            );
-        });
-    }
-
-    /// Routes an AI query submission to the correct non-local target, using the same
-    /// [`resolve_ai_query_routing`] source of truth as the footer live-VM indicator, so a
-    /// cloud/remote conversation never continues on the local agent. Shared by
-    /// [`Self::submit_ai_query_with_routing`] (the Enter / zero-state submit path) and
-    /// `input_cmd_enter`.
-    ///
-    /// Returns `true` when the submission was handled here (forwarded to the live VM, started a
-    /// cloud follow-up, or blocked with a toast) and the caller should stop; `false` when the
-    /// caller should handle the local case (submit locally for Enter, or emit the default
-    /// unhandled-cmd-enter action for Cmd+Enter). Also returns `false` for an executor viewer
-    /// running a local-action slash command such as `/fork`.
     fn maybe_route_ai_query_to_remote_target(&mut self, ctx: &mut ViewContext<Self>) -> bool {
-        // Nothing to route for an empty buffer; let the caller's normal (no-op) handling run.
-        if self.editor.as_ref(ctx).buffer_text(ctx).trim().is_empty() {
-            return false;
-        }
-
-        // Route by the shared source of truth. A live shared-session viewer forwards to the sharer
-        // (an ambient cloud run or a shared local session); the other arms cover panes that are not
-        // attached to a live session.
-        let ai_query_routing = {
-            let model = self.model.lock();
-            resolve_ai_query_routing(
-                self.terminal_view_id,
-                self.ambient_agent_view_model(),
-                &model,
-                ctx,
-            )
-        };
-        match ai_query_routing {
-            AIQueryRouting::Local => false,
-            AIQueryRouting::LiveRemoteVm {
-                is_executor: true, ..
-            } => {
-                // Returns false for local-action slash commands (e.g. /fork), which should still
-                // run on the viewer's own machine; the caller then proceeds to local submission.
-                self.submit_viewer_ai_query(ctx)
-            }
-            AIQueryRouting::LiveRemoteVm {
-                is_executor: false, ..
-            } => {
-                if self.model.lock().shared_session_status().is_active_viewer() {
-                    // Connected to the live session but without an executor role.
-                    log::warn!("Viewer tried to submit AI query without executor role");
-                    self.show_ephemeral_error_toast(
-                        "Cannot send queries as a read-only viewer.",
-                        ctx,
-                    );
-                } else {
-                    // The Oz run has a live execution this pane never attached to (a new execution
-                    // was started for the run while this pane was open from earlier), so there is
-                    // no live shared session to forward the prompt to.
-                    // TODO: instead of blocking, connect to the live shared session
-                    // and submit the prompt to the running remote VM. Or, auto close and reopen the link.
-                    self.show_ephemeral_error_toast(
-                        "This pane is out of date. Reopen the Oz session link in a new pane and try submitting again.",
-                        ctx,
-                    );
-                }
-                true
-            }
-            AIQueryRouting::NewCloudVm { task_id } => {
-                if FeatureFlag::HandoffCloudCloud.is_enabled() {
-                    let prompt = self.editor.as_ref(ctx).buffer_text(ctx).trim().to_owned();
-                    let pending_attachments = self
-                        .ai_context_model
-                        .as_ref(ctx)
-                        .pending_attachments()
-                        .to_vec();
-                    if Self::should_upload_cloud_followup_attachments(&pending_attachments) {
-                        self.freeze_input_in_loading_state(ctx);
-                        self.upload_files_then_submit_cloud_followup(
-                            task_id,
-                            prompt,
-                            pending_attachments,
-                            ctx,
-                        );
-                    } else {
-                        if !pending_attachments.is_empty() {
-                            log::warn!(
-                                "Cannot upload cloud follow-up attachments: CloudModeImageContext is disabled"
-                            );
-                        }
-                        ctx.emit(Event::SubmitCloudFollowup { prompt });
-                    }
-                } else {
-                    // Cloud-to-cloud follow-up is unavailable; block rather than run locally.
-                    self.show_ephemeral_error_toast(
-                        "This cloud conversation can't continue on your local machine.",
-                        ctx,
-                    );
-                }
-                true
-            }
-            AIQueryRouting::UnconnectedReadOnly => {
-                self.show_ephemeral_error_toast(
-                    "This cloud conversation can't continue on your local machine.",
-                    ctx,
-                );
-                true
-            }
-        }
-    }
-
-    fn should_upload_cloud_followup_attachments(pending_attachments: &[PendingAttachment]) -> bool {
-        !pending_attachments.is_empty() && FeatureFlag::CloudModeImageContext.is_enabled()
+        let _ = ctx;
+        false
     }
 
     /// Primary entry point for submitting the input buffer as an AI query. Routes to the correct
@@ -4599,12 +4462,6 @@ impl Input {
             },
         );
     }
-
-    #[cfg_attr(target_family = "wasm", allow(dead_code))]
-    pub(crate) fn handoff_entry_point(&self, ctx: &AppContext) -> HandoffEntryPoint {
-        self.handoff_compose_state.as_ref(ctx).entry_point()
-    }
-
     #[cfg(all(feature = "local_fs", not(target_family = "wasm")))]
     pub(crate) fn exit_cloud_handoff_compose_and_clear_prompt(
         &mut self,
@@ -6094,30 +5951,6 @@ impl Input {
         conversation_id_override: Option<AIConversationId>,
         ctx: &mut ViewContext<Self>,
     ) -> bool {
-        // The skills menu should be hiding skills that are not available in the remote context.
-        // This is a safety net to prevent invoking skills locally when follow ups are not supposed to run locally, in case some skills are showing up in the menu.
-        // Currently skills are populated by the local machine's state and are always run locally below.
-        // TODO: consider populating the skills menu with skills in the remote machine, and forward to the remote machine.
-        let ai_query_routing = resolve_ai_query_routing(
-            self.terminal_view_id,
-            self.ambient_agent_view_model(),
-            &self.model.lock(),
-            ctx,
-        );
-        if !ai_query_routing.is_local() {
-            let window_id = ctx.window_id();
-            ToastStack::handle(ctx).update(ctx, |toast_stack, ctx| {
-                toast_stack.add_ephemeral_toast(
-                    DismissibleToast::default(
-                        LOCAL_SKILLS_REMOTE_EXECUTION_ERROR_MESSAGE.to_owned(),
-                    ),
-                    window_id,
-                    ctx,
-                );
-            });
-            return true;
-        }
-
         let is_queued_prompt = queued_query_id.is_some();
         let skill = match self
             .ai_controller
@@ -6651,11 +6484,6 @@ impl Input {
     pub fn editor(&self) -> &ViewHandle<EditorView> {
         &self.editor
     }
-
-    pub(crate) fn ai_context_model(&self) -> &ModelHandle<BlocklistAIContextModel> {
-        &self.ai_context_model
-    }
-
     pub fn buffer_text(&self, ctx: &AppContext) -> String {
         self.editor.as_ref(ctx).buffer_text(ctx)
     }
@@ -7974,24 +7802,6 @@ impl Input {
             });
         }
     }
-
-    /// Restores a VM-down cloud follow-up after an attachment upload fails. Unlike
-    /// [`Self::unfreeze_agent_input`], this path runs on a disconnected cloud pane rather than an
-    /// active shared-session viewer, so it must restore the visible prompt and editable state
-    /// directly.
-    fn restore_cloud_followup_input_after_upload_failure(
-        &mut self,
-        prompt: &str,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        self.editor.update(ctx, |editor, ctx| {
-            editor.set_buffer_text(prompt, ctx);
-            editor.set_interaction_state(InteractionState::Editable, ctx);
-            let appearance: &Appearance = Appearance::as_ref(ctx);
-            editor.set_text_colors(TextColors::from_appearance(appearance), ctx);
-        });
-    }
-
     pub fn reset_after_cloud_followup_submission(&mut self, ctx: &mut ViewContext<Self>) {
         self.editor.update(ctx, |editor, ctx| {
             editor.set_interaction_state(InteractionState::Editable, ctx);
@@ -14790,163 +14600,6 @@ impl Input {
             });
         }
     }
-
-    /// Send the given query to the session sharer for them to execute on their machine.
-    /// Returns false if the query should be run locally instead of being sent to the sharer
-    /// (which is the case for slash commands like fork and fork-and-compact).
-    fn submit_viewer_ai_query(&mut self, ctx: &mut ViewContext<Self>) -> bool {
-        let prompt = self.editor.as_ref(ctx).buffer_text(ctx);
-        if prompt.is_empty() {
-            return true;
-        }
-
-        // Slash commands that run as an immediate local action (e.g. /fork) should execute on
-        // the viewer's own machine instead of being forwarded to the sharer. Centralized with
-        // the prompt-queue gate via `slash_command_is_submitted_as_prompt`: only the
-        // prompt-submitting commands (/compact, /plan, /orchestrate) are forwarded as prompts;
-        // every other slash command runs locally.
-        if let SlashCommandEntryState::SlashCommand(detected) = self
-            .slash_command_model
-            .as_ref(ctx)
-            .detect_command(&prompt, ctx)
-            && !slash_command_is_submitted_as_prompt(&detected.command)
-        {
-            return false;
-        }
-
-        // We're committed to sending the prompt, so finalize any in-flight image-attachment
-        // processing. This drops images that haven't finished processing; already-processed ones
-        // are collected as pending context below. (Local-action slash commands returned above.)
-        self.emit_input_buffer_submitted_telemetry(ctx);
-        self.editor.update(ctx, |editor, ctx| {
-            editor.abort_attached_images_future_handle(ctx);
-        });
-
-        // Freeze the editor and put it in a loading state
-        self.freeze_input_in_loading_state(ctx);
-
-        // Look up the conversation's server token from the conversation metadata.
-        let selected_conv_id = self
-            .ai_context_model
-            .as_ref(ctx)
-            .selected_conversation_id(ctx);
-        let server_conversation_token = selected_conv_id
-            .and_then(|id| {
-                BlocklistAIHistoryModel::as_ref(ctx)
-                    .conversation(&id)
-                    .and_then(|conv| conv.server_conversation_token().cloned())
-            })
-            .and_then(|token| {
-                token
-                    .as_str()
-                    .parse()
-                    .ok()
-                    .map(ServerConversationToken::from_uuid)
-            });
-
-        // Collect block/selected-text references from the context model.
-        let attachments: Vec<AgentAttachment> = self
-            .ai_context_model
-            .as_ref(ctx)
-            .pending_context(ctx, true, None)
-            .into_iter()
-            .filter_map(|context| match context {
-                AIAgentContext::Block(block) => Some(AgentAttachment::BlockReference {
-                    block_id: block.id.into(),
-                }),
-                AIAgentContext::SelectedText(text) => {
-                    Some(AgentAttachment::PlainText { content: text })
-                }
-                // For now, only AgentAttachment context is supported.
-                // TODO: Add support for other context types.
-                _ => None,
-            })
-            .collect();
-
-        let pending_images: Vec<_> = self
-            .ai_context_model
-            .as_ref(ctx)
-            .pending_images()
-            .into_iter()
-            .cloned()
-            .collect();
-        let pending_files: Vec<_> = self
-            .ai_context_model
-            .as_ref(ctx)
-            .pending_files()
-            .into_iter()
-            .cloned()
-            .collect();
-
-        self.upload_and_send_viewer_prompt(
-            server_conversation_token,
-            prompt,
-            attachments,
-            pending_images,
-            pending_files,
-            None,
-            ctx,
-        );
-
-        true
-    }
-
-    /// Upload pending attachments to the task definition before emitting the text-only cloud
-    /// follow-up event. `SubmitCloudFollowup` only carries the prompt text, so this helper owns
-    /// the prompt and attachment payloads until the async upload either succeeds and submits the
-    /// prompt or fails and restores the input. A new VM execution downloads these task attachments
-    /// during startup.
-    fn upload_files_then_submit_cloud_followup(
-        &mut self,
-        task_id: crate::ai::ambient_agents::AmbientAgentTaskId,
-        prompt: String,
-        pending_attachments: Vec<PendingAttachment>,
-        ctx: &mut ViewContext<Self>,
-    ) -> SpawnedFutureHandle {
-        let ai_client = ServerApiProvider::as_ref(ctx).get_ai_client();
-        let server_api = ServerApiProvider::as_ref(ctx).get();
-
-        ctx.spawn(
-            async move {
-                // Fail fast: any per-attachment failure (decode, size-limit, or HTTP) is fatal
-                // on the VM-down follow-up path; the user can fix the attachment and retry.
-                let outcomes = upload_pending_attachments_to_task(
-                    ai_client,
-                    server_api,
-                    task_id,
-                    pending_attachments,
-                )
-                .await
-                .map_err(|e| format!("Failed to prepare attachment uploads: {e:#}"))?;
-                for outcome in &outcomes {
-                    if let TaskAttachmentUploadOutcome::Failed { error, .. } = outcome {
-                        return Err(error.clone());
-                    }
-                }
-                Ok::<(), String>(())
-            },
-            move |input, result, ctx| {
-                if let Err(error) = result {
-                    input.restore_cloud_followup_input_after_upload_failure(&prompt, ctx);
-                    let window_id = ctx.window_id();
-                    ToastStack::handle(ctx).update(ctx, |toast_stack, ctx| {
-                        toast_stack.add_ephemeral_toast(
-                            DismissibleToast::error(format!("Couldn't upload attachment: {error}")),
-                            window_id,
-                            ctx,
-                        );
-                    });
-                    return;
-                }
-
-                input.ai_context_model.update(ctx, |context_model, ctx| {
-                    context_model.clear_pending_attachments(ctx);
-                });
-                ctx.emit(Event::SubmitCloudFollowup { prompt });
-            },
-        )
-    }
-
     fn emit_input_buffer_submitted_telemetry(&self, ctx: &mut ViewContext<Self>) {
         let input_model = self.ai_input_model.as_ref(ctx);
         let block_id = self.model.lock().active_block_id().clone();
@@ -15011,9 +14664,9 @@ impl Input {
     /// with the resulting `FileReference` attachments appended.
     #[allow(clippy::too_many_arguments)]
     fn upload_files_then_send_prompt(
-        task_id: crate::ai::ambient_agents::AmbientAgentTaskId,
+        task_id: crate::ai::agent_tasks::AmbientAgentTaskId,
         server_conversation_token: Option<
-            session_sharing_protocol::common::ServerConversationToken,
+            warp_terminal::session_sharing_types::common::ServerConversationToken,
         >,
         prompt: String,
         base_attachments: Vec<AgentAttachment>,

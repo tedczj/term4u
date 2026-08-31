@@ -284,12 +284,12 @@ pub(crate) enum PersistedAIAgentActionType {
     UseComputer {
         action_summary: String,
         #[serde(deserialize_with = "deserialize_targeted_actions")]
-        actions: Vec<computer_use::TargetedAction>,
-        screenshot_params: Option<computer_use::ScreenshotParams>,
+        actions: Vec<interaction_types::TargetedAction>,
+        screenshot_params: Option<interaction_types::ScreenshotParams>,
     },
     RequestComputerUse {
         task_summary: String,
-        screenshot_params: Option<computer_use::ScreenshotParams>,
+        screenshot_params: Option<interaction_types::ScreenshotParams>,
     },
     AskUserQuestion {
         questions: Vec<AskUserQuestionItem>,
@@ -307,12 +307,12 @@ pub(crate) enum PersistedAIAgentActionType {
 /// shape and the legacy bare-`Action` shape.
 ///
 /// Conversations persisted before `actions` became `Vec<TargetedAction>` stored each element as a
-/// bare [`computer_use::Action`]; those decode with the target defaulting to `Target::Screen`. New
+/// bare [`interaction_types::Action`]; those decode with the target defaulting to `Target::Screen`. New
 /// data round-trips unchanged, and serialization still emits the `{ action, target }` shape via the
 /// derived `Serialize` impl.
 fn deserialize_targeted_actions<'de, D>(
     deserializer: D,
-) -> Result<Vec<computer_use::TargetedAction>, D::Error>
+) -> Result<Vec<interaction_types::TargetedAction>, D::Error>
 where
     D: Deserializer<'de>,
 {
@@ -323,11 +323,11 @@ where
     #[serde(untagged)]
     enum TargetedActionCompat {
         Targeted {
-            action: computer_use::Action,
+            action: interaction_types::Action,
             #[serde(default)]
-            target: computer_use::Target,
+            target: interaction_types::Target,
         },
-        Bare(computer_use::Action),
+        Bare(interaction_types::Action),
     }
 
     let actions = Vec::<TargetedActionCompat>::deserialize(deserializer)?;
@@ -335,9 +335,9 @@ where
         .into_iter()
         .map(|compat| match compat {
             TargetedActionCompat::Targeted { action, target } => {
-                computer_use::TargetedAction { action, target }
+                interaction_types::TargetedAction { action, target }
             }
-            TargetedActionCompat::Bare(action) => computer_use::TargetedAction::screen(action),
+            TargetedActionCompat::Bare(action) => interaction_types::TargetedAction::screen(action),
         })
         .collect())
 }

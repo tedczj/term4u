@@ -191,9 +191,6 @@ pub struct AIDocumentModel {
 
 impl AIDocumentModel {
     pub fn new(ctx: &mut ModelContext<Self>) -> Self {
-        ctx.subscribe_to_model(&UpdateManager::handle(ctx), |me, _, event, ctx| {
-            me.handle_update_manager_event(event, ctx);
-        });
         ctx.subscribe_to_model(&CloudModel::handle(ctx), |me, _, event, ctx| {
             me.handle_cloud_model_event(event, ctx);
         });
@@ -468,50 +465,6 @@ impl AIDocumentModel {
             }
         });
     }
-
-    fn handle_update_manager_event(
-        &mut self,
-        event: &UpdateManagerEvent,
-        ctx: &mut ModelContext<Self>,
-    ) {
-        let UpdateManagerEvent::ObjectOperationComplete { result } = event else {
-            return;
-        };
-        if !matches!(result.operation, ObjectOperation::Create { .. })
-            || result.success_type != OperationSuccessType::Success
-        {
-            return;
-        }
-        if result.server_id.is_none() {
-            return;
-        };
-
-        // If we're waiting on a Plans folder to complete creation, ensure the Plans folder exists
-        // (creating it if needed) and if it has a ServerId, process the pending document queue.
-        //
-        // NOTE: this handler runs for *all* Warp Drive object creations, so we must only create the
-        // Plans folder when we actually have a plan notebook waiting to be created.
-        if !self.pending_document_queue.is_empty() {
-            if let Some(owner) = Self::get_plan_owner(ctx) {
-                if let Some(folder_id) = self.get_or_create_plan_folder(owner, ctx).into_server() {
-                    let queue = std::mem::take(&mut self.pending_document_queue);
-
-                    for pending in queue {
-                        self.create_notebook_in_plan_folder(
-                            pending.id,
-                            &pending.title,
-                            &pending.content,
-                            owner,
-                            folder_id,
-                            ctx,
-                        );
-                        ctx.emit(AIDocumentModelEvent::DocumentSaveStatusUpdated(pending.id));
-                    }
-                }
-            }
-        }
-    }
-
     /// Create a new document with default title/content and return its ID.
     pub fn create_document(
         &mut self,

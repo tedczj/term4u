@@ -63,7 +63,9 @@ use crate::cloud_object::CloudObjectEventEntrypoint;
 use crate::server::graphql::{get_request_context, get_user_facing_error_message};
 use crate::server::ids::ServerId;
 use crate::workspaces::team::{DiscoverableTeam, MembershipRole};
-use crate::workspaces::user_workspaces::{CreateTeamResponse, WorkspacesMetadataWithPricing};
+use crate::workspaces::user_workspaces::{
+    CreateTeamResponse, WorkspacesMetadataResponse, WorkspacesMetadataWithPricing,
+};
 use crate::workspaces::workspace::Workspace;
 
 #[cfg_attr(test, automock)]
@@ -161,6 +163,154 @@ pub trait TeamClient: 'static + Send + Sync {
         team_uid: ServerId,
         role: MembershipRole,
     ) -> Result<WorkspacesMetadataWithPricing>;
+}
+
+#[cfg_attr(not(target_family = "wasm"), async_trait)]
+#[cfg_attr(target_family = "wasm", async_trait(?Send))]
+impl TeamClient for crate::server::offline_api::OfflineApi {
+    async fn workspaces_metadata(&self) -> Result<WorkspacesMetadataWithPricing> {
+        Ok(WorkspacesMetadataWithPricing {
+            metadata: WorkspacesMetadataResponse {
+                workspaces: Vec::new(),
+                joinable_teams: Vec::new(),
+                experiments: None,
+                ai_credit_availability: None,
+                user_purchase_policy: None,
+            },
+            pricing_info: None,
+        })
+    }
+
+    async fn add_invite_link_domain_restriction(
+        &self,
+        team_uid: ServerId,
+        domain: String,
+    ) -> Result<WorkspacesMetadataWithPricing> {
+        let _ = (team_uid, domain);
+        Err(Self::unavailable("team API"))
+    }
+
+    async fn delete_invite_link_domain_restriction(
+        &self,
+        team_uid: ServerId,
+        domain_uid: ServerId,
+    ) -> Result<WorkspacesMetadataWithPricing> {
+        let _ = (team_uid, domain_uid);
+        Err(Self::unavailable("team API"))
+    }
+
+    async fn create_team(
+        &self,
+        name: String,
+        entrypoint: CloudObjectEventEntrypoint,
+        discoverable: Option<bool>,
+    ) -> Result<CreateTeamResponse> {
+        let _ = (name, entrypoint, discoverable);
+        Err(Self::unavailable("team API"))
+    }
+
+    async fn remove_user_from_team(
+        &self,
+        user_uid: UserUid,
+        team_uid: ServerId,
+        entrypoint: CloudObjectEventEntrypoint,
+    ) -> Result<WorkspacesMetadataWithPricing> {
+        let _ = (user_uid, team_uid, entrypoint);
+        Err(Self::unavailable("team API"))
+    }
+
+    async fn leave_team(
+        &self,
+        user_uid: UserUid,
+        team_uid: ServerId,
+        entrypoint: CloudObjectEventEntrypoint,
+    ) -> Result<WorkspacesMetadataWithPricing> {
+        let _ = (user_uid, team_uid, entrypoint);
+        Err(Self::unavailable("team API"))
+    }
+
+    async fn join_team_with_team_discovery(
+        &self,
+        team_uid: ServerId,
+    ) -> Result<WorkspacesMetadataWithPricing> {
+        let _ = team_uid;
+        Err(Self::unavailable("team API"))
+    }
+
+    async fn send_team_invite_email(
+        &self,
+        team_uid: ServerId,
+        email: String,
+    ) -> Result<WorkspacesMetadataWithPricing> {
+        let _ = (team_uid, email);
+        Err(Self::unavailable("team API"))
+    }
+
+    async fn delete_team_invite(
+        &self,
+        team_uid: ServerId,
+        email: String,
+    ) -> Result<WorkspacesMetadataWithPricing> {
+        let _ = (team_uid, email);
+        Err(Self::unavailable("team API"))
+    }
+
+    async fn get_discoverable_teams(&self) -> Result<Vec<DiscoverableTeam>> {
+        Ok(Vec::new())
+    }
+
+    async fn rename_team(
+        &self,
+        new_name: String,
+        team_uid: ServerId,
+    ) -> Result<WorkspacesMetadataWithPricing> {
+        let _ = (new_name, team_uid);
+        Err(Self::unavailable("team API"))
+    }
+
+    async fn reset_invite_links(
+        &self,
+        team_uid: ServerId,
+    ) -> Result<WorkspacesMetadataWithPricing> {
+        let _ = team_uid;
+        Err(Self::unavailable("team API"))
+    }
+
+    async fn set_is_invite_link_enabled(
+        &self,
+        team_uid: ServerId,
+        new_value: bool,
+    ) -> Result<WorkspacesMetadataWithPricing> {
+        let _ = (team_uid, new_value);
+        Err(Self::unavailable("team API"))
+    }
+
+    async fn set_team_discoverability(
+        &self,
+        team_uid: ServerId,
+        discoverable: bool,
+    ) -> Result<WorkspacesMetadataWithPricing> {
+        let _ = (team_uid, discoverable);
+        Err(Self::unavailable("team API"))
+    }
+
+    async fn transfer_team_ownership(
+        &self,
+        new_owner_email: String,
+    ) -> Result<WorkspacesMetadataWithPricing> {
+        let _ = new_owner_email;
+        Err(Self::unavailable("team API"))
+    }
+
+    async fn set_team_member_role(
+        &self,
+        user_uid: UserUid,
+        team_uid: ServerId,
+        role: MembershipRole,
+    ) -> Result<WorkspacesMetadataWithPricing> {
+        let _ = (user_uid, team_uid, role);
+        Err(Self::unavailable("team API"))
+    }
 }
 
 #[cfg_attr(not(target_family = "wasm"), async_trait)]

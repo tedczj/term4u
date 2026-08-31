@@ -15,9 +15,6 @@ use parking_lot::FairMutex;
 use pathfinder_geometry::rect::RectF;
 use pathfinder_geometry::vector::{Vector2F, vec2f};
 use serde::{Deserialize, Serialize};
-use session_sharing_protocol::common::{
-    ParticipantId, Role, RoleRequestId, RoleRequestRejectedReason, RoleRequestResponse, SessionId,
-};
 use settings::Setting as _;
 use tree::DEFAULT_FLEX_VALUE;
 use typed_path::TypedPath;
@@ -28,6 +25,9 @@ use warp_core::command::ExitCode;
 use warp_core::context_flag::ContextFlag;
 use warp_errors::report_if_error;
 use warp_terminal::focus_env::add_session_focus_env_vars;
+use warp_terminal::session_sharing_types::common::{
+    ParticipantId, Role, RoleRequestId, RoleRequestRejectedReason, RoleRequestResponse, SessionId,
+};
 use warp_terminal::shell::{ShellName, ShellType};
 #[cfg(feature = "local_fs")]
 use warp_util::path::LineAndColumnArg;
@@ -52,8 +52,8 @@ use crate::ai::agent_conversations_model::{
     AgentConversationEntryId, AgentConversationNavigationSubject, AgentConversationsModel,
     AgentConversationsModelEvent,
 };
+use crate::ai::agent_tasks::AmbientAgentTaskId;
 use crate::ai::ai_document_view::AIDocumentView;
-use crate::ai::ambient_agents::AmbientAgentTaskId;
 #[cfg(not(target_family = "wasm"))]
 use crate::ai::blocklist::BlocklistAIHistoryEvent;
 use crate::ai::blocklist::agent_view::AgentViewEntryOrigin;
@@ -135,12 +135,12 @@ use crate::terminal::model::terminal_model::ConversationTranscriptViewerStatus;
 #[cfg(feature = "remote_tty")]
 use crate::terminal::remote_tty::TerminalManager as RemoteTtyTerminalManager;
 use crate::terminal::session_settings::{NewSessionSource, SessionSettings};
-use crate::terminal::shared_session::render_util::ParticipantAvatarParams;
-use crate::terminal::shared_session::role_change_modal::{
+use crate::terminal::session_sharing::render_util::ParticipantAvatarParams;
+use crate::terminal::session_sharing::role_change_modal::{
     RoleChangeCloseSource, RoleChangeModal, RoleChangeModalEvent,
 };
-use crate::terminal::shared_session::share_modal::{ShareSessionModal, ShareSessionModalEvent};
-use crate::terminal::shared_session::{
+use crate::terminal::session_sharing::share_modal::{ShareSessionModal, ShareSessionModalEvent};
+use crate::terminal::session_sharing::{
     self, IsSharedSessionCreator, SharedSessionActionSource, SharedSessionSource,
 };
 use crate::terminal::view::inline_banner::{
@@ -176,9 +176,6 @@ use crate::{cmd_or_ctrl_shift, send_telemetry_from_ctx};
 
 mod ambient_pane_restoration;
 mod child_agent;
-pub(crate) use child_agent::materialization::{
-    ChildPaneMaterialization, decide_child_pane_materialization,
-};
 pub mod focus_state;
 pub mod pane;
 pub mod tree;
@@ -2833,12 +2830,14 @@ impl PaneGroup {
         self.shared_session_role_change_modal
             .update(ctx, |modal, ctx| {
                 modal.open_for_sharer_response(
-                    terminal_pane_id,
-                    viewer_id,
-                    firebase_uid,
-                    role_request_id,
-                    params,
-                    role,
+                    (
+                        terminal_pane_id,
+                        viewer_id,
+                        firebase_uid,
+                        role_request_id,
+                        params,
+                        role,
+                    ),
                     ctx,
                 );
             });
@@ -3612,7 +3611,7 @@ impl PaneGroup {
                 view_bounds.size(),
                 true, // enable_orchestration_polling (root orchestrator viewer)
                 // `true` when the caller already knows this is an ambient run
-                // (e.g. attach-to-running). Otherwise `false`: a raw shared_session
+                // (e.g. attach-to-running). Otherwise `false`: a raw session_sharing
                 // link may still turn out to be ambient, in which case the model is
                 // created lazily at `SessionJoined`.
                 is_ambient_agent,
@@ -4127,7 +4126,7 @@ impl PaneGroup {
 
             child_terminal_view.update(ctx, |view, ctx| {
                 view.attempt_to_share_session(
-                    shared_session::SharedSessionScrollbackType::All,
+                    session_sharing::SharedSessionScrollbackType::All,
                     None,
                     source,
                     /* bypass_conversation_guard = */ false,
@@ -5589,9 +5588,9 @@ impl PaneGroup {
                 });
             }
             let status = if view.owned_ambient_agent_task_id(ctx).is_some() {
-                shared_session::SharedSessionStatus::NotShared
+                session_sharing::SharedSessionStatus::NotShared
             } else {
-                shared_session::SharedSessionStatus::FinishedViewer
+                session_sharing::SharedSessionStatus::FinishedViewer
             };
             view.model.lock().set_shared_session_status(status);
             view.insert_conversation_ended_tombstone_with_resolved_cta(ctx);
@@ -6248,76 +6247,21 @@ impl PaneGroup {
         ViewHandle<TerminalView>,
         ModelHandle<Box<dyn TerminalManager>>,
     ) {
-        let window_id = ctx.window_id();
-        let terminal_init = shared_session::viewer::TerminalManager::new(
-            session_id,
+        let _ = (session_id, enable_orchestration_polling, is_ambient_agent);
+        let init = MockTerminalManager::create_model(
+            ShellLaunchState::ShellSpawned {
+                available_shell: None,
+                display_name: ShellName::blank(),
+                shell_type: ShellType::Zsh,
+            },
             resources,
+            None,
+            None,
             initial_size,
-            window_id,
-            enable_orchestration_polling,
-            is_ambient_agent,
+            ctx.window_id(),
             ctx,
         );
-        let viewer_manager = terminal_init.manager;
-        let terminal_view = terminal_init.view;
-        let terminal_manager =
-            ctx.add_model(|_ctx| Box::new(viewer_manager) as Box<dyn TerminalManager>);
-
-        // Wire the viewer's `TerminalManager` to the ambient model's session lifecycle
-        // events so a follow-up run (which spawns a fresh VM after the previous one ends)
-        // re-attaches the viewer to the new execution session. `create_cloud_mode_view`
-        // does this for the compose path; shared-session viewers need it too.
-        match terminal_view
-            .as_ref(ctx)
-            .ambient_agent_view_model()
-            .cloned()
-        {
-            Some(view_model) => {
-                // Upfront ambient viewer (attach-to-running / restore): the model already
-                // exists at construction, so wire it immediately.
-                crate::terminal::view::ambient_agent::wire_ambient_agent_session_events(
-                    &terminal_manager,
-                    &view_model,
-                    ctx,
-                );
-            }
-            _ => {
-                if enable_orchestration_polling {
-                    // Link-join viewer: the model is created lazily at `SessionJoined` (see
-                    // `TerminalView::begin_viewing_ambient_session`), so wire it once it exists.
-                    // Gate on `enable_orchestration_polling` to mirror the `SessionJoined` model-
-                    // creation gate, so model-less hidden child viewers don't install a dead
-                    // subscription. The weak manager handle avoids keeping a closed pane's manager
-                    // and view alive via this dormant subscription.
-                    let weak_terminal_manager = terminal_manager.downgrade();
-                    ctx.subscribe_to_view(&terminal_view, move |_, terminal_view, event, ctx| {
-                        if !matches!(
-                            event,
-                            crate::terminal::view::Event::AmbientAgentViewModelCreated
-                        ) {
-                            return;
-                        }
-                        let Some(terminal_manager) = weak_terminal_manager.upgrade(ctx) else {
-                            return;
-                        };
-                        let Some(view_model) = terminal_view
-                            .as_ref(ctx)
-                            .ambient_agent_view_model()
-                            .cloned()
-                        else {
-                            return;
-                        };
-                        crate::terminal::view::ambient_agent::wire_ambient_agent_session_events(
-                            &terminal_manager,
-                            &view_model,
-                            ctx,
-                        );
-                    });
-                }
-            }
-        }
-
-        (terminal_view, terminal_manager)
+        (init.view, init.manager)
     }
 
     /// Builds a live-session pane for an orchestration child with its ambient
@@ -6333,34 +6277,21 @@ impl PaneGroup {
         ViewHandle<TerminalView>,
         ModelHandle<Box<dyn TerminalManager>>,
     ) {
-        let terminal_init =
-            shared_session::viewer::TerminalManager::new_for_ambient_orchestration_child(
-                session_id,
-                conversation_id,
-                resources,
-                initial_size,
-                ctx.window_id(),
-                ctx,
-            );
-        let terminal_view = terminal_init.view;
-        let terminal_manager =
-            ctx.add_model(|_ctx| Box::new(terminal_init.manager) as Box<dyn TerminalManager>);
-
-        // The ambient model exists as soon as the view is constructed, so its
-        // session events have to be wired here rather than on session join.
-        if let Some(view_model) = terminal_view
-            .as_ref(ctx)
-            .ambient_agent_view_model()
-            .cloned()
-        {
-            crate::terminal::view::ambient_agent::wire_ambient_agent_session_events(
-                &terminal_manager,
-                &view_model,
-                ctx,
-            );
-        }
-
-        (terminal_view, terminal_manager)
+        let _ = (session_id, conversation_id);
+        let init = MockTerminalManager::create_model(
+            ShellLaunchState::ShellSpawned {
+                available_shell: None,
+                display_name: ShellName::blank(),
+                shell_type: ShellType::Zsh,
+            },
+            resources,
+            None,
+            None,
+            initial_size,
+            ctx.window_id(),
+            ctx,
+        );
+        (init.view, init.manager)
     }
 
     fn create_conversation_viewer(
@@ -7169,79 +7100,8 @@ impl PaneGroup {
         session_id: SessionId,
         ctx: &mut ViewContext<Self>,
     ) -> bool {
-        let Some(terminal_view) = self.terminal_view_from_pane_id(pane_id, ctx) else {
-            log::warn!(
-                "attach_execution_session: no terminal view for \
-                 pane_id={pane_id:?}"
-            );
-            return false;
-        };
-
-        // A conversation transcript viewer renders a snapshot of an ended conversation and can
-        // never be turned into a writable session, so refuse it instead of focusing a dead pane.
-        if terminal_view
-            .as_ref(ctx)
-            .model
-            .lock()
-            .is_conversation_transcript_viewer()
-        {
-            log::warn!(
-                "Tried to attach execution session to conversation transcript viewer pane {pane_id:?}"
-            );
-            return false;
-        }
-
-        // The pane may have been left in a finished/read-only state (ended-conversation tombstone,
-        // `FinishedViewer` status, non-editable input) by an earlier end-of-session transition.
-        // Only cleared once a join is actually underway: a caller that gets `false` opens a fresh
-        // pane instead, and this one would otherwise be left looking writable while attached to
-        // nothing.
-        if let Some(ambient_agent_view_model) = terminal_view
-            .as_ref(ctx)
-            .ambient_agent_view_model()
-            .cloned()
-        {
-            ambient_agent_view_model.update(ctx, |model, ctx| {
-                model.attach_execution_session(session_id, ctx);
-            });
-            terminal_view.update(ctx, |view, ctx| {
-                view.prepare_for_live_session_reattach(ctx);
-            });
-            return true;
-        }
-
-        let Some(terminal_manager) = self
-            .terminal_session_by_id(pane_id)
-            .map(|session| session.terminal_manager(ctx))
-        else {
-            log::warn!(
-                "attach_execution_session: no terminal manager for \
-                 pane_id={pane_id:?}"
-            );
-            return false;
-        };
-
-        let mut attached = false;
-        terminal_manager.update(ctx, |terminal_manager, ctx| {
-            let Some(manager) = terminal_manager
-                .as_any_mut()
-                .downcast_mut::<shared_session::viewer::TerminalManager>()
-            else {
-                log::warn!(
-                    "attach_execution_session: non-viewer \
-                     terminal manager for pane_id={pane_id:?}"
-                );
-                return;
-            };
-            attached = manager.attach_execution_session(session_id, ctx);
-        });
-
-        if attached {
-            terminal_view.update(ctx, |view, ctx| {
-                view.prepare_for_live_session_reattach(ctx);
-            });
-        }
-        attached
+        let _ = (pane_id, session_id, ctx);
+        false
     }
 
     /// Resolve the pane id that owns a given conversation's `TerminalView`,

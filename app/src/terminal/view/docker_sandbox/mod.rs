@@ -30,10 +30,10 @@ use crate::ai::agent_sdk::driver::{
 use crate::ai::agent_sdk::environment_snapshot::EnvironmentSnapshotReporter;
 #[cfg(not(target_family = "wasm"))]
 use crate::ai::agent_sdk::setup_observability::SetupClientEventReporter;
-#[cfg(not(target_family = "wasm"))]
-use crate::ai::cloud_environments::CloudAmbientAgentEnvironment;
 #[cfg(all(feature = "local_tty", not(feature = "remote_tty")))]
 use crate::banner::BannerState;
+#[cfg(not(target_family = "wasm"))]
+use crate::cloud_object::agent_environment::CloudAmbientAgentEnvironment;
 #[cfg(feature = "local_tty")]
 use crate::pane_group::TerminalViewResources;
 #[cfg(feature = "local_tty")]
@@ -60,7 +60,7 @@ use crate::terminal::local_tty::{
 #[cfg(feature = "remote_tty")]
 use crate::terminal::remote_tty::TerminalManager as RemoteTtyTerminalManager;
 #[cfg(all(feature = "local_tty", not(feature = "remote_tty")))]
-use crate::terminal::shared_session::IsSharedSessionCreator;
+use crate::terminal::session_sharing::IsSharedSessionCreator;
 
 /// Default base Docker image used for newly created sandbox shells.
 ///

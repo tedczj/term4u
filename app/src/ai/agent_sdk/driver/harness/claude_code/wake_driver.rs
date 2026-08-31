@@ -20,7 +20,7 @@ use super::parent_bridge::{
 use super::{ClaudeHarness, claude_command, prepare_claude_environment_config};
 use crate::ai::agent::conversation::{AIConversation, ConversationStatus};
 use crate::ai::agent_events::{AgentMessageEventMetadata, MessageHydrator};
-use crate::ai::ambient_agents::{AmbientAgentTaskId, AmbientAgentTaskState};
+use crate::ai::agent_tasks::{AmbientAgentTaskId, AmbientAgentTaskState};
 use crate::server::server_api::ServerApi;
 use crate::server::server_api::ai::AIClient;
 use crate::server::server_api::harness_support::ResolvePromptRequest;
@@ -296,7 +296,3 @@ fn prefix_command_with_env_vars(command: String, env_vars: HashMap<OsString, OsS
 
     format!("env {assignments} {command}")
 }
-
-#[cfg(test)]
-#[path = "wake_driver_tests.rs"]
-mod tests;

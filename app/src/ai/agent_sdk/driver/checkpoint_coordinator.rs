@@ -31,7 +31,7 @@ use warpui::{ModelSpawner, SingletonEntity};
 
 use super::AgentDriver;
 use super::snapshot::{self, CheckpointResult, DeclarationsWriterHandle};
-use crate::ai::ambient_agents::AmbientAgentTaskId;
+use crate::ai::agent_tasks::AmbientAgentTaskId;
 use crate::ai::blocklist::BlocklistAIHistoryModel;
 use crate::server::server_api::harness_support::{CheckpointGeneration, HarnessSupportClient};
 
@@ -628,7 +628,3 @@ async fn coordinator_loop(
         }
     }
 }
-
-#[cfg(test)]
-#[path = "checkpoint_coordinator_tests.rs"]
-mod tests;

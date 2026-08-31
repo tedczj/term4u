@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+ALLOWLIST=script/license_boundary_allowlist.txt
+metadata=$(mktemp)
+trap 'rm -f "$metadata"' EXIT
+cargo metadata --no-deps --format-version 1 > "$metadata"
+
+python3 - "$metadata" "$ALLOWLIST" <<'PY'
+import json
+import pathlib
+import sys
+
+metadata_path, allowlist_path = sys.argv[1:]
+with open(metadata_path) as stream:
+    metadata = json.load(stream)
+
+packages = {package["name"]: package for package in metadata["packages"]}
+allowed = {
+    line.strip()
+    for line in pathlib.Path(allowlist_path).read_text().splitlines()
+    if line.strip() and not line.lstrip().startswith("#")
+}
+violations = []
+for crate_name in ("warpui", "warpui_core"):
+    package = packages[crate_name]
+    for dependency in package["dependencies"]:
+        if dependency.get("path") is None:
+            continue
+        dependency_name = dependency["name"]
+        dependency_package = packages.get(dependency_name)
+        license_name = dependency_package.get("license") if dependency_package else None
+        if license_name == "MIT":
+            continue
+        edge = f"{crate_name} -> {dependency_name}"
+        if edge not in allowed:
+            violations.append(f"{edge} ({license_name or 'no license declaration'})")
+
+for package in metadata["packages"]:
+    manifest_path = pathlib.PurePath(package["manifest_path"])
+    if "crates-local" not in manifest_path.parts:
+        continue
+    for dependency in package["dependencies"]:
+        if dependency.get("path") is None:
+            continue
+        dependency_package = packages.get(dependency["name"])
+        license_name = dependency_package.get("license") if dependency_package else None
+        if license_name != "MIT":
+            violations.append(
+                f"{package['name']} -> {dependency['name']} "
+                f"({license_name or 'no license declaration'})"
+            )
+
+stale = []
+for edge in sorted(allowed):
+    source, dependency = edge.split(" -> ", 1)
+    package = packages.get(source)
+    if package is None or not any(
+        item.get("path") is not None and item["name"] == dependency
+        for item in package["dependencies"]
+    ):
+        stale.append(edge)
+
+if violations:
+    for violation in violations:
+        print(f"LICENSE BOUNDARY VIOLATION: {violation}", file=sys.stderr)
+if stale:
+    for edge in stale:
+        print(f"STALE LICENSE BOUNDARY ALLOWLIST ENTRY: {edge}", file=sys.stderr)
+if violations or stale:
+    raise SystemExit(1)
+PY

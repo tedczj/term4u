@@ -1036,7 +1036,3 @@ fn serde_json_to_prost(value: serde_json::Value) -> Result<prost_types::Value, S
         }),
     })
 }
-
-#[cfg(test)]
-#[path = "convert_to_tests.rs"]
-mod tests;

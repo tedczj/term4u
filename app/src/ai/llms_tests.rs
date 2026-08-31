@@ -1108,7 +1108,6 @@ fn updating_active_profile_base_model_persists_and_updates_resolution() {
                 &LaunchMode::Tui {
                     entrypoint: TuiEntryPoint::Interactive {
                         mount: Box::new(|_| {}),
-                        api_key: None,
                     },
                 },
                 ctx,

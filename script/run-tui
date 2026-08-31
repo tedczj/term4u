@@ -1,12 +1,7 @@
 #!/bin/bash
 #
-# Run a local `warp_tui` build.
-#
-# Selects the internal `local` channel when the `warp-channel-config` generator
-# is available (mirroring `./script/run`), otherwise falls back to the OSS
-# channel so contributors without repo access can still run the TUI. Unlike the
-# GUI `./script/run`, the TUI is a console binary, so there is no `.app` bundle
-# step.
+# Run the offline `term4u-tui` build. Unlike the GUI `./script/run`, the TUI is
+# a console binary, so there is no `.app` bundle step.
 #
 # On macOS the binary is built with `cargo build` and then codesigned with a
 # stable "Apple Development" identity (mirroring `./script/macos/run`). Keychain
@@ -22,15 +17,8 @@ set -e
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")"/.. && pwd)"
 cd "${REPO_ROOT}"
 
-./script/install_channel_config || echo "Skipping internal channel config installation (no repo access)."
-
-if command -v warp-channel-config &>/dev/null; then
-    BIN="warp-tui"
-    CHANNEL="local"
-else
-    BIN="warp-tui-oss"
-    CHANNEL="oss"
-fi
+BIN="term4u-tui"
+CHANNEL="oss"
 
 # Split cargo arguments from binary arguments (after `--`), tracking the profile
 # and target triple so we can locate the built binary (for codesigning on macOS)
@@ -88,10 +76,7 @@ done
 # the packaged TUI is built in script/macos/bundle). Without it, the app can't
 # locate its bundled skills when run outside a `.app` bundle. Keep voice input
 # enabled for local macOS development while leaving Linux builds free of ALSA.
-TUI_FEATURES="standalone"
-if [[ "$(uname -s)" = "Darwin" ]]; then
-  TUI_FEATURES="$TUI_FEATURES,voice_input"
-fi
+TUI_FEATURES="standalone,offline_hard"
 CARGO_ARGS+=(--features "$TUI_FEATURES")
 
 # Resolve Cargo's actual target directory rather than assuming ./target

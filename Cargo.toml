@@ -1,6 +1,7 @@
 [workspace]
 members = [
   "crates/*",
+  "crates-local/*",
   "app",
 ]
 resolver = "2"
@@ -42,7 +43,7 @@ cloud_objects = { path = "crates/cloud_objects" }
 cloud_object_client = { path = "crates/cloud_object_client" }
 cloud_object_persistence = { path = "crates/cloud_object_persistence" }
 cloud_object_models = { path = "crates/cloud_object_models" }
-computer_use = { path = "crates/computer_use" }
+interaction_types = { path = "crates-local/interaction_types" }
 field_mask = { path = "crates/field_mask" }
 firebase = { path = "crates/firebase" }
 fuzzy_match = { path = "crates/fuzzy_match" }
@@ -62,10 +63,10 @@ mcp = { path = "crates/mcp" }
 natural_language_detection = { path = "crates/natural_language_detection" }
 node_runtime = { path = "crates/node_runtime" }
 onboarding = { path = "crates/onboarding" }
+offline_guard = { path = "crates-local/offline_guard" }
 persistence = { path = "crates/persistence" }
 prevent_sleep = { path = "crates/prevent_sleep" }
 regex_dfas = { path = "crates/regex_dfas" }
-remote_server = { path = "crates/remote_server" }
 repo_metadata = { path = "crates/repo_metadata" }
 secret_redaction = { path = "crates/secret_redaction" }
 settings = { path = "crates/settings" }
@@ -78,10 +79,8 @@ syntax_tree = { path = "crates/syntax_tree" }
 ui_components = { path = "crates/ui_components" }
 vim = { path = "crates/vim" }
 virtual-fs = { path = "crates/virtual_fs" }
-voice_input = { path = "crates/voice_input" }
 warp = { path = "app" }
 warp_assets = { path = "crates/warp_assets" }
-warp_channel_config = { path = "crates/warp_channel_config" }
 warp_cli = { path = "crates/warp_cli" }
 warp_completer = { path = "crates/warp_completer" }
 warp_core = { path = "crates/warp_core" }
@@ -209,15 +208,6 @@ notify-debouncer-full = { git = "https://github.com/warpdotdev/notify", rev = "9
 nom = "7.1.1"
 num-traits = "0.2"
 oauth2 = { version = "5.0.0", default-features = false }
-opentelemetry = { version = "0.32.0", default-features = false, features = ["trace"] }
-opentelemetry-http = "0.32.0"
-opentelemetry-otlp = { version = "0.32.0", default-features = false, features = [
-  "gzip-http",
-  "http-proto",
-  "trace",
-  "zstd-http",
-] }
-opentelemetry_sdk = { version = "0.32.1", default-features = false, features = ["trace"] }
 openh264 = "0.8"
 static_assertions = "1.1.0"
 url = "2.5.4"
@@ -263,17 +253,6 @@ rust-embed = { version = "8.7.0", features = ["include-exclude"] }
 rustc-hash = "2.1.1"
 rustls = "0.23.39"
 schemars = { version = "1", features = ["chrono04"] }
-sentry = { version = "0.47.0", default-features = false, features = [
-  "anyhow",
-  "backtrace",
-  "contexts",
-  "debug-images",
-  "panic",
-  "release-health",
-  "reqwest",
-  "rustls",
-] }
-sentry-log = "0.47.0"
 serde = { version = "1.0", features = ["derive", "rc"] }
 serde_bytes = "0.11"
 serde-bytes-repr = "0.3"
@@ -298,7 +277,6 @@ tower = "0.5.2"
 tower-http = "0.6.6"
 tracing = "0.1.40"
 tracing-futures = "0.2.5"
-tracing-opentelemetry = { version = "0.33.0", default-features = false }
 tracing-subscriber = { version = "0.3.22", default-features = false, features = [
   "registry",
   "std",

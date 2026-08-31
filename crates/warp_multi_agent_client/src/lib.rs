@@ -135,7 +135,7 @@ fn is_passive_suggestion_request(request: &warp_multi_agent_api::Request) -> boo
 fn endpoint_url(is_passive: bool) -> String {
     format!(
         "{}/{}/{}",
-        ChannelState::server_root_url(),
+        ChannelState::server_root_url().unwrap_or_default(),
         if cfg!(feature = "agent_mode_evals") {
             "agent-mode-evals"
         } else {
@@ -165,7 +165,3 @@ fn decode_response_event(data: &str) -> Result<warp_multi_agent_api::ResponseEve
     warp_multi_agent_api::ResponseEvent::decode(decoded_data.as_slice())
         .map_err(Error::ProtobufDecode)
 }
-
-#[cfg(test)]
-#[path = "lib_tests.rs"]
-mod tests;

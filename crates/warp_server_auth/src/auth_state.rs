@@ -58,6 +58,19 @@ impl AuthState {
             credentials: RwLock::new(None),
         }
     }
+    pub fn new_local(ctx: &AppContext) -> Self {
+        Self::new(ctx)
+    }
+
+    pub fn new_offline() -> Self {
+        Self {
+            user: RwLock::new(None),
+            anonymous_id: Uuid::new_v4(),
+            needs_reauth: AtomicBool::new(false),
+            credentials: RwLock::new(None),
+        }
+    }
+
     #[cfg(any(
         test,
         feature = "integration_tests",
@@ -616,3 +629,23 @@ impl Entity for AuthStateProvider {
 }
 
 impl SingletonEntity for AuthStateProvider {}
+
+pub struct LocalAuthStateProvider {
+    auth_state: Arc<AuthState>,
+}
+
+impl LocalAuthStateProvider {
+    pub fn new(auth_state: Arc<AuthState>) -> Self {
+        Self { auth_state }
+    }
+
+    pub fn get(&self) -> &Arc<AuthState> {
+        &self.auth_state
+    }
+}
+
+impl Entity for LocalAuthStateProvider {
+    type Event = ();
+}
+
+impl SingletonEntity for LocalAuthStateProvider {}

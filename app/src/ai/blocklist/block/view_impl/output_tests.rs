@@ -2,7 +2,7 @@ use std::time::{Duration, SystemTime};
 
 use ai::agent::action::{UploadArtifactRequest, UseComputerRequest};
 use ai::skills::{ParsedSkill, SkillProvider, SkillReference, SkillScope};
-use computer_use::{Action, ScreenshotParams, Target, TargetedAction};
+use interaction_types::{Action, ScreenshotParams, Target, TargetedAction};
 use repo_metadata::repositories::DetectedRepositories;
 use repo_metadata::{DirectoryWatcher, RepoMetadataModel};
 use warp_util::host_id::HostId;
@@ -128,7 +128,7 @@ fn stop_recording_card_text_includes_complete_duration() {
         width_px: 1280,
         height_px: 720,
         size_bytes: 42,
-        completion_status: computer_use::RecordingCompletionStatus::Completed,
+        completion_status: interaction_types::RecordingCompletionStatus::Completed,
         termination_reason: "Stopped by agent".to_string(),
     });
 
@@ -151,7 +151,7 @@ fn stop_recording_card_text_includes_partial_duration_without_raw_reason() {
         width_px: 1280,
         height_px: 720,
         size_bytes: 42,
-        completion_status: computer_use::RecordingCompletionStatus::StoppedEarly,
+        completion_status: interaction_types::RecordingCompletionStatus::StoppedEarly,
         termination_reason: "internal raw reason".to_string(),
     });
 

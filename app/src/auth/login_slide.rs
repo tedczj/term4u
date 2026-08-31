@@ -12,7 +12,6 @@ use warp_core::features::FeatureFlag;
 use warp_core::safe_error;
 use warp_core::ui::Icon;
 use warp_core::ui::theme::color::internal_colors;
-use warpui::actions::StandardAction;
 use warpui::clipboard::ClipboardContent;
 use warpui::elements::{
     Align, Border, CacheOption, ChildAnchor, ClippedScrollStateHandle, ConstrainedBox, Container,
@@ -21,7 +20,7 @@ use warpui::elements::{
     OffsetPositioning, ParentAnchor, ParentElement, ParentOffsetBounds, Radius, Shrinkable, Stack,
 };
 use warpui::fonts::Weight;
-use warpui::keymap::{FixedBinding, Keystroke};
+use warpui::keymap::Keystroke;
 use warpui::text_layout::TextAlignment;
 use warpui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
 use warpui::{
@@ -40,55 +39,9 @@ use crate::editor::{EditorView, SingleLineEditorOptions, TextColors, TextOptions
 use crate::server::telemetry::{LoginEventSource, TelemetryEvent};
 use crate::settings::PrivacySettings;
 use crate::themes::theme::Fill as ThemeFill;
-use crate::util::bindings::CustomAction;
 use crate::{send_telemetry_from_ctx, send_telemetry_sync_from_ctx};
 
 const TOS_URL: &str = "https://www.warp.dev/terms-of-service";
-
-// ---------------------------------------------------------------------------
-// Init (keybindings)
-// ---------------------------------------------------------------------------
-
-pub fn init(app: &mut AppContext) {
-    use warpui::keymap::macros::*;
-
-    app.register_fixed_bindings([
-        FixedBinding::new(
-            "enter",
-            LoginSlideAction::Enter,
-            id!(LoginSlideView::ui_name()),
-        ),
-        FixedBinding::new(
-            "cmdorctrl-enter",
-            LoginSlideAction::ShowSkipDialog,
-            id!(LoginSlideView::ui_name()),
-        ),
-        FixedBinding::new(
-            "escape",
-            LoginSlideAction::DismissOverlayOrBack,
-            id!(LoginSlideView::ui_name()),
-        ),
-        FixedBinding::custom(
-            CustomAction::Paste,
-            LoginSlideAction::PasteAuthUrl,
-            "Paste",
-            id!(LoginSlideView::ui_name()),
-        ),
-        FixedBinding::standard(
-            StandardAction::Paste,
-            LoginSlideAction::PasteAuthUrl,
-            id!(LoginSlideView::ui_name()),
-        ),
-    ]);
-
-    #[cfg(any(target_os = "linux", target_os = "freebsd", target_os = "windows"))]
-    app.register_fixed_bindings([FixedBinding::new(
-        "cmdorctrl-v",
-        LoginSlideAction::PasteAuthUrl,
-        id!(LoginSlideView::ui_name()),
-    )]);
-}
-
 impl LoginPurpose {
     fn copy(self) -> (&'static str, &'static str) {
         match self {
@@ -130,7 +83,6 @@ pub enum LoginSlideAction {
     ConfirmSkip,
     LoginFromSkipDialog,
     DismissDialog,
-    DismissOverlayOrBack,
     Back,
     BackToSelectAuthPathway,
     CopyLoginUrl,
@@ -141,7 +93,6 @@ pub enum LoginSlideAction {
     ToggleCrashReporting,
     ToggleCloudConversationStorage,
     DismissNotification,
-    PasteAuthUrl,
 }
 
 #[derive(Clone, Debug)]
@@ -312,11 +263,6 @@ impl LoginSlideView {
     pub fn is_auth_token_input_visible(&self) -> bool {
         matches!(self.step, LoginStep::BrowserOpen) && self.show_auth_token_input
     }
-
-    pub fn is_account_first_onboarding(&self) -> bool {
-        matches!(self.source, LoginSlideSource::AccountFirstOnboarding)
-    }
-
     pub fn new(
         ai_enabled: bool,
         uses_third_party_agents: bool,
@@ -1325,46 +1271,6 @@ impl TypedActionView for LoginSlideView {
                 self.active_overlay = None;
                 ctx.notify();
             }
-            LoginSlideAction::DismissOverlayOrBack => {
-                if self.active_overlay.is_some() {
-                    self.active_overlay = None;
-                    ctx.notify();
-                } else if matches!(self.step, LoginStep::PrivacySettings) {
-                    match self.source {
-                        LoginSlideSource::PrivacySettingsFromTerminalIntentionTheme => {
-                            ctx.emit(LoginSlideEvent::BackToOnboarding);
-                        }
-                        LoginSlideSource::OnboardingFlow
-                        | LoginSlideSource::AccountFirstOnboarding
-                        | LoginSlideSource::LoginExistingUserFromWelcome => {
-                            self.step = LoginStep::SelectAuthPathway;
-                            ctx.focus_self();
-                            ctx.notify();
-                        }
-                    }
-                } else if matches!(self.step, LoginStep::BrowserOpen) {
-                    // PrivacySettingsFromTerminalIntentionTheme starts on the
-                    // privacy-settings step and should never transition into the
-                    // select-auth-pathway step. If this branch is ever reached
-                    // for that source, route back to onboarding instead.
-                    match self.source {
-                        LoginSlideSource::LoginExistingUserFromWelcome
-                        | LoginSlideSource::PrivacySettingsFromTerminalIntentionTheme => {
-                            ctx.emit(LoginSlideEvent::BackToOnboarding);
-                        }
-                        LoginSlideSource::OnboardingFlow
-                        | LoginSlideSource::AccountFirstOnboarding => {
-                            self.send_account_first_action("browser_auth", "back", ctx);
-                            self.step = LoginStep::SelectAuthPathway;
-                            ctx.focus_self();
-                            ctx.notify();
-                        }
-                    }
-                } else {
-                    self.send_account_first_action("create_account", "back", ctx);
-                    ctx.emit(LoginSlideEvent::BackToOnboarding);
-                }
-            }
             LoginSlideAction::Back => {
                 self.send_account_first_action("create_account", "back", ctx);
                 ctx.emit(LoginSlideEvent::BackToOnboarding);
@@ -1463,17 +1369,6 @@ impl TypedActionView for LoginSlideView {
                 self.last_login_failure_reason = None;
                 ctx.notify();
             }
-            LoginSlideAction::PasteAuthUrl => {
-                self.last_login_failure_reason = None;
-                let clipboard_content = ctx.clipboard().read();
-                if !clipboard_content.plain_text.is_empty() {
-                    self.handle_pasted_auth_url(clipboard_content.plain_text, ctx);
-                }
-            }
         }
     }
 }
-
-#[cfg(test)]
-#[path = "login_slide_tests.rs"]
-mod tests;

@@ -81,6 +81,19 @@ pub struct TuiOnboardingMarkers {
 }
 
 impl TuiOnboardingMarkers {
+    pub fn new_offline() -> Self {
+        Self {
+            state: TuiOnboardingMarkersState::Ready {
+                first_zero_state_available: true,
+                first_credit_gate_available: true,
+            },
+            load_generation: 0,
+            persist_markers: false,
+            onboarding_client: None,
+            load_timeout: MARKER_LOAD_TIMEOUT,
+        }
+    }
+
     pub fn new(ctx: &mut ModelContext<Self>) -> Self {
         let onboarding_client = ServerApiProvider::as_ref(ctx).get_tui_onboarding_client();
         ctx.subscribe_to_model(&UpdateManager::handle(ctx), |markers, _, event, ctx| {

@@ -47,6 +47,13 @@ pub enum TuiUserInfoManagerEvent {
 pub struct TuiUserInfoManager;
 
 impl TuiUserInfoManager {
+    pub fn new_offline(ctx: &mut ModelContext<Self>) -> Self {
+        ctx.subscribe_to_model(&UserWorkspaces::handle(ctx), |me, _, _, ctx| {
+            me.refresh(ctx);
+        });
+        Self
+    }
+
     pub fn new(ctx: &mut ModelContext<Self>) -> Self {
         ctx.subscribe_to_model(&AuthManager::handle(ctx), |me, _, _, ctx| {
             me.refresh(ctx);

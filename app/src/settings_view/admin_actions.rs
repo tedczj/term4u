@@ -9,14 +9,24 @@ pub struct AdminActions;
 impl AdminActions {
     /// Generate the admin panel URL for a given team
     pub fn admin_panel_link_for_team(team_uid: ServerId) -> String {
-        format!("{}/admin/{}", ChannelState::server_root_url(), team_uid)
+        format!(
+            "{}/admin/{}",
+            ChannelState::server_root_url().unwrap_or_default(),
+            team_uid
+        )
     }
 
     pub fn admin_panel_link_for_workspace() -> String {
-        format!("{}/admin", ChannelState::server_root_url())
+        format!(
+            "{}/admin",
+            ChannelState::server_root_url().unwrap_or_default()
+        )
     }
     pub fn workspace_teams_admin_panel_link() -> String {
-        format!("{}/admin/workspace/teams", ChannelState::server_root_url())
+        format!(
+            "{}/admin/workspace/teams",
+            ChannelState::server_root_url().unwrap_or_default()
+        )
     }
 
     /// Open the admin panel for a specific team

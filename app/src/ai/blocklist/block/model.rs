@@ -4,8 +4,8 @@ mod model_impl;
 use chrono::{DateTime, Local, TimeDelta};
 pub use helper::AIBlockModelHelper;
 pub use model_impl::*;
-use session_sharing_protocol::common::ParticipantId;
 use warp_core::features::FeatureFlag;
+use warp_terminal::session_sharing_types::common::ParticipantId;
 use warpui::{AppContext, ViewContext};
 
 use crate::ai::agent::conversation::AIConversationId;

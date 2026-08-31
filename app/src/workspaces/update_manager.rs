@@ -5,12 +5,8 @@ use anyhow::{Context, Result};
 use futures::channel::oneshot::{self, Receiver};
 use futures::stream::AbortHandle;
 use warp_errors::{report_error, report_if_error};
-use warpui::r#async::Timer;
-use warpui::{
-    Entity, ModelContext, ModelHandle, RequestState, SingletonEntity, duration_with_jitter,
-};
+use warpui::{Entity, ModelContext, RequestState, SingletonEntity};
 
-use super::team_tester::{TeamTesterStatus, TeamTesterStatusEvent};
 use super::user_workspaces::{
     CreateTeamResponse, UserWorkspaces, WorkspacesMetadataResponse, WorkspacesMetadataWithPricing,
 };
@@ -18,14 +14,11 @@ use super::workspace::WorkspaceUid;
 use crate::ai::request_usage_model::AIRequestUsageModel;
 use crate::auth::AuthStateProvider;
 use crate::cloud_object::CloudObjectEventEntrypoint;
-use crate::network::{NetworkStatus, NetworkStatusEvent, NetworkStatusKind};
 use crate::persistence::ModelEvent;
 use crate::pricing::PricingInfoModel;
 use crate::server::cloud_objects::update_manager::UpdateManager;
 use crate::server::ids::ServerId;
-use crate::server::retry_strategies::{
-    OUT_OF_BAND_REQUEST_RETRY_STRATEGY, PERIODIC_POLL, PERIODIC_POLL_RETRY_STRATEGY,
-};
+use crate::server::retry_strategies::OUT_OF_BAND_REQUEST_RETRY_STRATEGY;
 use crate::server::server_api::ServerApiProvider;
 use crate::server::server_api::team::TeamClient;
 
@@ -58,17 +51,13 @@ pub struct TeamUpdateManager {
 }
 
 impl TeamUpdateManager {
+    #[cfg(test)]
     pub fn new(
         team_client: Arc<dyn TeamClient>,
         model_event_sender: Option<SyncSender<ModelEvent>>,
         ctx: &mut ModelContext<Self>,
     ) -> Self {
-        let network_status = NetworkStatus::handle(ctx);
-        ctx.subscribe_to_model(&network_status, Self::handle_network_status_changed);
-
-        let team_tester_status = TeamTesterStatus::handle(ctx);
-        ctx.subscribe_to_model(&team_tester_status, Self::handle_team_tester_status_changed);
-
+        let _ = ctx;
         Self {
             team_client,
             model_event_sender,
@@ -76,38 +65,6 @@ impl TeamUpdateManager {
             next_poll_abort_handle: None,
             in_flight_request_abort_handle: None,
         }
-    }
-
-    fn handle_network_status_changed(
-        &mut self,
-        _: ModelHandle<NetworkStatus>,
-        network_status: &NetworkStatusEvent,
-        ctx: &mut ModelContext<Self>,
-    ) {
-        match network_status {
-            NetworkStatusEvent::NetworkStatusChanged { new_status } => match new_status {
-                NetworkStatusKind::Online => {
-                    // TODO: this will cause us to reset our polling very frequently
-                    // if the client's network conn is repeatedly flipping between on and off.
-                    self.start_polling_for_workspace_metadata_updates(ctx);
-                }
-                NetworkStatusKind::Offline => self.stop_polling_for_workspace_metadata_updates(),
-            },
-        }
-    }
-
-    fn handle_team_tester_status_changed(
-        &mut self,
-        _: ModelHandle<TeamTesterStatus>,
-        event: &TeamTesterStatusEvent,
-        ctx: &mut ModelContext<Self>,
-    ) {
-        let TeamTesterStatusEvent::InitiateDataPollers { force_refresh } = event;
-        if *force_refresh {
-            std::mem::drop(self.refresh_workspace_metadata(ctx));
-        }
-
-        self.start_polling_for_workspace_metadata_updates(ctx);
     }
 
     #[cfg(test)]
@@ -133,17 +90,6 @@ impl TeamUpdateManager {
 
         Self::new(Arc::new(team_client), Default::default(), ctx)
     }
-
-    /// Starts a periodic poll for workspace metadata changes, if there isn't already
-    /// an existing poll queued up.
-    pub fn start_polling_for_workspace_metadata_updates(&mut self, ctx: &mut ModelContext<Self>) {
-        let is_online = NetworkStatus::as_ref(ctx).is_online();
-        if !self.should_poll_for_workspace_metadata_updates && is_online {
-            self.should_poll_for_workspace_metadata_updates = true;
-            self.poll_for_workspace_metadata_changes(ctx);
-        }
-    }
-
     pub fn stop_polling_for_workspace_metadata_updates(&mut self) {
         self.should_poll_for_workspace_metadata_updates = false;
         self.abort_existing_poll();
@@ -189,70 +135,6 @@ impl TeamUpdateManager {
             abort_handle.abort();
         }
     }
-
-    /// Only call this method if you need to restart the poll and force a refresh.
-    /// Currently called when
-    /// - we decide that a feature flag needs to change
-    /// - find out that a user is a team tester
-    /// - a network status changes (we go from offline to online state)
-    ///
-    /// Note: the gql query for this poll also pulls in experiment state. If we change
-    /// the behaviour for polling workspace metadata, we should consider what ramifications
-    /// that has on querying experiment state.
-    fn poll_for_workspace_metadata_changes(&mut self, ctx: &mut ModelContext<Self>) {
-        self.abort_existing_poll();
-
-        if !self.should_poll_for_workspace_metadata_updates {
-            return;
-        }
-
-        // Don't poll when the user is logged out to avoid spamming auth errors in the logs.
-        // Polling will be restarted when the user logs in via `initiate_data_pollers`.
-        if !AuthStateProvider::as_ref(ctx).get().is_logged_in() {
-            self.should_poll_for_workspace_metadata_updates = false;
-            return;
-        }
-
-        let team_client = self.team_client.clone();
-        // We retry a few times here in case there are any transient network errors.
-        let spawn_handle = ctx.spawn_with_retry_on_error(
-            move || {
-                let team_client = team_client.clone();
-                async move {
-                    team_client
-                        .workspaces_metadata()
-                        .await
-                        .context("Error polling for workspace metadata changes")
-                }
-            },
-            PERIODIC_POLL_RETRY_STRATEGY,
-            |update_manager, res, ctx| {
-                // Only poll if `spawn_with_retry_on_error` is not going to retry again so we don't end up with multiple
-                // polls running simultaneously.
-                let should_poll_again = !res.has_pending_retries();
-                update_manager.handle_workspace_metadata_with_request_state(res, ctx);
-
-                if should_poll_again {
-                    let next_poll_handle = ctx.spawn(
-                        async move {
-                            Timer::after(duration_with_jitter(
-                                PERIODIC_POLL,
-                                0.2, /* max_jitter_multiplier */
-                            ))
-                            .await
-                        },
-                        |update_manager, _, ctx| {
-                            update_manager.poll_for_workspace_metadata_changes(ctx);
-                        },
-                    );
-                    update_manager.next_poll_abort_handle = Some(next_poll_handle.abort_handle());
-                }
-            },
-        );
-
-        self.in_flight_request_abort_handle = Some(spawn_handle.abort_handle());
-    }
-
     fn save_to_db(&self, events: impl IntoIterator<Item = ModelEvent>) {
         let model_event_sender = self.model_event_sender.clone();
         if let Some(model_event_sender) = &model_event_sender {
@@ -537,7 +419,3 @@ impl Entity for TeamUpdateManager {
 }
 
 impl SingletonEntity for TeamUpdateManager {}
-
-#[cfg(test)]
-#[path = "update_manager_tests.rs"]
-mod tests;

@@ -270,7 +270,7 @@ impl UserWorkspaces {
     pub fn upgrade_link(user_id: UserUid) -> String {
         format!(
             "{}{}/{}/{}",
-            ChannelState::server_root_url(),
+            ChannelState::server_root_url().unwrap_or_default(),
             STRIPE_SUBSCRIPTION_INTERVAL_PAGE_PREFIX,
             "user",
             user_id.as_str()
@@ -281,7 +281,7 @@ impl UserWorkspaces {
     pub fn upgrade_link_for_team(team_uid: ServerId) -> String {
         format!(
             "{}{}/{}",
-            ChannelState::server_root_url(),
+            ChannelState::server_root_url().unwrap_or_default(),
             STRIPE_SUBSCRIPTION_INTERVAL_PAGE_PREFIX,
             team_uid
         )
@@ -308,7 +308,9 @@ impl UserWorkspaces {
             || {
                 format!(
                     "{}{}",
-                    ChannelState::server_root_url().trim_end_matches('/'),
+                    ChannelState::server_root_url()
+                        .unwrap_or_default()
+                        .trim_end_matches('/'),
                     STRIPE_SUBSCRIPTION_INTERVAL_PAGE_PREFIX
                 )
             },
@@ -319,7 +321,9 @@ impl UserWorkspaces {
     pub fn admin_billing_link_for_team(team_uid: ServerId) -> String {
         format!(
             "{}/admin/{team_uid}/billing",
-            ChannelState::server_root_url().trim_end_matches('/')
+            ChannelState::server_root_url()
+                .unwrap_or_default()
+                .trim_end_matches('/')
         )
     }
 

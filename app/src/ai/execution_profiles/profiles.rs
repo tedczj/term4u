@@ -18,8 +18,6 @@ use super::{
     ExecutionProfilesConfig, WriteToPtyPermission,
 };
 use crate::ai::llms::{LLMId, LLMPreferences};
-use crate::ai::mcp::TemplatableMCPServerManager;
-use crate::ai::mcp::templatable_manager::TemplatableMCPServerManagerEvent;
 use crate::auth::AuthStateProvider;
 // The auth-completion trigger for the legacy import is compiled out for eval builds.
 #[cfg(not(feature = "agent_mode_evals"))]
@@ -67,16 +65,14 @@ impl AIExecutionProfileInfo {
 
 /// Enables file-backed profiles for every TUI build and for flagged GUI builds.
 ///
-/// CLI and remote-server modes retain their dedicated in-memory behavior.
+/// CLI mode retains its dedicated in-memory behavior.
 fn file_backed_execution_profiles_enabled(launch_mode: &LaunchMode) -> bool {
     match launch_mode {
         LaunchMode::Tui { .. } => true,
         LaunchMode::App { .. } | LaunchMode::Test { .. } => {
             FeatureFlag::FileBackedExecutionProfiles.is_enabled()
         }
-        LaunchMode::CommandLine { .. }
-        | LaunchMode::RemoteServerProxy
-        | LaunchMode::RemoteServerDaemon { .. } => false,
+        LaunchMode::CommandLine { .. } => false,
     }
 }
 
@@ -367,14 +363,6 @@ impl AIExecutionProfilesModel {
                                 id: ExecutionProfileId::new(),
                             }
                         }
-                        // RemoteServerProxy and RemoteServerDaemon don't use AI
-                        // execution profiles. They never reach this code path
-                        // since they don't go through initialize_app, but handle
-                        // exhaustively.
-                        LaunchMode::RemoteServerProxy | LaunchMode::RemoteServerDaemon { .. } => DefaultProfileState::Unsynced {
-                            id: ExecutionProfileId::new(),
-                            profile: super::create_default_from_legacy_settings(ctx),
-                        },
                         // Settings-backed TUI initialization is handled before the
                         // legacy cloud-object branch.
                         LaunchMode::Tui { .. } => unreachable!("TUI profiles use settings"),
@@ -455,13 +443,6 @@ impl AIExecutionProfilesModel {
                 });
             }
         }
-
-        ctx.subscribe_to_model(
-            &TemplatableMCPServerManager::handle(ctx),
-            |me, _, event, ctx| {
-                me.handle_templatable_mcp_server_manager_event(event, ctx);
-            },
-        );
 
         // In dev, it's possible the SQLite data read in for the default profile actually comes from a different environment
         // (say, we switch between local and staging servers). When that happens the default profile starts as synced but
@@ -2205,25 +2186,6 @@ impl AIExecutionProfilesModel {
             ctx.emit(AIExecutionProfilesModelEvent::ProfileCreated);
         }
     }
-
-    fn handle_templatable_mcp_server_manager_event(
-        &mut self,
-        event: &TemplatableMCPServerManagerEvent,
-        ctx: &mut ModelContext<Self>,
-    ) {
-        match event {
-            TemplatableMCPServerManagerEvent::TemplatableMCPServersUpdated => {
-                self.remove_deleted_mcp_servers(ctx);
-            }
-            TemplatableMCPServerManagerEvent::LegacyServerConverted
-            | TemplatableMCPServerManagerEvent::StateChanged { uuid: _, state: _ }
-            | TemplatableMCPServerManagerEvent::AuthenticationRequired { uuid: _ }
-            | TemplatableMCPServerManagerEvent::CredentialsChanged { uuid: _ }
-            | TemplatableMCPServerManagerEvent::ServerInstallationAdded(_)
-            | TemplatableMCPServerManagerEvent::ServerInstallationDeleted(_) => {}
-        }
-    }
-
     /// Handle a newly created AI execution profile from the cloud.
     fn handle_ai_execution_profile_created(
         &mut self,
@@ -2342,30 +2304,6 @@ impl AIExecutionProfilesModel {
             ctx.emit(AIExecutionProfilesModelEvent::ProfileUpdated(profile_id));
         }
     }
-
-    /// Handle deleted MCP servers by deleting its uuid from all profiles.
-    fn remove_deleted_mcp_servers(&mut self, ctx: &mut ModelContext<Self>) {
-        let all_valid_uuids = TemplatableMCPServerManager::get_all_cloud_synced_mcp_servers(ctx);
-        for profile_id in self.get_all_profile_ids() {
-            self.edit_profile_internal(
-                &profile_id,
-                |profile| {
-                    let original_allowlist_len = profile.mcp_allowlist.len();
-                    let original_denylist_len = profile.mcp_denylist.len();
-                    profile
-                        .mcp_allowlist
-                        .retain(|uuid| all_valid_uuids.contains_key(uuid));
-                    profile
-                        .mcp_denylist
-                        .retain(|uuid| all_valid_uuids.contains_key(uuid));
-                    profile.mcp_allowlist.len() != original_allowlist_len
-                        || profile.mcp_denylist.len() != original_denylist_len
-                },
-                ctx,
-            );
-        }
-    }
-
     /// Replaces a temporary client sync ID with the server ID assigned after object creation.
     ///
     /// Migration-capable sources also replace generated profile keys with their deterministic

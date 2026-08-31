@@ -95,7 +95,6 @@ fn terminal_bootstrap_is_idempotent_after_background_terminal_exists() {
     App::test((), |mut app| async move {
         register_tui_session_view_test_singletons(&mut app);
         add_test_semantic_selection(&mut app);
-        app.update(crate::autoupdate::TuiAutoupdater::register);
         let (window_id, root) = app.update(|ctx| {
             ctx.add_tui_window(
                 AddWindowOptions {

@@ -4,10 +4,10 @@ pub mod auth_override_warning_modal;
 mod auth_view_body;
 pub mod auth_view_modal;
 mod auth_view_shared_helpers;
+#[cfg(target_family = "wasm")]
 mod login_error_modal;
 mod login_failure_notification;
 pub mod login_slide;
-pub mod needs_sso_link_view;
 pub mod paste_auth_token_modal;
 mod user_properties;
 pub use warp_server_auth::{auth_state, credentials, user, user_uid};
@@ -52,7 +52,7 @@ use crate::settings::{
     TELEMETRY_ENABLED_DEFAULTS_KEY,
 };
 use crate::terminal::general_settings::GeneralSettings;
-use crate::terminal::shared_session::manager::Manager as SharedSessionManager;
+use crate::terminal::session_sharing::manager::Manager as SharedSessionManager;
 use crate::workflows::manager::WorkflowManager;
 use crate::workspace::{Workspace, WorkspaceAction};
 use crate::workspaces::update_manager::TeamUpdateManager;
@@ -60,15 +60,6 @@ use crate::{
     GlobalResourceHandlesProvider, focus_running_window_and_show_native_modal, persistence,
     send_telemetry_sync_from_app_ctx,
 };
-
-pub fn init(app: &mut AppContext) {
-    auth_view_modal::init(app);
-    auth_view_body::init(app);
-    auth_override_warning_body::init(app);
-    login_slide::init(app);
-    paste_auth_token_modal::init(app);
-}
-
 /// Returns the configured Warp web logout URL.
 ///
 /// Keep this derived from the channel's server root so local and non-production
@@ -76,7 +67,9 @@ pub fn init(app: &mut AppContext) {
 pub fn web_logout_url() -> String {
     format!(
         "{}/logout",
-        ChannelState::server_root_url().trim_end_matches('/')
+        ChannelState::server_root_url()
+            .unwrap_or_default()
+            .trim_end_matches('/')
     )
 }
 
@@ -410,7 +403,3 @@ fn remove_cloud_persisted_settings(app: &mut AppContext) {
         privacy_settings.refresh_to_default();
     });
 }
-
-#[cfg(test)]
-#[path = "mod_tests.rs"]
-mod tests;

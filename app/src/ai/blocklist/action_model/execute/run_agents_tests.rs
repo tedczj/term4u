@@ -15,12 +15,12 @@ use crate::ai::agent::task::TaskId;
 use crate::ai::blocklist::{
     BlocklistAIHistoryModel, BlocklistAIPermissions, StartAgentExecutorEvent, StartAgentRequest,
 };
-use crate::ai::cloud_agent_settings::CloudAgentSettings;
 use crate::ai::document::ai_document_model::{AIDocumentModel, AIDocumentSaveStatus};
 use crate::ai::execution_profiles::RunAgentsPermission;
 use crate::ai::execution_profiles::profiles::AIExecutionProfilesModel;
 use crate::ai::mcp::templatable_manager::TemplatableMCPServerManager;
 use crate::ai::orchestration::populate_default_auth_secret_for_execution;
+use crate::ai::orchestration::settings::OrchestrationSettings;
 use crate::appearance::Appearance;
 use crate::auth::AuthStateProvider;
 use crate::cloud_object::model::persistence::CloudModel;
@@ -289,7 +289,7 @@ fn local_codex_run_agents_maps_to_local_harness_mode_when_flag_enabled() {
 }
 
 fn persist_default_auth_secret(app: &mut App, harness_config_name: &str, secret_name: &str) {
-    CloudAgentSettings::handle(app).update(app, |settings, ctx| {
+    OrchestrationSettings::handle(app).update(app, |settings, ctx| {
         let mut secrets = settings.last_selected_auth_secret.value().clone();
         secrets.insert(harness_config_name.to_string(), secret_name.to_string());
         settings

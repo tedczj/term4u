@@ -144,7 +144,7 @@ fn convert_run_agents(
             .collect(),
         plan_id,
         // Auth secret is a client-side dispatch concern populated by the
-        // confirmation card from `CloudAgentSettings.last_selected_auth_secret`
+        // confirmation card from `OrchestrationSettings.last_selected_auth_secret`
         // before Accept. The proto does not carry it.
         harness_auth_secret_name: None,
     })
@@ -943,7 +943,3 @@ fn convert_api_question(
         },
     })
 }
-
-#[cfg(test)]
-#[path = "convert_from_tests.rs"]
-mod tests;

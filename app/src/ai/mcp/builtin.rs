@@ -63,7 +63,10 @@ pub fn builtin_bearer_token(credentials: &Credentials) -> Option<String> {
 /// streamable-HTTP MCP server hosted by warp-server at `/api/v1/mcp/factory`,
 /// pre-authenticated via the `Authorization` header.
 pub fn factory_mcp_installation(bearer_token: &str) -> TemplatableMCPServerInstallation {
-    factory_mcp_installation_for_server_root(&ChannelState::server_root_url(), bearer_token)
+    factory_mcp_installation_for_server_root(
+        &ChannelState::server_root_url().unwrap_or_default(),
+        bearer_token,
+    )
 }
 
 /// Like [`factory_mcp_installation`], with an explicit server root for tests.

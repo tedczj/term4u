@@ -7,20 +7,17 @@
 
 use std::future::Future;
 
-#[cfg(not(target_family = "wasm"))]
-use futures::future::Either;
 use futures::future::ready;
 #[cfg(not(target_family = "wasm"))]
 use repo_metadata::repositories::DetectedRepositories;
 use repo_metadata::repositories::RepoDetectionSource;
 use warp_core::SessionId;
 use warp_util::local_or_remote_path::LocalOrRemotePath;
+#[cfg(not(target_family = "wasm"))]
+use warp_util::remote_path::RemoteNavigationResult;
 use warpui::AppContext;
 #[cfg(not(target_family = "wasm"))]
 use warpui::SingletonEntity;
-
-#[cfg(not(target_family = "wasm"))]
-use crate::remote_server::manager::RemoteServerManager;
 
 /// Describes whether the active session is local or remote.
 pub enum RepoDetectionSessionType {
@@ -58,16 +55,8 @@ pub fn detect_possible_git_repo(
     let remote_detect = match session_type {
         RepoDetectionSessionType::Local => None,
         RepoDetectionSessionType::Remote { session_id } => {
-            if RemoteServerManager::as_ref(ctx).is_session_potentially_active(session_id) {
-                Some(Either::Left(RemoteServerManager::handle(ctx).update(
-                    ctx,
-                    |mgr, ctx| {
-                        mgr.navigate_to_directory(session_id, active_directory.to_string(), ctx)
-                    },
-                )))
-            } else {
-                Some(Either::Right(ready(None)))
-            }
+            let _ = session_id;
+            Some(ready(None::<RemoteNavigationResult>))
         }
     };
 

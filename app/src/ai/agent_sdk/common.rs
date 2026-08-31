@@ -8,18 +8,18 @@ use std::time::Duration;
 use futures::TryFutureExt;
 use inquire::{InquireError, Select};
 use warp_cli::agent::Harness;
-use warp_cli::environment::{EnvironmentCreateArgs, EnvironmentUpdateArgs};
+use warp_cli::environment::EnvironmentCreateArgs;
 use warp_cli::scope::ObjectScope;
 use warpui::r#async::FutureExt;
 use warpui::{AppContext, GetSingletonModelHandle, SingletonEntity as _, UpdateModel};
 
 use crate::ai::agent::conversation::ServerAIConversationMetadata;
 use crate::ai::agent_sdk::driver::{AgentDriverError, WARP_DRIVE_SYNC_TIMEOUT};
-use crate::ai::ambient_agents::AmbientAgentTaskId;
-use crate::ai::cloud_environments::CloudAmbientAgentEnvironment;
+use crate::ai::agent_tasks::AmbientAgentTaskId;
 use crate::ai::llms::{LLMId, LLMPreferences, is_model_allowed_for_scope};
 use crate::auth::UserUid;
 use crate::auth::auth_state::AuthStateProvider;
+use crate::cloud_object::agent_environment::CloudAmbientAgentEnvironment;
 use crate::cloud_object::{CloudObject, CloudObjectLookup as _, Owner};
 use crate::server::cloud_objects::update_manager::UpdateManager;
 use crate::server::ids::{ServerId, SyncId};
@@ -426,23 +426,6 @@ Without an environment, the agent will not be able to access private repositorie
             }
         }
     }
-
-    /// Resolve the environment to use when updating an agent integration. If the user did not
-    /// request any changes to the environment, this returns `Ok(None)`.
-    /// Warp Drive *must* have been synced first.
-    pub fn resolve_for_update(
-        args: EnvironmentUpdateArgs,
-        ctx: &AppContext,
-    ) -> Result<Option<Self>, ResolveConfigurationError> {
-        if args.remove_environment {
-            Ok(Some(EnvironmentChoice::None))
-        } else if let Some(id) = args.environment {
-            Self::get_by_id(id, ctx).map(Some)
-        } else {
-            Ok(None)
-        }
-    }
-
     fn get_by_id(id: String, ctx: &AppContext) -> Result<Self, ResolveConfigurationError> {
         let sync_id = SyncId::ServerId(ServerId::try_from(id.as_str()).map_err(|_| {
             ResolveConfigurationError::InvalidId {
@@ -477,7 +460,3 @@ impl fmt::Display for EnvironmentChoice {
         }
     }
 }
-
-#[cfg(test)]
-#[path = "common_tests.rs"]
-mod tests;

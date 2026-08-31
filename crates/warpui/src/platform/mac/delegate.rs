@@ -70,7 +70,6 @@ impl IntegrationTestDelegate {
 }
 
 impl platform::Delegate for IntegrationTestDelegate {
-    #[cfg(feature = "test-util")]
     fn get_cursor_shape(&self) -> Cursor {
         self.app_delegate.get_cursor_shape()
     }
@@ -213,9 +212,8 @@ impl platform::Delegate for AppDelegate {
         cursor.set();
     }
 
-    #[cfg(feature = "test-util")]
     fn get_cursor_shape(&self) -> Cursor {
-        unimplemented!("only implemented in tests")
+        Cursor::Arrow
     }
     fn open_url(&self, url: &str) -> bool {
         Window::open_url(url)

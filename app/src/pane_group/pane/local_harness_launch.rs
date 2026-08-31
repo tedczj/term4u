@@ -14,10 +14,10 @@ use crate::ai::agent_sdk::driver::harness::{
     remove_claude_externally_managed_listener_env_vars,
 };
 use crate::ai::agent_sdk::{task_env_vars, validate_cli_installed};
-use crate::ai::ambient_agents::task::{
+use crate::ai::agent_tasks::task::{
     HarnessConfig, HarnessModelConfig, normalize_orchestrator_agent_name,
 };
-use crate::ai::ambient_agents::{AgentConfigSnapshot, AmbientAgentTaskId};
+use crate::ai::agent_tasks::{AgentConfigSnapshot, AmbientAgentTaskId};
 use crate::ai::local_harness_setup::local_harness_product_disabled_message;
 use crate::server::server_api::ai::AIClient;
 use crate::terminal::cli_agent_sessions::plugin_manager::{

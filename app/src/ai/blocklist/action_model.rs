@@ -14,10 +14,6 @@
 
 mod execute;
 mod preprocess;
-pub(crate) mod recording_controller;
-#[cfg(not(target_family = "wasm"))]
-pub(crate) mod recording_finalize;
-pub(crate) mod recording_telemetry;
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::path::PathBuf;
@@ -28,11 +24,10 @@ use chrono::Local;
 pub use execute::{
     AskUserQuestionExecutor, EditAcceptAndContinueClickedEvent, EditAcceptClickedEvent,
     EditResolvedEvent, EditStats, NewConversationDecision, PromptSuggestionExecutor,
-    ReadFileContextResult, RequestFileEditsExecutor, RequestFileEditsFormatKind,
-    RequestFileEditsTelemetryEvent, RunAgentsExecutor, RunAgentsExecutorEvent,
-    RunAgentsSpawningSnapshot, ShellCommandExecutor, ShellCommandExecutorEvent, StartAgentExecutor,
-    StartAgentExecutorEvent, StartAgentOutcome, StartAgentRequest, StartAgentRequestId,
-    read_local_file_context,
+    RequestFileEditsExecutor, RequestFileEditsFormatKind, RequestFileEditsTelemetryEvent,
+    RunAgentsExecutor, RunAgentsExecutorEvent, RunAgentsSpawningSnapshot, ShellCommandExecutor,
+    ShellCommandExecutorEvent, StartAgentExecutor, StartAgentExecutorEvent, StartAgentOutcome,
+    StartAgentRequest, StartAgentRequestId, read_local_file_context,
 };
 pub(crate) use execute::{
     FileReadResult, MalformedFinalLineProxyEvent, apply_edits, coerce_integer_args,
@@ -43,7 +38,6 @@ use futures::future::{BoxFuture, join_all};
 use itertools::Itertools;
 use parking_lot::FairMutex;
 use preprocess::{PendingPreprocessedActions, PreprocessId};
-pub(crate) use recording_telemetry::RecordingTelemetryEvent;
 use warpui::{AppContext, Entity, EntityId, ModelContext, ModelHandle, SingletonEntity};
 
 use self::execute::search_codebase::SearchCodebaseExecutor;
@@ -51,8 +45,6 @@ use self::execute::{
     BlocklistAIActionExecutor, BlocklistAIActionExecutorEvent, NotExecutedReason,
     RunningActionPhase, TryExecuteResult,
 };
-#[cfg(not(target_family = "wasm"))]
-use self::recording_finalize::{FinalizeReason, finalize_recording_for_conversation};
 use super::BlocklistAIHistoryModel;
 use crate::ai::agent::conversation::{
     AIConversation, AIConversationId, ConversationStatus, RecordingSpanInfo,
@@ -254,7 +246,7 @@ pub struct BlocklistAIActionModel {
     is_view_only: bool,
 
     /// The ID of the ambient agent task which owns this action model, if any.
-    ambient_agent_task_id: Option<crate::ai::ambient_agents::AmbientAgentTaskId>,
+    ambient_agent_task_id: Option<crate::ai::agent_tasks::AmbientAgentTaskId>,
 }
 
 impl BlocklistAIActionModel {
@@ -421,7 +413,7 @@ impl BlocklistAIActionModel {
 
     pub fn set_ambient_agent_task_id(
         &mut self,
-        id: Option<crate::ai::ambient_agents::AmbientAgentTaskId>,
+        id: Option<crate::ai::agent_tasks::AmbientAgentTaskId>,
         ctx: &mut ModelContext<Self>,
     ) {
         self.ambient_agent_task_id = id;
@@ -1168,29 +1160,6 @@ impl BlocklistAIActionModel {
         self.executor.update(ctx, |executor, ctx| {
             executor.cancel_all_running_async_actions_for_conversation(conversation_id, reason, ctx)
         });
-        #[cfg(not(target_family = "wasm"))]
-        {
-            // Cancelling a conversation kills the running ffmpeg process
-            // without uploading the partial recording, so pass
-            // `should_upload = false`.
-            if let Some(finalization) = finalize_recording_for_conversation(
-                conversation_id,
-                FinalizeReason::RunCancelled,
-                false,
-                ctx,
-            ) {
-                ctx.spawn(
-                    async move { finalization.resolve().await },
-                    |_model, (result, actual_reason), _ctx| {
-                        log::info!(
-                            "Recording finalization after conversation cancellation completed \
-                             (reason={actual_reason:?}): {result:?}"
-                        );
-                    },
-                );
-            }
-        }
-
         let Some(actions_to_cancel) = self.pending_actions.get_mut(&conversation_id) else {
             return;
         };

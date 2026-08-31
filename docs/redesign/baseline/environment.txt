@@ -1,0 +1,15 @@
+date=2026-08-30T10:01:00Z
+commit=b5f4f0f636a1c9b6076e5bac9e2d33d26591ad70
+rustc=rustc 1.92.0 (ded5c06cf 2025-12-08)
+cargo=cargo 1.92.0 (344c4567c 2025-10-21)
+nextest=cargo-nextest 0.9.143 (60fa45f63 2026-08-04)
+platform=Darwin arm64 macOS 14.5
+cmd_list=cargo nextest list --workspace --exclude command-signatures-v2 --message-format json
+cmd_run=cargo nextest run --no-fail-fast --workspace --exclude command-signatures-v2
+build_first_exit=101
+build_first_blocker=full Xcode/Metal compiler is absent; xcrun cannot find metal
+presubmit_first_exit=101
+presubmit_first_blocker=protoc was absent at baseline time; installed afterward with Homebrew
+inventory_workaround=tests.txt was generated from a detached b5f4f0f6 worktree with a documented test-only xcrun placeholder because nextest list does not execute GPU rendering; source baseline remained unchanged
+full_test_attempt_exit=101
+full_test_attempt_blocker=57 GiB test-link output exhausted the 57 GiB free filesystem; no test result was classified as a product failure

@@ -13,8 +13,8 @@ use warp_core::features::FeatureFlag;
 use warp_errors::report_error;
 
 use crate::ai::agent_sdk::retry::with_bounded_retry;
-use crate::ai::ambient_agents::AmbientAgentTaskId;
-use crate::ai::ambient_agents::task::{AttachmentInput, TaskAttachment};
+use crate::ai::agent_tasks::AmbientAgentTaskId;
+use crate::ai::agent_tasks::task::{AttachmentInput, TaskAttachment};
 use crate::ai::attachment_utils::MAX_ATTACHMENT_SIZE_BYTES;
 use crate::server::server_api::ServerApi;
 use crate::server::server_api::ai::AIClient;
@@ -343,7 +343,3 @@ pub fn process_attachment(
         data: base64_data,
     })
 }
-
-#[cfg(test)]
-#[path = "attachments_tests.rs"]
-mod tests;

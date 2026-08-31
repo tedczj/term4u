@@ -37,6 +37,19 @@ pub trait ReferralsClient: 'static + Send + Sync {
 
 #[cfg_attr(not(target_family = "wasm"), async_trait)]
 #[cfg_attr(target_family = "wasm", async_trait(?Send))]
+impl ReferralsClient for crate::server::offline_api::OfflineApi {
+    async fn get_referral_info(&self) -> Result<ReferralInfo> {
+        Err(Self::unavailable("referrals API"))
+    }
+
+    async fn send_invite(&self, emails: Vec<String>) -> Result<Vec<String>> {
+        let _ = emails;
+        Err(Self::unavailable("referrals API"))
+    }
+}
+
+#[cfg_attr(not(target_family = "wasm"), async_trait)]
+#[cfg_attr(target_family = "wasm", async_trait(?Send))]
 impl ReferralsClient for ServerApi {
     async fn get_referral_info(&self) -> Result<ReferralInfo> {
         let variables = GetReferralInfoVariables {
@@ -50,7 +63,7 @@ impl ReferralsClient for ServerApi {
                 Ok(ReferralInfo {
                     url: format!(
                         "{}/referral/{}",
-                        ChannelState::server_root_url(),
+                        ChannelState::server_root_url().unwrap_or_default(),
                         user_output.user.referrals.referral_code
                     ),
                     code: user_output.user.referrals.referral_code,

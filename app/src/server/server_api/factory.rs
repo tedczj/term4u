@@ -46,6 +46,25 @@ pub trait FactoryClient: 'static + Send + Sync {
 
 #[cfg_attr(not(target_family = "wasm"), async_trait)]
 #[cfg_attr(target_family = "wasm", async_trait(?Send))]
+impl FactoryClient for crate::server::offline_api::OfflineApi {
+    async fn get_runners(&self, sort_by: Option<RunnerSortBy>) -> Result<Vec<Runner>> {
+        let _ = sort_by;
+        Ok(Vec::new())
+    }
+
+    async fn upsert_runner(&self, input: UpsertRunnerInput) -> Result<UpsertedRunner> {
+        let _ = input;
+        Err(Self::unavailable("runner API"))
+    }
+
+    async fn delete_runner(&self, uid: String) -> Result<String> {
+        let _ = uid;
+        Err(Self::unavailable("runner API"))
+    }
+}
+
+#[cfg_attr(not(target_family = "wasm"), async_trait)]
+#[cfg_attr(target_family = "wasm", async_trait(?Send))]
 impl FactoryClient for ServerApi {
     async fn get_runners(&self, sort_by: Option<RunnerSortBy>) -> Result<Vec<Runner>> {
         let operation = GetRunners::build(GetRunnersVariables {

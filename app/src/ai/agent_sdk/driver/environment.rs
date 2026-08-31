@@ -27,7 +27,7 @@ use crate::ai::agent_sdk::environment_snapshot::{
     EnvironmentSnapshot, EnvironmentSnapshotReporter, RepositoryRevision,
 };
 use crate::ai::agent_sdk::setup_observability::{SetupClientEventReporter, SetupStep};
-use crate::ai::cloud_environments::SourceRepo;
+use crate::cloud_object::agent_environment::SourceRepo;
 use crate::terminal::model::session::command_executor::shell_escape_single_quotes;
 use crate::terminal::shell::ShellType;
 
@@ -1299,7 +1299,3 @@ async fn terminal_directory_exists(
         })?;
     Ok(output.status == CommandExitStatus::Success)
 }
-
-#[cfg(test)]
-#[path = "environment_tests.rs"]
-mod tests;

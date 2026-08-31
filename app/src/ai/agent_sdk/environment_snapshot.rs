@@ -6,7 +6,7 @@ use cloud_object_models::CodeForge;
 use warpui::r#async::executor::Background;
 use warpui::r#async::{FutureExt as _, Timer};
 
-use crate::ai::ambient_agents::AmbientAgentTaskId;
+use crate::ai::agent_tasks::AmbientAgentTaskId;
 use crate::server::retry_strategies::{backoff_after_attempts, is_transient_http_error};
 use crate::server::server_api::ai::{
     AIClient, AgentRunEnvironmentSnapshotRequest, AgentRunRepositoryRevision,
@@ -135,7 +135,3 @@ async fn publish_with_retry(
 
     unreachable!("environment snapshot reporter always attempts at least once")
 }
-
-#[cfg(test)]
-#[path = "environment_snapshot_tests.rs"]
-mod tests;

@@ -15,13 +15,12 @@ use parking_lot::FairMutex;
 use warp::settings::{AISettings, PrivacySettings, PrivacySettingsChangedEvent};
 use warp::tui_export::{
     AIConversationId, AISettingsChangedEvent, AttachmentInput, BlocklistAIContextModel,
-    BlocklistAIController, BlocklistAIHistoryModel, CloudAgentTelemetryEvent,
-    CloudEnvironmentCatalog, HandoffCommitOutcome, HandoffEntryPoint, HandoffLaunchAttachments,
-    HandoffPrepareError, HandoffPrepareInput, HandoffRestoration, HandoffSurface, LLMId,
-    LLMPreferences, LLMPreferencesEvent, OptionRow, OptionSnapshot, OptionSourceStatus,
-    PendingCloudLaunch, PendingHandoff, ServerApiProvider, SnapshotUploadTarget, TerminalModel,
-    UserWorkspaces, UserWorkspacesEvent, execute_handoff, handoff_dispatch_error,
-    oz_model_snapshot, prepare_handoff, suggest_handoff_environment,
+    BlocklistAIController, BlocklistAIHistoryModel, CloudAgentTelemetryEvent, HandoffCommitOutcome,
+    HandoffEntryPoint, HandoffLaunchAttachments, HandoffPrepareError, HandoffPrepareInput,
+    HandoffRestoration, HandoffSurface, LLMId, LLMPreferences, LLMPreferencesEvent, OptionRow,
+    OptionSnapshot, OptionSourceStatus, PendingCloudLaunch, PendingHandoff, ServerApiProvider,
+    SnapshotUploadTarget, TerminalModel, UserWorkspaces, UserWorkspacesEvent, execute_handoff,
+    handoff_dispatch_error, oz_model_snapshot, prepare_handoff, suggest_handoff_environment,
 };
 use warpui::{AppContext, Entity, EntityId, ModelContext, ModelHandle, SingletonEntity as _};
 
@@ -101,7 +100,6 @@ impl TuiHandoffPreparationFailure {
 pub(crate) struct TuiHandoffModel {
     source_conversation_id: Option<AIConversationId>,
     phase: TuiHandoffPhase,
-    environments: ModelHandle<CloudEnvironmentCatalog>,
     forked_existing_conversation: bool,
     next_operation_id: u64,
     execution_cancellation: Option<oneshot::Sender<()>>,
@@ -180,10 +178,6 @@ impl TuiHandoffModel {
         }
 
         Ok(ctx.add_model(move |ctx: &mut ModelContext<Self>| {
-            let environments = CloudEnvironmentCatalog::handle(ctx);
-            ctx.subscribe_to_model(&environments, |model, _, _, ctx| {
-                model.handle_environment_change(ctx);
-            });
             ctx.subscribe_to_model(&LLMPreferences::handle(ctx), |_, _, event, ctx| {
                 if matches!(event, LLMPreferencesEvent::UpdatedAvailableLLMs) {
                     ctx.emit(TuiHandoffModelEvent::Changed { focus_block: false });
@@ -228,14 +222,11 @@ impl TuiHandoffModel {
                     },
                     pending: Box::new(pending),
                 },
-                environments,
                 forked_existing_conversation,
                 next_operation_id: 0,
                 execution_cancellation: None,
                 dismissed: false,
             };
-            model.refresh_pending_environments(ctx);
-
             if let Some(path) = current_working_directory.map(PathBuf::from) {
                 let suggestion = suggest_handoff_environment(path, ctx);
                 ctx.spawn(suggestion, |model, environment_id, ctx| {
@@ -359,7 +350,8 @@ impl TuiHandoffModel {
     }
 
     pub(crate) fn no_environments(&self, ctx: &AppContext) -> bool {
-        self.environments.as_ref(ctx).environments().is_empty()
+        let _ = ctx;
+        true
     }
 
     pub(crate) fn forked_existing_conversation(&self) -> bool {
@@ -421,35 +413,13 @@ impl TuiHandoffModel {
     }
 
     fn environment_snapshot(&self, ctx: &AppContext) -> OptionSnapshot {
-        let selected_id = self
-            .pending()
-            .and_then(|pending| pending.presentation_snapshot().environment_id)
-            .map(|id| id.to_string());
-        let rows = self
-            .environments
-            .as_ref(ctx)
-            .environments()
-            .iter()
-            .map(|environment| OptionRow {
-                id: environment.id.to_string(),
-                label: environment.name.clone(),
-                harness: None,
-                badge: None,
-                disabled_reason: None,
-            })
-            .collect::<Vec<_>>();
-        let selected_id =
-            selected_id.filter(|selected_id| rows.iter().any(|row| row.id == *selected_id));
+        let _ = ctx;
         OptionSnapshot {
-            status: if rows.is_empty() {
-                OptionSourceStatus::Empty {
-                    message: "No cloud environments available".to_owned(),
-                }
-            } else {
-                OptionSourceStatus::Ready
+            status: OptionSourceStatus::Empty {
+                message: "Cloud environments are unavailable in term4u".to_owned(),
             },
-            rows,
-            selected_id,
+            rows: Vec::new(),
+            selected_id: None,
             footer: None,
         }
     }
@@ -464,19 +434,8 @@ impl TuiHandoffModel {
     }
 
     pub(crate) fn environment_label(&self, ctx: &AppContext) -> String {
-        let selected = self
-            .pending()
-            .and_then(|pending| pending.presentation_snapshot().environment_id);
-        selected
-            .and_then(|selected| {
-                self.environments
-                    .as_ref(ctx)
-                    .environments()
-                    .iter()
-                    .find(|environment| environment.id == selected)
-                    .map(|environment| environment.name.clone())
-            })
-            .unwrap_or_else(|| "Select an environment".to_owned())
+        let _ = ctx;
+        "Cloud environments unavailable".to_owned()
     }
 
     pub(crate) fn model_label(&self, ctx: &AppContext) -> String {
@@ -535,25 +494,7 @@ impl TuiHandoffModel {
         ctx: &mut ModelContext<Self>,
     ) -> bool {
         match page {
-            TuiHandoffSelectorKind::Environment => {
-                let environment_id = self
-                    .environments
-                    .as_ref(ctx)
-                    .environments()
-                    .iter()
-                    .find(|environment| environment.id.to_string() == id)
-                    .map(|environment| environment.id);
-                let Some(environment_id) = environment_id else {
-                    return false;
-                };
-                let Some(pending) = self.pending_mut() else {
-                    return false;
-                };
-                pending.set_environment_id(Some(environment_id), true);
-                self.environments.update(ctx, |catalog, ctx| {
-                    catalog.persist_selection(environment_id, ctx);
-                });
-            }
+            TuiHandoffSelectorKind::Environment => return false,
             TuiHandoffSelectorKind::Model => {
                 let Some(pending) = self.pending_mut() else {
                     return false;
@@ -721,41 +662,6 @@ impl TuiHandoffModel {
         }
         self.dismissed = true;
         ctx.emit(TuiHandoffModelEvent::StartNewConversation);
-        ctx.notify();
-    }
-
-    pub(crate) fn refresh_environments(&self, ctx: &mut ModelContext<Self>) {
-        self.environments.update(ctx, |catalog, ctx| {
-            catalog.refresh_from_server(ctx);
-        });
-    }
-
-    fn refresh_pending_environments(&mut self, ctx: &AppContext) {
-        let valid_ids = self
-            .environments
-            .as_ref(ctx)
-            .environments()
-            .iter()
-            .map(|environment| environment.id)
-            .collect::<HashSet<_>>();
-        let default_environment_id = self.environments.as_ref(ctx).default_environment_id(ctx);
-        let Some(pending) = self.pending_mut() else {
-            return;
-        };
-        pending.set_valid_environment_ids(valid_ids);
-        if pending.presentation_snapshot().environment_id.is_none()
-            && let Some(environment_id) = default_environment_id
-        {
-            pending.set_environment_id(Some(environment_id), false);
-        }
-    }
-
-    fn handle_environment_change(&mut self, ctx: &mut ModelContext<Self>) {
-        if !self.is_editable() {
-            return;
-        }
-        self.refresh_pending_environments(ctx);
-        ctx.emit(TuiHandoffModelEvent::Changed { focus_block: false });
         ctx.notify();
     }
 }

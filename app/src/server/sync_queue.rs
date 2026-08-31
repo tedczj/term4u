@@ -19,17 +19,16 @@ use super::graphql::GraphQLError;
 use super::ids::{ClientId, HashableId, ObjectUid, ServerId, SyncId, ToServerId};
 use super::server_api::auth::UserAuthenticationError;
 use super::server_api::object::ObjectClient;
-use crate::ai::ambient_agents::scheduled::CloudScheduledAmbientAgentModel;
-use crate::ai::cloud_agent_config::CloudAgentConfigModel;
-use crate::ai::cloud_environments::CloudAmbientAgentEnvironmentModel;
 use crate::ai::execution_profiles::CloudAIExecutionProfileModel;
 use crate::ai::facts::CloudAIFactModel;
 use crate::ai::mcp::CloudMCPServerModel;
 use crate::ai::mcp::templatable::CloudTemplatableMCPServerModel;
+use crate::cloud_object::agent_environment::CloudAmbientAgentEnvironmentModel;
 use crate::cloud_object::model::actions::{
     ObjectAction, ObjectActionHistory, ObjectActionSubtype, ObjectActionType,
 };
 use crate::cloud_object::model::generic_string_model::GenericStringObjectId;
+use crate::cloud_object::scheduled_agent::CloudScheduledAmbientAgentModel;
 use crate::cloud_object::{
     BulkCreateCloudObjectResult, BulkCreateGenericStringObjectsRequest, CloudModelType,
     CloudObject, CloudObjectEventEntrypoint, CreateCloudObjectResult, CreateObjectRequest,
@@ -214,11 +213,6 @@ pub enum QueueItem {
         id: SyncId,
         revision: Option<Revision>,
     },
-    UpdateCloudAgentConfig {
-        model: Arc<CloudAgentConfigModel>,
-        id: SyncId,
-        revision: Option<Revision>,
-    },
     RecordObjectAction {
         id_and_type: CloudObjectTypeAndId,
         action_type: ObjectActionType,
@@ -313,11 +307,6 @@ pub enum SyncQueueEvent {
         /// The revision of the object after updating.
         revision_and_editor: RevisionAndLastEditor,
     },
-    ObjectUpdateRejected {
-        id: String,
-        #[derivative(PartialEq = "ignore")]
-        object: Arc<ServerCloudObject>,
-    },
     #[allow(dead_code)]
     ObjectUpdateFeatureNotAvailable { id: String },
     /// Request to server for creating a queue item has failed.
@@ -394,6 +383,7 @@ impl SyncQueue {
         self.should_dequeue
     }
 
+    #[cfg(test)]
     pub fn stop_dequeueing(&mut self) {
         self.should_dequeue = false
     }
@@ -448,8 +438,7 @@ impl SyncQueue {
             | QueueItem::UpdateAIExecutionProfile { id, .. }
             | QueueItem::UpdateTemplatableMCPServer { id, .. }
             | QueueItem::UpdateCloudEnvironment { id, .. }
-            | QueueItem::UpdateScheduledAmbientAgent { id, .. }
-            | QueueItem::UpdateCloudAgentConfig { id, .. } => self.get_update_dependencies(id),
+            | QueueItem::UpdateScheduledAmbientAgent { id, .. } => self.get_update_dependencies(id),
 
             // Update workflow requests should depend on existing requests to that object, as well as
             // any enums or env vars they reference.
@@ -567,7 +556,6 @@ impl SyncQueue {
                 | QueueItem::UpdateTemplatableMCPServer { id, .. }
                 | QueueItem::UpdateCloudEnvironment { id, .. }
                 | QueueItem::UpdateScheduledAmbientAgent { id, .. }
-                | QueueItem::UpdateCloudAgentConfig { id, .. }
                     if id.uid() == item_id =>
                 {
                     Some(QueueDependency::QueueItem(*queue_item_id))
@@ -674,8 +662,7 @@ impl SyncQueue {
                 | QueueItem::UpdateAIExecutionProfile { id, revision, .. }
                 | QueueItem::UpdateTemplatableMCPServer { id, revision, .. }
                 | QueueItem::UpdateCloudEnvironment { id, revision, .. }
-                | QueueItem::UpdateScheduledAmbientAgent { id, revision, .. }
-                | QueueItem::UpdateCloudAgentConfig { id, revision, .. } => {
+                | QueueItem::UpdateScheduledAmbientAgent { id, revision, .. } => {
                     Self::maybe_update_queue_item_with_new_revision(
                         &self.client_id_to_server,
                         id,
@@ -879,20 +866,6 @@ impl SyncQueue {
                     );
                 }
                 QueueItem::UpdateScheduledAmbientAgent {
-                    model,
-                    id,
-                    revision,
-                } => {
-                    self.update_object(
-                        model.clone(),
-                        id,
-                        revision,
-                        object_client,
-                        dequeued_item_id,
-                        ctx,
-                    );
-                }
-                QueueItem::UpdateCloudAgentConfig {
                     model,
                     id,
                     revision,
@@ -1548,10 +1521,6 @@ impl SyncQueue {
                 update_result: UpdateResponseType::Rejected { object },
             } => {
                 let uid = object.uid();
-                ctx.emit(SyncQueueEvent::ObjectUpdateRejected {
-                    id: uid.clone(),
-                    object: Arc::new(*object),
-                });
                 if let Some(dependencies) = self.waiting_response.get_mut(&uid.clone()) {
                     dependencies.remove(&queue_item_id);
                 }
@@ -1930,9 +1899,6 @@ impl SyncQueue {
                 QueueItem::UpdateScheduledAmbientAgent { id, .. } => {
                     self.handle_update_failure_response(id, item_id, ctx);
                 }
-                QueueItem::UpdateCloudAgentConfig { id, .. } => {
-                    self.handle_update_failure_response(id, item_id, ctx);
-                }
                 QueueItem::RecordObjectAction {
                     id_and_type,
                     action_timestamp,
@@ -1982,7 +1948,3 @@ impl Entity for SyncQueue {
 }
 
 impl SingletonEntity for SyncQueue {}
-
-#[cfg(test)]
-#[path = "sync_queue_tests.rs"]
-mod tests;

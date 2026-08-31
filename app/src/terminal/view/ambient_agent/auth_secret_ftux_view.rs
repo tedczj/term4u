@@ -103,7 +103,7 @@ struct SecretCreationState {
     is_saving: bool,
     /// The exact name we fired at `create_auth_secret`. Set when
     /// `handle_continue` dispatches; cleared on success / failure /
-    /// cancel. Used to filter the global `AuthSecretCreated` event so
+    /// cancel. Used to filter the global `SecretCreated` event so
     /// another concurrent FTUX view's success can't close us.
     pending_name: Option<String>,
 }
@@ -195,7 +195,7 @@ impl AuthSecretFtuxView {
         ctx.subscribe_to_model(
             &HarnessAvailabilityModel::handle(ctx),
             |me, _, event, ctx| match event {
-                HarnessAvailabilityEvent::AuthSecretCreated { harness, name } => {
+                HarnessAvailabilityEvent::SecretCreated { harness, name } => {
                     // Only consume the event when it matches the request
                     // *this* view actually fired. Without the harness/name
                     // match a concurrent FTUX view's success would close
@@ -210,7 +210,7 @@ impl AuthSecretFtuxView {
                         me.handle_secret_created(*harness, name.clone(), ctx);
                     }
                 }
-                HarnessAvailabilityEvent::AuthSecretCreationFailed { error } => {
+                HarnessAvailabilityEvent::SecretCreationFailed { error } => {
                     // Only react if *we* are mid-save; otherwise this
                     // failure belongs to another FTUX view's request.
                     if let Some(state) = me.creation_state.as_mut() {
@@ -234,11 +234,10 @@ impl AuthSecretFtuxView {
                         ctx.notify();
                     }
                 }
-                HarnessAvailabilityEvent::Changed
-                | HarnessAvailabilityEvent::AuthSecretsLoaded
-                | HarnessAvailabilityEvent::AuthSecretsFetchFailed
-                | HarnessAvailabilityEvent::AuthSecretDeleted { .. }
-                | HarnessAvailabilityEvent::AuthSecretDeletionFailed { .. } => {}
+                HarnessAvailabilityEvent::SecretsLoaded
+                | HarnessAvailabilityEvent::SecretsFetchFailed
+                | HarnessAvailabilityEvent::SecretDeleted { .. }
+                | HarnessAvailabilityEvent::SecretDeletionFailed { .. } => {}
             },
         );
 
@@ -667,7 +666,7 @@ impl AuthSecretFtuxView {
                 // the same required-field rules.
                 let msg = err.to_string();
                 HarnessAvailabilityModel::handle(ctx).update(ctx, |_model, ctx| {
-                    ctx.emit(HarnessAvailabilityEvent::AuthSecretCreationFailed { error: msg });
+                    ctx.emit(HarnessAvailabilityEvent::SecretCreationFailed { error: msg });
                 });
                 return;
             }

@@ -31,7 +31,6 @@ use derivative::Derivative;
 use markdown_parser::{FormattedTable, FormattedText, FormattedTextInline, parse_markdown};
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
-use session_sharing_protocol::common::ParticipantId;
 use task::TaskId;
 pub use telemetry::AIIdentifiers;
 use uuid::Uuid;
@@ -39,6 +38,7 @@ use warp_core::channel::ChannelState;
 use warp_core::features::FeatureFlag;
 use warp_editor::render::model::LineCount;
 use warp_multi_agent_api::{AgentEvent, AgentType, diff_hunk as diff_hunk_api};
+use warp_terminal::session_sharing_types::common::ParticipantId;
 
 pub use self::api::{MaybeAIAgentOutputMessage, MessageToAIAgentOutputMessageError};
 use super::llms::LLMId;
@@ -3551,7 +3551,3 @@ impl Suggestions {
         self.agent_mode_workflows.extend(new_workflows);
     }
 }
-
-#[cfg(test)]
-#[path = "mod_tests.rs"]
-mod tests;

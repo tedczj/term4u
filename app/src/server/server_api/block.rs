@@ -48,6 +48,38 @@ pub trait BlockClient: 'static + Send + Sync {
 
 #[cfg_attr(not(target_family = "wasm"), async_trait)]
 #[cfg_attr(target_family = "wasm", async_trait(?Send))]
+impl BlockClient for crate::server::offline_api::OfflineApi {
+    async fn unshare_block(&self, block_id: String) -> Result<(), anyhow::Error> {
+        let _ = block_id;
+        Err(Self::unavailable("shared block API"))
+    }
+
+    async fn save_block(
+        &self,
+        block: &Block,
+        title: Option<String>,
+        show_prompt: bool,
+        display_setting: DisplaySetting,
+    ) -> Result<String, anyhow::Error> {
+        let _ = (block, title, show_prompt, display_setting);
+        Err(Self::unavailable("shared block API"))
+    }
+
+    async fn blocks_owned_by_user(&self) -> Result<Vec<Block>, anyhow::Error> {
+        Ok(Vec::new())
+    }
+
+    async fn generate_shared_block_title(
+        &self,
+        request: GenerateBlockTitleRequest,
+    ) -> Result<GenerateBlockTitleResponse, anyhow::Error> {
+        let _ = request;
+        Err(Self::unavailable("shared block API"))
+    }
+}
+
+#[cfg_attr(not(target_family = "wasm"), async_trait)]
+#[cfg_attr(target_family = "wasm", async_trait(?Send))]
 impl BlockClient for ServerApi {
     async fn unshare_block(&self, block_uid: String) -> Result<(), anyhow::Error> {
         let variables = UnshareBlockVariables {
@@ -99,8 +131,11 @@ impl BlockClient for ServerApi {
         let response = self.send_graphql_request(operation, None).await?;
         match response.share_block {
             ShareBlockResult::ShareBlockOutput(output) => {
-                let mut created_url =
-                    format!("{}{}", ChannelState::server_root_url(), output.url_ending);
+                let mut created_url = format!(
+                    "{}{}",
+                    ChannelState::server_root_url().unwrap_or_default(),
+                    output.url_ending
+                );
 
                 // If this is a preview build, ensure the link routes to a preview build.
                 if matches!(ChannelState::channel(), Channel::Preview) {
@@ -145,7 +180,7 @@ impl BlockClient for ServerApi {
         let auth_token = self.get_or_refresh_access_token().await?;
         let request_builder = self.base_client.http_client().post(format!(
             "{}/ai/generate_block_title",
-            ChannelState::server_root_url()
+            ChannelState::server_root_url().unwrap_or_default()
         ));
         let response = if let Some(token) = auth_token.as_bearer_token() {
             request_builder.bearer_auth(token)

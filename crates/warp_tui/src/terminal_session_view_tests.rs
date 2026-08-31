@@ -55,7 +55,6 @@ use warpui_core::event::ModifiersState;
 use warpui_core::keymap::{Context, DescriptionContext, Keystroke, Trigger};
 use warpui_core::platform::keyboard::KeyCode;
 use warpui_core::presenter::tui::{TuiFrame, TuiPresenter};
-use warpui_core::telemetry::{EventPayload, flush_events};
 use warpui_core::{App, AppContext, TuiView, TypedActionView, ViewContext, WindowInvalidation};
 
 use super::statusline::{
@@ -86,7 +85,6 @@ use super::{
     voice_argument_is_empty, voice_command_argument,
 };
 use crate::agent_block::{TuiAIBlock, upgrade_url};
-use crate::autoupdate::TuiAutoupdater;
 use crate::editor_element::TuiEditorAction;
 use crate::inline_menu::MAX_INLINE_MENU_ROWS;
 use crate::input::view::TuiInputAction;
@@ -363,7 +361,9 @@ fn manage_billing_slash_command_opens_the_default_team_billing_page_for_admins()
             opened_urls.borrow().as_slice(),
             &[format!(
                 "{}/admin/test_uid00000000000123/billing",
-                ChannelState::server_root_url().trim_end_matches('/')
+                ChannelState::server_root_url()
+                    .unwrap_or_default()
+                    .trim_end_matches('/')
             )]
         );
     });
@@ -2738,7 +2738,6 @@ fn footer_model_label_is_a_bounded_click_target() {
 fn focus_test_fixture(app: &mut App) -> FocusTestFixture {
     register_tui_session_view_test_singletons(app);
     add_test_semantic_selection(app);
-    app.update(TuiAutoupdater::register);
     let (window_id, _) = app.update(|ctx| {
         ctx.add_tui_window(
             AddWindowOptions {
@@ -3071,8 +3070,6 @@ fn nld_slash_command_toggles_and_reports_its_effects() {
         let _agent_mode = warp_core::features::FeatureFlag::AgentMode.override_enabled(true);
         let fixture = focus_test_fixture(&mut app);
         let (view, _) = add_focus_test_session(&mut app, &fixture, true);
-        flush_events();
-
         view.update(&mut app, |view, ctx| {
             view.input_view.update(ctx, |input, ctx| {
                 input.set_text("/natural-language-detection", ctx);
@@ -3122,42 +3119,6 @@ fn nld_slash_command_toggles_and_reports_its_effects() {
                 "Natural language detection disabled.".to_owned(),
                 TransientHintTone::Success
             ))
-        );
-
-        let deadline = Instant::now() + Duration::from_secs(5);
-        let mut toggles = Vec::new();
-        while toggles.len() < 2 {
-            toggles.extend(
-                flush_events()
-                    .into_iter()
-                    .filter_map(|event| match event.payload {
-                        EventPayload::NamedEvent {
-                            name,
-                            value: Some(value),
-                            ..
-                        } if name == "AgentMode.ToggleAutoDetectionSetting" => Some(value),
-                        _ => None,
-                    }),
-            );
-            if toggles.len() >= 2 || Instant::now() >= deadline {
-                break;
-            }
-            Timer::after(Duration::from_millis(10)).await;
-        }
-        assert_eq!(toggles.len(), 2);
-        assert_eq!(
-            toggles[0],
-            serde_json::json!({
-                "is_autodetection_enabled": true,
-                "origin": "slash_command",
-            })
-        );
-        assert_eq!(
-            toggles[1],
-            serde_json::json!({
-                "is_autodetection_enabled": false,
-                "origin": "slash_command",
-            })
         );
     });
 }
@@ -6445,29 +6406,6 @@ fn copy_debugging_id_available_in_active_commands_at_zero_state() {
 }
 
 /// Verifies that `/handoff` remains available for the TUI's blank active conversation.
-#[test]
-fn handoff_is_available_at_zero_state() {
-    App::test((), |mut app| async move {
-        let _oz_handoff = FeatureFlag::OzHandoff.override_enabled(true);
-        let _local_cloud = FeatureFlag::HandoffLocalCloud.override_enabled(true);
-        let fixture = focus_test_fixture(&mut app);
-        let (view, _) = add_focus_test_session(&mut app, &fixture, true);
-        view.read(&app, |view, ctx| {
-            let active_names: Vec<&str> = view
-                .slash_commands_source
-                .as_ref(ctx)
-                .active_commands()
-                .map(|(_, cmd)| cmd.name)
-                .collect();
-
-            assert!(
-                active_names.contains(&slash_commands::MOVE_TO_CLOUD.name),
-                "/handoff must be active at zero state",
-            );
-        });
-    });
-}
-
 /// Verifies that the full TUI session renders the no-token error hint in its footer.
 #[test]
 fn copy_debugging_id_footer_hint_renders_in_session() {

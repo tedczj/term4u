@@ -10,6 +10,7 @@ mod config_state;
 mod edit_state;
 mod providers;
 mod remote_child;
+pub mod settings;
 mod snapshots;
 mod validation;
 

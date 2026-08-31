@@ -242,7 +242,6 @@ pub trait Delegate: 'static {
     fn set_cursor_shape(&self, cursor: Cursor);
 
     /// Returns the current cursor pointer
-    #[cfg(feature = "test-util")]
     fn get_cursor_shape(&self) -> Cursor;
     fn close_ime_async(&self, window_id: WindowId);
     fn is_ime_open(&self) -> bool;

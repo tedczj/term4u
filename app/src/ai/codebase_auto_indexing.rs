@@ -10,26 +10,14 @@ use crate::workspaces::user_workspaces::UserWorkspaces;
 #[derive(Clone, Copy, Debug)]
 pub(crate) enum CodebaseAutoIndexingSurface {
     Local,
-    Remote,
 }
 
 impl CodebaseAutoIndexingSurface {
     fn required_feature_enabled(self) -> bool {
         match self {
             Self::Local => true,
-            Self::Remote => FeatureFlag::RemoteCodebaseIndexing.is_enabled(),
         }
     }
-}
-
-pub(crate) fn should_use_codebase_indexing(
-    surface: CodebaseAutoIndexingSurface,
-    ctx: &AppContext,
-) -> bool {
-    codebase_indexing_enabled(
-        surface,
-        UserWorkspaces::as_ref(ctx).is_codebase_context_enabled(ctx),
-    )
 }
 
 pub(crate) fn should_auto_index_codebase(

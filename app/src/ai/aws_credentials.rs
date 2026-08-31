@@ -16,11 +16,11 @@ use warp_managed_secrets::ManagedSecretManager;
 use warp_managed_secrets::client::IdentityTokenOptions;
 use warpui::{ModelContext, ModelHandle, SingletonEntity};
 
-use crate::settings::{AISettings, AISettingsChangedEvent};
+use crate::settings::AISettings;
 use crate::terminal::event::{AfterBlockCompletedEvent, BlockType};
 use crate::terminal::model::terminal_model::TerminalModel;
 use crate::terminal::model_events::{ModelEvent, ModelEventDispatcher};
-use crate::workspaces::user_workspaces::{UserWorkspaces, UserWorkspacesEvent};
+use crate::workspaces::user_workspaces::UserWorkspaces;
 
 /// Errors that can occur when loading AWS credentials.
 #[derive(Debug, Clone)]
@@ -183,12 +183,6 @@ pub trait AwsCredentialRefresher {
         ctx: &mut ModelContext<Self>,
     ) where
         Self: Sized;
-
-    /// Sets up subscriptions to `UserWorkspaces` and `AISettings` to refresh AWS credentials
-    /// when workspace settings or AWS Bedrock settings change.
-    fn subscribe_to_settings_changes(&mut self, ctx: &mut ModelContext<Self>)
-    where
-        Self: Sized;
 }
 
 impl AwsCredentialRefresher for ApiKeyManager {
@@ -219,32 +213,6 @@ impl AwsCredentialRefresher for ApiKeyManager {
                     log::debug!("Detected AWS auth command completion, refreshing credentials");
                     drop(refresh_aws_credentials(manager, ctx));
                 }
-            }
-        });
-    }
-
-    fn subscribe_to_settings_changes(&mut self, ctx: &mut ModelContext<Self>) {
-        // Subscribe to UserWorkspaces events to refresh AWS credentials when workspace settings change
-        // (this also initializes AWS credentials on app startup via TeamsChanged)
-        ctx.subscribe_to_model(&UserWorkspaces::handle(ctx), |manager, _, event, ctx| {
-            if matches!(
-                event,
-                UserWorkspacesEvent::UpdateWorkspaceSettingsSuccess
-                    | UserWorkspacesEvent::TeamsChanged
-            ) {
-                drop(refresh_aws_credentials(manager, ctx));
-            }
-        });
-
-        // Subscribe to AISettings changes to refresh AWS credentials when AWS Bedrock settings change
-        ctx.subscribe_to_model(&AISettings::handle(ctx), |manager, _, event, ctx| {
-            if matches!(
-                event,
-                AISettingsChangedEvent::AwsBedrockProfile { .. }
-                    | AISettingsChangedEvent::AwsBedrockAuthRefreshCommand { .. }
-                    | AISettingsChangedEvent::AwsBedrockCredentialsEnabled { .. }
-            ) {
-                drop(refresh_aws_credentials(manager, ctx));
             }
         });
     }

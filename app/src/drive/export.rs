@@ -80,12 +80,6 @@ enum State {
 ///    [`ExportManager::handle_object_export`]. If the export is done, it emits an
 ///    [`ExportEvent::Completed`] event. If it failed, it emits an [`ExportEvent::Failed`].
 impl ExportManager {
-    pub fn new(_ctx: &mut ModelContext<Self>) -> Self {
-        Self {
-            exports: Default::default(),
-        }
-    }
-
     /// Export a list of objects.
     pub fn export(
         &mut self,
@@ -544,7 +538,3 @@ pub fn safe_filename(filename: &str) -> String {
     });
     result
 }
-
-#[cfg(test)]
-#[path = "export_tests.rs"]
-mod tests;

@@ -13,7 +13,6 @@ mod agent_message;
 mod alt_screen_view;
 mod api_keys_menu;
 mod attachment_bar;
-mod autoupdate;
 #[cfg(feature = "test-util")]
 #[doc(hidden)]
 pub mod benchmark_support;

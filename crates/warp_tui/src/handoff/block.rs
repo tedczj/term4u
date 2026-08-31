@@ -12,7 +12,7 @@
 
 use std::cell::Cell;
 
-use warp::tui_export::{AIConversationId, OZ_ENVIRONMENTS_URL};
+use warp::tui_export::AIConversationId;
 use warpui_core::elements::CrossAxisAlignment;
 use warpui_core::elements::tui::{
     Modifier, TuiChildView, TuiConstraint, TuiContainer, TuiElement, TuiFlex, TuiLayoutContext,
@@ -735,7 +735,7 @@ impl TypedActionView for TuiHandoffBlock {
             TuiHandoffBlockAction::NextPage => {
                 self.navigate_page(PageNavigationDirection::Next, ctx)
             }
-            TuiHandoffBlockAction::OpenEnvironments => ctx.open_url(OZ_ENVIRONMENTS_URL),
+            TuiHandoffBlockAction::OpenEnvironments => {}
             TuiHandoffBlockAction::RefreshEnvironments => {
                 self.model
                     .update(ctx, |model, ctx| model.refresh_environments(ctx));

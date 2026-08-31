@@ -19,11 +19,11 @@ use warpui::{AppContext, SingletonEntity as _};
 
 use crate::ChannelState;
 use crate::ai::agent::UserQueryMode;
-use crate::ai::ambient_agents::task::{
+use crate::ai::agent_tasks::task::{
     HarnessAuthSecretsConfig, HarnessConfig, normalize_orchestrator_agent_name,
 };
-use crate::ai::ambient_agents::{
-    OUT_OF_CREDITS_TASK_FAILURE_MESSAGE, SERVER_OVERLOADED_TASK_FAILURE_MESSAGE, github_auth_url,
+use crate::ai::agent_tasks::{
+    OUT_OF_CREDITS_TASK_FAILURE_MESSAGE, SERVER_OVERLOADED_TASK_FAILURE_MESSAGE,
 };
 use crate::ai::blocklist::StartAgentRequest;
 #[cfg(not(target_family = "wasm"))]
@@ -318,9 +318,13 @@ pub fn classify_cloud_agent_startup_error(error: &anyhow::Error) -> CloudAgentSt
     if let Some(client_error) = error.downcast_ref::<ClientError>()
         && let Some(auth_url) = &client_error.auth_url
     {
+        let _ = auth_url;
         return CloudAgentStartupIssue::Blocked(CloudAgentStartupBlocker::GitHubAuthRequired {
-            message: client_error.error.clone(),
-            auth_url: github_auth_url::cloud_setup_auth_url_with_next(auth_url),
+            message: format!(
+                "{} GitHub authentication is unavailable in term4u.",
+                client_error.error
+            ),
+            auth_url: String::new(),
         });
     }
     if let Some(capacity_error) = error.downcast_ref::<CloudAgentCapacityError>() {
@@ -375,7 +379,10 @@ pub(crate) fn should_disable_snapshot(ctx: &AppContext) -> bool {
 /// Builds the Oz web URL for a server-assigned agent run ID.
 #[cfg_attr(not(feature = "tui"), allow(dead_code))]
 pub fn oz_run_url(run_id: &str) -> String {
-    format!("{}/runs/{run_id}", ChannelState::oz_root_url())
+    format!(
+        "{}/runs/{run_id}",
+        ChannelState::oz_root_url().unwrap_or_default()
+    )
 }
 
 fn resolve_runtime_skills(

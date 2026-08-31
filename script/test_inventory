@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+BASE=docs/redesign/baseline
+LIST_CMD=(cargo nextest list --workspace --exclude command-signatures-v2 --message-format json)
+
+list_tests() {
+  "${LIST_CMD[@]}" 2>/dev/null | python3 -c '
+import json
+import sys
+
+data = json.load(sys.stdin)
+tests = []
+for binary_id, suite in data.get("rust-suites", {}).items():
+    for name in suite.get("testcases", {}):
+        tests.append(f"{binary_id}::{name}")
+print("\n".join(sorted(tests)))
+'
+}
+
+case "${1:-}" in
+  list)
+    list_tests
+    ;;
+  snapshot)
+    name=${2:?need a snapshot name}
+    mkdir -p "$BASE"
+    list_tests > "$BASE/$name.txt"
+    wc -l "$BASE/$name.txt"
+    ;;
+  diff)
+    before="$BASE/${2:?need the earlier snapshot name}.txt"
+    after="$BASE/${3:?need the later snapshot name}.txt"
+    test -f "$before"
+    test -f "$after"
+    diff -u "$before" "$after" || true
+    comm -23 <(sort "$before") <(sort "$after") > /tmp/term4u-disappeared-tests.txt
+    if [[ ! -s /tmp/term4u-disappeared-tests.txt ]]; then
+      echo "OK: no tests disappeared"
+      exit 0
+    fi
+    whitelist="$BASE/deleted-test-ids.txt"
+    if [[ ! -f "$whitelist" ]]; then
+      echo "ERROR: tests disappeared, but $whitelist does not exist:" >&2
+      cat /tmp/term4u-disappeared-tests.txt >&2
+      exit 1
+    fi
+    if comm -23 <(sort /tmp/term4u-disappeared-tests.txt) <(sort "$whitelist") | grep -q .; then
+      echo "ERROR: tests disappeared outside deleted-test-ids.txt:" >&2
+      comm -23 <(sort /tmp/term4u-disappeared-tests.txt) <(sort "$whitelist") >&2
+      exit 1
+    fi
+    echo "OK: every disappeared test is explicitly whitelisted"
+    ;;
+  classify)
+    python3 script/lib/classify_tests.py --out "$BASE"
+    ;;
+  *)
+    echo "usage: $0 {list|snapshot NAME|diff BEFORE AFTER|classify}" >&2
+    exit 2
+    ;;
+esac

@@ -50,9 +50,6 @@ use crate::ai::blocklist::telemetry::{
     BlocklistOrchestrationTelemetryEvent, OrchestrationEnteredEvent, OrchestrationEntrySource,
     RunAgentsCardDecision, run_agents_card_decision_event,
 };
-use crate::ai::connected_self_hosted_workers::{
-    ConnectedSelfHostedWorkersEvent, ConnectedSelfHostedWorkersModel,
-};
 use crate::ai::harness_availability::{
     AuthSecretFetchState, HarnessAvailabilityEvent, HarnessAvailabilityModel,
 };
@@ -483,12 +480,12 @@ impl RunAgentsCardView {
 
         // Repopulate pickers when the server-provided harness list,
         // harness model catalogs, or per-harness auth secrets change.
-        // Without an `AuthSecretsLoaded` handler the picker stays on
+        // Without an `SecretsLoaded` handler the picker stays on
         // "Loading…" forever after the lazy fetch completes.
         ctx.subscribe_to_model(
             &HarnessAvailabilityModel::handle(ctx),
             |me, _, event, ctx| match event {
-                HarnessAvailabilityEvent::AuthSecretCreated { harness, name } => {
+                HarnessAvailabilityEvent::SecretCreated { harness, name } => {
                     // Adopt the new secret before repopulating the picker.
                     oc::apply_created_auth_secret_if_matches(
                         &mut me.orchestration_edit_state.orchestration_config_state,
@@ -504,10 +501,9 @@ impl RunAgentsCardView {
                     me.refresh_accept_button_state(ctx);
                     ctx.notify();
                 }
-                HarnessAvailabilityEvent::Changed
-                | HarnessAvailabilityEvent::AuthSecretsLoaded
-                | HarnessAvailabilityEvent::AuthSecretsFetchFailed
-                | HarnessAvailabilityEvent::AuthSecretDeleted { .. } => {
+                HarnessAvailabilityEvent::SecretsLoaded
+                | HarnessAvailabilityEvent::SecretsFetchFailed
+                | HarnessAvailabilityEvent::SecretDeleted { .. } => {
                     // Repopulate even on fetch failure to replace "Loading…".
                     // Deleted events also force a repopulate so this card
                     // stops surfacing the deleted secret as an option.
@@ -520,35 +516,21 @@ impl RunAgentsCardView {
                     me.maybe_auto_open_create_modal(ctx);
                     ctx.notify();
                 }
-                HarnessAvailabilityEvent::AuthSecretCreationFailed { .. }
-                | HarnessAvailabilityEvent::AuthSecretDeletionFailed { .. } => {}
+                HarnessAvailabilityEvent::SecretCreationFailed { .. }
+                | HarnessAvailabilityEvent::SecretDeletionFailed { .. } => {}
             },
         );
 
         let create_environment_modal = ctx.add_typed_action_view(CreateEnvironmentModal::new);
-        ctx.subscribe_to_view(&create_environment_modal, |me, _, event, ctx| match event {
-            CreateEnvironmentModalEvent::Created { environment_id } => {
-                me.select_created_environment(environment_id.clone(), ctx);
-            }
-            CreateEnvironmentModalEvent::Cancelled => {
-                ctx.notify();
-            }
-        });
-
-        ctx.subscribe_to_model(
-            &ConnectedSelfHostedWorkersModel::handle(ctx),
-            |me, _, event, ctx| match event {
-                ConnectedSelfHostedWorkersEvent::Changed => {
-                    oc::repopulate_all_pickers(
-                        &mut me.orchestration_edit_state.orchestration_config_state,
-                        &me.handles.pickers,
-                        ctx,
-                    );
-                    me.refresh_accept_button_state(ctx);
+        ctx.subscribe_to_view(
+            &create_environment_modal,
+            |_me, _, event, ctx| match event {
+                CreateEnvironmentModalEvent::Cancelled => {
                     ctx.notify();
                 }
             },
         );
+
         // When auto_launched is true, execution is deferred to the
         // ActionBlockedOnUserConfirmation subscription above — the action
         // hasn't been queued in pending_actions yet at construction time.
@@ -579,7 +561,7 @@ impl RunAgentsCardView {
 
         view.ensure_pickers(ctx);
         view.refresh_accept_button_state(ctx);
-        // No-ops if secrets are still in flight; the `AuthSecretsLoaded`
+        // No-ops if secrets are still in flight; the `SecretsLoaded`
         // subscription will retry once they resolve.
         view.maybe_auto_open_create_modal(ctx);
 
@@ -823,7 +805,7 @@ impl RunAgentsCardView {
             return;
         };
         // Only auto-open on `Loaded([])`. Other fetch states are
-        // ambiguous; the `AuthSecretsLoaded` subscription will retry.
+        // ambiguous; the `SecretsLoaded` subscription will retry.
         let has_zero_loaded = matches!(
             HarnessAvailabilityModel::as_ref(ctx).auth_secrets_for(harness),
             AuthSecretFetchState::Loaded(secrets) if secrets.is_empty()
@@ -937,11 +919,7 @@ impl RunAgentsCardView {
             });
             oc::populate_host_picker(&handle, initial_host, ctx);
             ctx.subscribe_to_view(&handle, |me, _, event, ctx| match event {
-                HostPickerEvent::Opened => {
-                    ConnectedSelfHostedWorkersModel::handle(ctx).update(ctx, |model, ctx| {
-                        model.refresh(ctx);
-                    });
-                }
+                HostPickerEvent::Opened => {}
                 HostPickerEvent::HostChanged { slug } => {
                     ctx.dispatch_typed_action(&RunAgentsCardViewAction::WorkerHostChanged {
                         worker_host: slug.clone(),
@@ -1183,17 +1161,6 @@ impl RunAgentsCardView {
         });
         ctx.notify();
     }
-
-    fn select_created_environment(&mut self, environment_id: String, ctx: &mut ViewContext<Self>) {
-        self.orchestration_edit_state
-            .orchestration_config_state
-            .set_environment_id(environment_id.clone());
-        if let Some(environment_picker) = &self.handles.pickers.environment_picker {
-            oc::populate_environment_picker(environment_picker, &environment_id, ctx);
-        }
-        ctx.notify();
-    }
-
     fn toggle_accept_menu(&mut self, ctx: &mut ViewContext<Self>) {
         self.is_accept_menu_open = !self.is_accept_menu_open;
         if self.is_accept_menu_open {

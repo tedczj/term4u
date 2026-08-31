@@ -19,7 +19,7 @@ use crate::ai::agent::{
     AIAgentAttachment, AIAgentContext, AIAgentInput, CancellationReason, ImageContext,
     PassiveSuggestionTrigger, UserQueryMode,
 };
-use crate::ai::ambient_agents::AmbientAgentTaskId;
+use crate::ai::agent_tasks::AmbientAgentTaskId;
 use crate::ai::blocklist::orchestration_events::{
     OrchestrationEventService, PendingEvent, PendingEventDetail,
 };

@@ -47,7 +47,7 @@ pub struct OrchestrationConfigState {
     /// `execution_mode` so a temporary switch to Local does not discard it.
     remote_computer_use_enabled: bool,
     /// Drives the picker display and Accept gate. Persisted as
-    /// `Named(_)` only via `CloudAgentSettings.last_selected_auth_secret`.
+    /// `Named(_)` only via `OrchestrationSettings.last_selected_auth_secret`.
     pub auth_secret_selection: AuthSecretSelection,
 }
 

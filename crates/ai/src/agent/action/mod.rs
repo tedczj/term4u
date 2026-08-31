@@ -160,7 +160,7 @@ pub enum AIAgentActionType {
         /// target records just that window via native ffmpeg `x11grab
         /// -window_id` on the foreground-visible window. Applied by the client
         /// only when background computer use is enabled.
-        window: Option<computer_use::Target>,
+        window: Option<interaction_types::Target>,
     },
 
     /// AI requested to stop an in-progress recording. When `should_persist` is
@@ -796,9 +796,9 @@ pub struct CreateDocumentsRequest {
 pub struct UseComputerRequest {
     pub action_summary: String,
     /// Each action carries the surface (screen or a specific window) it targets.
-    pub actions: Vec<computer_use::TargetedAction>,
+    pub actions: Vec<interaction_types::TargetedAction>,
     /// If set, a screenshot will be captured after the actions are executed.
-    pub screenshot_params: Option<computer_use::ScreenshotParams>,
+    pub screenshot_params: Option<interaction_types::ScreenshotParams>,
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -806,7 +806,7 @@ pub struct RequestComputerUseRequest {
     /// A short summary of the task.
     pub task_summary: String,
     /// If set, a screenshot will be captured after the actions are executed.
-    pub screenshot_params: Option<computer_use::ScreenshotParams>,
+    pub screenshot_params: Option<interaction_types::ScreenshotParams>,
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]

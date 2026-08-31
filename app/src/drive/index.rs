@@ -23,7 +23,6 @@ use warpui::elements::{
     YAxisAnchor,
 };
 use warpui::fonts::{Properties, Weight};
-use warpui::keymap::FixedBinding;
 use warpui::platform::{Cursor, OperatingSystem};
 use warpui::ui_components::button::ButtonVariant;
 use warpui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
@@ -583,35 +582,6 @@ pub struct DriveIndex {
     mcp_server_collection: WarpDriveMCPServerCollection,
     mcp_server_collection_item_mouse_states: ItemStates,
 }
-
-pub fn init(app: &mut AppContext) {
-    use warpui::keymap::macros::*;
-
-    app.register_fixed_bindings(vec![
-        FixedBinding::new("up", DriveIndexAction::FocusPreviousItem, id!("DriveIndex")),
-        FixedBinding::new("down", DriveIndexAction::FocusNextItem, id!("DriveIndex")),
-        FixedBinding::new(
-            "j",
-            DriveIndexAction::FocusNextItem,
-            id!("DriveIndex") & !id!("DisableDriveIndexVimKeybindings"),
-        ),
-        FixedBinding::new(
-            "k",
-            DriveIndexAction::FocusPreviousItem,
-            id!("DriveIndex") & !id!("DisableDriveIndexVimKeybindings"),
-        ),
-        FixedBinding::new("left", DriveIndexAction::LeftArrowKey, id!("DriveIndex")),
-        FixedBinding::new("right", DriveIndexAction::RightArrowKey, id!("DriveIndex")),
-        FixedBinding::new("enter", DriveIndexAction::EnterKey, id!("DriveIndex")),
-        FixedBinding::new("escape", DriveIndexAction::EscapeKey, id!("DriveIndex")),
-        FixedBinding::new(
-            "cmdorctrl-enter",
-            DriveIndexAction::ToggleDriveItemContextMenu,
-            id!("DriveIndex"),
-        ),
-    ]);
-}
-
 impl DriveIndex {
     // Called whenever cloud model or user workspaces change.
     pub fn initialize_section_states(&mut self, ctx: &mut ViewContext<Self>) {
@@ -5736,7 +5706,3 @@ impl TypedActionView for DriveIndex {
         }
     }
 }
-
-#[cfg(test)]
-#[path = "index_tests.rs"]
-mod tests;

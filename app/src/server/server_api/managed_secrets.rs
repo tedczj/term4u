@@ -33,11 +33,79 @@ use warp_graphql::queries::managed_secret_config::{
 use warp_graphql::queries::task_secrets::{
     ManagedSecretValue, TaskSecrets, TaskSecretsInput, TaskSecretsResult, TaskSecretsVariables,
 };
+use warp_managed_secrets::client::{IdentityTokenOptions, SecretOwner, TaskIdentityToken};
 pub use warp_managed_secrets::client::{ManagedSecretConfigs, ManagedSecretsClient};
-use warp_managed_secrets::client::{SecretOwner, TaskIdentityToken};
 
 use super::ServerApi;
 use crate::server::graphql::{get_request_context, get_user_facing_error_message};
+
+#[cfg_attr(not(target_family = "wasm"), async_trait)]
+#[cfg_attr(target_family = "wasm", async_trait(?Send))]
+impl ManagedSecretsClient for crate::server::offline_api::OfflineApi {
+    async fn get_managed_secret_configs(&self) -> Result<ManagedSecretConfigs> {
+        Ok(ManagedSecretConfigs {
+            user_secrets: None,
+            team_secrets: HashMap::new(),
+        })
+    }
+
+    async fn create_managed_secret(
+        &self,
+        owner: SecretOwner,
+        name: String,
+        secret_type: ManagedSecretType,
+        encrypted_value: String,
+        description: Option<String>,
+    ) -> Result<ManagedSecret> {
+        let _ = (owner, name, secret_type, encrypted_value, description);
+        Err(Self::unavailable("managed secrets API"))
+    }
+
+    async fn delete_managed_secret(&self, owner: SecretOwner, name: String) -> Result<()> {
+        let _ = (owner, name);
+        Err(Self::unavailable("managed secrets API"))
+    }
+
+    async fn update_managed_secret(
+        &self,
+        owner: SecretOwner,
+        name: String,
+        encrypted_value: Option<String>,
+        description: Option<String>,
+    ) -> Result<ManagedSecret> {
+        let _ = (owner, name, encrypted_value, description);
+        Err(Self::unavailable("managed secrets API"))
+    }
+
+    async fn list_secrets(&self) -> Result<Vec<ManagedSecret>> {
+        Ok(Vec::new())
+    }
+
+    async fn list_harness_auth_secrets(
+        &self,
+        harness: warp_graphql::ai::AgentHarness,
+    ) -> Result<Vec<ManagedSecret>> {
+        let _ = harness;
+        Ok(Vec::new())
+    }
+
+    async fn get_task_secrets(
+        &self,
+        task_id: String,
+        workload_token: String,
+    ) -> Result<HashMap<String, ManagedSecretValue>> {
+        let _ = (task_id, workload_token);
+        Ok(HashMap::new())
+    }
+
+    async fn issue_task_identity_token(
+        &self,
+        options: IdentityTokenOptions,
+    ) -> Result<TaskIdentityToken> {
+        let _ = options;
+        Err(Self::unavailable("task identity API"))
+    }
+}
 
 #[cfg_attr(not(target_family = "wasm"), async_trait)]
 #[cfg_attr(target_family = "wasm", async_trait(?Send))]

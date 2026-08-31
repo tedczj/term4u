@@ -1,7 +1,7 @@
 #[cfg(not(target_family = "wasm"))]
 use std::collections::HashMap;
 
-use instant::{Duration, Instant};
+use instant::Instant;
 use log::debug;
 use url::Url;
 use warp_core::send_telemetry_from_ctx;
@@ -28,12 +28,9 @@ use warpui::{
 
 use super::editor_text_colors;
 use super::settings_page::{InputListItem, render_input_list};
-use crate::ChannelState;
-use crate::ai::ambient_agents::github_auth_notifier::{GitHubAuthEvent, GitHubAuthNotifier};
-use crate::ai::ambient_agents::github_auth_url::{self, AuthSource, GithubAuthRedirectTarget};
-use crate::ai::ambient_agents::telemetry::CloudAgentTelemetryEvent;
-use crate::ai::cloud_environments::{AmbientAgentEnvironment, GithubRepo};
+use crate::ai::agent_tasks::telemetry::CloudAgentTelemetryEvent;
 use crate::appearance::Appearance;
+use crate::cloud_object::agent_environment::{AmbientAgentEnvironment, GithubRepo};
 use crate::editor::{
     EditorOptions, EditorView, PropagateAndNoOpNavigationKeys, SingleLineEditorOptions, TextOptions,
 };
@@ -198,6 +195,19 @@ pub enum UpdateEnvironmentFormAction {
     OpenUrl(String),
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum GithubAuthRedirectTarget {
+    SettingsEnvironments,
+    FocusCloudMode,
+}
+
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum AuthSource {
+    #[default]
+    Settings,
+    CloudSetup,
+}
+
 /// State for the GitHub repos dropdown.
 #[derive(Clone, Default)]
 pub struct GithubReposDropdownState {
@@ -221,9 +231,7 @@ enum CachedSuggestImageResult {
         needs_custom_image: bool,
         reason: String,
     },
-    AuthRequired {
-        auth_url: String,
-    },
+    AuthRequired,
 }
 
 #[derive(Clone, Debug)]
@@ -240,7 +248,6 @@ enum SuggestImageState {
     },
     AuthRequired {
         key: String,
-        auth_url: String,
     },
     Error {
         key: String,
@@ -345,7 +352,6 @@ pub struct UpdateEnvironmentForm {
     suggest_image_last_attempt_key: Option<String>,
     suggest_image_request_seq: u64,
     suggest_image_button_mouse_state: MouseStateHandle,
-    suggest_image_auth_button_mouse_state: MouseStateHandle,
     suggest_image_launch_agent_button_mouse_state: MouseStateHandle,
     image_link_button_mouse_state: MouseStateHandle,
 
@@ -377,7 +383,6 @@ const FORM_FIELD_SPACING: f32 = 20.;
 const FORM_LABEL_SPACING: f32 = 6.;
 const FORM_INPUT_HEIGHT: f32 = 36.;
 const FORM_INPUT_HORIZONTAL_PADDING: f32 = 10.;
-const AUTH_URL_REFRESH_THRESHOLD: Duration = Duration::from_secs(10 * 60);
 const FORM_DESCRIPTION_HEIGHT: f32 = 72.;
 const FORM_DESCRIPTION_VERTICAL_PADDING: f32 = 6.;
 const CARD_BORDER_WIDTH: f32 = 1.;
@@ -613,13 +618,6 @@ impl UpdateEnvironmentForm {
             }
         };
 
-        // Subscribe to GitHubAuthNotifier to refetch repos when auth completes
-        ctx.subscribe_to_model(&GitHubAuthNotifier::handle(ctx), |me, _, event, ctx| {
-            if matches!(event, GitHubAuthEvent::AuthCompleted) {
-                me.fetch_github_repos(ctx);
-            }
-        });
-
         let mut form = Self {
             self_handle: ctx.handle(),
             mode,
@@ -659,7 +657,6 @@ impl UpdateEnvironmentForm {
             suggest_image_last_attempt_key: None,
             suggest_image_request_seq: 0,
             suggest_image_button_mouse_state: MouseStateHandle::default(),
-            suggest_image_auth_button_mouse_state: MouseStateHandle::default(),
             suggest_image_launch_agent_button_mouse_state: MouseStateHandle::default(),
             image_link_button_mouse_state: MouseStateHandle::default(),
             edit_repos_modified: false,
@@ -1239,63 +1236,17 @@ impl UpdateEnvironmentForm {
     }
 
     pub fn start_github_auth(&mut self, ctx: &mut ViewContext<Self>) {
-        if self.github_dropdown_state.is_loading {
-            return;
-        }
-        if self.should_refresh_auth_url() {
-            if let Some(elapsed) = self
-                .github_dropdown_state
-                .auth_fetched_at
-                .map(|fetched_at| fetched_at.elapsed())
-            {
-                debug!(
-                    "Refreshing GitHub auth URL after {:.0}s (threshold {:.0}s)",
-                    elapsed.as_secs_f64(),
-                    AUTH_URL_REFRESH_THRESHOLD.as_secs_f64()
-                );
-            } else {
-                debug!("Refreshing GitHub auth URL (no previous fetch timestamp)");
-            }
-            self.fetch_github_repos_for_auth(ctx);
-        } else {
-            self.open_github_auth_url_or_fallback(ctx);
-        }
+        self.github_dropdown_state.auth_url = None;
+        self.github_dropdown_state.load_error_message =
+            Some("GitHub authentication is unavailable in term4u".to_string());
+        ctx.notify();
     }
-
-    fn should_refresh_auth_url(&self) -> bool {
-        match self.github_dropdown_state.auth_fetched_at {
-            Some(fetched_at) => fetched_at.elapsed() >= AUTH_URL_REFRESH_THRESHOLD,
-            // No timestamp means the age is unknown — treat as stale to be safe.
-            None => self.github_dropdown_state.auth_url.is_some(),
-        }
-    }
-
-    fn open_github_auth_url_or_fallback(&self, ctx: &mut ViewContext<Self>) {
-        let url = self
-            .github_dropdown_state
-            .auth_url
-            .as_deref()
-            .map(|auth_url| self.auth_url_with_next(auth_url))
-            .unwrap_or_else(|| self.github_connect_fallback_url());
-        ctx.open_url(&url);
-    }
-
-    fn github_connect_fallback_url(&self) -> String {
-        let base_url = format!("{}/oauth/connect/github", ChannelState::server_root_url());
-        self.auth_url_with_next(&base_url)
-    }
-
     fn extract_tx_id(auth_url: &str) -> Option<String> {
         let parsed = Url::parse(auth_url).ok()?;
         parsed
             .query_pairs()
             .find_map(|(key, value)| (key == "txId").then(|| value.to_string()))
     }
-
-    fn fetch_github_repos_for_auth(&mut self, ctx: &mut ViewContext<Self>) {
-        self.fetch_github_repos_internal(ctx, true);
-    }
-
     /// Fetch GitHub repos for the dropdown.
     pub fn fetch_github_repos(&mut self, ctx: &mut ViewContext<Self>) {
         self.fetch_github_repos_internal(ctx, false);
@@ -1380,13 +1331,9 @@ impl UpdateEnvironmentForm {
                 }
 
                 if should_open_auth {
-                    if let Some(auth_url) = me.github_dropdown_state.auth_url.as_deref() {
-                        let auth_url = me.auth_url_with_next(auth_url);
-                        ctx.open_url(&auth_url);
-                    } else if me.github_dropdown_state.available_repos.is_empty() {
-                        let fallback_url = me.github_connect_fallback_url();
-                        ctx.open_url(&fallback_url);
-                    }
+                    me.github_dropdown_state.auth_url = None;
+                    me.github_dropdown_state.load_error_message =
+                        Some("GitHub authentication is unavailable in term4u".to_string());
                 }
                 ctx.notify();
             },
@@ -1436,10 +1383,9 @@ impl UpdateEnvironmentForm {
                     ctx,
                 );
             }
-            CachedSuggestImageResult::AuthRequired { auth_url } => {
+            CachedSuggestImageResult::AuthRequired => {
                 self.suggest_image_state = SuggestImageState::AuthRequired {
                     key: key.to_string(),
-                    auth_url,
                 };
             }
         }
@@ -1551,16 +1497,11 @@ impl UpdateEnvironmentForm {
                                 ctx,
                             );
                         }
-                        warp_graphql::queries::suggest_cloud_environment_image::SuggestCloudEnvironmentImageResult::SuggestCloudEnvironmentImageAuthRequiredOutput(output) => {
-                            me.suggest_image_cache.insert(
-                                key.clone(),
-                                CachedSuggestImageResult::AuthRequired {
-                                    auth_url: output.auth_url.clone(),
-                                },
-                            );
+                        warp_graphql::queries::suggest_cloud_environment_image::SuggestCloudEnvironmentImageResult::SuggestCloudEnvironmentImageAuthRequiredOutput(_) => {
+                            me.suggest_image_cache
+                                .insert(key.clone(), CachedSuggestImageResult::AuthRequired);
                             me.suggest_image_state = SuggestImageState::AuthRequired {
                                 key: key.clone(),
-                                auth_url: output.auth_url,
                             };
                         }
                         warp_graphql::queries::suggest_cloud_environment_image::SuggestCloudEnvironmentImageResult::UserFacingError(_) => {
@@ -2846,35 +2787,6 @@ impl UpdateEnvironmentForm {
 
         chips_row.finish()
     }
-
-    fn auth_url_with_next(&self, base_auth_url: &str) -> String {
-        match (self.github_auth_redirect_target, self.auth_source) {
-            (GithubAuthRedirectTarget::SettingsEnvironments, AuthSource::Settings) => {
-                github_auth_url::settings_environments_auth_url_with_next(base_auth_url)
-            }
-            (GithubAuthRedirectTarget::FocusCloudMode, AuthSource::CloudSetup) => {
-                github_auth_url::cloud_setup_auth_url_with_next(base_auth_url)
-            }
-            (target, auth_source) => {
-                github_auth_url::auth_url_with_next(base_auth_url, target, auth_source)
-            }
-        }
-    }
-
-    #[cfg(test)]
-    pub(crate) fn build_auth_url_with_next(
-        base_auth_url: &str,
-        target: GithubAuthRedirectTarget,
-        scheme: &str,
-    ) -> String {
-        github_auth_url::build_auth_url_with_next(
-            base_auth_url,
-            target,
-            scheme,
-            AuthSource::Settings,
-        )
-    }
-
     /// Parses a Docker image reference and returns the Docker Hub URL if it looks like a Docker Hub image.
     ///
     /// Recognizes:
@@ -3222,24 +3134,12 @@ impl UpdateEnvironmentForm {
             ) if key == current_key => {
                 Some(self.render_suggest_image_callout_with_action(reason, appearance))
             }
-            (SuggestImageState::AuthRequired { key, auth_url }, Some(current_key))
+            (SuggestImageState::AuthRequired { key, .. }, Some(current_key))
                 if key == current_key =>
             {
-                let auth_url_with_next = self.auth_url_with_next(auth_url);
-                let action = UpdateEnvironmentFormAction::OpenUrl(auth_url_with_next);
-                let button = WarningBoxButtonConfig::new(
-                    "Authenticate",
-                    self.suggest_image_auth_button_mouse_state.clone(),
-                    move |ctx| {
-                        ctx.dispatch_typed_action(action.clone());
-                    },
-                );
                 Some(render_warning_box(
-                    WarningBoxConfig::new(
-                        "You need to grant access to your GitHub repos to suggest a Docker image",
-                    )
-                    .with_width(self.field_max_width)
-                    .with_button(button),
+                    WarningBoxConfig::new("GitHub authentication is unavailable in term4u")
+                        .with_width(self.field_max_width),
                     appearance,
                 ))
             }
@@ -3595,7 +3495,3 @@ impl View for UpdateEnvironmentForm {
         }
     }
 }
-
-#[cfg(test)]
-#[path = "update_environment_form_tests.rs"]
-mod tests;

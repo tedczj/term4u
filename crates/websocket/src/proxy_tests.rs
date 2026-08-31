@@ -367,6 +367,32 @@ async fn connect_via_proxy_sends_correct_connect_request() {
 }
 
 #[tokio::test]
+async fn guard_allows_loopback_proxy_to_remote_target() {
+    let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let address = listener.local_addr().unwrap();
+    let proxy_info = ProxyInfo {
+        host: "127.0.0.1".to_string(),
+        port: address.port(),
+        basic_auth: None,
+    };
+    let proxy = tokio::spawn(async move {
+        let (mut socket, _) = listener.accept().await.unwrap();
+        let mut request = [0; 1024];
+        let _ = socket.read(&mut request).await.unwrap();
+        socket
+            .write_all(b"HTTP/1.1 200 Connection established\r\n\r\n")
+            .await
+            .unwrap();
+    });
+    let target_uri = "wss://198.51.100.1:443".parse().unwrap();
+
+    let result = connect_via_proxy(&proxy_info, &target_uri).await;
+
+    proxy.await.unwrap();
+    assert!(result.is_ok());
+}
+
+#[tokio::test]
 async fn connect_via_proxy_sends_auth_header() {
     let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
     let addr = listener.local_addr().unwrap();

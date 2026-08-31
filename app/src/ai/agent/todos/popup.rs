@@ -7,10 +7,8 @@ use warpui::elements::{
     Radius, SavePosition, ScrollTarget, ScrollToPositionMode, ScrollbarWidth, Shrinkable, Text,
 };
 use warpui::fonts::{FamilyId, Properties, Weight};
-use warpui::keymap::FixedBinding;
 use warpui::{
-    AppContext, Element, Entity, EntityId, ModelHandle, SingletonEntity, TypedActionView, View,
-    ViewContext,
+    Element, Entity, EntityId, ModelHandle, SingletonEntity, TypedActionView, View, ViewContext,
 };
 
 use crate::ai::agent::icons::{in_progress_icon, pending_icon, succeeded_icon};
@@ -44,16 +42,6 @@ struct Styles {
     main_text_color: ColorU,
     sub_text_color: ColorU,
     detail_font_size: f32,
-}
-
-pub fn init(app: &mut AppContext) {
-    use warpui::keymap::macros::*;
-
-    app.register_fixed_bindings([FixedBinding::new(
-        "escape",
-        AgentTodosPopupAction::ClosePopup,
-        id!(AgentTodosPopupView::ui_name()),
-    )]);
 }
 
 impl AgentTodosPopupView {

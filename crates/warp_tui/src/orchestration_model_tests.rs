@@ -52,7 +52,6 @@ fn remote_request(parent_conversation_id: AIConversationId) -> StartAgentRequest
 fn orchestration_fixture(app: &mut App) -> OrchestrationFixture {
     register_tui_session_view_test_singletons(app);
     add_test_semantic_selection(app);
-    app.update(crate::autoupdate::TuiAutoupdater::register);
     let (window_id, root) = app.update(|ctx| {
         ctx.add_tui_window(
             AddWindowOptions {

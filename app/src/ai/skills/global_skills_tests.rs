@@ -9,7 +9,7 @@ use warp_util::remote_path::RemotePath;
 use warp_util::standardized_path::StandardizedPath;
 
 use super::{filter_skills_by_spec, resolve_skill_repos};
-use crate::ai::cloud_environments::GithubRepo;
+use crate::cloud_object::agent_environment::GithubRepo;
 
 #[test]
 fn resolve_skill_repos_returns_empty_for_empty_input() {

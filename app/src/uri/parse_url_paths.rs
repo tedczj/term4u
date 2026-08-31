@@ -11,7 +11,7 @@ pub enum WarpWebLink {
 }
 
 pub fn get_item_data_from_warp_link(url: &Url) -> Option<WarpWebLink> {
-    if url.origin() == ChannelState::server_root_domain() {
+    if ChannelState::server_root_domain().is_ok_and(|origin| url.origin() == origin) {
         url.path_segments().and_then(|mut path_segments| {
             path_segments.next().and_then(|segment| match segment {
                 "drive" => extract_server_id_and_object_type_from_warp_drive_link(url)

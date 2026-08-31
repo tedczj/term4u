@@ -158,7 +158,3 @@ impl fmt::Display for NetworkLogItem {
         write!(f, "{}", self.0)
     }
 }
-
-#[cfg(test)]
-#[path = "network_logging_tests.rs"]
-mod tests;

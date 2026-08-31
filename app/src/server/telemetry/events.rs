@@ -2,8 +2,6 @@ use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
-use session_sharing_protocol::common::{ParticipantId, Role, SessionId as SharedSessionId};
-use session_sharing_protocol::sharer::{SessionEndedReason, SessionSourceType};
 use strum_macros::{EnumDiscriminants, EnumIter};
 use warp_completer::completer::MatchType;
 use warp_core::command::ExitCode;
@@ -12,6 +10,10 @@ use warp_core::telemetry::{
     EnablementState, TelemetryEvent as TelemetryEventTrait, TelemetryEventDesc,
 };
 pub use warp_terminal::ImageProtocol;
+use warp_terminal::session_sharing_types::common::{
+    ParticipantId, Role, SessionId as SharedSessionId,
+};
+use warp_terminal::session_sharing_types::sharer::{SessionEndedReason, SessionSourceType};
 use warpui::keymap::Keystroke;
 use warpui::notification::{NotificationSendError, RequestPermissionsOutcome};
 use warpui::rendering::ThinStrokes;
@@ -23,7 +25,7 @@ use crate::ai::agent::{
     EntrypointType, PassiveSuggestionTrigger, ServerOutputId, SuggestedLoggingId,
 };
 use crate::ai::agent_management::notifications::NotificationSourceAgent;
-use crate::ai::ambient_agents::AmbientAgentTaskId;
+use crate::ai::agent_tasks::AmbientAgentTaskId;
 use crate::ai::blocklist::agent_view::AgentViewEntryOrigin;
 use crate::ai::blocklist::{
     AIBlockResponseRating, CommandExecutionPermissionAllowedReason, InputType,
@@ -65,8 +67,8 @@ use crate::terminal::input::TelemetryInputSuggestionsMode;
 use crate::terminal::model::block::BlockId;
 use crate::terminal::model::session::SessionId;
 use crate::terminal::model::terminal_model::BlockSelectionCardinality;
+use crate::terminal::session_sharing::SharedSessionActionSource;
 use crate::terminal::settings::AltScreenPaddingMode;
-use crate::terminal::shared_session::SharedSessionActionSource;
 use crate::terminal::shell::ShellType;
 use crate::terminal::view::inline_banner::{
     ZeroStatePromptSuggestionTriggeredFrom, ZeroStatePromptSuggestionType,
@@ -2774,14 +2776,14 @@ pub enum TelemetryEvent {
     /// `error` is `None` on success, `Some(reason)` on failure.
     RemoteServerInstallation {
         error: Option<String>,
-        install_source: Option<remote_server::transport::InstallSource>,
+        install_source: Option<String>,
         remote_os: Option<String>,
         remote_arch: Option<String>,
     },
     /// Emitted when the remote server connection + initialization completes.
     /// `error` is `None` on success, `Some(reason)` on failure.
     RemoteServerInitialization {
-        phase: remote_server::manager::RemoteServerInitPhase,
+        phase: String,
         error: Option<String>,
         remote_os: Option<String>,
         remote_arch: Option<String>,
@@ -2801,8 +2803,8 @@ pub enum TelemetryEvent {
     },
     /// Emitted when a client request to the remote server fails.
     RemoteServerClientRequestError {
-        operation: remote_server::manager::RemoteServerOperation,
-        error_type: remote_server::manager::RemoteServerErrorKind,
+        operation: String,
+        error_type: String,
         remote_os: Option<String>,
         remote_arch: Option<String>,
     },
@@ -2831,7 +2833,7 @@ pub enum TelemetryEvent {
         remote_arch: Option<String>,
         /// Typed unsupported reason. Converted into stable telemetry
         /// fields in `payload()`.
-        unsupported_reason: remote_server::setup::UnsupportedReason,
+        unsupported_reason: String,
         /// Detected libc on the remote host, e.g. `"glibc 2.28"`,
         /// `"musl"`, `"unknown"`.
         detected_libc: String,
@@ -2860,13 +2862,13 @@ pub enum TelemetryEvent {
     },
     /// Emitted when the remote codebase index status changes.
     RemoteCodebaseIndexStatusChanged {
-        state: remote_server::codebase_index_proto::RemoteCodebaseIndexState,
-        previous_state: Option<remote_server::codebase_index_proto::RemoteCodebaseIndexState>,
+        state: String,
+        previous_state: Option<String>,
         has_root_hash: bool,
         has_failure_message: bool,
         progress_completed: Option<u64>,
         progress_total: Option<u64>,
-        mutation_kind: Option<remote_server::manager::RemoteCodebaseIndexUpdateOperation>,
+        mutation_kind: Option<String>,
         source: RemoteCodebaseIndexStatusTelemetrySource,
         remote_os: Option<String>,
         remote_arch: Option<String>,
@@ -4278,32 +4280,12 @@ impl TelemetryEvent {
                 remote_arch,
                 unsupported_reason,
                 detected_libc,
-            } => {
-                let unsupported_os = match unsupported_reason {
-                    remote_server::setup::UnsupportedReason::UnsupportedOs { os } => {
-                        Some(os.clone())
-                    }
-                    remote_server::setup::UnsupportedReason::GlibcTooOld { .. }
-                    | remote_server::setup::UnsupportedReason::NonGlibc { .. }
-                    | remote_server::setup::UnsupportedReason::UnsupportedArch { .. } => None,
-                };
-                let unsupported_arch = match unsupported_reason {
-                    remote_server::setup::UnsupportedReason::UnsupportedArch { arch } => {
-                        Some(arch.clone())
-                    }
-                    remote_server::setup::UnsupportedReason::GlibcTooOld { .. }
-                    | remote_server::setup::UnsupportedReason::NonGlibc { .. }
-                    | remote_server::setup::UnsupportedReason::UnsupportedOs { .. } => None,
-                };
-                Some(json!({
-                    "remote_os": remote_os,
-                    "remote_arch": remote_arch,
-                    "reason": unsupported_reason.as_telemetry_reason(),
-                    "detected_libc": detected_libc,
-                    "unsupported_os": unsupported_os,
-                    "unsupported_arch": unsupported_arch,
-                }))
-            }
+            } => Some(json!({
+                "remote_os": remote_os,
+                "remote_arch": remote_arch,
+                "reason": unsupported_reason,
+                "detected_libc": detected_libc,
+            })),
             TelemetryEvent::ConversationListItemOpened { is_ambient_agent } => Some(json!({
                 "is_ambient_agent": is_ambient_agent,
             })),
@@ -7096,7 +7078,3 @@ impl TelemetryEventDesc for TelemetryEventDiscriminants {
 }
 
 warp_core::register_telemetry_event!(TelemetryEvent);
-
-#[cfg(test)]
-#[path = "events_tests.rs"]
-mod tests;

@@ -14,9 +14,8 @@ use warpui::r#async::Timer;
 use warpui::{AppContext, ModelContext, SingletonEntity};
 
 use crate::auth::AuthStateProvider;
-use crate::settings::{AISettings, AISettingsChangedEvent};
 use crate::workspaces::user_workspaces::{
-    GeminiEnterpriseBackgroundHost, TeamScope, UserWorkspaces, UserWorkspacesEvent,
+    GeminiEnterpriseBackgroundHost, TeamScope, UserWorkspaces,
 };
 
 const GEAP_IDENTITY_TOKEN_DURATION: Duration = Duration::from_secs(60 * 60);
@@ -137,35 +136,6 @@ pub(crate) fn current_geap_policy_for_any_team(app: &AppContext) -> GeapPolicy {
         GeminiEnterpriseBackgroundHost::Enabled(settings) => {
             geap_policy_from_host_settings(Some(settings), app)
         }
-    }
-}
-
-pub trait GeapCredentialRefresher {
-    fn subscribe_to_geap_settings_changes(&mut self, ctx: &mut ModelContext<Self>)
-    where
-        Self: Sized;
-}
-
-impl GeapCredentialRefresher for ApiKeyManager {
-    fn subscribe_to_geap_settings_changes(&mut self, ctx: &mut ModelContext<Self>) {
-        ctx.subscribe_to_model(&UserWorkspaces::handle(ctx), |manager, _, event, ctx| {
-            if matches!(
-                event,
-                UserWorkspacesEvent::UpdateWorkspaceSettingsSuccess
-                    | UserWorkspacesEvent::TeamsChanged
-            ) {
-                refresh_geap_credentials(manager, ctx);
-            }
-        });
-
-        ctx.subscribe_to_model(&AISettings::handle(ctx), |manager, _, event, ctx| {
-            if matches!(
-                event,
-                AISettingsChangedEvent::GeminiEnterpriseCredentialsEnabled { .. }
-            ) {
-                refresh_geap_credentials(manager, ctx);
-            }
-        });
     }
 }
 

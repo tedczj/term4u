@@ -23,7 +23,6 @@ use num_traits::SaturatingSub;
 use pathfinder_color::ColorU;
 use pathfinder_geometry::rect::RectF;
 use pathfinder_geometry::vector::Vector2F;
-use remote_server::manager::RemoteServerManager;
 #[cfg(feature = "local_fs")]
 use repo_metadata::repositories::DetectedRepositories;
 use string_offset::CharOffset;
@@ -1708,13 +1707,6 @@ impl LocalCodeEditorView {
                         error: error.clone(),
                     });
                 }
-                GlobalBufferModelEvent::RemoteBufferConflict { .. } => {
-                    me.has_remote_conflict = true;
-                    ctx.notify();
-                }
-                GlobalBufferModelEvent::ServerLocalBufferUpdated { .. } => {
-                    // Not relevant for local code editors.
-                }
             }
 
             me.update_diff_hunk_gutter_buttons(ctx);
@@ -1722,8 +1714,7 @@ impl LocalCodeEditorView {
     }
 
     pub fn has_version_conflicts(&self, app: &AppContext) -> bool {
-        // Remote buffers use SyncClock for conflict detection.
-        // The flag is set by the RemoteBufferConflict event handler.
+        // Remote conflicts are surfaced by the buffer model.
         if matches!(self.file_location(), Some(BufferFileLocation::Remote(_))) {
             return self.has_remote_conflict;
         }
@@ -1739,12 +1730,8 @@ impl LocalCodeEditorView {
     /// `RemoteServerManager` so it is always in sync with actual
     /// connection state.
     pub fn is_remote_disconnected(&self, app: &AppContext) -> bool {
-        let Some(BufferFileLocation::Remote(remote_path)) = self.file_location() else {
-            return false;
-        };
-        RemoteServerManager::as_ref(app)
-            .client_for_host(&remote_path.host_id)
-            .is_none()
+        let _ = app;
+        matches!(self.file_location(), Some(BufferFileLocation::Remote(_)))
     }
 
     /// Whether auto-save can actually persist this editor's changes: it needs
@@ -2462,16 +2449,8 @@ impl TypedActionView for LocalCodeEditorView {
                     self.base_content_version = Some(self.editor().as_ref(ctx).version(ctx));
                     ctx.emit(LocalCodeEditorEvent::DiscardUnsavedChanges { path });
                 } else if self.has_remote_conflict {
-                    // Remote file: re-open the buffer from the server to get
-                    // the latest on-disk content. The BufferLoaded event will
-                    // clear has_remote_conflict and update base_content_version.
-                    // If the re-open fails, has_remote_conflict stays true and
-                    // the banner remains visible so the user can retry.
-                    if let Some(file_id) = self.file_id() {
-                        GlobalBufferModel::handle(ctx).update(ctx, |model, ctx| {
-                            model.reopen_remote_buffer(file_id, ctx);
-                        });
-                    }
+                    self.has_remote_conflict = false;
+                    ctx.notify();
                 }
             }
             LocalCodeEditorAction::NavigateToTarget(location) => {

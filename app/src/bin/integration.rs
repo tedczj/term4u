@@ -1,9 +1,17 @@
+#[cfg(not(feature = "offline_hard"))]
 use anyhow::Result;
+#[cfg(not(feature = "offline_hard"))]
 use clap::Parser;
+#[cfg(not(feature = "offline_hard"))]
 use warp_cli::WorkerCommand;
+#[cfg(not(feature = "offline_hard"))]
 use warp_core::AppId;
-use warp_core::channel::{Channel, ChannelConfig, ChannelState, OzConfig, WarpServerConfig};
+#[cfg(not(feature = "offline_hard"))]
+use warp_core::channel::{
+    Channel, ChannelConfig, ChannelState, ConnectivityMode, OzConfig, WarpServerConfig,
+};
 
+#[cfg(not(feature = "offline_hard"))]
 #[derive(Debug, Default, Parser, Clone)]
 #[command(name = "warp-integration")]
 #[clap(args_conflicts_with_subcommands = true)]
@@ -12,6 +20,7 @@ pub struct Args {
     command: Option<WorkerCommand>,
 }
 
+#[cfg(not(feature = "offline_hard"))]
 pub fn main() -> Result<()> {
     ChannelState::set(ChannelState::new(
         Channel::Integration,
@@ -26,24 +35,23 @@ pub fn main() -> Result<()> {
                 },
             ),
             logfile_name: "warp_integration.log".into(),
-            server_config: WarpServerConfig {
-                firebase_auth_api_key: "".into(),
-                // Use an IP in the IANA testing range, with the TCP discard port, to
-                // black-hole server traffic.
-                server_root_url: "http://192.0.2.0:9".into(),
-                rtc_server_url: "ws://192.0.2.0:9/graphql/v2".into(),
-                session_sharing_server_url: None,
-                iap_config: None,
+            connectivity: ConnectivityMode::Cloud {
+                server: WarpServerConfig {
+                    firebase_auth_api_key: "".into(),
+                    // Use an IP in the IANA testing range, with the TCP discard port, to
+                    // black-hole server traffic.
+                    server_root_url: "http://192.0.2.0:9".into(),
+                    rtc_server_url: "ws://192.0.2.0:9/graphql/v2".into(),
+                    session_sharing_server_url: None,
+                    iap_config: None,
+                },
+                oz: OzConfig {
+                    // Use an IP in the IANA testing range, with the TCP discard port, to
+                    // black-hole server traffic.
+                    oz_root_url: "http://192.0.2.0:9".into(),
+                    workload_audience_url: None,
+                },
             },
-            oz_config: OzConfig {
-                // Use an IP in the IANA testing range, with the TCP discard port, to
-                // black-hole server traffic.
-                oz_root_url: "http://192.0.2.0:9".into(),
-                workload_audience_url: None,
-            },
-            telemetry_config: None,
-            crash_reporting_config: None,
-            autoupdate_config: None,
             mcp_static_config: None,
         },
     ));
@@ -72,4 +80,10 @@ pub fn main() -> Result<()> {
     }
 
     warp::run()
+}
+
+#[cfg(feature = "offline_hard")]
+fn main() {
+    eprintln!("integration is not available in offline builds");
+    std::process::exit(2);
 }

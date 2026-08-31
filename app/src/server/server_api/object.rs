@@ -122,16 +122,16 @@ use warp_graphql::queries::get_updated_cloud_objects::{
 use warp_graphql::subscriptions::get_warp_drive_updates::GetWarpDriveUpdates;
 use warp_graphql::subscriptions::start_graphql_streaming_operation;
 
-use crate::ai::ambient_agents::scheduled::ScheduledAmbientAgent;
-use crate::ai::cloud_environments::AmbientAgentEnvironment;
 use crate::ai::document::ai_document_model::AIDocumentId;
 use crate::ai::execution_profiles::AIExecutionProfile;
 use crate::ai::facts::AIFact;
 use crate::ai::mcp::{MCPServer, TemplatableMCPServer};
 use crate::channel::ChannelState;
+use crate::cloud_object::agent_environment::AmbientAgentEnvironment;
 use crate::cloud_object::model::generic_string_model::{
     GenericStringModel, GenericStringObjectId, Serializer, StringModel,
 };
+use crate::cloud_object::scheduled_agent::ScheduledAmbientAgent;
 use crate::cloud_object::{
     BulkCreateCloudObjectResult, BulkCreateGenericStringObjectsRequest, CreateCloudObjectResult,
     CreateObjectRequest, CreatedCloudObject, GenericCloudObject, GenericServerObject,
@@ -157,6 +157,252 @@ use crate::workflows::WorkflowId;
 use crate::workflows::workflow_enum::WorkflowEnum;
 use crate::workspaces::gql_convert::object_update_message_from_gql;
 use crate::workspaces::user_profiles::UserProfileWithUID;
+
+#[cfg_attr(not(target_family = "wasm"), async_trait)]
+#[cfg_attr(target_family = "wasm", async_trait(?Send))]
+impl ObjectClient for crate::server::offline_api::OfflineApi {
+    async fn create_workflow(
+        &self,
+        request: CreateObjectRequest,
+    ) -> Result<CreateCloudObjectResult> {
+        let _ = request;
+        Err(Self::unavailable("cloud object API"))
+    }
+
+    async fn update_workflow(
+        &self,
+        workflow_id: WorkflowId,
+        data: SerializedModel,
+        revision: Option<Revision>,
+    ) -> Result<UpdateCloudObjectResult<ServerWorkflow>> {
+        let _ = (workflow_id, data, revision);
+        Err(Self::unavailable("cloud object API"))
+    }
+
+    async fn bulk_create_generic_string_objects(
+        &self,
+        owner: Owner,
+        objects: &[BulkCreateGenericStringObjectsRequest],
+    ) -> Result<BulkCreateCloudObjectResult> {
+        let _ = (owner, objects);
+        Err(Self::unavailable("cloud object API"))
+    }
+
+    async fn create_generic_string_object(
+        &self,
+        format: GenericStringObjectFormat,
+        uniqueness_key: Option<GenericStringObjectUniqueKey>,
+        request: CreateObjectRequest,
+    ) -> Result<CreateCloudObjectResult> {
+        let _ = (format, uniqueness_key, request);
+        Err(Self::unavailable("cloud object API"))
+    }
+
+    async fn create_notebook(
+        &self,
+        request: CreateObjectRequest,
+    ) -> Result<CreateCloudObjectResult> {
+        let _ = request;
+        Err(Self::unavailable("cloud object API"))
+    }
+
+    async fn update_notebook(
+        &self,
+        notebook_id: cloud_object_models::NotebookId,
+        title: Option<String>,
+        data: Option<SerializedModel>,
+        revision: Option<Revision>,
+    ) -> Result<UpdateCloudObjectResult<ServerNotebook>> {
+        let _ = (notebook_id, title, data, revision);
+        Err(Self::unavailable("cloud object API"))
+    }
+
+    async fn create_folder(&self, request: CreateObjectRequest) -> Result<CreateCloudObjectResult> {
+        let _ = request;
+        Err(Self::unavailable("cloud object API"))
+    }
+
+    async fn update_folder(
+        &self,
+        folder_id: FolderId,
+        name: SerializedModel,
+    ) -> Result<UpdateCloudObjectResult<ServerFolder>> {
+        let _ = (folder_id, name);
+        Err(Self::unavailable("cloud object API"))
+    }
+
+    async fn update_generic_string_object(
+        &self,
+        object_id: GenericStringObjectId,
+        model: SerializedModel,
+        revision: Option<Revision>,
+    ) -> Result<UpdateCloudObjectResult<Box<dyn ServerObject>>> {
+        let _ = (object_id, model, revision);
+        Err(Self::unavailable("cloud object API"))
+    }
+
+    async fn grab_notebook_edit_access(
+        &self,
+        notebook_id: cloud_object_models::NotebookId,
+    ) -> Result<ServerMetadata> {
+        let _ = notebook_id;
+        Err(Self::unavailable("cloud object API"))
+    }
+
+    async fn give_up_notebook_edit_access(
+        &self,
+        notebook_id: cloud_object_models::NotebookId,
+    ) -> Result<ServerMetadata> {
+        let _ = notebook_id;
+        Err(Self::unavailable("cloud object API"))
+    }
+
+    async fn get_warp_drive_updates(
+        &self,
+        message_sender: Sender<ObjectUpdateMessage>,
+        stream_ready_sender: Sender<()>,
+    ) -> Result<()> {
+        let _ = message_sender;
+        stream_ready_sender.send(()).await?;
+        Ok(())
+    }
+
+    async fn fetch_changed_objects(
+        &self,
+        objects_to_update: ObjectsToUpdate,
+        force_refresh: bool,
+    ) -> Result<InitialLoadResponse> {
+        let _ = (objects_to_update, force_refresh);
+        Err(Self::unavailable("cloud object API"))
+    }
+
+    async fn fetch_single_cloud_object(&self, id: ServerId) -> Result<GetCloudObjectResponse> {
+        let _ = id;
+        Err(Self::unavailable("cloud object API"))
+    }
+
+    async fn transfer_notebook_owner(
+        &self,
+        notebook_id: cloud_object_models::NotebookId,
+        owner: Owner,
+    ) -> Result<bool> {
+        let _ = (notebook_id, owner);
+        Err(Self::unavailable("cloud object API"))
+    }
+
+    async fn transfer_workflow_owner(&self, workflow_id: WorkflowId, owner: Owner) -> Result<bool> {
+        let _ = (workflow_id, owner);
+        Err(Self::unavailable("cloud object API"))
+    }
+
+    async fn transfer_generic_string_object_owner(
+        &self,
+        workflow_id: GenericStringObjectId,
+        owner: Owner,
+    ) -> Result<bool> {
+        let _ = (workflow_id, owner);
+        Err(Self::unavailable("cloud object API"))
+    }
+
+    async fn trash_object(&self, id: ServerId) -> Result<bool> {
+        let _ = id;
+        Err(Self::unavailable("cloud object API"))
+    }
+
+    async fn untrash_object(&self, id: ServerId) -> Result<ObjectMetadataUpdateResult> {
+        let _ = id;
+        Err(Self::unavailable("cloud object API"))
+    }
+
+    async fn delete_object(&self, id: ServerId) -> Result<ObjectDeleteResult> {
+        let _ = id;
+        Err(Self::unavailable("cloud object API"))
+    }
+
+    async fn empty_trash(&self, owner: Owner) -> Result<ObjectDeleteResult> {
+        let _ = owner;
+        Err(Self::unavailable("cloud object API"))
+    }
+
+    async fn move_object(
+        &self,
+        id: ServerId,
+        folder_id: Option<FolderId>,
+        owner: Owner,
+        object_type: ObjectType,
+    ) -> Result<bool> {
+        let _ = (id, folder_id, owner, object_type);
+        Err(Self::unavailable("cloud object API"))
+    }
+
+    async fn record_object_action(
+        &self,
+        id: ServerId,
+        action_type: ObjectActionType,
+        timestamp: DateTime<Utc>,
+        data: Option<String>,
+    ) -> Result<ObjectActionHistory> {
+        let _ = (id, action_type, timestamp, data);
+        Err(Self::unavailable("cloud object API"))
+    }
+
+    async fn leave_object(&self, id: ServerId) -> Result<ObjectDeleteResult> {
+        let _ = id;
+        Err(Self::unavailable("cloud object API"))
+    }
+
+    async fn set_object_link_permissions(
+        &self,
+        object_id: ServerId,
+        access_level: SharingAccessLevel,
+    ) -> Result<ObjectPermissionUpdateResult> {
+        let _ = (object_id, access_level);
+        Err(Self::unavailable("cloud object API"))
+    }
+
+    async fn remove_object_link_permissions(
+        &self,
+        object_id: ServerId,
+    ) -> Result<ObjectPermissionUpdateResult> {
+        let _ = object_id;
+        Err(Self::unavailable("cloud object API"))
+    }
+
+    async fn add_object_guests(
+        &self,
+        object_id: ServerId,
+        guest_emails: Vec<String>,
+        access_level: AccessLevel,
+    ) -> Result<ObjectPermissionsUpdateData> {
+        let _ = (object_id, guest_emails, access_level);
+        Err(Self::unavailable("cloud object API"))
+    }
+
+    async fn update_object_guests(
+        &self,
+        object_id: ServerId,
+        guest_emails: Vec<String>,
+        access_level: AccessLevel,
+    ) -> Result<ServerPermissions> {
+        let _ = (object_id, guest_emails, access_level);
+        Err(Self::unavailable("cloud object API"))
+    }
+
+    async fn remove_object_guest(
+        &self,
+        object_id: ServerId,
+        guest: GuestIdentifier,
+    ) -> Result<ServerPermissions> {
+        let _ = (object_id, guest);
+        Err(Self::unavailable("cloud object API"))
+    }
+
+    async fn fetch_environment_last_task_run_timestamps(
+        &self,
+    ) -> Result<HashMap<String, DateTime<Utc>>> {
+        Ok(HashMap::new())
+    }
+}
 
 #[cfg_attr(not(target_family = "wasm"), async_trait)]
 #[cfg_attr(target_family = "wasm", async_trait(?Send))]
@@ -688,7 +934,7 @@ impl ObjectClient for ServerApi {
         let subscription = GetWarpDriveUpdates::build(());
 
         let result = start_graphql_streaming_operation(
-            &ChannelState::ws_server_url(),
+            &ChannelState::ws_server_url().unwrap_or_default(),
             init_payload,
             subscription,
             |res| {

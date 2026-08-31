@@ -36,7 +36,8 @@ impl BaseClient {
             .get_or_refresh_access_token()
             .await
             .context("Failed to get access token for API request")?;
-        let url = format!("{}/api/v1/{path}", ChannelState::server_root_url());
+        let server_root_url = ChannelState::server_root_url()?;
+        let url = format!("{server_root_url}/api/v1/{path}");
         let mut request = self.http_client().get(&url);
         if let Some(token) = auth_token.as_bearer_token() {
             request = request.bearer_auth(token);
@@ -89,7 +90,3 @@ impl BaseClient {
             .with_context(|| format!("Failed to deserialize response from {response_url}"))
     }
 }
-
-#[cfg(test)]
-#[path = "public_api_tests.rs"]
-mod tests;

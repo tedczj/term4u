@@ -3,8 +3,8 @@ use std::marker::PhantomData;
 use anyhow::{Result, anyhow};
 use chrono::{DateTime, Local, TimeDelta};
 use history_model::{BlocklistAIHistoryEvent, BlocklistAIHistoryModel};
-use session_sharing_protocol::common::ParticipantId;
 use warp_errors::report_error;
+use warp_terminal::session_sharing_types::common::ParticipantId;
 use warpui::{AppContext, Entity, SingletonEntity, ViewContext};
 
 use super::{AIBlockModel, AIBlockOutputStatus, OutputStatusUpdateCallback};

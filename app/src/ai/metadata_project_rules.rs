@@ -3,8 +3,6 @@ use futures::future::{BoxFuture, FutureExt as _};
 use warp_util::local_or_remote_path::LocalOrRemotePath;
 use warpui::AppContext;
 
-use super::remote_context_files::read_remote_text_file_contents;
-
 pub(crate) fn read_project_rule_contents(
     rule_paths: Vec<LocalOrRemotePath>,
     ctx: &AppContext,
@@ -30,7 +28,11 @@ pub(crate) fn read_project_rule_contents(
         }
         .boxed(),
         Some(LocalOrRemotePath::Remote(_)) => {
-            read_remote_text_file_contents(rule_paths, None, None, ctx)
+            let _ = ctx;
+            futures::future::ready(Err(anyhow::anyhow!(
+                "remote project rules are unavailable in term4u"
+            )))
+            .boxed()
         }
     }
 }

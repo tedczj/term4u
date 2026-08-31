@@ -67,7 +67,6 @@ use crate::server::ids::ClientId;
 use crate::server::server_api::ServerApiProvider;
 use crate::server::server_api::team::{MockTeamClient, TeamClient};
 use crate::server::sync_queue::SyncQueue;
-use crate::server::telemetry::context_provider::AppTelemetryContextProvider;
 use crate::settings::{
     AISettings, AgentModeCommandExecutionPredicate, CodeSettings, FocusedTerminalInfo,
 };
@@ -133,7 +132,6 @@ fn initialize_app_with_auth(
     app.add_singleton_model(|_| ServerApiProvider::new_for_test());
     app.add_singleton_model(|_| auth_state_provider);
     app.add_singleton_model(AuthManager::new_for_test);
-    app.add_singleton_model(AppTelemetryContextProvider::new_context_provider);
     app.add_singleton_model(|_| {
         PublicPreferences::new(Box::<user_preferences::in_memory::InMemoryPreferences>::default())
     });
@@ -148,7 +146,7 @@ fn initialize_app_with_auth(
     // The start of polling is normally triggered by authentication completion, but
     // we need to do it manually for tests.
     TeamTesterStatus::handle(app).update(app, |team_tester, ctx| {
-        team_tester.initiate_data_pollers(false, ctx);
+        team_tester.initiate_data_pollers(ctx);
     });
 }
 
@@ -1037,7 +1035,7 @@ fn warp_agent_cli_upgrade_link_is_channel_aware_and_user_bound() {
         UserWorkspaces::warp_agent_cli_upgrade_link(Some(user_uid)),
         format!(
             "{}{STRIPE_SUBSCRIPTION_INTERVAL_PAGE_PREFIX}/user/{user_uid}?source=warp-agent-cli",
-            ChannelState::server_root_url(),
+            ChannelState::server_root_url().unwrap_or_default(),
         )
     );
 }
@@ -1048,7 +1046,9 @@ fn warp_agent_cli_upgrade_link_uses_channel_aware_fallback_without_a_user() {
         UserWorkspaces::warp_agent_cli_upgrade_link(None),
         format!(
             "{}{STRIPE_SUBSCRIPTION_INTERVAL_PAGE_PREFIX}?source=warp-agent-cli",
-            ChannelState::server_root_url().trim_end_matches('/'),
+            ChannelState::server_root_url()
+                .unwrap_or_default()
+                .trim_end_matches('/'),
         )
     );
 }
@@ -1078,7 +1078,9 @@ fn admin_billing_link_for_default_team_targets_the_first_admin_team() {
                 UserWorkspaces::as_ref(ctx).admin_billing_link_for_default_team(email),
                 Some(format!(
                     "{}/admin/{first_team_uid}/billing",
-                    ChannelState::server_root_url().trim_end_matches('/'),
+                    ChannelState::server_root_url()
+                        .unwrap_or_default()
+                        .trim_end_matches('/'),
                 ))
             );
         });
@@ -1108,7 +1110,9 @@ fn admin_billing_link_for_default_team_accepts_admin_when_multi_admin_is_enabled
                 UserWorkspaces::as_ref(ctx).admin_billing_link_for_default_team(email),
                 Some(format!(
                     "{}/admin/{team_uid}/billing",
-                    ChannelState::server_root_url().trim_end_matches('/'),
+                    ChannelState::server_root_url()
+                        .unwrap_or_default()
+                        .trim_end_matches('/'),
                 ))
             );
         });

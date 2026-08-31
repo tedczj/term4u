@@ -14,10 +14,9 @@ use warp_core::ui::theme::color::internal_colors;
 use warp_errors::{report_error, report_if_error};
 use warpui::r#async::{SpawnedFutureHandle, Timer};
 use warpui::elements::{
-    Align, ChildAnchor, ChildView, ConstrainedBox, Container, CornerRadius, CrossAxisAlignment,
-    Empty, Expanded, Flex, Hoverable, MainAxisAlignment, MainAxisSize, MouseStateHandle,
-    OffsetPositioning, ParentAnchor, ParentElement, ParentOffsetBounds, Radius, Rect, Shrinkable,
-    Stack, Text,
+    Align, ChildView, ConstrainedBox, Container, CornerRadius, CrossAxisAlignment, Empty, Expanded,
+    Flex, Hoverable, MainAxisAlignment, MainAxisSize, MouseStateHandle, ParentElement, Radius,
+    Rect, Shrinkable, Text,
 };
 use warpui::fonts::Weight;
 use warpui::keymap::ContextPredicate;
@@ -43,10 +42,9 @@ use crate::channel::ChannelState;
 use crate::modal::{Modal, ModalEvent, ModalViewState};
 use crate::send_telemetry_from_ctx;
 use crate::server::telemetry::TelemetryEvent;
-use crate::settings::{AISettings, CustomSecretRegex, PrivacySettings, RegexDisplayInfo};
+use crate::settings::{CustomSecretRegex, PrivacySettings, RegexDisplayInfo};
 use crate::settings_view::privacy::AddRegexModalViewState;
 use crate::settings_view::render_body_item_label;
-use crate::settings_view::settings_page::CONTENT_FONT_SIZE;
 use crate::terminal::safe_mode_settings::{
     SafeModeEnabled, SafeModeSettings, SecretDisplayMode, SecretDisplayModeSetting,
     get_effective_secret_display_mode,
@@ -56,9 +54,6 @@ use crate::ui_components::icons::Icon;
 use crate::util::links::PRIVACY_POLICY_URL;
 use crate::view_components::{Dropdown, DropdownItem};
 use crate::workspaces::user_workspaces::UserWorkspaces;
-use crate::workspaces::workspace::{
-    AdminEnablementSetting, CustomerType, UgcCollectionEnablementSetting,
-};
 
 const FONT_SIZE: f32 = 12.;
 
@@ -73,13 +68,7 @@ const USER_SECRET_REGEX_TITLE: &str = "Custom secret redaction";
 const USER_SECRET_REGEX_DESCRIPTION: &str = "Use regex to define additional secrets or data you'd like to redact. This will take effect \
     when the next command runs. You can use the inline (?i) flag as a prefix to your regex \
     to make it case-insensitive.";
-const TELEMETRY_DESCRIPTION_OLD: &str = "App analytics help us make the product better for you. We only collect \
-    app usage metadata, never console input or output.";
 const TELEMETRY_TITLE: &str = "Help improve Warp";
-const TELEMETRY_DESCRIPTION: &str = "App analytics help us make the product better for you. We may collect \
-    certain console interactions to improve Warp's AI capabilities.";
-const TELEMETRY_DOCS_URL: &str = "https://docs.warp.dev/support-and-community/privacy-and-security/privacy#what-telemetry-data-does-warp-collect-and-why";
-
 const DATA_MANAGEMENT_TITLE: &str = "Manage your data";
 const DATA_MANAGEMENT_DESCRIPTION: &str = "At any time, you may choose to delete your Warp account permanently. \
     You will no longer be able to use Warp.";
@@ -92,10 +81,13 @@ pub fn data_management_url(custom_token: Option<&str>) -> String {
     match custom_token {
         Some(token) => format!(
             "{}/data_management?customToken={}",
-            ChannelState::server_root_url(),
+            ChannelState::server_root_url().unwrap_or_default(),
             token
         ),
-        None => format!("{}/data_management", ChannelState::server_root_url(),),
+        None => format!(
+            "{}/data_management",
+            ChannelState::server_root_url().unwrap_or_default(),
+        ),
     }
 }
 
@@ -1373,57 +1365,6 @@ impl SettingsWidget for SecretRedactionWidget {
 #[derive(Default)]
 struct AppAnalyticsWidget {
     switch_state: SwitchStateHandle,
-    docs_link_mouse_state: MouseStateHandle,
-    zdr_badge_mouse_state: MouseStateHandle,
-}
-
-impl AppAnalyticsWidget {
-    fn render_zero_data_retention_badge(&self, appearance: &Appearance) -> Box<dyn Element> {
-        let ui_builder = appearance.ui_builder();
-
-        Hoverable::new(self.zdr_badge_mouse_state.clone(), move |mouse_state| {
-            let is_hovered = mouse_state.is_hovered();
-            let theme = appearance.theme();
-
-            let background_color = appearance.theme().accent();
-
-            let badge = Container::new(
-                Text::new_inline("ZDR", appearance.ui_font_family(), CONTENT_FONT_SIZE - 2.)
-                    .with_color(theme.active_ui_text_color().into())
-                    .finish(),
-            )
-            .with_background(background_color)
-            .with_corner_radius(CornerRadius::with_all(Radius::Pixels(3.)))
-            .with_uniform_padding(3.)
-            .with_margin_left(8.)
-            .finish();
-
-            let mut stack = Stack::new().with_child(badge);
-            if is_hovered {
-                let tooltip = ui_builder.tool_tip(
-                    "Your administrator has enabled zero data retention for your team. User generated content will never be collected."
-                        .to_string(),
-                );
-                stack.add_positioned_child(
-                    tooltip.build().finish(),
-                    OffsetPositioning::offset_from_parent(
-                        vec2f(0., -3.),
-                        ParentOffsetBounds::Unbounded,
-                        ParentAnchor::TopLeft,
-                        ChildAnchor::BottomLeft,
-                    ),
-                );
-            }
-            stack.finish()
-        })
-        .with_cursor(Cursor::PointingHand)
-        .finish()
-    }
-
-    fn should_show_zdr_badge(&self, app: &AppContext) -> bool {
-        let setting = UserWorkspaces::as_ref(app).get_ugc_collection_enablement_setting();
-        matches!(setting, UgcCollectionEnablementSetting::Disable)
-    }
 }
 
 impl SettingsWidget for AppAnalyticsWidget {
@@ -1434,13 +1375,8 @@ impl SettingsWidget for AppAnalyticsWidget {
     }
 
     fn should_render(&self, app: &AppContext) -> bool {
-        // Builds without a telemetry config (e.g. OpenWarp) cannot ship
-        // telemetry, so the toggle would be a no-op. Hide it in that case.
-        if !ChannelState::is_telemetry_available() {
-            return false;
-        }
-        let privacy_settings = PrivacySettings::as_ref(app);
-        !privacy_settings.is_telemetry_force_enabled()
+        let _ = app;
+        true
     }
 
     fn render(
@@ -1449,83 +1385,32 @@ impl SettingsWidget for AppAnalyticsWidget {
         appearance: &Appearance,
         app: &AppContext,
     ) -> Box<dyn Element> {
-        let privacy_settings = PrivacySettings::as_ref(app);
+        let _ = app;
         let ui_builder = appearance.ui_builder();
         let description_text_color = description_text_color(appearance.theme()).into_solid();
-
-        let is_enterprise = UserWorkspaces::as_ref(app)
-            .current_workspace()
-            .is_some_and(|w| w.billing_metadata.customer_type == CustomerType::Enterprise);
-        // Keep the old description for enterprise users because we do not collect block input/output for them.
-        let description = if is_enterprise {
-            TELEMETRY_DESCRIPTION_OLD
-        } else {
-            TELEMETRY_DESCRIPTION
-        };
-
-        let org_setting = UserWorkspaces::handle(app)
-            .as_ref(app)
-            .get_ugc_collection_enablement_setting();
-
-        let (is_toggleable, is_checked) = match org_setting {
-            UgcCollectionEnablementSetting::Enable => (false, true),
-            UgcCollectionEnablementSetting::Disable => (false, false),
-            UgcCollectionEnablementSetting::RespectUserSetting => {
-                (true, privacy_settings.is_telemetry_enabled)
-            }
-        };
-
-        let zdr_label_component = if self.should_show_zdr_badge(app) {
-            Flex::row()
-                .with_cross_axis_alignment(CrossAxisAlignment::Center)
-                .with_child(render_body_item_label::<PrivacyPageAction>(
-                    TELEMETRY_TITLE.into(),
-                    None,
-                    None,
-                    LocalOnlyIconState::Hidden,
-                    is_toggleable.into(),
-                    appearance,
-                ))
-                .with_child(self.render_zero_data_retention_badge(appearance))
-                .finish()
-        } else {
-            render_body_item_label::<PrivacyPageAction>(
-                TELEMETRY_TITLE.into(),
-                None,
-                None,
-                LocalOnlyIconState::Hidden,
-                is_toggleable.into(),
-                appearance,
-            )
-        };
-
+        let description = "Local build: analytics collection is disabled and cannot be changed.";
+        let label = render_body_item_label::<PrivacyPageAction>(
+            TELEMETRY_TITLE.into(),
+            None,
+            None,
+            LocalOnlyIconState::Hidden,
+            ToggleState::Disabled,
+            appearance,
+        );
         let switch = ui_builder
             .switch(self.switch_state.clone())
-            .check(is_checked);
-        let switch = if is_toggleable {
-            switch
-                .build()
-                .on_click(move |ctx, _, _| {
-                    ctx.dispatch_typed_action(PrivacyPageAction::ToggleTelemetry)
-                })
-                .finish()
-        } else {
-            switch
-                .with_tooltip(TooltipConfig {
-                    text: "This setting is managed by your organization.".to_string(),
-                    styles: ui_builder.default_tool_tip_styles(),
-                })
-                .disable()
-                .build()
-                .finish()
-        };
+            .check(false)
+            .with_tooltip(TooltipConfig {
+                text: "Local build: this setting is disabled and cannot be changed.".to_string(),
+                styles: ui_builder.default_tool_tip_styles(),
+            })
+            .disable()
+            .build()
+            .finish();
 
         let mut column = Flex::column();
         column.add_child(super::settings_page::build_toggle_element(
-            zdr_label_component,
-            switch,
-            appearance,
-            None,
+            label, switch, appearance, None,
         ));
         column.add_child(
             ui_builder
@@ -1541,24 +1426,6 @@ impl SettingsWidget for AppAnalyticsWidget {
                 })
                 .build()
                 .finish(),
-        );
-
-        column.add_child(
-            Align::new(
-                ui_builder
-                    .link(
-                        "Read more about Warp's use of data".into(),
-                        Some(TELEMETRY_DOCS_URL.into()),
-                        None,
-                        self.docs_link_mouse_state.clone(),
-                    )
-                    .soft_wrap(false)
-                    .build()
-                    .with_margin_bottom(styles::DESCRIPTION_MARGIN_BOTTOM)
-                    .finish(),
-            )
-            .left()
-            .finish(),
         );
 
         column.finish()
@@ -1578,13 +1445,8 @@ impl SettingsWidget for CrashReportsWidget {
     }
 
     fn should_render(&self, app: &AppContext) -> bool {
-        // Builds without a crash reporting config (e.g. OpenWarp) cannot ship
-        // crash reports, so the toggle would be a no-op. Hide it in that case.
-        if !ChannelState::is_crash_reporting_available() {
-            return false;
-        }
-        let privacy_settings = PrivacySettings::as_ref(app);
-        !privacy_settings.is_telemetry_force_enabled()
+        let _ = app;
+        true
     }
 
     fn render(
@@ -1594,29 +1456,27 @@ impl SettingsWidget for CrashReportsWidget {
         app: &AppContext,
     ) -> Box<dyn Element> {
         let ui_builder = appearance.ui_builder();
-        let privacy_settings = PrivacySettings::as_ref(app);
+        let _ = app;
         Flex::column()
             .with_child(render_body_item::<PrivacyPageAction>(
                 "Send crash reports".into(),
                 None,
                 // Crash report state is always synced to cloud, so no need to show local only icon.
                 LocalOnlyIconState::Hidden,
-                ToggleState::Enabled,
+                ToggleState::Disabled,
                 appearance,
                 ui_builder
                     .switch(self.switch_state.clone())
-                    .check(privacy_settings.is_crash_reporting_enabled)
+                    .check(false)
+                    .disable()
                     .build()
-                    .on_click(move |ctx, _, _| {
-                        ctx.dispatch_typed_action(PrivacyPageAction::ToggleCrashReporting)
-                    })
                     .finish(),
                 None,
             ))
             .with_child(
                 ui_builder
                     .paragraph(
-                        "Crash reports assist with debugging and stability improvements."
+                        "Local build: crash reporting is disabled and cannot be changed."
                             .to_owned(),
                     )
                     .with_style(UiComponentStyles {
@@ -1653,19 +1513,8 @@ impl SettingsWidget for CloudConversationStorageWidget {
     }
 
     fn should_render(&self, app: &AppContext) -> bool {
-        if !FeatureFlag::CloudConversations.is_enabled() {
-            return false;
-        }
-
-        // Hide the toggle entirely when AI is disabled: the setting has no
-        // effect without AI (no agent conversations are produced), so showing
-        // it is confusing.
-        if !AISettings::as_ref(app).is_any_ai_enabled(app) {
-            return false;
-        }
-
-        let privacy_settings = PrivacySettings::as_ref(app);
-        !privacy_settings.is_telemetry_force_enabled()
+        let _ = app;
+        true
     }
 
     fn render(
@@ -1675,18 +1524,8 @@ impl SettingsWidget for CloudConversationStorageWidget {
         app: &AppContext,
     ) -> Box<dyn Element> {
         let ui_builder = appearance.ui_builder();
-        let privacy_settings = PrivacySettings::as_ref(app);
-        let org_setting =
-            UserWorkspaces::as_ref(app).get_cloud_conversation_storage_enablement_setting();
-
-        let (toggle_state, is_checked) = match org_setting {
-            AdminEnablementSetting::Enable => (ToggleState::Disabled, true),
-            AdminEnablementSetting::Disable => (ToggleState::Disabled, false),
-            AdminEnablementSetting::RespectUserSetting => (
-                ToggleState::Enabled,
-                privacy_settings.is_cloud_conversation_storage_enabled,
-            ),
-        };
+        let _ = app;
+        let (toggle_state, is_checked) = (ToggleState::Disabled, false);
 
         let switch = ui_builder
             .switch(self.switch_state.clone())
@@ -1722,16 +1561,8 @@ impl SettingsWidget for CloudConversationStorageWidget {
             .with_child(
                 ui_builder
                     .paragraph(
-                        if is_checked {
-                            "Agent conversations can be shared with others and are retained \
-                            when you log in on different devices. This data is only stored \
-                            for product functionality, and Warp will not use it for analytics."
-                        } else {
-                            "Agent conversations are only stored locally on your machine, are \
-                            lost upon logout, and cannot be shared. Note: conversation data \
-                            for ambient agents are still stored in the cloud."
-                        }
-                        .to_owned(),
+                        "Local build: cloud conversation storage is disabled and cannot be changed."
+                            .to_owned(),
                     )
                     .with_style(UiComponentStyles {
                         font_color: Some(

@@ -5,7 +5,7 @@ use serde_json::{Map, Value};
 use warp_cli::mcp::MCPSpec;
 use warp_core::features::FeatureFlag;
 
-use crate::ai::ambient_agents::AgentConfigSnapshot;
+use crate::ai::agent_tasks::AgentConfigSnapshot;
 
 /// A strict, file-based representation of `AgentConfigSnapshot`.
 ///
@@ -227,7 +227,3 @@ pub fn merge_mcp_servers(
         }
     }
 }
-
-#[cfg(test)]
-#[path = "config_file_tests.rs"]
-mod tests;

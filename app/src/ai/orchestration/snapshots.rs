@@ -16,14 +16,13 @@ use super::providers::{
 };
 use crate::LLMPreferences;
 use crate::ai::auth_secret_types::auth_secret_types_for_harness;
-use crate::ai::cloud_environments::CloudAmbientAgentEnvironment;
-use crate::ai::connected_self_hosted_workers::ConnectedSelfHostedWorkersModel;
 use crate::ai::harness_availability::{AuthSecretFetchState, HarnessAvailabilityModel};
 use crate::ai::harness_display;
 use crate::ai::local_harness_setup::{
     LocalHarnessSetupState, local_harness_is_product_enabled, local_harness_setup_state,
 };
 use crate::cloud_object::CloudObjectLookup as _;
+use crate::cloud_object::agent_environment::CloudAmbientAgentEnvironment;
 use crate::workspaces::user_workspaces::TeamScope;
 
 const DEFAULT_MODEL_LABEL: &str = "Default model";
@@ -486,10 +485,7 @@ pub fn host_snapshot<S: TeamScope + ?Sized>(
 ) -> OptionSnapshot {
     let default_host = resolve_default_host_slug(scope, ctx);
     let recent_host = resolve_recent_host_slug(scope, ctx);
-    let mut connected_hosts = ConnectedSelfHostedWorkersModel::as_ref(ctx)
-        .worker_hosts_excluding(default_host.as_deref());
-    connected_hosts.sort();
-    connected_hosts.dedup();
+    let connected_hosts = Vec::new();
     let current = match &state.execution_mode {
         RunAgentsExecutionMode::Remote { worker_host, .. } if !worker_host.trim().is_empty() => {
             worker_host.trim().to_string()

@@ -7,7 +7,7 @@ use warpui::platform::TerminationMode;
 use warpui::{AppContext, ModelContext, SingletonEntity};
 
 use crate::ai::agent_sdk::oauth_flow::poll_oauth_until_terminal;
-use crate::ai::cloud_environments::GithubRepo;
+use crate::cloud_object::agent_environment::GithubRepo;
 use crate::server::server_api::ServerApiProvider;
 use crate::server::server_api::ai::AgentSkillItem;
 

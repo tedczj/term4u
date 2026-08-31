@@ -45,18 +45,20 @@ use crate::ai::agent_management::details_action_buttons::{
     ActionButtonsConfig, AgentDetailsButtonEvent, ConversationActionButtonsRow,
 };
 use crate::ai::agent_management::telemetry::{AgentManagementTelemetryEvent, OpenedFrom};
-use crate::ai::ambient_agents::task::TaskPrincipalInfo;
-use crate::ai::ambient_agents::{AmbientAgentTaskId, cancel_task_with_toast};
+use crate::ai::agent_tasks::task::TaskPrincipalInfo;
+use crate::ai::agent_tasks::{AmbientAgentTaskId, cancel_task_with_toast};
 use crate::ai::artifacts::{Artifact, ArtifactButtonsRow, ArtifactButtonsRowEvent};
 use crate::ai::blocklist::BlocklistAIHistoryModel;
 use crate::ai::blocklist::view_util::{UsageLabelKind, format_usage, usage_label};
-use crate::ai::cloud_environments::{AmbientAgentEnvironment, CloudAmbientAgentEnvironment};
 use crate::ai::harness_availability::HarnessAvailabilityModel;
 use crate::ai::harness_display;
 use crate::ai::runner_display::{self, RunnerPlatform};
 use crate::appearance::Appearance;
 use crate::auth::UserUid;
 use crate::cloud_object::CloudObjectLookup as _;
+use crate::cloud_object::agent_environment::{
+    AmbientAgentEnvironment, CloudAmbientAgentEnvironment,
+};
 use crate::notebooks::NotebookId;
 use crate::persistence::model::ChargedUsageTotals;
 use crate::send_telemetry_from_ctx;
@@ -992,7 +994,7 @@ impl ConversationDetailsPanel {
             ..
         } = &data.mode
         {
-            let oz_root_url = ChannelState::oz_root_url();
+            let oz_root_url = ChannelState::oz_root_url().unwrap_or_default();
             Some(format!("{oz_root_url}/runs/{task_id}"))
         } else {
             None
@@ -1241,7 +1243,7 @@ impl ConversationDetailsPanel {
         .finish();
 
         let agent_name_element = if let Some(uid) = &executor.uid {
-            let oz_root_url = ChannelState::oz_root_url();
+            let oz_root_url = ChannelState::oz_root_url().unwrap_or_default();
             let agent_url = format!("{oz_root_url}/agents/{}", urlencoding::encode(uid));
             appearance
                 .ui_builder()
@@ -1605,7 +1607,7 @@ impl ConversationDetailsPanel {
         .with_selectable(true)
         .finish();
 
-        let oz_root_url = ChannelState::oz_root_url();
+        let oz_root_url = ChannelState::oz_root_url().unwrap_or_default();
         let encoded_skill_name = urlencoding::encode(&skill_name);
         let skill_url = format!("{oz_root_url}/skills/{encoded_skill_name}");
 

@@ -21,9 +21,9 @@ use warpui::{
 };
 
 use crate::ai::blocklist::agent_view::agent_input_footer::AgentInputButtonTheme;
-use crate::ai::cloud_agent_settings::CloudAgentSettings;
 use crate::ai::harness_availability::HarnessAvailabilityModel;
 use crate::ai::harness_display::{brand_color, icon_for};
+use crate::ai::orchestration::settings::OrchestrationSettings;
 use crate::menu::{Event as MenuEvent, Menu, MenuItem, MenuItemFields};
 use crate::terminal::input::{MenuPositioning, MenuPositioningProvider};
 use crate::terminal::view::ambient_agent::AmbientAgentViewModel;
@@ -140,7 +140,7 @@ impl HarnessSelector {
             ambient_agent_model,
         };
         // Restore the last selected harness from settings if none is explicitly set.
-        if let Some(saved) = CloudAgentSettings::as_ref(ctx)
+        if let Some(saved) = OrchestrationSettings::as_ref(ctx)
             .last_selected_harness
             .value()
             .as_deref()
@@ -345,7 +345,7 @@ impl TypedActionView for HarnessSelector {
                     model.set_harness(harness, ctx);
                 });
                 // Persist the selection to settings for next time.
-                CloudAgentSettings::handle(ctx).update(ctx, |settings, ctx| {
+                OrchestrationSettings::handle(ctx).update(ctx, |settings, ctx| {
                     report_if_error!(
                         settings
                             .last_selected_harness

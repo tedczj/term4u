@@ -10,14 +10,13 @@ use pathfinder_color::ColorU;
 use ui_components::{Component as _, Options as _, button};
 use warp_core::safe_error;
 use warp_core::ui::theme::color::internal_colors;
-use warpui::actions::StandardAction;
 use warpui::elements::{
     Align, Border, ConstrainedBox, Container, CornerRadius, CrossAxisAlignment, Dismiss, Fill,
     Flex, FormattedTextElement, HighlightedHyperlink, MainAxisAlignment, MainAxisSize,
     MouseStateHandle, ParentElement, Radius, Shrinkable, Stack,
 };
 use warpui::fonts::Weight;
-use warpui::keymap::{FixedBinding, Keystroke};
+use warpui::keymap::Keystroke;
 use warpui::text_layout::TextAlignment;
 use warpui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
 use warpui::{
@@ -34,52 +33,13 @@ use crate::editor::{
 };
 use crate::server::server_api::auth::UserAuthenticationError;
 use crate::themes::theme::Fill as ThemeFill;
-use crate::util::bindings::CustomAction;
 
 const MODAL_WIDTH: f32 = 460.;
 const AUTH_TOKEN_INPUT_BORDER_RADIUS: Radius = Radius::Pixels(4.);
-
-pub fn init(app: &mut AppContext) {
-    use warpui::keymap::macros::*;
-    app.register_fixed_bindings([
-        FixedBinding::new(
-            "enter",
-            PasteAuthTokenModalAction::Confirm,
-            id!(PasteAuthTokenModalView::ui_name()),
-        ),
-        FixedBinding::new(
-            "escape",
-            PasteAuthTokenModalAction::Cancel,
-            id!(PasteAuthTokenModalView::ui_name()),
-        ),
-        FixedBinding::custom(
-            CustomAction::Paste,
-            PasteAuthTokenModalAction::PasteIntoEditor,
-            "Paste",
-            id!(PasteAuthTokenModalView::ui_name()),
-        ),
-        FixedBinding::standard(
-            StandardAction::Paste,
-            PasteAuthTokenModalAction::PasteIntoEditor,
-            id!(PasteAuthTokenModalView::ui_name()),
-        ),
-    ]);
-
-    #[cfg(any(target_os = "linux", target_os = "freebsd", target_os = "windows"))]
-    app.register_fixed_bindings([FixedBinding::new(
-        "cmdorctrl-v",
-        PasteAuthTokenModalAction::PasteIntoEditor,
-        id!(PasteAuthTokenModalView::ui_name()),
-    )]);
-}
-
 #[derive(Clone, Copy, Debug)]
 pub enum PasteAuthTokenModalAction {
     Confirm,
     Cancel,
-    /// Cmd+V/Ctrl+V at the modal level — routes paste into the editor even
-    /// when focus is still on the modal itself rather than the input.
-    PasteIntoEditor,
 }
 
 #[derive(Clone, Debug)]
@@ -432,10 +392,6 @@ impl TypedActionView for PasteAuthTokenModalView {
             }
             PasteAuthTokenModalAction::Cancel => {
                 ctx.emit(PasteAuthTokenModalEvent::Cancelled);
-            }
-            PasteAuthTokenModalAction::PasteIntoEditor => {
-                self.auth_token_input
-                    .update(ctx, |editor, ctx| editor.paste(ctx));
             }
         }
     }

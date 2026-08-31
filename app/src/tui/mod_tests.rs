@@ -188,7 +188,9 @@ fn stores_device_fallback_before_opening_browser() {
             });
             let verification_url = format!(
                 "{}/device",
-                ChannelState::server_root_url().trim_end_matches('/')
+                ChannelState::server_root_url()
+                    .unwrap_or_default()
+                    .trim_end_matches('/')
             );
             handle_auth_manager_event(
                 &AuthManagerEvent::ReceivedDeviceAuthorizationCode {
@@ -273,7 +275,9 @@ fn post_logout_device_auth_opens_logout_with_device_continuation() {
             });
             let verification_url = format!(
                 "{}/device",
-                ChannelState::server_root_url().trim_end_matches('/')
+                ChannelState::server_root_url()
+                    .unwrap_or_default()
+                    .trim_end_matches('/')
             );
             handle_auth_manager_event(
                 &AuthManagerEvent::ReceivedDeviceAuthorizationCode {

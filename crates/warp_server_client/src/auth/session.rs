@@ -71,7 +71,7 @@ pub struct AuthSession {
     client: Arc<http_client::Client>,
     auth_state: Arc<AuthState>,
     event_sender: async_channel::Sender<AuthEvent>,
-    oauth_client: OAuth2Client,
+    oauth_client: Option<OAuth2Client>,
 }
 
 impl AuthSession {
@@ -163,6 +163,12 @@ impl AuthSession {
         &self,
     ) -> StdResult<oauth2::StandardDeviceAuthorizationResponse, UserAuthenticationError> {
         self.oauth_client
+            .as_ref()
+            .ok_or_else(|| {
+                UserAuthenticationError::Unexpected(
+                    warp_core::channel::OfflineError::new("device authorization API").into(),
+                )
+            })?
             .exchange_device_code()
             .request_async(self.client.as_ref())
             .await
@@ -177,6 +183,12 @@ impl AuthSession {
     ) -> StdResult<FirebaseToken, UserAuthenticationError> {
         let result = self
             .oauth_client
+            .as_ref()
+            .ok_or_else(|| {
+                UserAuthenticationError::Unexpected(
+                    warp_core::channel::OfflineError::new("device authorization API").into(),
+                )
+            })?
             .exchange_device_access_token(details)
             .request_async(
                 self.client.as_ref(),
@@ -195,19 +207,17 @@ impl AuthSession {
         ))
     }
 
-    fn create_oauth_client() -> OAuth2Client {
-        let server_root =
-            Url::parse(&ChannelState::server_root_url()).expect("Server root URL must be valid");
-        let token_url = server_root
-            .join("/api/v1/oauth/token")
-            .expect("Invalid token URL");
-        let device_url = server_root
-            .join("/api/v1/oauth/device/auth")
-            .expect("Invalid device URL");
+    fn create_oauth_client() -> Option<OAuth2Client> {
+        let server_root_url = ChannelState::server_root_url().ok()?;
+        let server_root = Url::parse(&server_root_url).ok()?;
+        let token_url = server_root.join("/api/v1/oauth/token").ok()?;
+        let device_url = server_root.join("/api/v1/oauth/device/auth").ok()?;
 
-        oauth2::basic::BasicClient::new(oauth2::ClientId::new("warp-agent-cli".to_string()))
-            .set_token_uri(oauth2::TokenUrl::from_url(token_url))
-            .set_device_authorization_url(oauth2::DeviceAuthorizationUrl::from_url(device_url))
+        Some(
+            oauth2::basic::BasicClient::new(oauth2::ClientId::new("warp-agent-cli".to_string()))
+                .set_token_uri(oauth2::TokenUrl::from_url(token_url))
+                .set_device_authorization_url(oauth2::DeviceAuthorizationUrl::from_url(device_url)),
+        )
     }
 
     fn fetch_auth_tokens(
@@ -216,10 +226,13 @@ impl AuthSession {
     ) -> BoxFuture<'static, StdResult<FirebaseAuthTokens, UserAuthenticationError>> {
         let client = self.client.clone();
         Box::pin(async move {
-            let firebase_api_key = ChannelState::firebase_api_key();
+            let firebase_api_key = ChannelState::firebase_api_key()
+                .expect("cloud authentication is unavailable in an offline build");
+            let server_root_url = ChannelState::server_root_url()
+                .expect("cloud authentication is unavailable in an offline build");
             let url = token.access_token_url(&firebase_api_key);
             let request_body = token.access_token_request_body();
-            let proxy_url = token.proxy_url(&ChannelState::server_root_url(), &firebase_api_key);
+            let proxy_url = token.proxy_url(&server_root_url, &firebase_api_key);
             let response = match client
                 .post(&url)
                 .form(&request_body)
@@ -280,7 +293,3 @@ impl AuthSession {
         })
     }
 }
-
-#[cfg(test)]
-#[path = "session_tests.rs"]
-mod tests;

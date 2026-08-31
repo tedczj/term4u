@@ -25,7 +25,7 @@ use crate::ai::agent::{
     AIAgentTodoId, FinishedAIAgentOutput, RenderableAIError, Shared, TransientNetworkErrorKind,
     UserQueryMode,
 };
-use crate::ai::ambient_agents::{
+use crate::ai::agent_tasks::{
     AmbientAgentTaskId, AmbientConversationStatus, conversation_output_status_from_conversation,
 };
 use crate::ai::blocklist::ResponseStreamId;
@@ -40,7 +40,6 @@ use crate::persistence::model::{
     PersistedAutoexecuteMode,
 };
 use crate::server::ids::ServerId;
-use crate::server::telemetry::context_provider::AppTelemetryContextProvider;
 use crate::terminal::model::session::SessionId;
 use crate::test_util::ai_agent_tasks::create_api_task;
 use crate::test_util::settings::{
@@ -4188,7 +4187,7 @@ fn test_fork_conversation_title_override_replaces_prefix() {
 #[test]
 fn hydrate_remote_child_placeholder_with_cloud_transcript_preserves_placeholder_identity() {
     use crate::ai::agent::conversation::AIConversation;
-    use crate::ai::ambient_agents::AmbientAgentTaskId;
+    use crate::ai::agent_tasks::AmbientAgentTaskId;
     use crate::persistence::model::AgentConversationData;
     use crate::test_util::ai_agent_tasks::create_api_task;
 
@@ -4399,7 +4398,6 @@ fn statuses_after_stream_error(
         // Completing a request with an error emits telemetry, which requires
         // the telemetry context provider (and the auth state it reads).
         app.add_singleton_model(|_| AuthStateProvider::new_for_test());
-        app.add_singleton_model(AppTelemetryContextProvider::new_context_provider);
         let terminal_view_id = EntityId::new();
         let history_model = app.add_singleton_model(|_| BlocklistAIHistoryModel::new_for_test());
 

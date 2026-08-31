@@ -1,4 +1,4 @@
-use computer_use::Target;
+use interaction_types::Target;
 use warp_multi_agent_api as api;
 
 use crate::agent::action::AIAgentActionType;

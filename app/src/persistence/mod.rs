@@ -74,9 +74,6 @@ pub enum PersistenceScope {
     /// version skew can never migrate a shared database out from under the
     /// older binary. Cloud sync is the cross-front-end sharing mechanism.
     Tui,
-    RemoteServerDaemon {
-        identity_key: String,
-    },
 }
 
 /// The [`PersistenceScope`] this process's persistence was initialized with.

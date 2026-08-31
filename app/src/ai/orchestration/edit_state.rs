@@ -47,7 +47,7 @@ impl OrchestrationConfigState {
     }
 
     /// Records the auth-secret picker choice (`None` means Inherit) and
-    /// persists it to `CloudAgentSettings`.
+    /// persists it to `OrchestrationSettings`.
     pub fn apply_auth_secret_change(&mut self, new_name: Option<String>, ctx: &mut AppContext) {
         let normalized = new_name.filter(|s| !s.trim().is_empty());
         self.auth_secret_selection = match normalized {

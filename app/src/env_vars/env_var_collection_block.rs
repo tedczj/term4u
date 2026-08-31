@@ -13,7 +13,7 @@ use warpui::elements::{
     MouseStateHandle, ParentElement, Radius, SavePosition, SelectableArea, SelectionHandle,
     get_rich_content_position_id,
 };
-use warpui::keymap::{FixedBinding, Keystroke};
+use warpui::keymap::Keystroke;
 use warpui::{
     AppContext, Element, Entity, EntityId, FocusContext, SingletonEntity, TypedActionView, View,
     ViewContext,
@@ -116,29 +116,6 @@ pub struct EnvVarCollectionBlock {
     header_is_expanded: bool,
     header_mouse_state: MouseStateHandle,
 }
-
-pub fn init(app: &mut AppContext) {
-    use warpui::keymap::macros::*;
-
-    app.register_fixed_bindings([
-        FixedBinding::new(
-            "ctrl-c",
-            EnvVarCollectionBlockAction::Cancel,
-            id!(EnvVarCollectionBlock::ui_name()),
-        ),
-        FixedBinding::new(
-            "enter",
-            EnvVarCollectionBlockAction::RunCommand,
-            id!(EnvVarCollectionBlock::ui_name()),
-        ),
-        FixedBinding::new(
-            "numpadenter",
-            EnvVarCollectionBlockAction::RunCommand,
-            id!(EnvVarCollectionBlock::ui_name()),
-        ),
-    ]);
-}
-
 impl EnvVarCollectionBlock {
     pub fn new(
         block_id: String,

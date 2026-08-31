@@ -3,17 +3,17 @@ use std::path::PathBuf;
 use std::time::Duration;
 
 use instant::Instant;
-use session_sharing_protocol::common::SessionId;
 use uuid::Uuid;
 use warp_errors::report_error;
+use warp_terminal::session_sharing_types::common::SessionId;
 use warpui::r#async::Timer;
 use warpui::{SingletonEntity, ViewContext};
 
 use super::{HiddenChildAgentTaskContext, apply_hidden_child_agent_task_context};
 use crate::ai::agent::conversation::{AIConversation, AIConversationId};
 use crate::ai::agent_conversations_model::AgentConversationsModel;
-use crate::ai::ambient_agents::AmbientAgentTaskId;
-use crate::ai::ambient_agents::task::AmbientAgentTask;
+use crate::ai::agent_tasks::AmbientAgentTaskId;
+use crate::ai::agent_tasks::task::AmbientAgentTask;
 use crate::ai::blocklist::BlocklistAIHistoryModel;
 use crate::ai::blocklist::agent_view::AgentViewEntryOrigin;
 use crate::ai::blocklist::orchestration_event_streamer::agent_task_harness;
@@ -26,7 +26,7 @@ use crate::pane_group::{
 use crate::server::retry_strategies::is_transient_http_error;
 use crate::server::server_api::ServerApiProvider;
 use crate::server::server_api::ai::TaskListFilter;
-use crate::terminal::shared_session::IsSharedSessionCreator;
+use crate::terminal::session_sharing::IsSharedSessionCreator;
 use crate::terminal::view::load_ai_conversation::{
     RestoreConversationEntryBehavior, RestoredAIConversation,
 };

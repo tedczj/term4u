@@ -6,8 +6,8 @@ use warpui::{AppContext, EntityId, SingletonEntity as _};
 #[cfg(not(target_family = "wasm"))]
 use {
     crate::ai::agent::conversation::AIConversationId,
-    crate::ai::ambient_agents::task::normalize_orchestrator_agent_name,
-    crate::ai::ambient_agents::{AgentConfigSnapshot, AmbientAgentTaskId},
+    crate::ai::agent_tasks::task::normalize_orchestrator_agent_name,
+    crate::ai::agent_tasks::{AgentConfigSnapshot, AmbientAgentTaskId},
     crate::ai::blocklist::{BlocklistAIHistoryModel, StartAgentRequestId},
     crate::server::server_api::ServerApiProvider,
 };

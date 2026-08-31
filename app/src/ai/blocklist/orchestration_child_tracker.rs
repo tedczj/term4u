@@ -28,8 +28,8 @@
 
 use std::collections::{HashMap, HashSet};
 
-use session_sharing_protocol::common::SessionId;
 use warp_multi_agent_api as api;
+use warp_terminal::session_sharing_types::common::SessionId;
 use warpui::ModelContext;
 #[cfg(not(test))]
 use warpui::SingletonEntity;
@@ -45,7 +45,7 @@ use crate::ai::agent::conversation::ConversationStatus;
 // without installing the full model singleton graph.
 #[cfg(not(test))]
 use crate::ai::agent_conversations_model::AgentConversationsModel;
-use crate::ai::ambient_agents::{AmbientAgentTask, AmbientAgentTaskId, AmbientAgentTaskState};
+use crate::ai::agent_tasks::{AmbientAgentTask, AmbientAgentTaskId, AmbientAgentTaskState};
 
 /// Every way a child run can become known funnels into
 /// [`OrchestrationChildTracker::observe_child`].

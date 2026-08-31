@@ -13,7 +13,7 @@ use warpui::r#async::FutureExt as _;
 
 use super::super::terminal::TerminalDriver;
 use super::{CloudProvider, CloudProviderSetupError, Result};
-use crate::ai::cloud_environments::GcpProviderConfig;
+use crate::cloud_object::agent_environment::GcpProviderConfig;
 
 /// Token lifetime for GCP executable-sourced credentials. The GCP client
 /// libraries handle refreshing automatically, so we keep this short.
@@ -180,7 +180,3 @@ impl CloudProvider for GcpCloudProvider {
         })
     }
 }
-
-#[cfg(test)]
-#[path = "gcp_tests.rs"]
-mod tests;

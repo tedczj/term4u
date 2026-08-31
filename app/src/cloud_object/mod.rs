@@ -37,9 +37,11 @@ use crate::workflows::{CloudWorkflow, WorkflowSource};
 use crate::workspaces::user_profiles::UserProfiles;
 use crate::workspaces::user_workspaces::UserWorkspaces;
 
+pub mod agent_environment;
 pub mod breadcrumbs;
 pub mod grab_edit_access_modal;
 pub mod model;
+pub mod scheduled_agent;
 pub mod toast_message;
 
 pub use cloud_objects::cloud_object::*;
@@ -719,7 +721,7 @@ where
 
                 let mut link = format!(
                     "{}/drive/{}/{}-{}",
-                    ChannelState::server_root_url(),
+                    ChannelState::server_root_url().unwrap_or_default(),
                     object_type_for_link,
                     link_safe_name,
                     id.uid()
@@ -984,10 +986,10 @@ pub use cloud_object_client::{
     ObjectDeleteResult, ObjectMetadataUpdateResult, ObjectPermissionsUpdateData,
 };
 pub use cloud_object_models::{
-    ServerAIExecutionProfile, ServerAIFact, ServerAmbientAgentEnvironment, ServerCloudAgentConfig,
-    ServerCloudObject, ServerEnvVarCollection, ServerFolder, ServerMCPServer, ServerNotebook,
-    ServerPreference, ServerScheduledAmbientAgent, ServerTemplatableMCPServer, ServerWorkflow,
-    ServerWorkflowEnum, TryFromGql,
+    ServerAIExecutionProfile, ServerAIFact, ServerAmbientAgentEnvironment, ServerCloudObject,
+    ServerEnvVarCollection, ServerFolder, ServerMCPServer, ServerNotebook, ServerPreference,
+    ServerScheduledAmbientAgent, ServerTemplatableMCPServer, ServerWorkflow, ServerWorkflowEnum,
+    TryFromGql,
 };
 use warp_errors::report_error;
 

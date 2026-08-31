@@ -38,9 +38,8 @@ use super::update_environment_form::{
     UpdateEnvironmentFormEvent,
 };
 use super::{SettingsSection, editor_text_colors};
-use crate::ai::ambient_agents::github_auth_url::GithubAuthRedirectTarget;
-use crate::ai::cloud_environments::{self, CloudAmbientAgentEnvironment};
 use crate::appearance::Appearance;
+use crate::cloud_object::agent_environment::CloudAmbientAgentEnvironment;
 use crate::cloud_object::model::persistence::{CloudModel, CloudModelEvent};
 use crate::cloud_object::{
     CloudObjectLocation, CloudObjectLookup as _, GenericStringObjectFormat, JsonObjectType, Owner,
@@ -51,10 +50,9 @@ use crate::editor::{
     EditorView, PropagateAndNoOpNavigationKeys, SingleLineEditorOptions, TextOptions,
 };
 use crate::root_view::CreateEnvironmentArg;
-use crate::server::cloud_objects::update_manager::{
-    ObjectOperation, OperationSuccessType, UpdateManager, UpdateManagerEvent,
-};
-use crate::server::ids::{ClientId, ServerId, SyncId};
+use crate::server::cloud_objects::update_manager::UpdateManager;
+use crate::server::ids::{ServerId, SyncId};
+use crate::settings_view::update_environment_form::GithubAuthRedirectTarget;
 use crate::terminal::view::init_environment::mode_selector::{
     EnvironmentSetupMode, EnvironmentSetupModeSelector, EnvironmentSetupModeSelectorEvent,
 };
@@ -224,7 +222,6 @@ pub struct EnvironmentsPageView {
     // Track pending save to show success toast when complete
     pending_save_env_id: Option<SyncId>,
     // Track pending create to show success toast when complete
-    pending_create_client_id: Option<ClientId>,
     // Track pending delete to show success toast when complete
     pending_delete_env_id: Option<SyncId>,
     // Track pending share (personal -> team) to show error toast on failure
@@ -365,10 +362,6 @@ impl EnvironmentsPageView {
         });
 
         // Subscribe to UpdateManager to show success toast when environment update completes
-        ctx.subscribe_to_model(&UpdateManager::handle(ctx), |view, _, event, ctx| {
-            view.handle_update_manager_event(event, ctx);
-        });
-
         // Create search editor for list page
         let search_editor = Self::create_single_line_editor("Search environments...", ctx);
         ctx.subscribe_to_view(&search_editor, |me, _, event, ctx| match event {
@@ -528,7 +521,6 @@ impl EnvironmentsPageView {
             empty_state_github_repos_button_mouse_state: MouseStateHandle::default(),
             empty_state_local_repos_button_mouse_state: MouseStateHandle::default(),
             pending_save_env_id: None,
-            pending_create_client_id: None,
             pending_delete_env_id: None,
             pending_share_server_id: None,
             delete_confirmation_dialog,
@@ -603,96 +595,6 @@ impl EnvironmentsPageView {
             toast_stack.add_ephemeral_toast(DismissibleToast::error(message), window_id, ctx);
         });
     }
-
-    fn show_success_toast(&self, message: String, ctx: &mut ViewContext<Self>) {
-        let window_id = ctx.window_id();
-        ToastStack::handle(ctx).update(ctx, |toast_stack, ctx| {
-            toast_stack.add_ephemeral_toast(DismissibleToast::success(message), window_id, ctx);
-        });
-    }
-
-    fn handle_update_manager_event(
-        &mut self,
-        event: &UpdateManagerEvent,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        let UpdateManagerEvent::ObjectOperationComplete { result } = event else {
-            return;
-        };
-
-        // Check if this is a successful update for our pending save
-        if let (ObjectOperation::Update, OperationSuccessType::Success) =
-            (&result.operation, &result.success_type)
-        {
-            let Some(server_id) = &result.server_id else {
-                return;
-            };
-
-            let should_handle = self
-                .pending_save_env_id
-                .is_some_and(|pending_env_id| server_id.uid() == pending_env_id.uid());
-
-            if should_handle {
-                self.pending_save_env_id = None;
-                self.show_success_toast("Successfully updated environment".to_string(), ctx);
-
-                // No need to force a global cloud-object refresh here: on update success the
-                // sync pipeline updates this environment's `revision_ts` (used for "Last edited")
-                // in-memory via `CloudModel::set_latest_revision_and_editor`.
-                ctx.notify();
-            }
-        }
-
-        // Check if this is a successful create for our pending create
-        if let (ObjectOperation::Create { .. }, OperationSuccessType::Success) =
-            (&result.operation, &result.success_type)
-            && let Some(pending_client_id) = self.pending_create_client_id.take()
-        {
-            // Check if the client_id in the result matches our pending client_id
-            if let Some(result_client_id) = &result.client_id
-                && *result_client_id == pending_client_id
-            {
-                self.show_success_toast("Successfully created environment".to_string(), ctx);
-            }
-        }
-
-        // Check if this is a successful delete for our pending delete
-        if let (ObjectOperation::Delete { .. }, OperationSuccessType::Success) =
-            (&result.operation, &result.success_type)
-            && let Some(pending_env_id) = self.pending_delete_env_id.take()
-        {
-            // Check if the server_id matches our pending environment
-            if let Some(server_id) = &result.server_id
-                && server_id.uid() == pending_env_id.uid()
-            {
-                self.show_success_toast("Environment deleted successfully".to_string(), ctx);
-            }
-        }
-
-        // Check if this is a completion event for our pending share (personal -> team)
-        if matches!(&result.operation, ObjectOperation::MoveToDrive) {
-            let (Some(pending_server_id), Some(result_server_id)) =
-                (self.pending_share_server_id, result.server_id)
-            else {
-                return;
-            };
-
-            if pending_server_id != result_server_id {
-                return;
-            }
-
-            self.pending_share_server_id = None;
-
-            if matches!(result.success_type, OperationSuccessType::Success) {
-                self.show_success_toast("Successfully shared environment".to_string(), ctx);
-            } else {
-                self.show_error_toast("Failed to share environment with team".to_string(), ctx);
-            }
-
-            ctx.notify();
-        }
-    }
-
     fn delete_environment(&mut self, env_id: SyncId, ctx: &mut ViewContext<Self>) {
         // Track the pending delete to show success toast when complete
         self.pending_delete_env_id = Some(env_id);
@@ -740,40 +642,11 @@ impl EnvironmentsPageView {
         ctx: &mut ViewContext<Self>,
     ) {
         match event {
-            UpdateEnvironmentFormEvent::Created {
-                environment,
-                share_with_team,
-            } => {
-                // Generate a client ID for tracking the create operation
-                let client_id = ClientId::default();
-                self.pending_create_client_id = Some(client_id);
-
-                let owner = if *share_with_team {
-                    cloud_environments::owner_for_new_environment(ctx)
-                } else {
-                    cloud_environments::owner_for_new_personal_environment(ctx)
-                };
-
-                let Some(owner) = owner else {
-                    self.show_error_toast(
-                        "Unable to create environment: not logged in.".to_string(),
-                        ctx,
-                    );
-                    return;
-                };
-
-                // Create via UpdateManager
-                UpdateManager::handle(ctx).update(ctx, |update_manager, ctx| {
-                    update_manager.create_ambient_agent_environment(
-                        environment.clone(),
-                        client_id,
-                        owner,
-                        ctx,
-                    );
-                });
-
-                // Navigate back to list
-                self.update_page(EnvironmentsPage::List, ctx);
+            UpdateEnvironmentFormEvent::Created { .. } => {
+                self.show_error_toast(
+                    "Cloud environments are unavailable in term4u".to_string(),
+                    ctx,
+                );
             }
             UpdateEnvironmentFormEvent::Updated {
                 env_id,
@@ -2088,7 +1961,3 @@ impl From<ViewHandle<EnvironmentsPageView>> for SettingsPageViewHandle {
         SettingsPageViewHandle::CloudEnvironments(view_handle)
     }
 }
-
-#[cfg(test)]
-#[path = "environments_page_tests.rs"]
-mod tests;

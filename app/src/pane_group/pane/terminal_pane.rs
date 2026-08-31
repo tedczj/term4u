@@ -3,13 +3,13 @@
 use std::collections::HashMap;
 use std::sync::mpsc::SyncSender;
 
-#[cfg(not(target_family = "wasm"))]
-use session_sharing_protocol::sharer::SessionSourceType;
 use url::Url;
 #[cfg(not(target_family = "wasm"))]
 use warp_cli::agent::Harness;
 use warp_core::execution_mode::AppExecutionMode;
 use warp_errors::report_error;
+#[cfg(not(target_family = "wasm"))]
+use warp_terminal::session_sharing_types::sharer::SessionSourceType;
 use warpui::{
     AppContext, EntityId, ModelHandle, SingletonEntity, ViewContext, ViewHandle, WindowId,
 };
@@ -26,8 +26,8 @@ use crate::AIExecutionProfilesModel;
 use crate::ai::active_agent_views_model::ActiveAgentViewsModel;
 use crate::ai::agent::conversation::{AIConversationId, ConversationStatus};
 use crate::ai::agent::{RenderableAIError, StartAgentExecutionMode};
-use crate::ai::ambient_agents::AmbientAgentTaskId;
-use crate::ai::ambient_agents::task::normalize_orchestrator_agent_name;
+use crate::ai::agent_tasks::AmbientAgentTaskId;
+use crate::ai::agent_tasks::task::normalize_orchestrator_agent_name;
 #[cfg(feature = "local_fs")]
 use crate::ai::blocklist::BlocklistAIHistoryEvent;
 use crate::ai::blocklist::agent_view::{AgentViewControllerEvent, AgentViewEntryOrigin};
@@ -58,10 +58,10 @@ use crate::session_management::SessionNavigationData;
 use crate::terminal::cli_agent_sessions::CLIAgentSessionsModel;
 use crate::terminal::general_settings::GeneralSettings;
 #[cfg(not(target_family = "wasm"))]
-use crate::terminal::shared_session::SharedSessionSource;
-use crate::terminal::shared_session::manager::{Manager, ManagerEvent};
-use crate::terminal::shared_session::role_change_modal::RoleChangeOpenSource;
-use crate::terminal::shared_session::{SharedSessionStatus, join_link};
+use crate::terminal::session_sharing::SharedSessionSource;
+use crate::terminal::session_sharing::manager::{Manager, ManagerEvent};
+use crate::terminal::session_sharing::role_change_modal::RoleChangeOpenSource;
+use crate::terminal::session_sharing::{SharedSessionStatus, join_link};
 use crate::terminal::view::Event;
 use crate::terminal::{TerminalManager, TerminalView};
 use crate::view_components::ToastFlavor;
@@ -75,7 +75,7 @@ use crate::{
         HiddenChildAgentConversation, HiddenChildAgentConversationRequest,
         HiddenChildAgentTaskContext, create_hidden_child_agent_conversation,
     },
-    terminal::shared_session::IsSharedSessionCreator,
+    terminal::session_sharing::IsSharedSessionCreator,
 };
 
 pub type TerminalPaneView = PaneView<TerminalView>;
@@ -720,9 +720,9 @@ fn cancel_cloud_agent_task(
         return false;
     };
     if show_toast {
-        crate::ai::ambient_agents::cancel_task_with_toast(task_id, ctx);
+        crate::ai::agent_tasks::cancel_task_with_toast(task_id, ctx);
     } else {
-        crate::ai::ambient_agents::cancel_task_silently(task_id, ctx);
+        crate::ai::agent_tasks::cancel_task_silently(task_id, ctx);
     }
     true
 }

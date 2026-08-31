@@ -18,7 +18,7 @@ use super::{
     recording_artifact_view_url, user_avatar_info_for_conversation_creator,
 };
 use crate::ai::agent::{AIAgentActionType, StartAgentExecutionMode};
-use crate::ai::ambient_agents::AmbientAgentTaskId;
+use crate::ai::agent_tasks::AmbientAgentTaskId;
 use crate::ai::blocklist::action_model::{
     compose_run_agents_child_prompt, run_agents_to_start_agent_mode,
 };
@@ -123,7 +123,7 @@ fn recording_artifact_view_url_uses_configured_oz_origin() {
         recording_artifact_view_url(Some(task_id), "recording-123"),
         Some(format!(
             "{}/runs/{task_id}?artifact=recording-123",
-            ChannelState::oz_root_url()
+            ChannelState::oz_root_url().unwrap_or_default()
         ))
     );
 }

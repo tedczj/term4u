@@ -6,7 +6,7 @@
 pub mod input_context;
 mod pending_response_streams;
 pub mod response_stream;
-pub(super) mod shared_session;
+pub(super) mod session_sharing;
 mod slash_command;
 use std::collections::{HashMap, HashSet};
 #[cfg(not(target_family = "wasm"))]
@@ -21,11 +21,11 @@ use input_context::{input_context_for_request, parse_context_attachments};
 use itertools::Itertools;
 use parking_lot::FairMutex;
 use pending_response_streams::PendingResponseStreams;
-use session_sharing_protocol::common::ParticipantId;
 pub use slash_command::*;
 use warp_core::assertions::safe_assert;
 use warp_errors::report_error;
 use warp_multi_agent_api::{Task, ToolType, message};
+use warp_terminal::session_sharing_types::common::ParticipantId;
 use warpui::r#async::{SpawnedFutureHandle, Timer};
 use warpui::{
     AppContext, Entity, EntityId, ModelContext, ModelHandle, SingletonEntity, WeakViewHandle,
@@ -57,7 +57,7 @@ use crate::ai::agent::{
 use crate::ai::agent_events::AgentMessageEventMetadata;
 #[cfg(not(target_family = "wasm"))]
 use crate::ai::agent_sdk::ClaudeHarness;
-use crate::ai::ambient_agents::AmbientAgentTaskId;
+use crate::ai::agent_tasks::AmbientAgentTaskId;
 use crate::ai::document::ai_document_model::{
     AIDocumentId, AIDocumentModel, AIDocumentUserEditStatus,
 };
@@ -338,7 +338,7 @@ pub struct BlocklistAIController {
 
     should_refresh_available_llms_on_stream_finish: bool,
 
-    shared_session_state: shared_session::SharedSessionState,
+    shared_session_state: session_sharing::SharedSessionState,
 
     /// Ambient agent task ID attached to this controller. This is a property of the controller, and not an individual
     /// conversation, because the ambient agent task driver owns the entire Warp window working on a task, and any
@@ -632,10 +632,20 @@ impl BlocklistAIController {
             } => {
                 me.handle_dormant_claude_wake_ready(*conversation_id, wake_message.clone(), ctx);
             }
-            // Viewer-mode events are handled by `OrchestrationViewerModel`.
-            OrchestrationEventStreamerEvent::ChildSpawned { .. }
-            | OrchestrationEventStreamerEvent::ChildStatusChanged { .. }
-            | OrchestrationEventStreamerEvent::WatchedRunStatusChanged { .. } => {}
+            OrchestrationEventStreamerEvent::ChildSpawned {
+                parent_task_id,
+                run_id,
+            } => {
+                let _ = (parent_task_id, run_id);
+            }
+            OrchestrationEventStreamerEvent::ChildStatusChanged {
+                parent_task_id,
+                run_id,
+                status,
+            } => {
+                let _ = (parent_task_id, run_id, status);
+            }
+            OrchestrationEventStreamerEvent::WatchedRunStatusChanged { .. } => {}
         });
         Self {
             input_model,
@@ -647,7 +657,7 @@ impl BlocklistAIController {
             terminal_surface_id,
             team_context_resolver,
             should_refresh_available_llms_on_stream_finish: false,
-            shared_session_state: shared_session::SharedSessionState::default(),
+            shared_session_state: session_sharing::SharedSessionState::default(),
             ambient_agent_task_id: None,
             attachments_download_dir: None,
             pending_auto_resume_handles: HashMap::new(),
@@ -2746,7 +2756,7 @@ impl BlocklistAIController {
         // normal-completion teardown in `Conversation` is skipped. Scoped to this conversation so a
         // concurrent background session in another conversation is left intact; idempotent and a
         // no-op when this conversation has no active background session.
-        computer_use::end_background_session(&conversation_id.to_string());
+        interaction_types::end_background_session(&conversation_id.to_string());
 
         // Cancel any pending auto-resume for this conversation.
         if let Some(handle) = self.pending_auto_resume_handles.remove(&conversation_id) {

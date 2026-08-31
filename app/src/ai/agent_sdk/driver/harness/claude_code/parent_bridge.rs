@@ -28,7 +28,7 @@ use crate::ai::agent_events::{
     AgentMessageEventMetadata, MessageHydrator, ServerApiAgentEventSource, run_agent_event_driver,
 };
 use crate::ai::agent_sdk::driver::{AgentDriver, OZ_MESSAGE_LISTENER_STATE_ROOT_ENV};
-use crate::ai::ambient_agents::AmbientAgentTaskId;
+use crate::ai::agent_tasks::AmbientAgentTaskId;
 use crate::server::server_api::ServerApi;
 use crate::server::server_api::ai::{AIClient, AgentRunEvent};
 

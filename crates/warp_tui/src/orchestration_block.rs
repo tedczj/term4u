@@ -271,17 +271,6 @@ impl TuiOrchestrationBlock {
             }
         });
 
-        // Connected worker changes alter the remote host choices shown on
-        // the active page.
-        ctx.subscribe_to_model(
-            &warp::tui_export::ConnectedSelfHostedWorkersModel::handle(ctx),
-            |me, _, event, ctx| {
-                let warp::tui_export::ConnectedSelfHostedWorkersEvent::Changed = event;
-                me.refresh_active_page(ctx);
-                ctx.notify();
-            },
-        );
-
         let controller = Rc::new(ModelOrchestrationBlockController { action_model });
         let identity_palette = TuiUiBuilder::from_app(ctx).agent_identity_palette();
         let mut view = Self::from_parts(

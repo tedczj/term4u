@@ -140,13 +140,7 @@ impl InlineDiffView {
                     file_model.register_file_path(&local_path, false, ctx)
                 })
             }
-            DiffSessionType::Remote(host_id) => {
-                let host_id = host_id.clone();
-                let remote_path = file_path.clone();
-                file_model.update(ctx, |file_model, _ctx| {
-                    file_model.register_remote_file(host_id, remote_path)
-                })
-            }
+            DiffSessionType::Remote(_) => return,
         };
 
         self.finish_file_registration(file_id, ctx);

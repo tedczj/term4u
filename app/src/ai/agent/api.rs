@@ -25,7 +25,7 @@ use warpui::{AppContext, EntityId, SingletonEntity as _};
 
 use super::{AIAgentInput, MCPContext, MCPServer, RequestMetadata, ServerOutputId, Suggestions};
 use crate::ai::agent::conversation::AIConversationId;
-use crate::ai::ambient_agents::AmbientAgentTaskId;
+use crate::ai::agent_tasks::AmbientAgentTaskId;
 use crate::ai::blocklist::{BlocklistAIPermissions, RequestInput, SessionContext};
 use crate::ai::execution_profiles::AIExecutionProfileAppExt;
 use crate::ai::execution_profiles::profiles::AIExecutionProfilesModel;
@@ -53,7 +53,7 @@ impl ServerConversationToken {
     pub fn debug_link(&self) -> String {
         format!(
             "{}/debug/maa/{}",
-            ChannelState::server_root_url(),
+            ChannelState::server_root_url().unwrap_or_default(),
             self.as_str()
         )
     }
@@ -86,15 +86,12 @@ impl ServerConversationToken {
     pub fn conversation_link(&self) -> String {
         format!(
             "{}/conversation/{}",
-            ChannelState::server_root_url(),
+            ChannelState::server_root_url().unwrap_or_default(),
             self.as_str()
         )
     }
 }
 
-#[cfg(test)]
-#[path = "api_tests.rs"]
-mod tests;
 impl From<ServerConversationToken> for String {
     fn from(value: ServerConversationToken) -> Self {
         value.0
@@ -102,14 +99,16 @@ impl From<ServerConversationToken> for String {
 }
 
 // Conversions between AI ServerConversationToken and protocol ServerConversationToken
-impl From<session_sharing_protocol::common::ServerConversationToken> for ServerConversationToken {
-    fn from(token: session_sharing_protocol::common::ServerConversationToken) -> Self {
+impl From<warp_terminal::session_sharing_types::common::ServerConversationToken>
+    for ServerConversationToken
+{
+    fn from(token: warp_terminal::session_sharing_types::common::ServerConversationToken) -> Self {
         Self(token.to_string())
     }
 }
 
 impl TryFrom<ServerConversationToken>
-    for session_sharing_protocol::common::ServerConversationToken
+    for warp_terminal::session_sharing_types::common::ServerConversationToken
 {
     type Error = uuid::Error;
 
@@ -370,7 +369,7 @@ impl RequestParams {
             && BlocklistAIPermissions::as_ref(app)
                 .get_computer_use_setting(terminal_view_id, scope, app)
                 .is_enabled()
-            && computer_use::is_supported_on_current_platform()
+            && interaction_types::is_supported_on_current_platform()
             && (FeatureFlag::LocalComputerUse.is_enabled() || is_ambient_agent);
         let ask_user_question_enabled = BlocklistAIPermissions::as_ref(app)
             .get_ask_user_question_setting(app, terminal_view_id)

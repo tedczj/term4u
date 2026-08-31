@@ -575,7 +575,7 @@ impl OrchestrationPillBar {
         let run_id = BlocklistAIHistoryModel::as_ref(app)
             .conversation(&conversation_id)?
             .run_id()?;
-        let oz_root_url = ChannelState::oz_root_url();
+        let oz_root_url = ChannelState::oz_root_url().unwrap_or_default();
         Some(format!("{oz_root_url}/runs/{run_id}"))
     }
 

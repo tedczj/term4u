@@ -21,17 +21,17 @@ use crate::CloudObjectTypeAndId;
 use crate::ai::agent_sdk::driver::WARP_DRIVE_SYNC_TIMEOUT;
 use crate::ai::agent_sdk::oauth_flow::poll_oauth_until_terminal;
 use crate::ai::agent_sdk::output::{self, TableFormat};
-use crate::ai::cloud_environments::{
+use crate::auth::UserUid;
+use crate::cloud_object::agent_environment::{
     AmbientAgentEnvironment, BaseImage, CloudAmbientAgentEnvironment,
     CloudAmbientAgentEnvironmentModel, GithubRepo,
 };
-use crate::auth::UserUid;
 use crate::cloud_object::model::generic_string_model::GenericStringObjectId;
 use crate::cloud_object::{CloudObject, CloudObjectLookup as _};
 use crate::server::cloud_objects::update_manager::{
     ObjectOperation, OperationSuccessType, UpdateManager, UpdateManagerEvent,
 };
-use crate::server::ids::{ClientId, ServerId, SyncId};
+use crate::server::ids::{ServerId, SyncId};
 use crate::server::server_api::ServerApiProvider;
 use crate::util::time_format::format_approx_duration_from_now_utc;
 use crate::workspaces::user_profiles::UserProfiles;
@@ -731,43 +731,20 @@ impl EnvironmentCommandRunner {
         scope: ObjectScope,
         ctx: &mut ModelContext<Self>,
     ) {
-        let environment = AmbientAgentEnvironment::new(
+        let _ = (
             name,
             description,
             github_repos,
             docker_image,
             setup_commands,
+            scope,
         );
-        let client_id = ClientId::default();
-
-        let owner = match super::common::resolve_owner(&scope, ctx) {
-            Ok(owner) => owner,
-            Err(e) => {
-                super::report_fatal_error(e, ctx);
-                return;
-            }
-        };
-
-        // Create on the server
-        UpdateManager::handle(ctx).update(ctx, |update_manager, ctx| {
-            update_manager.create_ambient_agent_environment(environment, client_id, owner, ctx);
-        });
-
-        // Await creation on the server, then return.
-        // We should subscribe to the UpdateManager here because we want to wait
-        // for our environment to be assigned a ServerId. Environments are not
-        // usable without first being synced.
-        ctx.subscribe_to_model(&UpdateManager::handle(ctx), move |_, _, event, ctx| {
-            if let UpdateManagerEvent::ObjectOperationComplete { result } = event
-                && matches!(result.operation, ObjectOperation::Create { .. })
-                && matches!(result.success_type, OperationSuccessType::Success)
-                && result.client_id == Some(client_id)
-            {
-                let server_id = result.server_id.unwrap();
-                println!("Environment created successfully with ID: {server_id}");
-                ctx.terminate_app(warpui::platform::TerminationMode::ForceTerminate, None);
-            }
-        });
+        ctx.terminate_app(
+            warpui::platform::TerminationMode::ForceTerminate,
+            Some(Err(anyhow::anyhow!(
+                "Cloud environments are unavailable in term4u"
+            ))),
+        );
     }
 
     // Before doing an action like `update` or `delete`, use this function to check whether

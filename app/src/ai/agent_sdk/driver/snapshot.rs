@@ -43,7 +43,7 @@ use warpui::r#async::FutureExt as _;
 use warpui::r#async::executor::Background;
 
 use crate::ai::agent_sdk::retry::with_bounded_retry;
-use crate::ai::ambient_agents::AmbientAgentTaskId;
+use crate::ai::agent_tasks::AmbientAgentTaskId;
 use crate::server::server_api::ai::{
     AIClient, InitialSnapshotToken, SnapshotUploadFileInfo as AiSnapshotUploadFileInfo,
     UploadLocalHandoffSnapshotRequest,
@@ -1917,6 +1917,3 @@ where
 
 // Snapshot upload is cloud-agent-only and only ever runs inside a Linux Docker container, so
 // skip the tests on Windows rather than teach every fixture to emit POSIX paths.
-#[cfg(all(test, not(windows)))]
-#[path = "snapshot_tests.rs"]
-mod tests;

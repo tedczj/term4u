@@ -5,7 +5,7 @@ use super::editor::AgentToolbarEditorMode;
 use crate::context_chips::{ContextChipKind, agent_footer_available_chips, available_chips};
 use crate::features::FeatureFlag;
 use crate::settings::{AISettings, CodeSettings};
-use crate::terminal::shared_session::SharedSessionStatus;
+use crate::terminal::session_sharing::SharedSessionStatus;
 use crate::ui_components::icons::Icon;
 
 /// Declares which footer(s) a toolbar item is available in.

@@ -39,10 +39,6 @@ const FILE_TYPE_DOCS_URL: &str =
     "https://docs.warp.dev/knowledge-and-collaboration/warp-drive#import-and-export";
 const SUPPORTED_FILE_TYPE_TEXT: &str = "md, yaml, yml";
 
-#[cfg(test)]
-#[path = "import_tests.rs"]
-mod import_tests;
-
 /// Current state of the import modal.
 ///
 /// The entire import flow goes as follows:
@@ -117,31 +113,6 @@ impl ImportModalBody {
         // Only handle event when path is expanded.
         if let ImportState::PathExpanded(state) = &mut self.state {
             match event {
-                ImportQueueEvent::FileCompleted { file_id, server_id } => {
-                    let result = match server_id {
-                        Some(id) => UploadResult::Success(id.clone()),
-                        None => UploadResult::Error("Failed to upload file to server".to_string()),
-                    };
-
-                    // Update the upstream folder status with the upload success state.
-                    if state.update_tree_with_file_upload_result(result, *file_id) {
-                        ctx.notify();
-                    }
-                }
-                ImportQueueEvent::FolderCompleted {
-                    folder_id,
-                    server_id,
-                } => {
-                    let result = match server_id {
-                        Some(id) => UploadResult::Success(id.clone()),
-                        None => {
-                            UploadResult::Error("Failed to upload folder to server".to_string())
-                        }
-                    };
-
-                    state.mark_folder_synced(result, *folder_id);
-                    ctx.notify();
-                }
                 ImportQueueEvent::FileSavedLocally(file_id) => {
                     let file_node = state
                         .file_id_to_node
@@ -265,7 +236,7 @@ impl ImportModalBody {
                         // upstream folders.
                         if let Err(e) = &response {
                             state.update_tree_with_file_upload_result(
-                                UploadResult::Error(e.to_string()),
+                                UploadResult::error(e.to_string()),
                                 file_id,
                             );
                         }

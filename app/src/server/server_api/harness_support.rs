@@ -15,7 +15,7 @@ pub use super::presigned_upload::UploadBody;
 use crate::ai::agent::conversation::AIConversationId;
 #[cfg(not(target_family = "wasm"))]
 use crate::ai::agent_sdk::retry::with_bounded_retry;
-use crate::ai::ambient_agents::AmbientAgentTaskId;
+use crate::ai::agent_tasks::AmbientAgentTaskId;
 use crate::ai::artifacts::Artifact;
 
 /// A presigned upload target returned by the server.
@@ -381,7 +381,11 @@ impl ServerApi {
             .await
             .context("Failed to get access token for API request")?;
 
-        let url = format!("{}/api/v1/{}", crate::ChannelState::server_root_url(), path);
+        let url = format!(
+            "{}/api/v1/{}",
+            crate::ChannelState::server_root_url().unwrap_or_default(),
+            path
+        );
 
         let mut request = self.base_client.http_client().get(&url);
         if let Some(token) = auth_token.as_bearer_token() {
@@ -418,7 +422,11 @@ impl ServerApi {
             .await
             .context("Failed to get access token for API request")?;
 
-        let url = format!("{}/api/v1/{}", crate::ChannelState::server_root_url(), path);
+        let url = format!(
+            "{}/api/v1/{}",
+            crate::ChannelState::server_root_url().unwrap_or_default(),
+            path
+        );
 
         let mut request = self.base_client.http_client().post(&url).json(body);
         if let Some(token) = auth_token.as_bearer_token() {
@@ -480,6 +488,88 @@ impl ServerApi {
                 "fetch_transcript_for_task is not supported on wasm; agent_sdk is not built on this target"
             );
         }
+    }
+}
+
+#[cfg_attr(not(target_family = "wasm"), async_trait)]
+#[cfg_attr(target_family = "wasm", async_trait(?Send))]
+impl HarnessSupportClient for crate::server::offline_api::OfflineApi {
+    async fn create_external_conversation(&self, format: &str) -> Result<AIConversationId> {
+        let _ = format;
+        Err(Self::unavailable("harness support API"))
+    }
+
+    async fn get_transcript_upload_target(
+        &self,
+        conversation_id: &AIConversationId,
+    ) -> Result<UploadTarget> {
+        let _ = conversation_id;
+        Err(Self::unavailable("harness support API"))
+    }
+
+    async fn get_block_snapshot_upload_target(
+        &self,
+        conversation_id: &AIConversationId,
+    ) -> Result<UploadTarget> {
+        let _ = conversation_id;
+        Err(Self::unavailable("harness support API"))
+    }
+
+    async fn resolve_prompt(&self, request: ResolvePromptRequest) -> Result<ResolvedHarnessPrompt> {
+        let _ = request;
+        Err(Self::unavailable("harness support API"))
+    }
+
+    async fn report_artifact(&self, artifact: &Artifact) -> Result<ReportArtifactResponse> {
+        let _ = artifact;
+        Err(Self::unavailable("harness support API"))
+    }
+
+    async fn notify_user(&self, message: &str) -> Result<()> {
+        let _ = message;
+        Err(Self::unavailable("harness support API"))
+    }
+
+    async fn finish_task(&self, success: bool, summary: &str) -> Result<()> {
+        let _ = (success, summary);
+        Err(Self::unavailable("harness support API"))
+    }
+
+    async fn report_clean_shutdown(&self) -> Result<()> {
+        Err(Self::unavailable("harness support API"))
+    }
+
+    async fn report_error_shutdown(
+        &self,
+        error_category: String,
+        error_message: String,
+    ) -> Result<()> {
+        let _ = (error_category, error_message);
+        Err(Self::unavailable("harness support API"))
+    }
+
+    async fn get_snapshot_upload_targets(
+        &self,
+        request: &SnapshotUploadRequest,
+    ) -> Result<Vec<UploadTarget>> {
+        let _ = request;
+        Ok(Vec::new())
+    }
+
+    async fn commit_snapshot(
+        &self,
+        request: &CommitSnapshotRequest,
+    ) -> Result<CommitSnapshotResponse> {
+        let _ = request;
+        Err(Self::unavailable("harness support API"))
+    }
+
+    async fn fetch_transcript(&self) -> Result<bytes::Bytes> {
+        Err(Self::unavailable("harness support API"))
+    }
+
+    fn http_client(&self) -> &http_client::Client {
+        self.http_client()
     }
 }
 

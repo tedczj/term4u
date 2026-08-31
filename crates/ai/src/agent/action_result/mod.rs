@@ -1147,7 +1147,7 @@ impl Display for ReadSkillResult {
 #[derive(Debug, Clone, PartialEq)]
 pub enum UseComputerResult {
     /// Computer use succeeded, with one result per requested action.
-    Success(computer_use::ActionResult),
+    Success(interaction_types::ActionResult),
     Error(String),
     Cancelled,
 }
@@ -1199,10 +1199,10 @@ pub struct ScreenDimensions {
 pub enum RequestComputerUseResult {
     /// Request was accepted, with the screen dimensions.
     Approved {
-        screenshot: computer_use::Screenshot,
-        platform: computer_use::Platform,
+        screenshot: interaction_types::Screenshot,
+        platform: interaction_types::Platform,
         /// The on-screen windows the agent may target.
-        windows: Vec<computer_use::WindowInfo>,
+        windows: Vec<interaction_types::WindowInfo>,
     },
     /// Request errored.
     Error(String),
@@ -1279,7 +1279,7 @@ pub struct RecordingStopped {
     pub width_px: i32,
     pub height_px: i32,
     pub size_bytes: i64,
-    pub completion_status: computer_use::RecordingCompletionStatus,
+    pub completion_status: interaction_types::RecordingCompletionStatus,
     pub termination_reason: String,
 }
 

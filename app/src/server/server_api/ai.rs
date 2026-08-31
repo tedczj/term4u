@@ -129,11 +129,10 @@ use crate::ai::agent::conversation::{
     AIAgentConversationFormat, AIAgentHarness, AIAgentSerializedBlockFormat,
     ServerAIConversationMetadata,
 };
-use crate::ai::ambient_agents::AmbientAgentTaskId;
+use crate::ai::agent_tasks::AmbientAgentTaskId;
 // Re-export ambient agent types for backwards compatibility
-pub use crate::ai::ambient_agents::{
+pub use crate::ai::agent_tasks::{
     AgentConfigSnapshot, AgentSource, AmbientAgentTask, AmbientAgentTaskState, ExecutionLocation,
-    TaskStatusMessage,
     task::{AttachmentInput, TaskAttachment},
 };
 use crate::ai::artifacts::Artifact;
@@ -147,7 +146,7 @@ use crate::ai::llms::{
 };
 #[cfg(feature = "agent_mode_evals")]
 use crate::ai::request_usage_model::RequestLimitInfo;
-use crate::ai::{AICreditAvailability, RequestUsageInfo};
+use crate::ai::{AICreditAvailability, AICreditDenialReason, RequestUsageInfo};
 use crate::ai_assistant::execution_context::WarpAiExecutionContext;
 use crate::ai_assistant::requests::GenerateDialogueResult;
 use crate::ai_assistant::utils::TranscriptPart;
@@ -1268,7 +1267,7 @@ pub trait AIClient: 'static + Send + Sync {
         &self,
         task_id: AmbientAgentTaskId,
         task_state: Option<AgentTaskState>,
-        session_id: Option<session_sharing_protocol::common::SessionId>,
+        session_id: Option<warp_terminal::session_sharing_types::common::SessionId>,
         conversation_id: Option<String>,
         status_message: Option<TaskStatusUpdate>,
         session_debug_until: Option<DateTime<Utc>>,
@@ -1567,6 +1566,585 @@ pub trait AIClient: 'static + Send + Sync {
         &self,
         request: GenerateCodeReviewContentRequest,
     ) -> Result<GenerateCodeReviewContentResponse, anyhow::Error>;
+}
+
+#[cfg_attr(not(target_family = "wasm"), async_trait)]
+#[cfg_attr(target_family = "wasm", async_trait(?Send))]
+impl AIClient for crate::server::offline_api::OfflineApi {
+    async fn generate_commands_from_natural_language(
+        &self,
+        prompt: String,
+        ai_execution_context: Option<WarpAiExecutionContext>,
+    ) -> Result<Vec<AIGeneratedCommand>, GenerateCommandsFromNaturalLanguageError> {
+        let _ = (prompt, ai_execution_context);
+        Ok(Vec::new())
+    }
+
+    async fn generate_dialogue_answer(
+        &self,
+        transcript: Vec<TranscriptPart>,
+        prompt: String,
+        ai_execution_context: Option<WarpAiExecutionContext>,
+    ) -> anyhow::Result<GenerateDialogueResult> {
+        let _ = (transcript, prompt, ai_execution_context);
+        Err(Self::unavailable("AI API"))
+    }
+
+    async fn generate_metadata_for_command(
+        &self,
+        command: String,
+    ) -> Result<GeneratedCommandMetadata, GeneratedCommandMetadataError> {
+        let _ = (command,);
+        Err(GeneratedCommandMetadataError::Other)
+    }
+
+    async fn get_request_limit_info(&self) -> Result<RequestUsageInfo, anyhow::Error> {
+        Ok(RequestUsageInfo {
+            request_limit_info: crate::ai::request_usage_model::RequestLimitInfo::default(),
+            bonus_grants: Vec::new(),
+        })
+    }
+
+    async fn get_ai_credit_availability(&self) -> Result<AICreditAvailability, anyhow::Error> {
+        Ok(AICreditAvailability::unavailable(
+            AICreditDenialReason::Unknown,
+        ))
+    }
+
+    async fn get_conversation_usage_history(
+        &self,
+        days: Option<i32>,
+        limit: Option<i32>,
+        last_updated_end_timestamp: Option<warp_graphql::scalars::Time>,
+    ) -> Result<Vec<ConversationUsage>, anyhow::Error> {
+        let _ = (days, limit, last_updated_end_timestamp);
+        Ok(Vec::new())
+    }
+
+    async fn get_feature_model_choices(&self) -> Result<ModelsByFeature, anyhow::Error> {
+        Ok(ModelsByFeature::default())
+    }
+
+    async fn get_available_harnesses(&self) -> Result<Vec<HarnessAvailability>, anyhow::Error> {
+        Ok(Vec::new())
+    }
+
+    async fn list_connected_self_hosted_workers(
+        &self,
+    ) -> Result<ListConnectedSelfHostedWorkersResponse, anyhow::Error> {
+        Ok(ListConnectedSelfHostedWorkersResponse {
+            workers: Vec::new(),
+        })
+    }
+
+    async fn get_free_available_models(
+        &self,
+        referrer: Option<String>,
+    ) -> Result<ModelsByFeature, anyhow::Error> {
+        let _ = (referrer,);
+        Ok(ModelsByFeature::default())
+    }
+
+    async fn update_merkle_tree(
+        &self,
+        embedding_config: EmbeddingConfig,
+        nodes: Vec<IntermediateNode>,
+    ) -> anyhow::Result<HashMap<NodeHash, bool>> {
+        let _ = (embedding_config, nodes);
+        Ok(HashMap::new())
+    }
+
+    async fn generate_code_embeddings(
+        &self,
+        embedding_config: EmbeddingConfig,
+        fragments: Vec<full_source_code_embedding::Fragment>,
+        root_hash: NodeHash,
+        repo_metadata: RepoMetadata,
+    ) -> anyhow::Result<HashMap<ContentHash, bool>> {
+        let _ = (embedding_config, fragments, root_hash, repo_metadata);
+        Ok(HashMap::new())
+    }
+
+    async fn provide_negative_feedback_response_for_ai_conversation(
+        &self,
+        conversation_id: String,
+        request_ids: Vec<String>,
+    ) -> anyhow::Result<i32, anyhow::Error> {
+        let _ = (conversation_id, request_ids);
+        Err(Self::unavailable("AI API"))
+    }
+
+    async fn create_agent_task(
+        &self,
+        prompt: String,
+        environment_uid: Option<String>,
+        parent_run_id: Option<String>,
+        config: Option<AgentConfigSnapshot>,
+    ) -> anyhow::Result<AmbientAgentTaskId, anyhow::Error> {
+        let _ = (prompt, environment_uid, parent_run_id, config);
+        Err(Self::unavailable("AI API"))
+    }
+
+    async fn update_agent_task(
+        &self,
+        task_id: AmbientAgentTaskId,
+        task_state: Option<AgentTaskState>,
+        session_id: Option<warp_terminal::session_sharing_types::common::SessionId>,
+        conversation_id: Option<String>,
+        status_message: Option<TaskStatusUpdate>,
+        session_debug_until: Option<DateTime<Utc>>,
+    ) -> anyhow::Result<(), anyhow::Error> {
+        let _ = (
+            task_id,
+            task_state,
+            session_id,
+            conversation_id,
+            status_message,
+            session_debug_until,
+        );
+        Err(Self::unavailable("AI API"))
+    }
+
+    async fn spawn_agent(
+        &self,
+        request: SpawnAgentRequest,
+    ) -> anyhow::Result<SpawnAgentResponse, anyhow::Error> {
+        let _ = (request,);
+        Err(Self::unavailable("AI API"))
+    }
+
+    async fn upload_local_handoff_snapshot(
+        &self,
+        request: UploadLocalHandoffSnapshotRequest,
+    ) -> anyhow::Result<UploadLocalHandoffSnapshotResponse, anyhow::Error> {
+        let _ = (request,);
+        Err(Self::unavailable("AI API"))
+    }
+
+    async fn fork_conversation(
+        &self,
+        conversation_id: String,
+        title: Option<String>,
+    ) -> anyhow::Result<ForkConversationResponse, anyhow::Error> {
+        let _ = (conversation_id, title);
+        Err(Self::unavailable("AI API"))
+    }
+
+    async fn rename_conversation(
+        &self,
+        conversation_id: String,
+        title: String,
+    ) -> anyhow::Result<RenameConversationResponse, anyhow::Error> {
+        let _ = (conversation_id, title);
+        Err(Self::unavailable("AI API"))
+    }
+
+    async fn list_ambient_agent_tasks(
+        &self,
+        limit: i32,
+        filter: TaskListFilter,
+    ) -> anyhow::Result<Vec<AmbientAgentTask>, anyhow::Error> {
+        let _ = (limit, filter);
+        Ok(Vec::new())
+    }
+
+    async fn list_agent_runs_raw(
+        &self,
+        limit: i32,
+        filter: TaskListFilter,
+    ) -> anyhow::Result<serde_json::Value, anyhow::Error> {
+        let _ = (limit, filter);
+        Ok(serde_json::Value::Array(Vec::new()))
+    }
+
+    async fn get_ambient_agent_task(
+        &self,
+        task_id: &AmbientAgentTaskId,
+    ) -> anyhow::Result<AmbientAgentTask, anyhow::Error> {
+        let _ = (task_id,);
+        Err(Self::unavailable("AI API"))
+    }
+
+    async fn get_agent_run_raw(
+        &self,
+        task_id: &AmbientAgentTaskId,
+    ) -> anyhow::Result<serde_json::Value, anyhow::Error> {
+        let _ = (task_id,);
+        Ok(serde_json::Value::Null)
+    }
+
+    #[cfg(not(target_family = "wasm"))]
+    async fn download_run_transcript_to_path(
+        &self,
+        run_id: &AmbientAgentTaskId,
+        destination: &Path,
+    ) -> anyhow::Result<(), anyhow::Error> {
+        let _ = (run_id, destination);
+        Err(Self::unavailable("AI API"))
+    }
+
+    async fn submit_run_followup(
+        &self,
+        run_id: &AmbientAgentTaskId,
+        request: RunFollowupRequest,
+    ) -> anyhow::Result<(), anyhow::Error> {
+        let _ = (run_id, request);
+        Err(Self::unavailable("AI API"))
+    }
+
+    async fn get_scheduled_agent_history(
+        &self,
+        schedule_id: &str,
+    ) -> anyhow::Result<ScheduledAgentHistory, anyhow::Error> {
+        let _ = (schedule_id,);
+        Err(Self::unavailable("AI API"))
+    }
+
+    async fn get_ai_conversation(
+        &self,
+        server_conversation_token: ServerConversationToken,
+    ) -> anyhow::Result<(ConversationData, ServerAIConversationMetadata), anyhow::Error> {
+        let _ = (server_conversation_token,);
+        Err(Self::unavailable("AI API"))
+    }
+
+    async fn list_ai_conversation_metadata(
+        &self,
+        conversation_ids: Option<Vec<String>>,
+    ) -> anyhow::Result<Vec<ServerAIConversationMetadata>> {
+        let _ = (conversation_ids,);
+        Ok(Vec::new())
+    }
+
+    async fn get_ai_conversation_format(
+        &self,
+        server_conversation_token: ServerConversationToken,
+    ) -> anyhow::Result<AIAgentConversationFormat, anyhow::Error> {
+        let _ = (server_conversation_token,);
+        Err(Self::unavailable("AI API"))
+    }
+
+    async fn get_block_snapshot(
+        &self,
+        server_conversation_token: ServerConversationToken,
+    ) -> anyhow::Result<SerializedBlock, anyhow::Error> {
+        let _ = (server_conversation_token,);
+        Err(Self::unavailable("AI API"))
+    }
+
+    async fn delete_ai_conversation(
+        &self,
+        server_conversation_token: String,
+    ) -> anyhow::Result<(), anyhow::Error> {
+        let _ = (server_conversation_token,);
+        Err(Self::unavailable("AI API"))
+    }
+
+    async fn list_skills(
+        &self,
+        repo: Option<String>,
+    ) -> anyhow::Result<Vec<AgentSkillItem>, anyhow::Error> {
+        let _ = (repo,);
+        Ok(Vec::new())
+    }
+
+    async fn list_agents(&self) -> anyhow::Result<Vec<AgentResponse>, anyhow::Error> {
+        Ok(Vec::new())
+    }
+
+    async fn list_agents_raw(&self) -> anyhow::Result<serde_json::Value, anyhow::Error> {
+        Ok(serde_json::Value::Array(Vec::new()))
+    }
+
+    async fn get_agent(&self, uid: &str) -> anyhow::Result<AgentResponse, anyhow::Error> {
+        let _ = (uid,);
+        Err(Self::unavailable("AI API"))
+    }
+
+    async fn get_agent_raw(&self, uid: &str) -> anyhow::Result<serde_json::Value, anyhow::Error> {
+        let _ = (uid,);
+        Ok(serde_json::Value::Null)
+    }
+
+    async fn create_agent(
+        &self,
+        request: CreateAgentRequest,
+    ) -> anyhow::Result<AgentResponse, anyhow::Error> {
+        let _ = (request,);
+        Err(Self::unavailable("AI API"))
+    }
+
+    async fn create_agent_raw(
+        &self,
+        request: CreateAgentRequest,
+    ) -> anyhow::Result<serde_json::Value, anyhow::Error> {
+        let _ = (request,);
+        Err(Self::unavailable("AI API"))
+    }
+
+    async fn update_agent(
+        &self,
+        uid: &str,
+        request: UpdateAgentRequest,
+    ) -> anyhow::Result<AgentResponse, anyhow::Error> {
+        let _ = (uid, request);
+        Err(Self::unavailable("AI API"))
+    }
+
+    async fn update_agent_raw(
+        &self,
+        uid: &str,
+        request: UpdateAgentRequest,
+    ) -> anyhow::Result<serde_json::Value, anyhow::Error> {
+        let _ = (uid, request);
+        Err(Self::unavailable("AI API"))
+    }
+
+    async fn delete_agent(&self, uid: &str) -> anyhow::Result<(), anyhow::Error> {
+        let _ = (uid,);
+        Err(Self::unavailable("AI API"))
+    }
+
+    async fn list_memory_stores(&self) -> anyhow::Result<Vec<MemoryStoreItem>, anyhow::Error> {
+        Ok(Vec::new())
+    }
+
+    async fn list_memory_store_memories(
+        &self,
+        store_uid: &str,
+    ) -> anyhow::Result<Vec<MemoryItem>, anyhow::Error> {
+        let _ = (store_uid,);
+        Ok(Vec::new())
+    }
+
+    async fn create_memory_store_memory(
+        &self,
+        store_uid: &str,
+        request: CreateMemoryRequest,
+    ) -> anyhow::Result<CreateMemoryResponse, anyhow::Error> {
+        let _ = (store_uid, request);
+        Err(Self::unavailable("AI API"))
+    }
+
+    async fn update_memory_store_memory(
+        &self,
+        store_uid: &str,
+        memory_uid: &str,
+        request: UpdateMemoryRequest,
+    ) -> anyhow::Result<UpdateMemoryResponse, anyhow::Error> {
+        let _ = (store_uid, memory_uid, request);
+        Err(Self::unavailable("AI API"))
+    }
+
+    async fn delete_memory_store_memory(
+        &self,
+        store_uid: &str,
+        memory_uid: &str,
+    ) -> anyhow::Result<(), anyhow::Error> {
+        let _ = (store_uid, memory_uid);
+        Err(Self::unavailable("AI API"))
+    }
+
+    async fn get_memory_store(
+        &self,
+        store_uid: &str,
+    ) -> anyhow::Result<MemoryStoreItem, anyhow::Error> {
+        let _ = (store_uid,);
+        Err(Self::unavailable("AI API"))
+    }
+
+    async fn update_memory_store(
+        &self,
+        store_uid: &str,
+        request: UpdateMemoryStoreRequest,
+    ) -> anyhow::Result<MemoryStoreItem, anyhow::Error> {
+        let _ = (store_uid, request);
+        Err(Self::unavailable("AI API"))
+    }
+
+    async fn list_memory_store_agents(
+        &self,
+        store_uid: &str,
+    ) -> anyhow::Result<Vec<AgentAttachmentItem>, anyhow::Error> {
+        let _ = (store_uid,);
+        Ok(Vec::new())
+    }
+
+    async fn list_memory_versions(
+        &self,
+        store_uid: &str,
+        memory_uid: &str,
+    ) -> anyhow::Result<Vec<MemoryVersionItem>, anyhow::Error> {
+        let _ = (store_uid, memory_uid);
+        Ok(Vec::new())
+    }
+
+    async fn cancel_ambient_agent_task(
+        &self,
+        task_id: &AmbientAgentTaskId,
+    ) -> anyhow::Result<(), anyhow::Error> {
+        let _ = (task_id,);
+        Err(Self::unavailable("AI API"))
+    }
+
+    async fn get_task_git_credentials(
+        &self,
+        task_id: String,
+        workload_token: String,
+        accepts_partial_refresh: bool,
+    ) -> anyhow::Result<TaskGitCredentialsResponse, anyhow::Error> {
+        let _ = (task_id, workload_token, accepts_partial_refresh);
+        Err(Self::unavailable("AI API"))
+    }
+
+    async fn get_task_attachments(
+        &self,
+        task_id: String,
+    ) -> anyhow::Result<Vec<TaskAttachment>, anyhow::Error> {
+        let _ = (task_id,);
+        Ok(Vec::new())
+    }
+
+    async fn create_file_artifact_upload_target(
+        &self,
+        request: CreateFileArtifactUploadRequest,
+    ) -> anyhow::Result<CreateFileArtifactUploadResponse, anyhow::Error> {
+        let _ = (request,);
+        Err(Self::unavailable("AI API"))
+    }
+
+    async fn confirm_file_artifact_upload(
+        &self,
+        artifact_uid: String,
+        checksum: String,
+    ) -> anyhow::Result<FileArtifactRecord, anyhow::Error> {
+        let _ = (artifact_uid, checksum);
+        Err(Self::unavailable("AI API"))
+    }
+
+    async fn get_artifact_download(
+        &self,
+        artifact_uid: &str,
+    ) -> anyhow::Result<ArtifactDownloadResponse, anyhow::Error> {
+        let _ = (artifact_uid,);
+        Err(Self::unavailable("AI API"))
+    }
+
+    async fn prepare_attachments_for_upload(
+        &self,
+        task_id: &AmbientAgentTaskId,
+        files: &[AttachmentFileInfo],
+    ) -> anyhow::Result<PrepareAttachmentUploadsResponse, anyhow::Error> {
+        let _ = (task_id, files);
+        Err(Self::unavailable("AI API"))
+    }
+
+    async fn download_task_attachments(
+        &self,
+        task_id: &AmbientAgentTaskId,
+        attachment_ids: &[String],
+    ) -> anyhow::Result<DownloadAttachmentsResponse, anyhow::Error> {
+        let _ = (task_id, attachment_ids);
+        Err(Self::unavailable("AI API"))
+    }
+
+    async fn get_handoff_snapshot_attachments(
+        &self,
+        task_id: &AmbientAgentTaskId,
+    ) -> anyhow::Result<Vec<TaskAttachment>, anyhow::Error> {
+        let _ = (task_id,);
+        Ok(Vec::new())
+    }
+
+    async fn send_agent_message(
+        &self,
+        request: SendAgentMessageRequest,
+    ) -> anyhow::Result<SendAgentMessageResponse, anyhow::Error> {
+        let _ = (request,);
+        Err(Self::unavailable("AI API"))
+    }
+
+    async fn list_agent_messages(
+        &self,
+        run_id: &str,
+        request: ListAgentMessagesRequest,
+    ) -> anyhow::Result<Vec<AgentMessageHeader>, anyhow::Error> {
+        let _ = (run_id, request);
+        Ok(Vec::new())
+    }
+
+    async fn update_event_sequence_on_server(
+        &self,
+        run_id: &str,
+        sequence: i64,
+    ) -> anyhow::Result<(), anyhow::Error> {
+        let _ = (run_id, sequence);
+        Err(Self::unavailable("AI API"))
+    }
+
+    async fn report_agent_event(
+        &self,
+        run_id: &str,
+        request: ReportAgentEventRequest,
+    ) -> anyhow::Result<ReportAgentEventResponse, anyhow::Error> {
+        let _ = (run_id, request);
+        Err(Self::unavailable("AI API"))
+    }
+
+    async fn post_agent_run_client_event(
+        &self,
+        run_id: &AmbientAgentTaskId,
+        request: AgentRunClientEventRequest,
+    ) -> anyhow::Result<(), anyhow::Error> {
+        let _ = (run_id, request);
+        Err(Self::unavailable("AI API"))
+    }
+
+    async fn post_agent_run_environment_snapshot(
+        &self,
+        run_id: &AmbientAgentTaskId,
+        request: AgentRunEnvironmentSnapshotRequest,
+    ) -> anyhow::Result<(), anyhow::Error> {
+        let _ = (run_id, request);
+        Err(Self::unavailable("AI API"))
+    }
+
+    async fn mark_message_delivered(&self, message_id: &str) -> anyhow::Result<(), anyhow::Error> {
+        let _ = (message_id,);
+        Err(Self::unavailable("AI API"))
+    }
+
+    async fn read_agent_message(
+        &self,
+        message_id: &str,
+    ) -> anyhow::Result<ReadAgentMessageResponse, anyhow::Error> {
+        let _ = (message_id,);
+        Err(Self::unavailable("AI API"))
+    }
+
+    async fn get_public_conversation(
+        &self,
+        conversation_id: &str,
+    ) -> anyhow::Result<serde_json::Value, anyhow::Error> {
+        let _ = (conversation_id,);
+        Ok(serde_json::Value::Null)
+    }
+
+    async fn get_run_conversation(
+        &self,
+        run_id: &str,
+    ) -> anyhow::Result<serde_json::Value, anyhow::Error> {
+        let _ = (run_id,);
+        Ok(serde_json::Value::Null)
+    }
+
+    async fn generate_code_review_content(
+        &self,
+        request: GenerateCodeReviewContentRequest,
+    ) -> Result<GenerateCodeReviewContentResponse, anyhow::Error> {
+        let _ = (request,);
+        Err(Self::unavailable("AI API"))
+    }
 }
 
 fn into_file_artifact_record(
@@ -2279,7 +2857,7 @@ impl AIClient for ServerApi {
         &self,
         task_id: AmbientAgentTaskId,
         task_state: Option<AgentTaskState>,
-        session_id: Option<session_sharing_protocol::common::SessionId>,
+        session_id: Option<warp_terminal::session_sharing_types::common::SessionId>,
         conversation_id: Option<String>,
         status_message: Option<TaskStatusUpdate>,
         session_debug_until: Option<DateTime<Utc>>,
@@ -3126,7 +3704,7 @@ impl AIClient for ServerApi {
         let auth_token = self.get_or_refresh_access_token().await?;
         let request_builder = self.base_client.http_client().post(format!(
             "{}/ai/generate_code_review_content",
-            ChannelState::server_root_url()
+            ChannelState::server_root_url().unwrap_or_default()
         ));
         let response = if let Some(token) = auth_token.as_bearer_token() {
             request_builder.bearer_auth(token)

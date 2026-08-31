@@ -26,7 +26,8 @@ use warp_graphql::queries::suggest_cloud_environment_image::{
     SuggestCloudEnvironmentImageVariables,
 };
 use warp_graphql::queries::user_github_info::{
-    GithubAuthRequiredOutput, UserGithubInfo, UserGithubInfoResult, UserGithubInfoVariables,
+    GithubAuthRequiredOutput, GithubConnectedOutput, UserGithubInfo, UserGithubInfoResult,
+    UserGithubInfoVariables,
 };
 use warp_graphql::queries::user_repo_auth_status::{
     RepoInput as UserRepoAuthStatusRepoInput, UserRepoAuthStatus, UserRepoAuthStatusInput,
@@ -134,6 +135,92 @@ pub trait IntegrationsClient: 'static + IntegrationsClientBounds {
         &self,
         repos: Vec<(String, String)>,
     ) -> Result<SuggestCloudEnvironmentImageResult>;
+}
+
+#[cfg_attr(target_family = "wasm", async_trait(?Send))]
+#[cfg_attr(not(target_family = "wasm"), async_trait)]
+impl IntegrationsClient for crate::server::offline_api::OfflineApi {
+    async fn check_user_repo_auth_status(
+        &self,
+        repos: Vec<(String, String)>,
+    ) -> Result<UserRepoAuthStatusOutput> {
+        let _ = repos;
+        Ok(UserRepoAuthStatusOutput {
+            statuses: Vec::new(),
+            auth_url: None,
+            tx_id: None,
+        })
+    }
+
+    async fn create_or_update_simple_integration(
+        &self,
+        integration_type: String,
+        is_update: bool,
+        environment_uid: Option<String>,
+        base_prompt: Option<String>,
+        model_id: Option<String>,
+        mcp_servers_json: Option<String>,
+        remove_mcp_server_names: Option<Vec<String>>,
+        worker_host: Option<String>,
+        enabled: bool,
+    ) -> Result<CreateSimpleIntegrationOutput> {
+        let _ = (
+            integration_type,
+            is_update,
+            environment_uid,
+            base_prompt,
+            model_id,
+            mcp_servers_json,
+            remove_mcp_server_names,
+            worker_host,
+            enabled,
+        );
+        Err(Self::unavailable("integrations API"))
+    }
+
+    async fn list_simple_integrations(
+        &self,
+        providers: Vec<String>,
+    ) -> Result<SimpleIntegrationsOutput> {
+        let _ = providers;
+        Ok(SimpleIntegrationsOutput {
+            integrations: Vec::new(),
+            message: None,
+        })
+    }
+
+    async fn poll_oauth_connect_status(&self, tx_id: String) -> Result<OauthConnectTxStatus> {
+        let _ = tx_id;
+        Err(Self::unavailable("integration OAuth API"))
+    }
+
+    async fn get_integrations_using_environment(
+        &self,
+        environment_id: String,
+    ) -> Result<GetIntegrationsUsingEnvironmentOutput> {
+        let _ = environment_id;
+        Ok(GetIntegrationsUsingEnvironmentOutput {
+            provider_names: Vec::new(),
+        })
+    }
+
+    async fn get_user_github_info(&self) -> Result<UserGithubInfoResult> {
+        Ok(UserGithubInfoResult::GithubConnectedOutput(
+            GithubConnectedOutput {
+                username: None,
+                installed_repos: Vec::new(),
+                app_install_link: String::new(),
+            },
+        ))
+    }
+
+    async fn suggest_cloud_environment_image(
+        &self,
+        repos: Vec<(String, String)>,
+    ) -> Result<SuggestCloudEnvironmentImageResult> {
+        let _ = repos;
+        Err(Self::unavailable("cloud environment API"))
+    }
 }
 
 #[cfg_attr(target_family = "wasm", async_trait(?Send))]
@@ -294,7 +381,10 @@ impl IntegrationsClient for ServerApi {
         if FeatureFlag::SimulateGithubUnauthed.is_enabled()
             && let UserGithubInfoResult::GithubConnectedOutput(connected) = &result
         {
-            let auth_url = format!("{}/oauth/connect/github", ChannelState::server_root_url());
+            let auth_url = format!(
+                "{}/oauth/connect/github",
+                ChannelState::server_root_url().unwrap_or_default()
+            );
             return Ok(UserGithubInfoResult::GithubAuthRequiredOutput(
                 GithubAuthRequiredOutput {
                     auth_url,

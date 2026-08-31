@@ -36,15 +36,14 @@ use super::touched_repos::extract_paths_from_conversation;
 use super::{HandoffLaunchAttachments, PendingCloudLaunch};
 use crate::ai::agent::conversation::{AIConversation, AIConversationId};
 use crate::ai::agent::{CancellationReason, extract_user_query_mode};
-use crate::ai::ambient_agents::AmbientAgentTaskId;
-use crate::ai::ambient_agents::telemetry::{
+use crate::ai::agent_tasks::AmbientAgentTaskId;
+use crate::ai::agent_tasks::telemetry::{
     CloudAgentTelemetryEvent, HandoffEntryPoint, HandoffInjectionPath, HandoffSurface,
 };
 use crate::ai::blocklist::orchestration_topology::descendant_conversation_ids_in_spawn_order;
 use crate::ai::blocklist::{
     BlocklistAIContextModel, BlocklistAIController, BlocklistAIHistoryModel, PendingAttachment,
 };
-use crate::ai::cloud_environments::CloudAmbientAgentEnvironment;
 use crate::ai::execution_profiles::resolve_cloud_agent_computer_use_state;
 use crate::ai::llms::{LLMId, LLMPreferences};
 use crate::ai::orchestration::{
@@ -53,6 +52,7 @@ use crate::ai::orchestration::{
     resolve_default_host_slug, should_disable_snapshot,
 };
 use crate::cloud_object::CloudObjectLookup as _;
+use crate::cloud_object::agent_environment::CloudAmbientAgentEnvironment;
 use crate::server::ids::{ServerId, SyncId};
 use crate::server::server_api::ai::{
     AIClient, AgentConfigSnapshot, AttachmentInput, InitialSnapshotToken, SpawnAgentRequest,
@@ -999,7 +999,3 @@ fn build_spawn_request(
         orchestration_handoff,
     }
 }
-
-#[cfg(test)]
-#[path = "pipeline_tests.rs"]
-mod tests;

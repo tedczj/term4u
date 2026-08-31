@@ -36,9 +36,6 @@ use crate::ai::blocklist::telemetry::{
     AgentProposedConfigEvent, BlocklistOrchestrationTelemetryEvent, OrchestrationApprovalStatus,
     OrchestrationExecutionModeKind, OrchestrationHarnessKind, PlanConfigApprovalToggledEvent,
 };
-use crate::ai::connected_self_hosted_workers::{
-    ConnectedSelfHostedWorkersEvent, ConnectedSelfHostedWorkersModel,
-};
 use crate::ai::document::ai_document_model::AIDocumentModel;
 use crate::ai::harness_availability::{
     AuthSecretFetchState, HarnessAvailabilityEvent, HarnessAvailabilityModel,
@@ -250,12 +247,12 @@ impl OrchestrationConfigBlockView {
 
         // Repopulate pickers when the server-provided harness list,
         // harness model catalogs, or per-harness auth secrets change.
-        // Without an `AuthSecretsLoaded` handler the picker stays on
+        // Without an `SecretsLoaded` handler the picker stays on
         // "Loading…" forever after the lazy fetch completes.
         ctx.subscribe_to_model(
             &HarnessAvailabilityModel::handle(ctx),
             |me, _, event, ctx| match event {
-                HarnessAvailabilityEvent::AuthSecretCreated { harness, name } => {
+                HarnessAvailabilityEvent::SecretCreated { harness, name } => {
                     if me.pickers_initialized {
                         oc::apply_created_auth_secret_if_matches(
                             &mut me.orchestration_edit_state.orchestration_config_state,
@@ -271,10 +268,9 @@ impl OrchestrationConfigBlockView {
                     }
                     ctx.notify();
                 }
-                HarnessAvailabilityEvent::Changed
-                | HarnessAvailabilityEvent::AuthSecretsLoaded
-                | HarnessAvailabilityEvent::AuthSecretsFetchFailed
-                | HarnessAvailabilityEvent::AuthSecretDeleted { .. } => {
+                HarnessAvailabilityEvent::SecretsLoaded
+                | HarnessAvailabilityEvent::SecretsFetchFailed
+                | HarnessAvailabilityEvent::SecretDeleted { .. } => {
                     // Repopulate even on fetch failure to replace "Loading…".
                     // The Deleted event also triggers a refresh so any
                     // already-mounted picker drops the deleted entry from
@@ -289,36 +285,21 @@ impl OrchestrationConfigBlockView {
                     me.maybe_auto_open_create_modal(ctx);
                     ctx.notify();
                 }
-                HarnessAvailabilityEvent::AuthSecretCreationFailed { .. }
-                | HarnessAvailabilityEvent::AuthSecretDeletionFailed { .. } => {}
+                HarnessAvailabilityEvent::SecretCreationFailed { .. }
+                | HarnessAvailabilityEvent::SecretDeletionFailed { .. } => {}
             },
         );
 
         let create_environment_modal = ctx.add_typed_action_view(CreateEnvironmentModal::new);
-        ctx.subscribe_to_view(&create_environment_modal, |me, _, event, ctx| match event {
-            CreateEnvironmentModalEvent::Created { environment_id } => {
-                me.select_created_environment(environment_id.clone(), ctx);
-            }
-            CreateEnvironmentModalEvent::Cancelled => {
-                ctx.notify();
-            }
-        });
-
-        ctx.subscribe_to_model(
-            &ConnectedSelfHostedWorkersModel::handle(ctx),
-            |me, _, event, ctx| match event {
-                ConnectedSelfHostedWorkersEvent::Changed => {
-                    if me.pickers_initialized {
-                        oc::repopulate_all_pickers(
-                            &mut me.orchestration_edit_state.orchestration_config_state,
-                            &me.pickers,
-                            ctx,
-                        );
-                    }
+        ctx.subscribe_to_view(
+            &create_environment_modal,
+            |_me, _, event, ctx| match event {
+                CreateEnvironmentModalEvent::Cancelled => {
                     ctx.notify();
                 }
             },
         );
+
         let mut view = Self {
             conversation_id,
             plan_id,
@@ -396,7 +377,7 @@ impl OrchestrationConfigBlockView {
             return;
         };
         // Only auto-open on `Loaded([])`. Other fetch states are
-        // ambiguous; the `AuthSecretsLoaded` subscription will retry.
+        // ambiguous; the `SecretsLoaded` subscription will retry.
         let has_zero_loaded = matches!(
             HarnessAvailabilityModel::as_ref(ctx).auth_secrets_for(harness),
             AuthSecretFetchState::Loaded(secrets) if secrets.is_empty()
@@ -569,11 +550,7 @@ impl OrchestrationConfigBlockView {
         });
         oc::populate_host_picker(&host_handle, initial_host, ctx);
         ctx.subscribe_to_view(&host_handle, |_me, _, event, ctx| match event {
-            HostPickerEvent::Opened => {
-                ConnectedSelfHostedWorkersModel::handle(ctx).update(ctx, |model, ctx| {
-                    model.refresh(ctx);
-                });
-            }
+            HostPickerEvent::Opened => {}
             HostPickerEvent::HostChanged { slug } => {
                 ctx.dispatch_typed_action(&OrchestrationConfigBlockAction::WorkerHostChanged {
                     worker_host: slug.clone(),
@@ -636,18 +613,6 @@ impl OrchestrationConfigBlockView {
         });
         ctx.notify();
     }
-
-    fn select_created_environment(&mut self, environment_id: String, ctx: &mut ViewContext<Self>) {
-        self.orchestration_edit_state
-            .orchestration_config_state
-            .set_environment_id(environment_id.clone());
-        if let Some(environment_picker) = &self.pickers.environment_picker {
-            oc::populate_environment_picker(environment_picker, &environment_id, ctx);
-        }
-        self.apply_field_change(ctx);
-        ctx.notify();
-    }
-
     fn apply_field_change(&mut self, ctx: &mut ViewContext<Self>) {
         self.suppress_refresh = true;
         let config = self

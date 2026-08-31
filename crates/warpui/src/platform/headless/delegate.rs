@@ -163,7 +163,6 @@ impl platform::Delegate for AppDelegate {
         *self.cursor_shape.lock() = cursor;
     }
 
-    #[cfg(feature = "test-util")]
     fn get_cursor_shape(&self) -> Cursor {
         *self.cursor_shape.lock()
     }

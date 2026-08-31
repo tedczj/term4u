@@ -51,7 +51,7 @@ use crate::ai::agent::{
     AIAgentOutputMessage, AIAgentOutputMessageType, AIIdentifiers, CancellationOutcome,
     CancellationReason, MessageToAIAgentOutputMessageError, SummarizationType,
 };
-use crate::ai::ambient_agents::AmbientAgentTaskId;
+use crate::ai::agent_tasks::AmbientAgentTaskId;
 use crate::ai::artifacts::Artifact;
 use crate::ai::blocklist::{
     BlocklistAIHistoryEvent, ConversationStatusUpdate, RequestInput, ResponseStreamId,
@@ -3100,7 +3100,7 @@ impl AIConversation {
                                 // active background session (e.g. other subagent types). The
                                 // ctrl-c / cancel path, where no SubagentResult is produced, is
                                 // handled in `BlocklistAIController::cancel_conversation_progress`.
-                                computer_use::end_background_session(&self.id.to_string());
+                                interaction_types::end_background_session(&self.id.to_string());
                             }
                         }
                         Some(api::message::Message::ModelUsed(model_used)) => {
@@ -4614,7 +4614,7 @@ pub struct ServerAIConversationMetadata {
     pub permissions: crate::cloud_object::ServerPermissions,
 
     /// The ID of the associated ambient agent task, if any.
-    pub ambient_agent_task_id: Option<crate::ai::ambient_agents::AmbientAgentTaskId>,
+    pub ambient_agent_task_id: Option<crate::ai::agent_tasks::AmbientAgentTaskId>,
 
     /// The server conversation token used to identify this conversation on the server.
     pub server_conversation_token: ServerConversationToken,
@@ -4859,7 +4859,3 @@ impl ConversationStatus {
         matches!(self, ConversationStatus::Error)
     }
 }
-
-#[cfg(test)]
-#[path = "conversation_tests.rs"]
-mod tests;

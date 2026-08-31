@@ -34,9 +34,6 @@ use warpui_core::elements::tui::{
 };
 use warpui_core::{AppContext, Entity, ModelHandle, TuiView, ViewContext};
 
-use crate::autoupdate::{
-    HOMEBREW_UPDATE_STATUS, TuiAutoupdateStatus, TuiAutoupdater, TuiAutoupdaterEvent,
-};
 use crate::tui_builder::TuiUiBuilder;
 use crate::ui::{abbreviate_home_prefix, append_welcome_capability_section, render_welcome_title};
 use crate::zero_state_animation::{
@@ -131,13 +128,6 @@ impl TuiZeroStateView {
                 if let ChangelogModelEvent::ChangelogRequestComplete { .. } = event {
                     ctx.notify();
                 }
-            },
-        );
-        ctx.subscribe_to_model(
-            &TuiAutoupdater::handle(ctx),
-            |_, _, event: &TuiAutoupdaterEvent, ctx| {
-                let TuiAutoupdaterEvent::StatusChanged = event;
-                ctx.notify();
             },
         );
         ctx.subscribe_to_model(
@@ -654,7 +644,7 @@ fn render_standard_top_section(
                 .truncate()
                 .finish(),
         )
-        .child(render_version_line(builder, app));
+        .child(render_version_line(builder));
     if visibility.signed_in_user {
         column = column.child(render_login_line(builder, app));
     }
@@ -692,7 +682,7 @@ fn render_first_run_top_section(
 ) -> TuiFlex {
     let mut column = TuiFlex::column()
         .child(render_welcome_title(builder))
-        .child(render_version_line(builder, app));
+        .child(render_version_line(builder));
     if visibility.signed_in_user {
         column = column.child(render_login_line_with_prefix("logged in as", builder, app));
     }
@@ -923,59 +913,10 @@ fn login_line_label(signed_in_prefix: &str, user_info: TuiUserInfoSnapshot) -> O
         .map(|display| format!("{signed_in_prefix} {display}"))
 }
 
-/// User-facing copy for each visible background updater status.
-fn autoupdate_status_label(status: TuiAutoupdateStatus) -> Option<&'static str> {
-    match status {
-        TuiAutoupdateStatus::Idle => None,
-        TuiAutoupdateStatus::Checking => Some("checking for updates…"),
-        TuiAutoupdateStatus::Updating => Some("updating…"),
-        TuiAutoupdateStatus::UpToDate => Some("up to date"),
-        TuiAutoupdateStatus::Failed => Some("automatic update failed"),
-        TuiAutoupdateStatus::PendingRestart => Some("update installed, restart to apply"),
-        TuiAutoupdateStatus::UpdateAvailable => Some(HOMEBREW_UPDATE_STATUS),
-    }
-}
-
-/// The version line: the release version (or "dev build"), with the
-/// background auto-updater's status appended in parentheses. Dev builds
-/// never run the updater (and have no version), so they render plain; the
-/// `Idle` status (updater ineligible, or no stable check result yet) renders
-/// no suffix either.
-fn render_version_line(builder: &TuiUiBuilder, app: &AppContext) -> Box<dyn TuiElement> {
-    let muted = builder.muted_text_style();
-    let Some(version) = ChannelState::app_version() else {
-        return TuiText::new("dev build")
-            .with_style(muted)
-            .truncate()
-            .finish();
-    };
-    let status = TuiAutoupdater::as_ref(app).status();
-    let Some(label) = autoupdate_status_label(status) else {
-        return TuiText::new(version).with_style(muted).truncate().finish();
-    };
-    let style = match status {
-        TuiAutoupdateStatus::Idle => unreachable!("idle status has no label"),
-        TuiAutoupdateStatus::Checking
-        | TuiAutoupdateStatus::Updating
-        | TuiAutoupdateStatus::UpToDate
-        | TuiAutoupdateStatus::UpdateAvailable => muted,
-        TuiAutoupdateStatus::Failed => builder.error_text_style(),
-        TuiAutoupdateStatus::PendingRestart => builder.success_glyph_style(),
-    };
-    // Like the bullet rows below: the version reports its natural width and
-    // the suffix wraps against the remaining column width.
-    TuiFlex::row()
-        .child(
-            TuiText::new(format!("{version} "))
-                .with_style(muted)
-                .truncate()
-                .finish(),
-        )
-        .child(
-            TuiText::new(format!("({label})"))
-                .with_style(style)
-                .finish(),
-        )
+fn render_version_line(builder: &TuiUiBuilder) -> Box<dyn TuiElement> {
+    TuiText::new(ChannelState::app_version().unwrap_or("dev build"))
+        .with_style(builder.muted_text_style())
+        .truncate()
         .finish()
 }
 

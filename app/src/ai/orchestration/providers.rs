@@ -9,19 +9,17 @@ use warpui::{AppContext, SingletonEntity};
 
 use crate::LLMPreferences;
 use crate::ai::auth_secret_types::auth_secret_types_for_harness;
-use crate::ai::cloud_agent_settings::CloudAgentSettings;
-use crate::ai::cloud_environments::CloudEnvironmentCatalog;
-use crate::ai::connected_self_hosted_workers::WARP_WORKER_HOST;
 use crate::ai::harness_availability::{AuthSecretFetchState, HarnessAvailabilityModel};
 use crate::ai::llms::LLMInfo;
 use crate::ai::orchestration::config_state::AuthSecretSelection;
+use crate::ai::orchestration::settings::OrchestrationSettings;
 use crate::workspaces::user_workspaces::{TeamScope, UserWorkspaces};
 
 /// Env var override for the workspace default host (developer testing).
 /// Mirrors the single-agent ambient flow.
 const DEFAULT_HOST_ENV_VAR: &str = "WARP_CLOUD_MODE_DEFAULT_HOST";
 
-pub const ORCHESTRATION_WARP_WORKER_HOST: &str = WARP_WORKER_HOST;
+pub const ORCHESTRATION_WARP_WORKER_HOST: &str = "warp";
 pub const ORCHESTRATION_ENV_NONE_LABEL: &str = "Empty environment";
 pub const ORCHESTRATION_RUNNER_NONE_LABEL: &str = "Use default";
 
@@ -106,13 +104,13 @@ pub fn resolve_default_host_slug<S: TeamScope + ?Sized>(
 }
 
 /// Returns the user's last-selected custom host slug from
-/// `CloudAgentSettings.last_selected_host`, excluding `"warp"` and
+/// `OrchestrationSettings.last_selected_host`, excluding `"warp"` and
 /// `scope`'s team default (those are surfaced as separate menu rows).
 pub fn resolve_recent_host_slug<S: TeamScope + ?Sized>(
     scope: &S,
     ctx: &AppContext,
 ) -> Option<String> {
-    let last = CloudAgentSettings::as_ref(ctx)
+    let last = OrchestrationSettings::as_ref(ctx)
         .last_selected_host
         .value()
         .clone()
@@ -127,7 +125,7 @@ pub fn resolve_recent_host_slug<S: TeamScope + ?Sized>(
 }
 
 /// Persists the user's most-recent host selection to
-/// `CloudAgentSettings.last_selected_host`. Skipped for `"warp"` and
+/// `OrchestrationSettings.last_selected_host`. Skipped for `"warp"` and
 /// empty values (those don't represent a custom slug worth remembering).
 pub fn persist_host_selection(worker_host: &str, ctx: &mut AppContext) {
     let trimmed = worker_host.trim();
@@ -135,7 +133,7 @@ pub fn persist_host_selection(worker_host: &str, ctx: &mut AppContext) {
         return;
     }
     let value = trimmed.to_string();
-    CloudAgentSettings::handle(ctx).update(ctx, |settings, ctx| {
+    OrchestrationSettings::handle(ctx).update(ctx, |settings, ctx| {
         report_if_error!(settings.last_selected_host.set_value(Some(value), ctx));
     });
 }
@@ -155,29 +153,15 @@ pub fn harness_save_key(harness_type: &str) -> &str {
 /// user's last-selected environment, then preserves its existing
 /// most-recent-use and case-sensitive-name fallback.
 pub fn resolve_default_environment_id(ctx: &AppContext) -> Option<String> {
-    CloudEnvironmentCatalog::as_ref(ctx)
-        .orchestration_default_environment_id(ctx)
-        .map(|id| id.uid())
+    let _ = ctx;
+    None
 }
 
 /// Persists the user's environment selection to settings so it can
 /// be restored as the default next time. Shared by both the plan
 /// card and confirmation card `EnvironmentChanged` handlers.
 pub fn persist_environment_selection(environment_id: &str, ctx: &mut AppContext) {
-    if environment_id.is_empty() {
-        return;
-    }
-    let catalog = CloudEnvironmentCatalog::handle(ctx);
-    let environment_id = catalog
-        .as_ref(ctx)
-        .environments()
-        .iter()
-        .find_map(|environment| (environment.id.uid() == environment_id).then_some(environment.id));
-    if let Some(environment_id) = environment_id {
-        catalog.update(ctx, |catalog, ctx| {
-            catalog.persist_selection(environment_id, ctx);
-        });
-    }
+    let _ = (environment_id, ctx);
 }
 
 /// Returns the persisted last-selected secret name for this harness, or
@@ -192,7 +176,7 @@ pub fn resolve_default_auth_secret_for_harness(
     if harness == Harness::Oz {
         return None;
     }
-    let persisted = CloudAgentSettings::as_ref(ctx)
+    let persisted = OrchestrationSettings::as_ref(ctx)
         .last_selected_auth_secret
         .value()
         .get(harness.config_name())
@@ -206,7 +190,7 @@ pub fn resolve_default_auth_secret_for_harness(
             persisted.filter(|name| secrets.iter().any(|s| s.name == *name))
         }
         // Pre-fetch: optimistically show the persisted name; the
-        // `AuthSecretsLoaded` subscription will re-resolve.
+        // `SecretsLoaded` subscription will re-resolve.
         AuthSecretFetchState::NotFetched
         | AuthSecretFetchState::Loading
         | AuthSecretFetchState::Failed(_) => persisted,
@@ -228,7 +212,7 @@ pub fn resolve_auth_secret_selection_for_harness(
         return AuthSecretSelection::Unset;
     }
     // Explicit Inherit wins over a stale Named fallback.
-    let inherit_chosen = CloudAgentSettings::as_ref(ctx)
+    let inherit_chosen = OrchestrationSettings::as_ref(ctx)
         .inherit_auth_secret_harnesses
         .value()
         .get(harness.config_name())
@@ -261,7 +245,7 @@ pub(crate) fn persist_auth_secret_selection(
     }
     let key = harness.config_name().to_string();
     let selection = selection.clone();
-    CloudAgentSettings::handle(ctx).update(ctx, |settings, ctx| {
+    OrchestrationSettings::handle(ctx).update(ctx, |settings, ctx| {
         let mut named_map = settings.last_selected_auth_secret.value().clone();
         let mut inherit_map = settings.inherit_auth_secret_harnesses.value().clone();
         match selection {
@@ -325,7 +309,7 @@ pub(crate) fn default_auth_secret_name_for_harness(
     if harness == Harness::Oz {
         return None;
     }
-    CloudAgentSettings::as_ref(ctx)
+    OrchestrationSettings::as_ref(ctx)
         .last_selected_auth_secret
         .value()
         .get(harness.config_name())

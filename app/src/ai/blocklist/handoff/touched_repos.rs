@@ -31,10 +31,10 @@ use warpui::r#async::FutureExt as _;
 
 use crate::ai::agent::conversation::AIConversation;
 use crate::ai::agent::{AIAgentAction, AIAgentActionType, AIAgentOutputMessageType};
-use crate::ai::cloud_environments::{
+use crate::cloud_object::CloudObjectLookup as _;
+use crate::cloud_object::agent_environment::{
     CloudAmbientAgentEnvironment, GithubRepo, sort_environments_by_recency,
 };
-use crate::cloud_object::CloudObjectLookup as _;
 use crate::server::ids::SyncId;
 
 /// Cap on how many of the conversation's action results we scan for paths,

@@ -602,7 +602,7 @@ impl BlocklistAIHistoryModel {
         terminal_surface_id: EntityId,
         parent_conversation_id: AIConversationId,
         run_id: String,
-        task_id: crate::ai::ambient_agents::AmbientAgentTaskId,
+        task_id: crate::ai::agent_tasks::AmbientAgentTaskId,
         name: String,
         fallback_title: String,
         orchestration_harness: Option<Harness>,
@@ -1535,7 +1535,7 @@ impl BlocklistAIHistoryModel {
         &mut self,
         conversation_id: AIConversationId,
         run_id: String,
-        task_id: Option<crate::ai::ambient_agents::AmbientAgentTaskId>,
+        task_id: Option<crate::ai::agent_tasks::AmbientAgentTaskId>,
         terminal_surface_id: EntityId,
         ctx: &mut ModelContext<Self>,
     ) {
@@ -3253,7 +3253,7 @@ pub enum BlocklistAIHistoryEvent {
     /// shared session.
     LocalSharedSessionEstablished {
         conversation_id: AIConversationId,
-        session_id: session_sharing_protocol::common::SessionId,
+        session_id: warp_terminal::session_sharing_types::common::SessionId,
     },
 }
 

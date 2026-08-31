@@ -1,0 +1,5 @@
+# No individual test failure was established before implementation.
+# INFRA: cargo build --workspace --all-targets exits 101 because this host has only
+# CommandLineTools and no xcrun metal/metallib compiler.
+# INFRA: the full nextest no-run link attempt exits 101 after consuming the 57 GiB
+# available filesystem; see nextest-first.log and environment.txt.

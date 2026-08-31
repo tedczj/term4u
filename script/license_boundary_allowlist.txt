@@ -1,0 +1,13 @@
+warpui -> asset_cache
+warpui -> command
+warpui -> markdown_parser
+warpui -> sum_tree
+warpui -> virtual-fs
+warpui -> warp_errors
+warpui_core -> command
+warpui_core -> markdown_parser
+warpui_core -> settings_value
+warpui_core -> string-offset
+warpui_core -> sum_tree
+warpui_core -> warp_errors
+warpui_core -> warp_util

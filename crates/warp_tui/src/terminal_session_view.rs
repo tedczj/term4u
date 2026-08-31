@@ -1651,7 +1651,6 @@ impl TuiTerminalSessionView {
                     active_session: active_session.clone(),
                     cli_subagent_controller: cli_subagent_controller.clone(),
                     terminal_view_id: terminal_surface_id,
-                    terminal_model: model.clone(),
                     team_context_resolver: slash_commands_team_context,
                 },
                 ctx,
@@ -1694,15 +1693,8 @@ impl TuiTerminalSessionView {
                 ctx,
             )
         });
-        ctx.subscribe_to_model(&conversation_menu, |view, _, event, ctx| match event {
+        ctx.subscribe_to_model(&conversation_menu, |_, _, event, ctx| match event {
             TuiConversationMenuEvent::Updated => ctx.notify(),
-            TuiConversationMenuEvent::CloudMetadataUnavailable => {
-                view.show_transient_hint(
-                    "Could not load cloud conversations. Showing local conversations only."
-                        .to_owned(),
-                    ctx,
-                );
-            }
         });
         let model_menu_team_context = UserWorkspaces::team_context_resolver(ctx.handle());
         let model_menu = ctx.add_model(|ctx| {
@@ -5775,9 +5767,6 @@ impl TerminalSurface for TuiTerminalSessionView {
     }
 }
 
-#[cfg(test)]
-#[path = "handoff/tests.rs"]
-mod handoff_tests;
 #[cfg(test)]
 #[path = "terminal_session_view_tests.rs"]
 mod tests;

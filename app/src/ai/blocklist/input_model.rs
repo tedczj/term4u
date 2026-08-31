@@ -14,10 +14,10 @@ pub use input_classifier::{InputClassifierDecisionSource, InputType};
 use instant::Instant;
 use parking_lot::FairMutex;
 use serde::{Deserialize, Serialize};
-use session_sharing_protocol::common::{InputMode, InputType as ProtocolInputType};
 use settings::Setting as _;
 use warp_completer::completer::CompletionContext;
 use warp_core::features::FeatureFlag;
+use warp_terminal::session_sharing_types::common::{InputMode, InputType as ProtocolInputType};
 use warpui::{AppContext, Entity, EntityId, ModelContext, ModelHandle, SingletonEntity};
 
 /// The source of the final input type decision applied to the user input.

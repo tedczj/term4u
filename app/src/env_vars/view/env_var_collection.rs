@@ -9,13 +9,12 @@ use warpui::elements::{
     ParentElement, ParentOffsetBounds, PositioningAxis, SavePosition, ScrollbarWidth, Shrinkable,
     Stack, XAxisAnchor, YAxisAnchor,
 };
-use warpui::keymap::EditableBinding;
 use warpui::platform::Cursor;
 use warpui::presenter::ChildView;
 use warpui::ui_components::components::UiComponent;
 use warpui::{
     AppContext, BlurContext, Element, Entity, FocusContext, ModelAsRef, ModelHandle,
-    SingletonEntity, TypedActionView, View, ViewContext, ViewHandle, WindowId, id,
+    SingletonEntity, TypedActionView, View, ViewContext, ViewHandle, WindowId,
 };
 
 use super::command_dialog::EnvVarCommandDialog;
@@ -52,7 +51,6 @@ use crate::ui_components::icons::Icon;
 use crate::ui_components::menu_button::{
     MenuDirection, highlight_icon_button_with_context_menu, icon_button_with_context_menu,
 };
-use crate::util::bindings::CustomAction;
 use crate::view_components::alert::AlertConfig;
 use crate::view_components::{Alert, DismissibleToast, ToastType};
 use crate::workspace::ToastStack;
@@ -92,17 +90,6 @@ const BUTTON_SPACING: f32 = 8.;
 // Validation error styling
 pub(super) const ERROR_BORDER_WIDTH: f32 = 1.;
 pub(super) const ERROR_ALERT_MARGIN_TOP: f32 = 8.;
-
-pub fn init(app: &mut AppContext) {
-    app.register_editable_bindings([EditableBinding::new(
-        "Close Env Var Collection",
-        "Close",
-        EnvVarCollectionAction::Close,
-    )
-    .with_custom_action(CustomAction::CloseCurrentSession)
-    .with_context_predicate(id!(EnvVarCollectionView::ui_name()))]);
-}
-
 #[derive(PartialEq, Clone, Copy)]
 pub(super) enum EditorType {
     Name,
@@ -954,15 +941,6 @@ impl EnvVarCollectionView {
             ActiveEnvVarCollectionDataEvent::BreadcrumbsChanged => {
                 self.update_breadcrumbs(ctx);
                 ctx.notify()
-            }
-            ActiveEnvVarCollectionDataEvent::CreatedOnServer(server_id) => {
-                self.update_breadcrumbs(ctx);
-                self.pane_configuration.update(ctx, |pane_config, ctx| {
-                    pane_config.set_shareable_object(
-                        Some(ShareableObject::WarpDriveObject(*server_id)),
-                        ctx,
-                    );
-                });
             }
             ActiveEnvVarCollectionDataEvent::TrashStatusChanged => {
                 self.pane_configuration.update(ctx, |pane_config, ctx| {

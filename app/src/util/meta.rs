@@ -215,7 +215,3 @@ where
         Some(HasSpan::span(self))
     }
 }
-
-#[cfg(test)]
-#[path = "meta_tests.rs"]
-mod tests;

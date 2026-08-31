@@ -18,11 +18,6 @@ impl CloudObjectToastMessage {
         let object_name_lowercase = object_name.to_ascii_lowercase();
 
         match (object.object_type(), operation, success_type) {
-            // We should only show toasts for creates initiated by the user, not by the system
-            (_, ObjectOperation::Create { initiated_by: InitiatedBy::User }, OperationSuccessType::Success) => {
-                let containing_object_name = object.containing_object_name(app);
-                Some(format!("{object_name} saved to {containing_object_name}"))
-            }
             // notebooks intentionally do not have an update message, as they are updated
             // as the user types and so toasts would be VERY noisy
             (
@@ -45,12 +40,6 @@ impl CloudObjectToastMessage {
             }
             (_, ObjectOperation::Leave, OperationSuccessType::Success) => {
                 Some(format!("Left {object_name}"))
-            }
-            (_, ObjectOperation::Create { initiated_by: InitiatedBy::User }, OperationSuccessType::Failure) => {
-                Some(format!("Failed to create {object_name_lowercase}"))
-            }
-            (_, ObjectOperation::Create { initiated_by: InitiatedBy::User }, OperationSuccessType::Denied(message)) => {
-                Some(message.to_string())
             }
             (_, ObjectOperation::Update, OperationSuccessType::Failure) => {
                 Some(format!("Failed to update {object_name_lowercase}"))

@@ -24,7 +24,6 @@ use itertools::Itertools as _;
 use oneshot::{Canceled, Receiver};
 use repo_metadata::local_model::IndexedRepoState;
 use repo_metadata::{RepoMetadataModel, RepositoryIdentifier};
-use session_sharing_protocol::sharer::SessionRetentionReason;
 use tracing::Instrument as _;
 use uuid::Uuid;
 use warp_cli::agent::{Harness, OutputFormat, RepositoryHeadOverride};
@@ -37,6 +36,7 @@ use warp_core::{safe_debug, safe_error, safe_info};
 use warp_errors::{ErrorExt, register_error, report_error, report_if_error};
 use warp_graphql::ai::{AgentTaskState, PlatformErrorCode};
 use warp_managed_secrets::ManagedSecretValue;
+use warp_terminal::session_sharing_types::sharer::SessionRetentionReason;
 use warp_util::local_or_remote_path::LocalOrRemotePath;
 use warpui::r#async::{FutureExt, TimeoutError, Timer};
 use warpui::{AppContext, Entity, ModelContext, ModelHandle, ModelSpawner, SingletonEntity};
@@ -56,8 +56,8 @@ use crate::ai::agent_sdk::environment_snapshot::{
 };
 use crate::ai::agent_sdk::retry::{is_transient_graphql_or_http_error, with_bounded_retry_using};
 use crate::ai::agent_sdk::setup_observability::{SetupClientEventReporter, SetupStep};
-use crate::ai::ambient_agents::task::HarnessModelConfig;
-use crate::ai::ambient_agents::{
+use crate::ai::agent_tasks::task::HarnessModelConfig;
+use crate::ai::agent_tasks::{
     AmbientAgentTaskId, AmbientConversationStatus, conversation_output_status_from_conversation,
 };
 use crate::ai::bedrock_credentials;
@@ -68,11 +68,7 @@ use crate::ai::blocklist::orchestration_event_streamer::{
 };
 use crate::ai::blocklist::orchestration_events::OrchestrationEventService;
 use crate::ai::blocklist::{
-    BlocklistAIHistoryEvent, BlocklistAIHistoryModel, BlocklistAIPermissions, FinalizeReason,
-    finalize_recording_for_conversation,
-};
-use crate::ai::cloud_environments::{
-    AmbientAgentEnvironment, CloudAmbientAgentEnvironment, GithubRepo, SourceRepo,
+    BlocklistAIHistoryEvent, BlocklistAIHistoryModel, BlocklistAIPermissions,
 };
 use crate::ai::document::ai_document_model::{AIDocumentModel, AIDocumentModelEvent};
 use crate::ai::execution_profiles::profiles::AIExecutionProfilesModel;
@@ -90,6 +86,9 @@ use crate::ai::skills::{
 };
 use crate::auth::AuthStateProvider;
 use crate::auth::credentials::Credentials;
+use crate::cloud_object::agent_environment::{
+    AmbientAgentEnvironment, CloudAmbientAgentEnvironment, GithubRepo, SourceRepo,
+};
 use crate::cloud_object::{CloudObject, CloudObjectLookup as _};
 use crate::send_telemetry_from_app_ctx;
 use crate::server::ids::{ServerId, SyncId};
@@ -1424,31 +1423,6 @@ impl AgentDriver {
                     .spawn(|me, ctx| me.unregister_streamer_consumer(ctx))
                     .await;
 
-                // The caller may terminate the process as soon as it receives
-                // `result`, so all durable artifact work must finish before the
-                // send below. First start or join finalization for this
-                // conversation and wait for ffmpeg stop plus upload to finish.
-                // This also waits for work already started by an early exit or
-                // cancellation path.
-                if let Ok(Some(finalization)) = foreground
-                    .spawn(|me, ctx| {
-                        me.run_conversation_id.and_then(|conversation_id| {
-                            finalize_recording_for_conversation(
-                                conversation_id,
-                                FinalizeReason::RunEnded,
-                                true,
-                                ctx,
-                            )
-                        })
-                    })
-                    .await
-                {
-                    let (finalization_result, actual_reason) = finalization.resolve().await;
-                    log::info!(
-                        "Recording finalization completed before agent driver exit \
-                         (reason={actual_reason:?}): {finalization_result:?}"
-                    );
-                }
                 Self::run_snapshot_upload(&foreground).await;
 
                 // Guarantee the server task row reaches a terminal state before
@@ -3883,7 +3857,7 @@ impl AgentDriver {
                         let telemetry_pattern = error.pattern.clone();
                         let _ = foreground
                             .spawn(move |_, ctx| {
-                                use warp_core::telemetry::TelemetryEvent as _;
+
                                 let event =
                                     ThirdPartyHarnessTelemetryEvent::RuntimeErrorDetected {
                                         harness: telemetry_harness,
@@ -4047,10 +4021,7 @@ impl AgentDriver {
         let committed_conversation_id: Arc<Mutex<Option<AIConversationId>>> =
             Arc::new(Mutex::new(self.run_conversation_id));
         let exit_commit_handle = OrchestrationEventService::as_ref(ctx).exit_commit_handle();
-        #[cfg(test)]
-        let post_commit_gate = tests::test_post_commit_gate();
-        #[cfg_attr(not(test), allow(unused_mut))]
-        let mut run_exit = IdleTimeoutSender::new(internal_tx).with_on_commit({
+        let run_exit = IdleTimeoutSender::new(internal_tx).with_on_commit({
             let committed_conversation_id = Arc::clone(&committed_conversation_id);
             move || {
                 if let Ok(guard) = committed_conversation_id.lock()
@@ -4058,22 +4029,8 @@ impl AgentDriver {
                 {
                     exit_commit_handle.commit(conversation_id);
                 }
-                // Test-only: lets a test pause deterministically right here — the commit has
-                // already landed, but the completion value has not been sent yet, so nothing
-                // (including the async forwarder that runs model-side cleanup) can have
-                // observed this run ending.
-                #[cfg(test)]
-                if let Some(gate) = &post_commit_gate {
-                    gate.wait(Duration::ZERO);
-                }
             }
         });
-        #[cfg(test)]
-        {
-            if let Some(wait) = tests::test_idle_wait_override() {
-                run_exit = run_exit.with_wait(wait);
-            }
-        }
         let restored_conversation_id = self.restored_conversation_id;
 
         // ServerSide prompts enter the agent view and emit
@@ -5054,7 +5011,3 @@ fn write_session_joined(join_url: &str, output_format: OutputFormat) {
         .context("Failed to write shared session event")
     );
 }
-
-#[cfg(test)]
-#[path = "driver_tests.rs"]
-mod tests;

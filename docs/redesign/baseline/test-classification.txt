@@ -1,0 +1,20 @@
+删除集条目            : 62
+删除集源文件 / 源码行 : 410 / 171067
+类 A（随模块消亡）    : 144 文件 / 64536 行
+类 B（编译期断裂）    : 151 文件 / 146101 行
+类 C 候选（可能漂移） : 604 文件
+存活测试文件          : 755   全量测试文件: 899
+
+类 B 热点：
+    43  app/src/ai/blocklist
+     9  crates/warp_tui/src
+     7  app/src/terminal/view
+     5  app/src/terminal
+     4  app/src/ai
+     4  app/src/server/server_api
+     4  app/src/settings_view
+     3  app/src/code/editor
+     3  app/src/notebooks
+     3  app/src/terminal/input
+
+已写入 docs/redesign/baseline/{class-a,class-b,class-c-candidates,deleted-tests}.txt

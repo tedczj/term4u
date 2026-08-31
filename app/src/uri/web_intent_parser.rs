@@ -1,13 +1,18 @@
+#[cfg(target_family = "wasm")]
 use anyhow::{Result, anyhow};
+#[cfg(target_family = "wasm")]
 use url::Url;
+#[cfg(target_family = "wasm")]
 use uuid::Uuid;
 #[cfg(target_family = "wasm")]
 use warp_core::context_flag::ContextFlag;
 
+#[cfg(target_family = "wasm")]
 use crate::ChannelState;
 #[cfg(target_family = "wasm")]
 use crate::uri::browser_url_handler::parse_current_url;
 
+#[cfg(target_family = "wasm")]
 #[derive(Debug)]
 /// Represents an intent parsed from a web url
 pub enum WebIntent {
@@ -20,10 +25,11 @@ pub enum WebIntent {
     Action(Url),
 }
 
+#[cfg(target_family = "wasm")]
 impl WebIntent {
     pub fn try_from_url(url: &Url) -> Result<Self> {
         // Only handle URLs that point at the current channel's web server.
-        let server_root = ChannelState::server_root_url();
+        let server_root = ChannelState::server_root_url().unwrap_or_default();
         let server_root_url = Url::parse(&server_root)?;
         if url.scheme() != server_root_url.scheme()
             || url.domain() != server_root_url.domain()
@@ -64,7 +70,7 @@ impl WebIntent {
                         }
 
                         let mut session_intent = Url::parse(
-                            format!("{url_scheme}://shared_session/{session_id}").as_str(),
+                            format!("{url_scheme}://session_sharing/{session_id}").as_str(),
                         )
                         .map_err(|_| anyhow!("Attempting to parse invalid url: {}", url))?;
 
@@ -163,6 +169,7 @@ impl WebIntent {
 
 /// Attempts to rewrite a Warp web URL into a native desktop intent URL (warp://...).
 /// Returns `None` if the URL is not a recognized Warp web intent.
+#[cfg(target_family = "wasm")]
 pub fn maybe_rewrite_web_url_to_intent(url: &Url) -> Option<Url> {
     WebIntent::try_from_url(url)
         .ok()

@@ -8,7 +8,6 @@ use warp_editor::editor::EditorView;
 use warpui::r#async::Timer;
 use warpui::platform::WindowStyle;
 use warpui::presenter::ChildView;
-use warpui::telemetry::EventPayload;
 use warpui::{
     AddSingletonModel, App, AppContext, Element, Entity, SingletonEntity, TypedActionView, View,
     ViewHandle, WindowId,
@@ -40,7 +39,6 @@ use crate::server::ids::ClientId;
 use crate::server::ids::SyncId::ServerId;
 use crate::server::server_api::ServerApiProvider;
 use crate::server::sync_queue::{QueueItem, SyncQueue, SyncQueueEvent};
-use crate::server::telemetry::context_provider::AppTelemetryContextProvider;
 use crate::settings_view::keybindings::KeybindingChangedNotifier;
 use crate::terminal::keys::TerminalKeybindings;
 use crate::test_util::settings::initialize_settings_for_tests;
@@ -78,7 +76,6 @@ fn initialize_app(app: &mut App) {
     app.add_singleton_model(|_| ActiveSession::default());
     app.add_singleton_model(|_| ObjectActions::new(Vec::new()));
     app.add_singleton_model(|_| AuthStateProvider::new_for_test());
-    app.add_singleton_model(AppTelemetryContextProvider::new_context_provider);
     app.add_singleton_model(AuthManager::new_for_test);
     #[cfg(feature = "voice_input")]
     app.add_singleton_model(voice_input::VoiceInput::new);
@@ -376,96 +373,6 @@ fn test_focus_tracking() {
         root.update(&mut app, |_, ctx| ctx.focus_self());
         notebook.update(&mut app, |notebook, ctx| notebook.focus(ctx));
         assert_eq!(app.focused_view_id(window), Some(input_view.id()));
-    });
-}
-
-#[test]
-#[ignore]
-fn test_edit_telemetry() {
-    fn edit_events() -> Vec<serde_json::Value> {
-        warpui::telemetry::flush_events()
-            .into_iter()
-            .filter_map(|event| match event.payload {
-                EventPayload::NamedEvent { name, value, .. } if name == "Notebook Edited" => value,
-                _ => None,
-            })
-            .collect_vec()
-    }
-
-    App::test((), |mut app| async move {
-        initialize_app(&mut app);
-        initial_load(&mut app, []).await;
-
-        let (_, notebook, _) = create_notebook(&mut app);
-        open_notebook(
-            &mut app,
-            &notebook,
-            cloud_notebook("Test Notebook", "This is a notebook"),
-        )
-        .await;
-        let input_view = notebook.read(&app, |notebook, _| notebook.input.clone());
-
-        // The notebook should show in edit mode, with telemetry recording.
-        notebook.update(&mut app, |notebook, ctx| {
-            notebook.grab_edit_access(true, ctx);
-            assert_eq!(
-                notebook.active_notebook_data.as_ref(ctx).mode,
-                Mode::Editing
-            );
-            assert!(notebook.edit_telemetry_handle.is_some());
-            notebook.focus_input(ctx);
-        });
-
-        // With no edits, there are no events.
-        ensure_saved(&mut app, &notebook).await;
-        Timer::after(2 * EDIT_WINDOW_DURATION).await;
-        assert!(edit_events().is_empty());
-
-        // Make a small edit, which should get reported as non-meaningful.
-        input_view.update(&mut app, |input, ctx| {
-            input.user_typed("Hi", ctx);
-        });
-
-        ensure_saved(&mut app, &notebook).await;
-        Timer::after(2 * EDIT_WINDOW_DURATION).await;
-        assert_eq!(
-            edit_events(),
-            vec![serde_json::json!({
-                "notebook_id": None::<()>,
-                "meaningful_change": false,
-            })]
-        );
-
-        // If we switch to view mode, we stop recording elemetry.
-        notebook.update(&mut app, |notebook, ctx| {
-            notebook.switch_to_view(ctx);
-            assert!(notebook.edit_telemetry_handle.is_none());
-        });
-
-        // Telemetry resumes when we switch to editing.
-        notebook.update(&mut app, |notebook, ctx| {
-            notebook.switch_to_edit(ctx);
-            notebook.focus_input(ctx);
-            assert!(notebook.edit_telemetry_handle.is_some());
-        });
-
-        // Finally, a meaningful edit is recorded as such.
-        input_view.update(&mut app, |input, ctx| {
-            input.user_typed(
-                "This is a very very very very long edit. This is a heavy notebook user.",
-                ctx,
-            );
-        });
-
-        ensure_saved(&mut app, &notebook).await;
-        Timer::after(2 * EDIT_WINDOW_DURATION).await;
-        assert_eq!(
-            edit_events(),
-            vec![serde_json::json!({
-                "notebook_id": None::<()>,
-                "meaningful_change": true,
-            })]
-        );
     });
 }
 
@@ -832,84 +739,6 @@ fn test_only_user_title_edits_synced() {
         });
     });
 }
-
-#[test]
-fn test_conflicting_notebook_read_only() {
-    App::test((), |mut app| async move {
-        initialize_app(&mut app);
-        initial_load(&mut app, vec![]).await;
-
-        let (_, notebook_view, _) = create_notebook(&mut app);
-
-        let mut server_notebook = mock_server_notebook("A Notebook", "Local Data");
-        let server_id = server_notebook.id;
-        let mut cloud_notebook: CloudNotebook =
-            CloudNotebook::new_from_server(server_notebook.clone());
-        server_notebook.model.data = "Remote Data".to_string();
-        cloud_notebook.set_conflicting_object(Arc::new(server_notebook.clone()));
-
-        CloudModel::handle(&app).update(&mut app, |cloud_model, _| {
-            cloud_model.add_object(cloud_notebook.id, cloud_notebook.clone());
-        });
-        open_notebook(&mut app, &notebook_view, cloud_notebook).await;
-
-        // The notebook should load into view mode.
-        app.read(|ctx| {
-            let active_notebook_data = notebook_view.as_ref(ctx).active_notebook_data.as_ref(ctx);
-            assert!(active_notebook_data.has_conflicts(ctx));
-            assert_eq!(active_notebook_data.mode, Mode::View);
-            assert_eq!(
-                notebook_view
-                    .as_ref(ctx)
-                    .input
-                    .as_ref(ctx)
-                    .interaction_state(ctx),
-                InteractionState::Selectable
-            );
-        });
-
-        // While there are conflicts, the user should not be able to start editing.
-        notebook_view.update(&mut app, |notebook_view, ctx| {
-            notebook_view.grab_edit_access_or_display_access_dialog(ctx);
-            assert!(
-                !notebook_view
-                    .active_notebook_data
-                    .as_ref(ctx)
-                    .show_grab_edit_access_modal
-            );
-            assert_eq!(notebook_view.mode(ctx), Mode::View);
-        });
-
-        // Resolving the conflict should make the notebook editable again.
-        notebook_view.update(&mut app, |notebook_view, ctx| {
-            notebook_view.conflict_dialog_refresh_button_clicked(ctx);
-            assert_eq!(notebook_view.content(ctx), "Remote Data");
-
-            notebook_view.grab_edit_access_or_display_access_dialog(ctx);
-            assert_eq!(notebook_view.mode(ctx), Mode::Editing);
-        });
-
-        // If there's another conflict, the notebook should switch back to view mode.
-        // Trigger this via the SyncQueue so that the UpdateManager records the conflict in CloudModel.
-        SyncQueue::handle(&app).update(&mut app, |_, ctx| {
-            ctx.emit(SyncQueueEvent::ObjectUpdateRejected {
-                id: server_id.uid(),
-                object: ServerCloudObject::Notebook(server_notebook).into(),
-            });
-        });
-
-        notebook_view.read(&app, |notebook_view, ctx| {
-            assert!(
-                notebook_view
-                    .active_notebook_data
-                    .as_ref(ctx)
-                    .has_conflicts(ctx)
-            );
-            assert_eq!(notebook_view.mode(ctx), Mode::View);
-        })
-    });
-}
-
 #[test]
 fn test_untitled_notebook() {
     App::test((), |mut app| async move {

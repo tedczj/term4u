@@ -16,7 +16,6 @@ use crate::network::NetworkStatus;
 use crate::persistence::ModelEvent;
 use crate::server::server_api::ServerApiProvider;
 use crate::server::sync_queue::SyncQueue;
-use crate::server::telemetry::context_provider::AppTelemetryContextProvider;
 use crate::settings::{PrivacySettings, WarpDrivePrivacySettings};
 use crate::workspaces::team_tester::TeamTesterStatus;
 use crate::workspaces::update_manager::TeamUpdateManager;
@@ -43,7 +42,6 @@ pub fn initialize_app(app: &mut App) {
     // under test.
     app.add_singleton_model(|_| ServerApiProvider::new_for_test());
     app.add_singleton_model(|_| AuthStateProvider::new_for_test());
-    app.add_singleton_model(AppTelemetryContextProvider::new_context_provider);
     app.add_singleton_model(AuthManager::new_for_test);
     WarpDrivePrivacySettings::register(app);
     app.update(PrivacySettings::register_singleton);
@@ -83,7 +81,7 @@ pub fn create_update_manager_struct(
     // we need to do it manually for tests. We do this AFTER UpdateManager is created
     // so the polling uses the correct mock.
     TeamTesterStatus::handle(app).update(app, |team_tester, ctx| {
-        team_tester.initiate_data_pollers(false, ctx);
+        team_tester.initiate_data_pollers(ctx);
     });
 
     UpdateManagerStruct {

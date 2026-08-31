@@ -1363,52 +1363,51 @@ pub(crate) fn convert_tool_call_result_to_input(
             })
         }
         Some(ToolCallResultType::UseComputer(result)) => {
-            let use_computer_result =
-                match &result.result {
-                    Some(api::use_computer_result::Result::Success(success)) => {
-                        let screenshot = success.screenshot.as_ref().map(|s| {
-                            // The original dimensions are not preserved through the API, so we use
-                            // the current dimensions for both.
-                            computer_use::Screenshot {
-                                width: s.width as usize,
-                                height: s.height as usize,
-                                original_width: s.width as usize,
-                                original_height: s.height as usize,
-                                data: s.data.clone(),
-                                mime_type: s.mime_type.clone().into(),
-                            }
-                        });
-                        let cursor_position = success
-                            .cursor_position
-                            .as_ref()
-                            .map(|c| computer_use::Vector2I::new(c.x, c.y));
-                        let windows = success
-                            .windows
-                            .iter()
-                            .map(convert_api_window_info)
-                            .collect();
-                        // A present captured-window message indicates a window screenshot was taken.
-                        // The window id is an opaque string on the wire; on macOS it is a CGWindowID,
-                        // so parse it back to a u32, defaulting to 0 when it is not parseable.
-                        let captured_window = success.captured_window.as_ref().map(|c| {
-                            computer_use::CapturedWindow {
-                                window_id: c.window_id.parse().unwrap_or(0),
-                                width_px: c.width_px,
-                                height_px: c.height_px,
-                            }
-                        });
-                        UseComputerResult::Success(computer_use::ActionResult {
-                            screenshot,
-                            cursor_position,
-                            windows,
-                            captured_window,
-                        })
-                    }
-                    Some(api::use_computer_result::Result::Error(error)) => {
-                        UseComputerResult::Error(error.message.clone())
-                    }
-                    None => UseComputerResult::Cancelled,
-                };
+            let use_computer_result = match &result.result {
+                Some(api::use_computer_result::Result::Success(success)) => {
+                    let screenshot = success.screenshot.as_ref().map(|s| {
+                        // The original dimensions are not preserved through the API, so we use
+                        // the current dimensions for both.
+                        interaction_types::Screenshot {
+                            width: s.width as usize,
+                            height: s.height as usize,
+                            original_width: s.width as usize,
+                            original_height: s.height as usize,
+                            data: s.data.clone(),
+                            mime_type: s.mime_type.clone().into(),
+                        }
+                    });
+                    let cursor_position = success
+                        .cursor_position
+                        .as_ref()
+                        .map(|c| interaction_types::Vector2I::new(c.x, c.y));
+                    let windows = success
+                        .windows
+                        .iter()
+                        .map(convert_api_window_info)
+                        .collect();
+                    // A present captured-window message indicates a window screenshot was taken.
+                    // The window id is an opaque string on the wire; on macOS it is a CGWindowID,
+                    // so parse it back to a u32, defaulting to 0 when it is not parseable.
+                    let captured_window = success.captured_window.as_ref().map(|c| {
+                        interaction_types::CapturedWindow {
+                            window_id: c.window_id.parse().unwrap_or(0),
+                            width_px: c.width_px,
+                            height_px: c.height_px,
+                        }
+                    });
+                    UseComputerResult::Success(interaction_types::ActionResult {
+                        screenshot,
+                        cursor_position,
+                        windows,
+                        captured_window,
+                    })
+                }
+                Some(api::use_computer_result::Result::Error(error)) => {
+                    UseComputerResult::Error(error.message.clone())
+                }
+                None => UseComputerResult::Cancelled,
+            };
 
             Some(AIAgentInput::ActionResult {
                 result: AIAgentActionResult {
@@ -1432,7 +1431,7 @@ pub(crate) fn convert_tool_call_result_to_input(
                             },
                             Some(platform),
                         ) => RequestComputerUseResult::Approved {
-                            screenshot: computer_use::Screenshot {
+                            screenshot: interaction_types::Screenshot {
                                 width: initial_screenshot.width as usize,
                                 height: initial_screenshot.height as usize,
                                 original_width: screen_dimensions.width_px as usize,
@@ -1729,12 +1728,14 @@ fn proto_duration_to_duration(duration: &prost_types::Duration) -> Duration {
     Duration::new(duration.seconds.max(0) as u64, duration.nanos.max(0) as u32)
 }
 
-fn convert_recording_completion_status(status: i32) -> computer_use::RecordingCompletionStatus {
+fn convert_recording_completion_status(
+    status: i32,
+) -> interaction_types::RecordingCompletionStatus {
     match api::stop_recording_result::CompletionStatus::try_from(status) {
         Ok(api::stop_recording_result::CompletionStatus::Complete) => {
-            computer_use::RecordingCompletionStatus::Completed
+            interaction_types::RecordingCompletionStatus::Completed
         }
-        _ => computer_use::RecordingCompletionStatus::StoppedEarly,
+        _ => interaction_types::RecordingCompletionStatus::StoppedEarly,
     }
 }
 
@@ -2191,13 +2192,13 @@ impl From<String> for crate::ai::agent::MessageId {
     }
 }
 
-fn convert_api_platform(platform: i32) -> Option<computer_use::Platform> {
+fn convert_api_platform(platform: i32) -> Option<interaction_types::Platform> {
     use api::request_computer_use_result::approved::Platform;
     match Platform::try_from(platform) {
-        Ok(Platform::Macos) => Some(computer_use::Platform::Mac),
-        Ok(Platform::Windows) => Some(computer_use::Platform::Windows),
-        Ok(Platform::LinuxX11) => Some(computer_use::Platform::LinuxX11),
-        Ok(Platform::LinuxWayland) => Some(computer_use::Platform::LinuxWayland),
+        Ok(Platform::Macos) => Some(interaction_types::Platform::Mac),
+        Ok(Platform::Windows) => Some(interaction_types::Platform::Windows),
+        Ok(Platform::LinuxX11) => Some(interaction_types::Platform::LinuxX11),
+        Ok(Platform::LinuxWayland) => Some(interaction_types::Platform::LinuxWayland),
         Err(_) => {
             log::warn!("Unknown platform value: {platform}");
             None
@@ -2206,8 +2207,8 @@ fn convert_api_platform(platform: i32) -> Option<computer_use::Platform> {
 }
 
 /// Reconstructs the internal computer_use window record from the API `WindowInfo` message.
-fn convert_api_window_info(window: &api::WindowInfo) -> computer_use::WindowInfo {
-    computer_use::WindowInfo {
+fn convert_api_window_info(window: &api::WindowInfo) -> interaction_types::WindowInfo {
+    interaction_types::WindowInfo {
         // The window id arrives as an opaque string; on macOS it is a CGWindowID (u32). Default to
         // 0 when it is not parseable.
         window_id: window.window_id.parse().unwrap_or(0),
@@ -2217,7 +2218,3 @@ fn convert_api_window_info(window: &api::WindowInfo) -> computer_use::WindowInfo
         layer: window.layer,
     }
 }
-
-#[cfg(test)]
-#[path = "convert_conversation_tests.rs"]
-mod tests;

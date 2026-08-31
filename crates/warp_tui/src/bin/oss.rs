@@ -6,21 +6,26 @@
 //! no app bundle), so unlike the GUI binaries it sets no `windows_subsystem`
 //! attribute and embeds no `Info.plist`.
 
+#[cfg(not(feature = "offline_hard"))]
 use anyhow::Result;
+#[cfg(not(feature = "offline_hard"))]
 use warp_core::AppId;
-use warp_core::channel::{Channel, ChannelConfig, ChannelState, OzConfig, WarpServerConfig};
+#[cfg(not(feature = "offline_hard"))]
+use warp_core::channel::{
+    Channel, ChannelConfig, ChannelState, ConnectivityMode, OzConfig, WarpServerConfig,
+};
 
+#[cfg(not(feature = "offline_hard"))]
 fn main() -> Result<()> {
     let mut state = ChannelState::new(
         Channel::Oss,
         ChannelConfig {
             app_id: AppId::new("dev", "warp", "WarpTui"),
             logfile_name: "warp-tui.log".into(),
-            server_config: WarpServerConfig::production(),
-            oz_config: OzConfig::production(),
-            telemetry_config: None,
-            crash_reporting_config: None,
-            autoupdate_config: None,
+            connectivity: ConnectivityMode::Cloud {
+                server: WarpServerConfig::production(),
+                oz: OzConfig::production(),
+            },
             mcp_static_config: None,
         },
     );
@@ -30,4 +35,10 @@ fn main() -> Result<()> {
     ChannelState::set(state);
 
     warp_tui::run()
+}
+
+#[cfg(feature = "offline_hard")]
+fn main() {
+    eprintln!("warp-tui-oss is not available in offline builds; use term4u-tui");
+    std::process::exit(2);
 }

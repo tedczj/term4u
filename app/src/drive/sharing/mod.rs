@@ -1,9 +1,9 @@
 use std::borrow::Cow;
 
 use chrono::{DateTime, Local};
-use session_sharing_protocol::common::SessionId;
 use warp_core::channel::ChannelState;
 use warp_core::ui::appearance::Appearance;
+use warp_terminal::session_sharing_types::common::SessionId;
 use warpui::color::ColorU;
 use warpui::ui_components::components::{UiComponent, UiComponentStyles};
 use warpui::{AppContext, SingletonEntity, WeakViewHandle};
@@ -14,8 +14,8 @@ use crate::cloud_object::model::persistence::CloudModel;
 use crate::server::ids::ServerId;
 use crate::server::server_api::object::GuestIdentifier;
 use crate::terminal::TerminalView;
-use crate::terminal::shared_session::join_link;
-use crate::terminal::shared_session::manager::Manager;
+use crate::terminal::session_sharing::join_link;
+use crate::terminal::session_sharing::manager::Manager;
 use crate::ui_components::avatar::{Avatar, AvatarContent};
 use crate::ui_components::icons::Icon;
 use crate::workspaces::user_profiles::UserProfiles;
@@ -76,7 +76,7 @@ impl ShareableObject {
                     .map(|m| {
                         format!(
                             "{}/conversation/{}",
-                            ChannelState::server_root_url(),
+                            ChannelState::server_root_url().unwrap_or_default(),
                             m.server_conversation_token.as_str()
                         )
                     })

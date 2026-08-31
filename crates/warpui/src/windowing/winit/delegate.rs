@@ -501,7 +501,6 @@ impl platform::Delegate for AppDelegate {
         );
     }
 
-    #[cfg(feature = "test-util")]
     fn get_cursor_shape(&self) -> Cursor {
         *self.last_known_cursor.borrow()
     }
@@ -673,7 +672,6 @@ impl platform::Delegate for IntegrationTestDelegate {
         // no-op
     }
 
-    #[cfg(feature = "test-util")]
     fn get_cursor_shape(&self) -> platform::Cursor {
         self.app_delegate.get_cursor_shape()
     }

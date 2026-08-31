@@ -18,8 +18,7 @@ use warpui::{
 };
 
 use crate::ai::blocklist::inline_action::orchestration_controls::ORCHESTRATION_WARP_WORKER_HOST;
-use crate::ai::cloud_agent_settings::CloudAgentSettings;
-use crate::ai::connected_self_hosted_workers::ConnectedSelfHostedWorkersModel;
+use crate::ai::orchestration::settings::OrchestrationSettings;
 use crate::menu::{Event as MenuEvent, Menu, MenuItem, MenuItemFields};
 use crate::terminal::input::{MenuPositioning, MenuPositioningProvider};
 use crate::view_components::action_button::{
@@ -132,13 +131,6 @@ impl HostSelector {
         ctx.subscribe_to_model(&Appearance::handle(ctx), |me, _, _, ctx| {
             me.refresh_menu(ctx);
         });
-        ctx.subscribe_to_model(
-            &ConnectedSelfHostedWorkersModel::handle(ctx),
-            |me, _, _, ctx| {
-                me.refresh_menu(ctx);
-            },
-        );
-
         let mut me = Self {
             button,
             menu,
@@ -148,7 +140,7 @@ impl HostSelector {
             default_host: None,
         };
         // Restore the last selected host from settings.
-        if let Some(saved_slug) = CloudAgentSettings::as_ref(ctx)
+        if let Some(saved_slug) = OrchestrationSettings::as_ref(ctx)
             .last_selected_host
             .value()
             .as_deref()
@@ -188,7 +180,7 @@ impl HostSelector {
 
         // If the user has a saved selection, preserve it instead of
         // unconditionally overwriting with the default.
-        let saved_slug = CloudAgentSettings::as_ref(ctx)
+        let saved_slug = OrchestrationSettings::as_ref(ctx)
             .last_selected_host
             .value()
             .clone();
@@ -218,7 +210,7 @@ impl HostSelector {
         }
         self.default_host = None;
 
-        if CloudAgentSettings::as_ref(ctx)
+        if OrchestrationSettings::as_ref(ctx)
             .last_selected_host
             .value()
             .is_some()
@@ -256,9 +248,6 @@ impl HostSelector {
         }
         self.is_menu_open = is_open;
         if is_open {
-            ConnectedSelfHostedWorkersModel::handle(ctx).update(ctx, |model, ctx| {
-                model.refresh(ctx);
-            });
             ctx.focus(&self.menu);
             self.highlight_selected_host(ctx);
         }
@@ -308,7 +297,7 @@ fn build_menu_items(
     header_text_color: ColorU,
     default_host: Option<&Host>,
     selected: &Host,
-    ctx: &mut ViewContext<HostSelector>,
+    _ctx: &mut ViewContext<HostSelector>,
 ) -> Vec<MenuItem<HostSelectorAction>> {
     let header = MenuItem::Header {
         fields: MenuItemFields::new(MENU_HEADER_LABEL)
@@ -350,12 +339,7 @@ fn build_menu_items(
         Some(Host::SelfHosted { slug }) => Some(slug.as_str()),
         Some(Host::Warp) | None => None,
     };
-    let mut connected_hosts = ConnectedSelfHostedWorkersModel::as_ref(ctx)
-        .worker_hosts_excluding(default_slug)
-        .into_iter()
-        .collect::<Vec<_>>();
-    connected_hosts.sort();
-    connected_hosts.dedup();
+    let connected_hosts: Vec<String> = Vec::new();
     for host in &connected_hosts {
         items.push(item_for(
             Host::SelfHosted { slug: host.clone() },
@@ -398,7 +382,7 @@ impl TypedActionView for HostSelector {
                 });
                 // Persist the selection to settings for next time.
                 if let Some(slug) = host.worker_host_value() {
-                    CloudAgentSettings::handle(ctx).update(ctx, |settings, ctx| {
+                    OrchestrationSettings::handle(ctx).update(ctx, |settings, ctx| {
                         report_if_error!(settings.last_selected_host.set_value(Some(slug), ctx));
                     });
                 }

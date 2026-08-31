@@ -2,7 +2,7 @@ use chrono::Utc;
 
 use super::{ChildPaneMaterialization, decide_child_pane_materialization};
 use crate::ai::agent::api::ServerConversationToken;
-use crate::ai::ambient_agents::{AmbientAgentTask, AmbientAgentTaskState};
+use crate::ai::agent_tasks::{AmbientAgentTask, AmbientAgentTaskState};
 
 /// Builds a minimal [`AmbientAgentTask`] for materialization tests.
 ///

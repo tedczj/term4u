@@ -8,10 +8,6 @@ use async_channel::Sender;
 use base64::Engine;
 use itertools::Either;
 use serde::Serialize;
-use session_sharing_protocol::common::{
-    AICommandMetadata, OrderedTerminalEventType, ParticipantId,
-};
-use session_sharing_protocol::sharer::SessionSourceType;
 use string_offset::CharOffset;
 use warp_completer::meta::Span;
 use warp_core::command::ExitCode;
@@ -22,6 +18,10 @@ pub use warp_terminal::event::ExitReason;
 use warp_terminal::event::validate_and_decode_in_band_command_output_to_bytes;
 pub use warp_terminal::model::{BlockIndex, RangeInModel};
 use warp_terminal::model::{KeyboardModes, KeyboardModesApplyBehavior};
+use warp_terminal::session_sharing_types::common::{
+    AICommandMetadata, OrderedTerminalEventType, ParticipantId,
+};
+use warp_terminal::session_sharing_types::sharer::SessionSourceType;
 use warpui::AppContext;
 use warpui::assets::asset_cache::Asset;
 use warpui::r#async::executor::Background;
@@ -52,7 +52,7 @@ use super::secrets::{RespectObfuscatedSecrets, SecretAndHandle};
 use super::selection::ScrollDelta;
 use super::session::{BootstrapSessionType, InBandCommandOutputReceiver, SessionId};
 use super::{Secret, SecretHandle};
-use crate::ai::ambient_agents::AmbientAgentTaskId;
+use crate::ai::agent_tasks::AmbientAgentTaskId;
 use crate::ai::blocklist::SerializedBlockListItem;
 use crate::terminal::available_shells::AvailableShell;
 use crate::terminal::block_filter::BlockFilterQuery;
@@ -77,8 +77,8 @@ use crate::terminal::model::index::VisibleRow;
 use crate::terminal::model::iterm_image::{ITermImage, ITermImageMetadata};
 use crate::terminal::model::secrets::ObfuscateSecrets;
 use crate::terminal::model::session::SessionInfo;
-use crate::terminal::shared_session::ai_agent::encode_agent_response_event;
-use crate::terminal::shared_session::{SharedSessionSource, SharedSessionStatus};
+use crate::terminal::session_sharing::ai_agent::encode_agent_response_event;
+use crate::terminal::session_sharing::{SharedSessionSource, SharedSessionStatus};
 use crate::terminal::shell::{ShellName, ShellType};
 use crate::terminal::ssh::util::{InteractiveSshCommand, SshLoginState};
 use crate::terminal::{
@@ -2081,7 +2081,7 @@ impl TerminalModel {
             let num_cols = size_update.new_size.columns();
             if let Some(tx) = &self.ordered_terminal_events_for_shared_session_tx
                 && let Err(e) = tx.try_send(OrderedTerminalEventType::Resize {
-                    window_size: session_sharing_protocol::common::WindowSize {
+                    window_size: warp_terminal::session_sharing_types::common::WindowSize {
                         num_rows,
                         num_cols,
                     },

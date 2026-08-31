@@ -48,8 +48,8 @@ pub use crate::ai::agent_conversations_model::{
     AgentManagementFilters, AgentRunDisplayStatus, HarnessFilter, OwnerFilter,
     query_conversation_entries,
 };
-pub use crate::ai::ambient_agents::AmbientAgentTaskId;
-pub use crate::ai::ambient_agents::telemetry::{
+pub use crate::ai::agent_tasks::AmbientAgentTaskId;
+pub use crate::ai::agent_tasks::telemetry::{
     CloudAgentTelemetryEvent, HandoffEntryPoint, HandoffSurface,
 };
 pub use crate::ai::blocklist::agent_view::{
@@ -123,12 +123,6 @@ pub use crate::ai::blocklist::{
 pub use crate::ai::blocklist::{
     PreparedLocalOzChildLaunch, apply_child_agent_model_override,
     finish_local_oz_child_conversation, prepare_local_oz_child_launch,
-};
-pub use crate::ai::cloud_environments::{
-    CloudEnvironment, CloudEnvironmentCatalog, CloudEnvironmentCatalogEvent, OZ_ENVIRONMENTS_URL,
-};
-pub use crate::ai::connected_self_hosted_workers::{
-    ConnectedSelfHostedWorkersEvent, ConnectedSelfHostedWorkersModel,
 };
 #[cfg(feature = "local_fs")]
 pub use crate::ai::conversation_export::{
@@ -241,7 +235,7 @@ pub use crate::terminal::model::session::{Session, Sessions, SessionsEvent};
 pub use crate::terminal::model::terminal_model::BlockIndex;
 pub use crate::terminal::model_events::{ModelEvent, ModelEventDispatcher};
 pub use crate::terminal::session_settings::SessionSettings;
-pub use crate::terminal::shared_session::IsSharedSessionCreator;
+pub use crate::terminal::session_sharing::IsSharedSessionCreator;
 pub use crate::terminal::terminal_manager::BlockSpacing;
 pub use crate::terminal::view::blocklist_filter::should_show_task_in_blocklist;
 pub use crate::terminal::view::{ExecuteCommandEvent, WAKEUP_THROTTLE_PERIOD};
@@ -278,7 +272,6 @@ pub use crate::util::image::{
 pub use crate::util::repo_detection::{RepoDetectionSessionType, detect_possible_git_repo};
 pub use crate::util::time_format::format_elapsed_seconds;
 #[cfg(feature = "voice_input")]
-pub use crate::voice::transcriber::{Transcriber, VoiceTranscriber};
 pub use crate::workspaces::update_manager::TeamUpdateManager;
 pub use crate::workspaces::user_workspaces::{
     ResolvedTeamScope, TeamContext, TeamContextResolver, TeamScope, UserWorkspaces,

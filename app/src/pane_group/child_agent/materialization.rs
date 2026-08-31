@@ -1,7 +1,7 @@
-use session_sharing_protocol::common::SessionId;
+use warp_terminal::session_sharing_types::common::SessionId;
 
 use crate::ai::agent::api::ServerConversationToken;
-use crate::ai::ambient_agents::{AmbientAgentLiveSessionState, AmbientAgentTask};
+use crate::ai::agent_tasks::{AmbientAgentLiveSessionState, AmbientAgentTask};
 
 /// How to materialize a child agent pane given its [`AmbientAgentTask`].
 /// See [`decide_child_pane_materialization`].

@@ -34,7 +34,6 @@ use crate::ai::blocklist::prompt::PromptIconButtonTheme;
 use crate::ai::blocklist::{
     BlocklistAIController, BlocklistAIControllerEvent, BlocklistAIInputEvent, BlocklistAIInputModel,
 };
-use crate::ai::cloud_agent_settings::CloudAgentSettings;
 use crate::ai::custom_model_routers::is_custom_router_id;
 use crate::ai::execution_profiles::ExecutionProfileId;
 use crate::ai::execution_profiles::model_menu_items::{
@@ -43,14 +42,13 @@ use crate::ai::execution_profiles::model_menu_items::{
 use crate::ai::execution_profiles::profiles::{
     AIExecutionProfilesModel, AIExecutionProfilesModelEvent,
 };
-use crate::ai::harness_availability::{
-    HarnessAvailabilityEvent, HarnessAvailabilityModel, HarnessModelInfo,
-};
+use crate::ai::harness_availability::{HarnessAvailabilityModel, HarnessModelInfo};
 use crate::ai::llms::{
     ByoKeySource, LLMId, LLMInfo, LLMPreferences, LLMPreferencesEvent, LLMSpec,
     byo_key_source_for_model, dedupe_model_display_names, is_model_allowed_for_scope,
     should_show_key_icon_for_model,
 };
+use crate::ai::orchestration::settings::OrchestrationSettings;
 use crate::appearance::Appearance;
 use crate::cloud_object::model::generic_string_model::StringModel;
 use crate::context_chips::display_chip::{udi_font_size, udi_icon_size};
@@ -515,15 +513,6 @@ impl ProfileModelSelector {
                         me.refresh_state(ctx);
                     }
                     _ => (),
-                }
-            },
-        );
-
-        ctx.subscribe_to_model(
-            &HarnessAvailabilityModel::handle(ctx),
-            |me, _, event, ctx| {
-                if let HarnessAvailabilityEvent::Changed = event {
-                    me.refresh_state(ctx);
                 }
             },
         );
@@ -2236,7 +2225,7 @@ impl TypedActionView for ProfileModelSelector {
                         );
                     });
                     let harness = ambient_agent_model.as_ref(ctx).selected_harness();
-                    CloudAgentSettings::handle(ctx).update(ctx, |settings, ctx| {
+                    OrchestrationSettings::handle(ctx).update(ctx, |settings, ctx| {
                         settings.persist_harness_model_selection(
                             harness,
                             model_id,

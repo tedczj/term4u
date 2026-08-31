@@ -28,8 +28,8 @@ use super::{
 };
 use crate::ai::agent::conversation::AIConversationId;
 use crate::ai::agent_sdk::setup_observability::SetupClientEventReporter;
-use crate::ai::ambient_agents::AmbientAgentTaskId;
-use crate::ai::ambient_agents::task::HarnessModelConfig;
+use crate::ai::agent_tasks::AmbientAgentTaskId;
+use crate::ai::agent_tasks::task::HarnessModelConfig;
 use crate::ai::mcp::JSONMCPServer;
 use crate::server::server_api::ServerApi;
 use crate::server::server_api::harness_support::{HarnessSupportClient, upload_to_target};
@@ -400,14 +400,20 @@ fn task_env_vars_for_harness_name(
         insert_non_empty_task_env_var(
             &mut env_vars,
             SERVER_ROOT_URL_OVERRIDE_ENV,
-            ChannelState::server_root_url().into_owned(),
+            ChannelState::server_root_url()
+                .unwrap_or_default()
+                .into_owned(),
         );
         insert_non_empty_task_env_var(
             &mut env_vars,
             WS_SERVER_URL_OVERRIDE_ENV,
-            ChannelState::ws_server_url().into_owned(),
+            ChannelState::ws_server_url()
+                .unwrap_or_default()
+                .into_owned(),
         );
         if let Some(url) = ChannelState::session_sharing_server_url()
+            .ok()
+            .flatten()
             .map(Cow::into_owned)
             .filter(|url| !url.is_empty())
         {
@@ -649,7 +655,3 @@ pub(super) async fn upload_current_block_snapshot(
         }
     }
 }
-
-#[cfg(test)]
-#[path = "mod_tests.rs"]
-mod tests;

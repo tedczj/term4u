@@ -17,12 +17,12 @@ use warpui::{
 };
 
 use crate::ai::blocklist::agent_view::agent_input_footer::AgentInputButtonTheme;
-use crate::ai::cloud_agent_settings::CloudAgentSettings;
 use crate::ai::custom_model_routers::is_custom_router_id;
 use crate::ai::execution_profiles::model_menu_items::is_auto;
-use crate::ai::harness_availability::{HarnessAvailabilityEvent, HarnessAvailabilityModel};
+use crate::ai::harness_availability::HarnessAvailabilityModel;
 use crate::ai::harness_display::icon_for as harness_icon_for;
 use crate::ai::llms::{LLMId, LLMPreferences, LLMPreferencesEvent};
+use crate::ai::orchestration::settings::OrchestrationSettings;
 use crate::editor::{
     EditorView, Event as EditorEvent, PropagateAndNoOpEscapeKey, PropagateAndNoOpNavigationKeys,
     SingleLineEditorOptions, TextOptions,
@@ -182,24 +182,6 @@ impl ModelSelector {
             },
         );
 
-        ctx.subscribe_to_model(
-            &HarnessAvailabilityModel::handle(ctx),
-            |me, _, event, ctx| match event {
-                HarnessAvailabilityEvent::Changed => {
-                    // Retry restore in case model metadata just arrived.
-                    me.maybe_restore_harness_model_from_settings(ctx);
-                    me.refresh_button(ctx);
-                    me.refresh_menu(ctx);
-                }
-                HarnessAvailabilityEvent::AuthSecretsLoaded
-                | HarnessAvailabilityEvent::AuthSecretCreated { .. }
-                | HarnessAvailabilityEvent::AuthSecretCreationFailed { .. }
-                | HarnessAvailabilityEvent::AuthSecretsFetchFailed
-                | HarnessAvailabilityEvent::AuthSecretDeleted { .. }
-                | HarnessAvailabilityEvent::AuthSecretDeletionFailed { .. } => {}
-            },
-        );
-
         ctx.subscribe_to_model(&Appearance::handle(ctx), |me, _, _, ctx| {
             me.refresh_menu(ctx);
         });
@@ -228,7 +210,7 @@ impl ModelSelector {
 
     /// Attaches an ambient agent view model after construction. Shared by [`Self::new`] and the
     /// lazy shared-session viewer path (the footer rebuilds this selector via the ambient setter
-    /// when a raw `shared_session` link turns out to be a cloud run) so both wire the ambient
+    /// when a raw `session_sharing` link turns out to be a cloud run) so both wire the ambient
     /// subscription, restore the saved harness model, and refresh identically. Idempotent: a
     /// no-op when a model is already set.
     pub fn set_ambient_agent_view_model(
@@ -281,7 +263,7 @@ impl ModelSelector {
         {
             return;
         }
-        let saved = CloudAgentSettings::as_ref(ctx)
+        let saved = OrchestrationSettings::as_ref(ctx)
             .last_selected_harness_model
             .value()
             .get(harness.config_name())
@@ -699,7 +681,7 @@ impl TypedActionView for ModelSelector {
                     });
                 }
                 // Persist the selection per-harness to settings for next time.
-                CloudAgentSettings::handle(ctx).update(ctx, |settings, ctx| {
+                OrchestrationSettings::handle(ctx).update(ctx, |settings, ctx| {
                     settings.persist_harness_model_selection(
                         *harness,
                         model_id,

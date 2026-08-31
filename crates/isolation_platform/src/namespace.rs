@@ -19,12 +19,13 @@ pub fn is_in_namespace_instance() -> bool {
 pub async fn issue_workload_token(
     duration: Option<Duration>,
 ) -> Result<WorkloadToken, IsolationPlatformError> {
+    let audience = ChannelState::workload_audience_url().map_err(anyhow::Error::from)?;
     let mut nsc_command = Command::new("nsc");
     nsc_command
         .arg("auth")
         .arg("issue-id-token")
         .arg("--audience")
-        .arg(&*ChannelState::workload_audience_url())
+        .arg(&*audience)
         .arg("--output")
         .arg("json");
 

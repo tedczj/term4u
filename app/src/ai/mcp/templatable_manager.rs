@@ -4,11 +4,7 @@ mod native;
 mod wasm;
 
 use std::collections::{HashMap, HashSet};
-#[cfg(not(target_family = "wasm"))]
-use std::sync::Arc;
 
-#[cfg(not(target_family = "wasm"))]
-use diesel::SqliteConnection;
 use futures_util::stream::AbortHandle;
 use mcp::TemplatableMCPServerInfo;
 #[cfg(not(target_family = "wasm"))]
@@ -16,13 +12,11 @@ use mcp::oauth;
 #[cfg(not(target_family = "wasm"))]
 pub use native::McpIntegration;
 #[cfg(not(target_family = "wasm"))]
-use parking_lot::Mutex;
-#[cfg(not(target_family = "wasm"))]
 use simple_logger::SimpleLogger;
 use uuid::Uuid;
 #[cfg(not(target_family = "wasm"))]
 use warpui::ModelSpawner;
-use warpui::{Entity, SingletonEntity};
+use warpui::{Entity, ModelContext, SingletonEntity};
 
 #[cfg(not(target_family = "wasm"))]
 use crate::ai::mcp::templatable::CloudTemplatableMCPServer;
@@ -62,8 +56,6 @@ pub struct TemplatableMCPServerManager {
     /// Cached credentials for file-based servers, keyed by installation hash.
     #[cfg(not(target_family = "wasm"))]
     file_based_server_credentials: oauth::FileBasedPersistedCredentialsMap,
-    #[cfg(not(target_family = "wasm"))]
-    database_connection: Option<Arc<Mutex<SqliteConnection>>>,
     /// Error messages for failed servers, keyed by installation UUID.
     server_error_messages: HashMap<Uuid, String>,
     /// Spawner for running tasks in the context of this manager.
@@ -390,6 +382,15 @@ impl TemplatableMCPServerManager {
     }
 }
 
+impl TemplatableMCPServerManager {
+    pub fn new_local(ctx: &mut ModelContext<Self>) -> Self {
+        Self {
+            spawner: Some(ctx.spawner()),
+            ..Self::default()
+        }
+    }
+}
+
 #[derive(Debug)]
 #[cfg_attr(target_family = "wasm", allow(dead_code))]
 pub enum TemplatableMCPServerManagerEvent {
@@ -415,8 +416,6 @@ pub enum TemplatableMCPServerManagerEvent {
     ServerInstallationAdded(Uuid),
     #[allow(dead_code)]
     ServerInstallationDeleted(Uuid),
-    TemplatableMCPServersUpdated,
-    LegacyServerConverted,
 }
 
 impl Entity for TemplatableMCPServerManager {

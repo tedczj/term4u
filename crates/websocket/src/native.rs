@@ -3,9 +3,9 @@
 use std::sync::Arc;
 
 use async_tungstenite::WebSocketStream;
-use async_tungstenite::tokio::{
-    ClientStream, client_async_tls_with_connector_and_config, connect_async_with_tls_connector,
-};
+#[cfg(not(feature = "offline_hard"))]
+use async_tungstenite::tokio::connect_async_with_tls_connector;
+use async_tungstenite::tokio::{ClientStream, client_async_tls_with_connector_and_config};
 use async_tungstenite::tungstenite::client::IntoClientRequest;
 use futures::{Sink, Stream};
 use futures_util::StreamExt as _;
@@ -46,11 +46,57 @@ pub async fn connect(request: impl IntoClientRequest + Unpin) -> anyhow::Result<
                 .await?;
         Ok(WebSocket(stream))
     } else {
-        let stream = connect_async_with_tls_connector(request, tls_connector)
-            .await?
-            .0;
+        cfg_if::cfg_if! {
+            if #[cfg(feature = "offline_hard")] {
+                let stream = connect_direct_offline(request, tls_connector).await?;
+            } else {
+                let stream = connect_async_with_tls_connector(request, tls_connector)
+                    .await?
+                    .0;
+            }
+        }
         Ok(WebSocket(stream))
     }
+}
+
+#[cfg(any(feature = "offline_hard", test))]
+async fn connect_direct_offline(
+    request: impl IntoClientRequest + Unpin,
+    tls_connector: Option<TlsConnector>,
+) -> anyhow::Result<WebSocketStream<ClientStream<TcpStream>>> {
+    let request = request.into_client_request()?;
+    let uri = request.uri();
+    let host = uri
+        .host()
+        .ok_or_else(|| anyhow::anyhow!("WebSocket URI has no host"))?;
+    let port = uri.port_u16().unwrap_or_else(|| {
+        if uri.scheme_str() == Some("wss") {
+            443
+        } else {
+            80
+        }
+    });
+    let addresses = offline_guard::loopback_addrs(host, port)?;
+    let mut last_error = None;
+    for address in addresses {
+        offline_guard::check_peer(&address)?;
+        match TcpStream::connect(address).await {
+            Ok(stream) => {
+                return Ok(client_async_tls_with_connector_and_config(
+                    request,
+                    stream,
+                    tls_connector,
+                    None,
+                )
+                .await?
+                .0);
+            }
+            Err(error) => last_error = Some(error),
+        }
+    }
+    Err(last_error
+        .map(anyhow::Error::from)
+        .unwrap_or_else(|| anyhow::anyhow!("No loopback address available")))
 }
 
 impl WebSocket {
@@ -97,3 +143,7 @@ impl WebsocketMessage for Message {
         }
     }
 }
+
+#[cfg(test)]
+#[path = "native_tests.rs"]
+mod tests;

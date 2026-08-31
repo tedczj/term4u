@@ -68,7 +68,7 @@ use crate::ai::agent::{
     UploadArtifactResult,
 };
 use crate::ai::agent_conversations_model::AgentConversationsModel;
-use crate::ai::ambient_agents::AmbientAgentTaskId;
+use crate::ai::agent_tasks::AmbientAgentTaskId;
 use crate::ai::blocklist::action_model::AIActionStatus;
 use crate::ai::blocklist::block::model::{AIBlockModel, AIBlockModelHelper, AIBlockOutputStatus};
 use crate::ai::blocklist::block::view_impl::common::{
@@ -121,7 +121,7 @@ use crate::terminal::ShellLaunchData;
 #[cfg(not(target_family = "wasm"))]
 use crate::terminal::input::slash_commands::fork_button_action;
 use crate::terminal::model::session::active_session::ActiveSession;
-use crate::terminal::shared_session::SharedSessionStatus;
+use crate::terminal::session_sharing::SharedSessionStatus;
 use crate::ui_components::blended_colors;
 use crate::ui_components::buttons::icon_button;
 use crate::ui_components::icons::Icon;
@@ -3026,7 +3026,7 @@ fn stop_recording_card_text(result: Option<&StopRecordingResult>) -> RecordingCa
             let duration = format_video_duration(stopped.duration);
             let subtext = if matches!(
                 stopped.completion_status,
-                computer_use::RecordingCompletionStatus::Completed
+                interaction_types::RecordingCompletionStatus::Completed
             ) {
                 duration
             } else {

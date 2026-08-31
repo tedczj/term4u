@@ -1,0 +1,17 @@
+[package]
+name = "interaction_types"
+edition = "2024"
+version = "0.1.0"
+publish = false
+license = "MIT"
+
+[features]
+test-util = []
+
+[dependencies]
+async-trait.workspace = true
+instant.workspace = true
+pathfinder_geometry.workspace = true
+serde.workspace = true
+serde_with.workspace = true
+thiserror.workspace = true

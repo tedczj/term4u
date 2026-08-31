@@ -33,7 +33,6 @@ use warpui::{
     ViewContext, ViewHandle, WindowId,
 };
 
-use super::aliases::WorkflowAliases;
 use super::command_parser::WorkflowCommandDisplayData;
 use super::{CloudWorkflowModel, WorkflowSource, WorkflowType, WorkflowViewMode};
 use crate::ai::AIRequestUsageModel;
@@ -71,10 +70,7 @@ use crate::network::NetworkStatus;
 use crate::pane_group::focus_state::PaneFocusHandle;
 use crate::pane_group::pane::view;
 use crate::pane_group::{BackingView, PaneConfiguration, PaneEvent};
-use crate::server::cloud_objects::update_manager::{
-    FetchSingleObjectOption, ObjectOperation, OperationSuccessType, UpdateManager,
-    UpdateManagerEvent,
-};
+use crate::server::cloud_objects::update_manager::{FetchSingleObjectOption, UpdateManager};
 use crate::server::ids::{ClientId, ServerId, SyncId};
 use crate::server::server_api::ServerApiProvider;
 use crate::server::server_api::ai::AIClient;
@@ -523,10 +519,7 @@ impl WorkflowView {
             workflow.handle_cloud_model_event(event, ctx)
         });
 
-        let update_manager = UpdateManager::handle(ctx);
-        ctx.subscribe_to_model(&update_manager, |me, _, event, ctx| {
-            me.handle_update_manager_event(event, ctx);
-        });
+        let _update_manager = UpdateManager::handle(ctx);
     }
 
     fn handle_cloud_model_event(&mut self, event: &CloudModelEvent, ctx: &mut ViewContext<Self>) {
@@ -545,63 +538,6 @@ impl WorkflowView {
             _ => (),
         }
     }
-
-    fn handle_update_manager_event(
-        &mut self,
-        event: &UpdateManagerEvent,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        let UpdateManagerEvent::ObjectOperationComplete { result } = event else {
-            return;
-        };
-
-        if let (ObjectOperation::Create { .. }, OperationSuccessType::Success) =
-            (&result.operation, &result.success_type)
-            && self.workflow_id.into_client() == result.client_id
-        {
-            let server_id = result
-                .server_id
-                .expect("Expect server id on success creation");
-
-            // The aliases were created with the old client sync id.  Update them to the new server id.
-            WorkflowAliases::handle(ctx).update(ctx, |aliases, ctx| {
-                if let Result::Err(e) =
-                    aliases.update_workflow_id(self.workflow_id, server_id.into(), ctx)
-                {
-                    report_error!(e.context("Failed to update aliases after workflow creation"));
-                }
-            });
-
-            if let Some(workflow) = CloudModel::as_ref(ctx).get_workflow_by_uid(&server_id.uid()) {
-                self.load(
-                    workflow.clone(),
-                    &OpenWarpDriveObjectSettings::default(),
-                    self.workflow_view_mode,
-                    ctx,
-                );
-            }
-            ctx.notify();
-        }
-
-        if let (ObjectOperation::Update, OperationSuccessType::Success) =
-            (&result.operation, &result.success_type)
-            && let Some(workflow) = self.get_cloud_workflow(ctx)
-        {
-            // This makes sure we get the correct updated revision_ts. So our subsequent
-            // updates don't fail
-            if self.workflow_id.into_client() == result.client_id
-                || self.workflow_id.uid() == result.server_id.unwrap_or_default().uid()
-            {
-                self.load(
-                    workflow,
-                    &OpenWarpDriveObjectSettings::default(),
-                    self.workflow_view_mode,
-                    ctx,
-                );
-            }
-        }
-    }
-
     fn should_show_unsaved_changes_dialog(&self, app: &AppContext) -> bool {
         self.is_dirty(app)
     }

@@ -2,23 +2,13 @@ use std::collections::HashMap;
 use std::collections::hash_map::Entry;
 use std::sync::Arc;
 
-use futures_util::stream::AbortHandle;
-use markdown_parser::markdown_parser::parse_markdown_to_raw_text;
-use warp_errors::report_error;
-use warpui::r#async::SpawnedFutureHandle;
-use warpui::{
-    Entity, EntityId, ModelContext, ModelHandle, SingletonEntity, WeakViewHandle, WindowId,
-};
+use warpui::{Entity, EntityId, ModelContext, SingletonEntity, WeakViewHandle, WindowId};
 
-use super::CloudNotebook;
 use super::notebook::NotebookView;
 use crate::cloud_object::Owner;
-use crate::cloud_object::model::persistence::{CloudModel, CloudModelEvent};
+use crate::cloud_object::model::persistence::CloudModel;
 use crate::drive::OpenWarpDriveObjectSettings;
 use crate::pane_group::{NotebookPane, PaneContent};
-use crate::server::cloud_objects::update_manager::{
-    ObjectOperation, OperationSuccessType, UpdateManager, UpdateManagerEvent,
-};
 use crate::server::ids::SyncId;
 use crate::workspace::PaneViewLocator;
 use crate::{safe_debug, safe_warn};
@@ -48,18 +38,7 @@ mod tests;
 /// which is needed for notebook search.
 pub struct NotebookManager {
     panes_by_hashed_id: HashMap<String, NotebookPaneData>,
-    // Cache
-    raw_text_by_hashed_id: HashMap<String, NotebookRawTextStatus>,
-}
-
-#[derive(Debug)]
-pub enum NotebookRawTextStatus {
-    NotParsed,
-    ParseInFlight(AbortHandle),
-    // We store this as an arc so it can be used in fuzzy searches
-    // without cloning the notebook's entire parsed contents.
-    Parsed(Arc<str>),
-    ParseError,
+    raw_text_by_hashed_id: HashMap<String, Arc<str>>,
 }
 
 /// Source for a new notebook pane.
@@ -74,61 +53,17 @@ pub enum NotebookSource {
 }
 
 impl NotebookManager {
-    /// Create a new [`NotebookManager`] singleton.
-    pub fn new(cached_notebooks: Vec<CloudNotebook>, ctx: &mut ModelContext<Self>) -> Self {
-        ctx.subscribe_to_model(
-            &UpdateManager::handle(ctx),
-            Self::handle_update_manager_event,
-        );
-
-        ctx.subscribe_to_model(&CloudModel::handle(ctx), Self::handle_cloud_model_event);
-
-        let mut raw_text_by_hashed_id: HashMap<String, NotebookRawTextStatus> = HashMap::new();
-        // Parse all the cached notebook raw text
-
-        cached_notebooks.into_iter().for_each(|notebook| {
-            let hashed_id = notebook.id.uid();
-            let handle = Self::spawn_raw_text_parse_for_notebook(notebook, ctx);
-            raw_text_by_hashed_id.insert(
-                hashed_id,
-                NotebookRawTextStatus::ParseInFlight(handle.abort_handle()),
-            );
-        });
-
+    pub fn new_local(ctx: &mut ModelContext<Self>) -> Self {
+        let _ = ctx;
         Self {
             panes_by_hashed_id: HashMap::new(),
-            raw_text_by_hashed_id,
+            raw_text_by_hashed_id: HashMap::new(),
         }
     }
 
-    fn spawn_raw_text_parse_for_notebook(
-        notebook: CloudNotebook,
-        ctx: &mut ModelContext<Self>,
-    ) -> SpawnedFutureHandle {
-        let hashed_id = notebook.id.uid();
-        ctx.spawn(
-            async move { parse_markdown_to_raw_text(&notebook.model().data) },
-            move |manager, response, _ctx| match response {
-                Ok(parsed_text) => {
-                    manager.raw_text_by_hashed_id.insert(
-                        hashed_id,
-                        NotebookRawTextStatus::Parsed(Arc::from(parsed_text)),
-                    );
-                }
-                Err(err) => {
-                    manager
-                        .raw_text_by_hashed_id
-                        .insert(hashed_id, NotebookRawTextStatus::ParseError);
-                    report_error!(err.context("Cached Notebook raw text failed to parse"));
-                }
-            },
-        )
-    }
-
-    /// Create a mock [`NotebookManager`] for use in tests.
     #[cfg(test)]
     pub fn mock(ctx: &mut ModelContext<Self>) -> Self {
-        Self::new(Vec::new(), ctx)
+        Self::new_local(ctx)
     }
 
     /// If the notebook is already open in a pane, finds the location of that pane.
@@ -141,42 +76,16 @@ impl NotebookManager {
             NotebookSource::New { .. } => None,
         }
     }
-
-    fn handle_cloud_model_event(
-        &mut self,
-        _: ModelHandle<CloudModel>,
-        event: &CloudModelEvent,
-        ctx: &mut ModelContext<Self>,
-    ) {
-        if let CloudModelEvent::ObjectUpdated { type_and_id, .. } = event
-            && let Some(notebook_id) = type_and_id.as_notebook_id()
-        {
-            self.update_raw_text_for_notebook(notebook_id, ctx);
-        }
-    }
-
     /// Returns the raw text of a given notebook id - if it exists in the cache.
     pub fn notebook_raw_text(&self, notebook_id: SyncId) -> Option<&str> {
-        match self
-            .raw_text_by_hashed_id
+        self.raw_text_by_hashed_id
             .get(&notebook_id.uid())
-            .unwrap_or(&NotebookRawTextStatus::NotParsed)
-        {
-            NotebookRawTextStatus::Parsed(text) => Some(text),
-            _ => None,
-        }
+            .map(AsRef::as_ref)
     }
 
     /// Returns a shared handle to the parsed raw text.
     pub fn notebook_raw_text_shared(&self, notebook_id: SyncId) -> Option<Arc<str>> {
-        match self
-            .raw_text_by_hashed_id
-            .get(&notebook_id.uid())
-            .unwrap_or(&NotebookRawTextStatus::NotParsed)
-        {
-            NotebookRawTextStatus::Parsed(text) => Some(text.clone()),
-            _ => None,
-        }
+        self.raw_text_by_hashed_id.get(&notebook_id.uid()).cloned()
     }
 
     /// Unconditionally create a new notebook pane.
@@ -265,69 +174,6 @@ impl NotebookManager {
             }
         }
     }
-
-    /// Spawns an async thread to compute the notebook's raw text, adds this
-    /// result to the cache ones the operation has been completed.
-    fn update_raw_text_for_notebook(&mut self, notebook_id: SyncId, ctx: &mut ModelContext<Self>) {
-        log::debug!("Updating raw text cache for {}", notebook_id.uid());
-        let Some(notebook) = CloudModel::handle(ctx).read(ctx, |model, _| {
-            Some(model.get_notebook(&notebook_id)?.clone())
-        }) else {
-            return;
-        };
-
-        if let Some(NotebookRawTextStatus::ParseInFlight(abort_handle)) =
-            self.raw_text_by_hashed_id.get(&notebook_id.uid())
-        {
-            // If there's already a parse in flight, abort it
-            abort_handle.abort();
-        }
-
-        let handle = Self::spawn_raw_text_parse_for_notebook(notebook, ctx);
-
-        self.raw_text_by_hashed_id.insert(
-            notebook_id.uid(),
-            NotebookRawTextStatus::ParseInFlight(handle.abort_handle()),
-        );
-    }
-
-    fn handle_update_manager_event(
-        &mut self,
-        _: ModelHandle<UpdateManager>,
-        event: &UpdateManagerEvent,
-        ctx: &mut ModelContext<Self>,
-    ) {
-        let UpdateManagerEvent::ObjectOperationComplete { result } = event else {
-            return;
-        };
-
-        if !matches!(&result.success_type, OperationSuccessType::Success) {
-            return;
-        }
-        if let ObjectOperation::Create { .. } = result.operation {
-            let server_id = result.server_id.expect("Expect server id on success");
-            let Some(server_id) = CloudModel::as_ref(ctx)
-                .get_notebook_by_uid(&server_id.uid())
-                .and_then(|notebook| notebook.id.into_server())
-            else {
-                return;
-            };
-            let Some(client_id) = result.client_id else {
-                return;
-            };
-
-            if let Some(mut pane) = self.panes_by_hashed_id.remove(&client_id.to_string()) {
-                pane.notebook_id = SyncId::ServerId(server_id);
-                self.panes_by_hashed_id
-                    .insert(server_id.uid().clone(), pane);
-            }
-            if let Some(parse_status) = self.raw_text_by_hashed_id.remove(&client_id.to_string()) {
-                self.raw_text_by_hashed_id
-                    .insert(server_id.uid(), parse_status);
-            }
-        }
-    }
-
     /// Swap the ID of the notebook open in a pane. This assumes the pane location and view are
     /// unchanged.
     pub(super) fn swap_notebook(&mut self, old_id: SyncId, new_id: SyncId) {
@@ -364,11 +210,7 @@ impl NotebookManager {
     /// This _does not_ save any pending notebook changes.
     pub fn reset(&mut self) {
         self.panes_by_hashed_id.clear();
-        for (_, status) in self.raw_text_by_hashed_id.drain() {
-            if let NotebookRawTextStatus::ParseInFlight(handle) = status {
-                handle.abort();
-            }
-        }
+        self.raw_text_by_hashed_id.clear();
     }
 }
 

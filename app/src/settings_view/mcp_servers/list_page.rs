@@ -24,7 +24,6 @@ use warpui::{
 };
 
 use crate::ToastStack;
-use crate::ai::mcp::gallery::MCPGalleryManagerEvent;
 use crate::ai::mcp::templatable::{GalleryData, TemplatableMCPServer};
 use crate::ai::mcp::templatable_manager::{
     TemplatableMCPServerManager, TemplatableMCPServerManagerEvent,
@@ -122,24 +121,24 @@ impl MCPServersListPageView {
             me.handle_templatable_mcp_manager_event(event, ctx);
         });
 
-        // Subscribe to MCP gallery server manager state changes
-        let gallery_manager = MCPGalleryManager::handle(ctx);
-        ctx.subscribe_to_model(&gallery_manager, |me, _, event, ctx| {
-            me.handle_mcp_gallery_manager_event(event, ctx);
-        });
-
         cfg_if::cfg_if!(
             if #[cfg(feature = "local_fs")] {
                 // Refresh cards when active servers are spawned, removed, or logged out.
                 let file_based_manager = FileBasedMCPManager::handle(ctx);
-                ctx.subscribe_to_model(&file_based_manager, |me, _, event, ctx| match event {
-                    FileBasedMCPManagerEvent::SpawnServers { .. }
-                    | FileBasedMCPManagerEvent::DespawnServers { .. }
-                    | FileBasedMCPManagerEvent::PurgeCredentials { .. } => {
-                        // Refresh cards when servers are spawned or removed.
-                        me.refresh_file_based_server_cards(ctx);
+                ctx.subscribe_to_model(&file_based_manager, |me, _, event, ctx| {
+                    match event {
+                        FileBasedMCPManagerEvent::SpawnServers { installations } => {
+                            let _ = installations;
+                        }
+                        FileBasedMCPManagerEvent::DespawnServers { installation_uuids } => {
+                            let _ = installation_uuids;
+                        }
+                        FileBasedMCPManagerEvent::PurgeCredentials { installation_hashes } => {
+                            let _ = installation_hashes;
+                        }
+                        _ => return,
                     }
-                    _ => {}
+                    me.refresh_file_based_server_cards(ctx);
                 });
 
                 // Refresh cards when MCP config files are parsed or removed.
@@ -1053,39 +1052,12 @@ impl MCPServersListPageView {
             | TemplatableMCPServerManagerEvent::AuthenticationRequired { uuid: _ }
             | TemplatableMCPServerManagerEvent::CredentialsChanged { uuid: _ }
             | TemplatableMCPServerManagerEvent::ServerInstallationAdded(_)
-            | TemplatableMCPServerManagerEvent::ServerInstallationDeleted(_)
-            | TemplatableMCPServerManagerEvent::TemplatableMCPServersUpdated
-            | TemplatableMCPServerManagerEvent::LegacyServerConverted => {
+            | TemplatableMCPServerManagerEvent::ServerInstallationDeleted(_) => {
                 self.refresh_server_cards(ctx);
                 self.refresh_file_based_server_cards(ctx);
             }
         }
     }
-
-    fn handle_mcp_gallery_manager_event(
-        &mut self,
-        event: &MCPGalleryManagerEvent,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        match event {
-            MCPGalleryManagerEvent::ItemsRefreshed => {
-                self.refresh_gallery_cards(ctx);
-                // We also need to refresh the server cards, because they use the gallery information to determine if an update is available
-                self.refresh_server_cards(ctx);
-            }
-        }
-    }
-
-    fn refresh_gallery_cards(&mut self, ctx: &mut ViewContext<Self>) {
-        self.gallery_server_cards = Self::create_gallery_server_cards(ctx);
-        for server_card_handle in self.gallery_server_cards.values() {
-            ctx.subscribe_to_view(server_card_handle, |me, _, event, ctx| {
-                me.handle_server_card_event(event, ctx);
-            });
-        }
-        ctx.notify();
-    }
-
     pub fn get_modal_content(&self) -> Option<Box<dyn Element>> {
         if self.update_modal_state.is_open() {
             Some(self.update_modal_state.render())

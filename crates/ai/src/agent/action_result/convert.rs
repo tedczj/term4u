@@ -1081,7 +1081,7 @@ impl TryFrom<UseComputerResult> for api::request::input::tool_call_result::Resul
     }
 }
 
-fn vec_to_coordinates(vec: computer_use::Vector2I) -> api::Coordinates {
+fn vec_to_coordinates(vec: interaction_types::Vector2I) -> api::Coordinates {
     api::Coordinates {
         x: vec.x(),
         y: vec.y(),
@@ -1089,7 +1089,7 @@ fn vec_to_coordinates(vec: computer_use::Vector2I) -> api::Coordinates {
 }
 
 /// Converts a computer_use window record into the API `WindowInfo` message.
-fn convert_window_info(window: computer_use::WindowInfo) -> api::WindowInfo {
+fn convert_window_info(window: interaction_types::WindowInfo) -> api::WindowInfo {
     api::WindowInfo {
         // The window id travels as an opaque string; on macOS it is a CGWindowID (u32).
         window_id: window.window_id.to_string(),
@@ -1101,14 +1101,14 @@ fn convert_window_info(window: computer_use::WindowInfo) -> api::WindowInfo {
 }
 
 fn convert_platform(
-    platform: computer_use::Platform,
+    platform: interaction_types::Platform,
 ) -> api::request_computer_use_result::approved::Platform {
     use api::request_computer_use_result::approved::Platform;
     match platform {
-        computer_use::Platform::Mac => Platform::Macos,
-        computer_use::Platform::Windows => Platform::Windows,
-        computer_use::Platform::LinuxX11 => Platform::LinuxX11,
-        computer_use::Platform::LinuxWayland => Platform::LinuxWayland,
+        interaction_types::Platform::Mac => Platform::Macos,
+        interaction_types::Platform::Windows => Platform::Windows,
+        interaction_types::Platform::LinuxX11 => Platform::LinuxX11,
+        interaction_types::Platform::LinuxWayland => Platform::LinuxWayland,
     }
 }
 
@@ -1416,12 +1416,12 @@ fn duration_to_proto(duration: std::time::Duration) -> prost_types::Duration {
 }
 
 fn convert_completion_status(
-    status: computer_use::RecordingCompletionStatus,
+    status: interaction_types::RecordingCompletionStatus,
 ) -> api::stop_recording_result::CompletionStatus {
     use api::stop_recording_result::CompletionStatus;
     match status {
-        computer_use::RecordingCompletionStatus::Completed => CompletionStatus::Complete,
-        computer_use::RecordingCompletionStatus::StoppedEarly => CompletionStatus::Incomplete,
+        interaction_types::RecordingCompletionStatus::Completed => CompletionStatus::Complete,
+        interaction_types::RecordingCompletionStatus::StoppedEarly => CompletionStatus::Incomplete,
     }
 }
 
