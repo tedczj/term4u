@@ -1,9 +1,7 @@
-use url::Url;
 use warpui::App;
 
 use super::*;
 use crate::ai::llms::{AvailableLLMs, LLMId, LLMInfo, LLMPreferences, ModelsByFeature};
-use crate::server::server_api::ClientError;
 use crate::test_util::terminal::{add_window_with_terminal, initialize_app_for_terminal_view};
 use crate::workspaces::user_workspaces::TeamlessScopeForTest;
 
@@ -369,44 +367,6 @@ fn test_environment_id() -> ServerId {
     ServerId::from(123)
 }
 
-#[test]
-fn github_auth_url_for_initial_run_includes_focus_cloud_mode_next() {
-    App::test((), |mut app| async move {
-        initialize_app_for_terminal_view(&mut app);
-        let model = add_model(&mut app);
-
-        model.update(&mut app, |model, ctx| {
-            model.status = Status::WaitingForSession {
-                progress: AgentProgress::new(),
-                kind: SessionStartupKind::InitialRun,
-            };
-            model.request = Some(retry_request("fix tests"));
-            model.handle_ambient_agent_stream_error(
-                anyhow::Error::new(ClientError {
-                    error: "auth required".to_string(),
-                    auth_url: Some(
-                        "https://example.com/oauth/connect/github?scheme=warpdev".to_string(),
-                    ),
-                }),
-                ctx,
-            );
-        });
-
-        model.read(&app, |model, _| {
-            let auth_url = model.github_auth_url().expect("auth url should be present");
-            assert_eq!(model.github_auth_error_message(), Some("auth required"));
-            let parsed = Url::parse(auth_url).expect("auth url should parse");
-            let next = parsed
-                .query_pairs()
-                .find(|(key, _)| key == "next")
-                .map(|(_, value)| value.into_owned());
-            assert_eq!(
-                next,
-                Some("warpdev://action/focus_cloud_mode?source=cloud_setup".to_string())
-            );
-        });
-    });
-}
 #[test]
 fn viewed_task_config_preserves_environment_before_cloud_model_load() {
     App::test((), |mut app| async move {

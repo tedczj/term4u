@@ -4135,7 +4135,7 @@ impl TuiTerminalSessionView {
         let local_skills_available = self
             .slash_commands_source
             .as_ref(ctx)
-            .local_skills_available(ctx);
+            .local_skills_available();
         let started = self.input_view.update(ctx, |input, ctx| {
             if source.clears_input() {
                 input.clear(ctx);
@@ -4235,7 +4235,7 @@ impl TuiTerminalSessionView {
         if !self
             .slash_commands_source
             .as_ref(ctx)
-            .local_skills_available(ctx)
+            .local_skills_available()
         {
             self.show_transient_hint(LOCAL_SKILLS_REMOTE_EXECUTION_ERROR_MESSAGE.to_owned(), ctx);
             return;
@@ -5732,7 +5732,7 @@ impl TypedActionView for TuiTerminalSessionView {
                 let local_skills_available = self
                     .slash_commands_source
                     .as_ref(ctx)
-                    .local_skills_available(ctx);
+                    .local_skills_available();
                 self.input_view.update(ctx, |input, ctx| {
                     input.handle_voice_hold_key(*key, *state, local_skills_available, ctx);
                 });

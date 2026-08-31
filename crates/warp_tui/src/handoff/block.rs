@@ -736,10 +736,7 @@ impl TypedActionView for TuiHandoffBlock {
                 self.navigate_page(PageNavigationDirection::Next, ctx)
             }
             TuiHandoffBlockAction::OpenEnvironments => {}
-            TuiHandoffBlockAction::RefreshEnvironments => {
-                self.model
-                    .update(ctx, |model, ctx| model.refresh_environments(ctx));
-            }
+            TuiHandoffBlockAction::RefreshEnvironments => {}
             TuiHandoffBlockAction::Back => self.handle_back(ctx),
             TuiHandoffBlockAction::Cancel => {
                 self.model.update(ctx, |model, ctx| model.cancel(ctx));

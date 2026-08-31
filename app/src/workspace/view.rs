@@ -1809,8 +1809,7 @@ impl Workspace {
     fn build_auth_override_warning_modal(
         ctx: &mut ViewContext<Self>,
     ) -> ViewHandle<AuthOverrideWarningModal> {
-        let auth_override_warning_modal =
-            ctx.add_typed_action_view(AuthOverrideWarningModal::new);
+        let auth_override_warning_modal = ctx.add_typed_action_view(AuthOverrideWarningModal::new);
 
         ctx.subscribe_to_view(&auth_override_warning_modal, |me, _, event, ctx| {
             me.handle_auth_override_warning_modal_event(event, ctx);

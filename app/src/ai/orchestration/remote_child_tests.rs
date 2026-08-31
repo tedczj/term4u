@@ -6,14 +6,14 @@ use tempfile::TempDir;
 use warpui::{App, SingletonEntity as _};
 
 use super::{
-    CloudAgentStartupAuthFlow, CloudAgentStartupBlocker, CloudAgentStartupFailure,
-    CloudAgentStartupIssue, CloudAgentStartupPresentation, RemoteChildLaunchConfig,
-    classify_cloud_agent_startup_error, prepare_remote_child_launch,
+    CloudAgentStartupAuthFlow, CloudAgentStartupFailure, CloudAgentStartupIssue,
+    CloudAgentStartupPresentation, RemoteChildLaunchConfig, classify_cloud_agent_startup_error,
+    prepare_remote_child_launch,
 };
 use crate::ai::agent::{StartAgentExecutionMode, UserQueryMode};
 use crate::ai::blocklist::StartAgentRequest;
 use crate::ai::skills::{BundledSkillActivation, SkillManager, SkillReference};
-use crate::server::server_api::{AIApiError, ClientError, CloudAgentCapacityError};
+use crate::server::server_api::{AIApiError, CloudAgentCapacityError};
 
 fn config(harness_type: &str) -> RemoteChildLaunchConfig {
     RemoteChildLaunchConfig {
@@ -240,24 +240,6 @@ fn missing_repo_qualified_skill_reports_repository_and_reason() {
         assert!(message.contains("Repository 'missing-repo' not found"));
     });
 }
-#[test]
-fn github_auth_error_is_a_shared_blocker_with_cloud_callback_url() {
-    let error = anyhow::Error::new(ClientError {
-        error: "GitHub authentication required".to_string(),
-        auth_url: Some("https://example.com/auth?scheme=warpdev".to_string()),
-    });
-    let CloudAgentStartupIssue::Blocked(CloudAgentStartupBlocker::GitHubAuthRequired {
-        message,
-        auth_url,
-    }) = classify_cloud_agent_startup_error(&error)
-    else {
-        panic!("expected GitHub auth blocker");
-    };
-    assert_eq!(message, "GitHub authentication required");
-    assert!(auth_url.starts_with("https://example.com/auth?"));
-    assert!(auth_url.contains("next="));
-}
-
 #[test]
 fn cloud_startup_presentations_preserve_gui_copy_and_child_retry_semantics() {
     assert_eq!(

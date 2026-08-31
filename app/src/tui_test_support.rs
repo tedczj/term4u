@@ -349,7 +349,7 @@ pub fn register_tui_session_view_test_singletons(app: &mut warpui::App) {
 
     app.add_singleton_model(|_| TemplatableMCPServerManager::default());
     app.add_singleton_model(LLMPreferences::new);
-    app.add_singleton_model(HarnessAvailabilityModel::new_offline);
+    app.add_singleton_model(|_| HarnessAvailabilityModel::new_offline());
     app.add_singleton_model(BlocklistAIPermissions::new);
     app.add_singleton_model(|ctx| {
         AIExecutionProfilesModel::new(&LaunchMode::new_for_unit_test(), ctx)

@@ -5,7 +5,6 @@
 //! subscriptions, validation, asynchronous execution, and lifecycle outcomes.
 //! [`super::block::TuiHandoffBlock`] only presents and edits this state.
 
-use std::collections::HashSet;
 use std::path::PathBuf;
 use std::sync::Arc;
 
@@ -17,8 +16,8 @@ use warp::tui_export::{
     AIConversationId, AISettingsChangedEvent, AttachmentInput, BlocklistAIContextModel,
     BlocklistAIController, BlocklistAIHistoryModel, CloudAgentTelemetryEvent, HandoffCommitOutcome,
     HandoffEntryPoint, HandoffLaunchAttachments, HandoffPrepareError, HandoffPrepareInput,
-    HandoffRestoration, HandoffSurface, LLMId, LLMPreferences, LLMPreferencesEvent, OptionRow,
-    OptionSnapshot, OptionSourceStatus, PendingCloudLaunch, PendingHandoff, ServerApiProvider,
+    HandoffRestoration, HandoffSurface, LLMId, LLMPreferences, LLMPreferencesEvent, OptionSnapshot,
+    OptionSourceStatus, PendingCloudLaunch, PendingHandoff, ServerApiProvider,
     SnapshotUploadTarget, TerminalModel, UserWorkspaces, UserWorkspacesEvent, execute_handoff,
     handoff_dispatch_error, oz_model_snapshot, prepare_handoff, suggest_handoff_environment,
 };
@@ -214,7 +213,7 @@ impl TuiHandoffModel {
 
             let forked_existing_conversation =
                 pending.presentation_snapshot().forked_existing_conversation;
-            let mut model = Self {
+            let model = Self {
                 source_conversation_id,
                 phase: TuiHandoffPhase::Editable {
                     state: TuiHandoffEditableState::Acceptance {
@@ -564,7 +563,6 @@ impl TuiHandoffModel {
                         },
                         pending,
                     };
-                    model.refresh_pending_environments(ctx);
                     ctx.emit(TuiHandoffModelEvent::Changed { focus_block: true });
                     ctx.notify();
                 }

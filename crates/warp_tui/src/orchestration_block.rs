@@ -243,19 +243,18 @@ impl TuiOrchestrationBlock {
         ctx.subscribe_to_model(
             &HarnessAvailabilityModel::handle(ctx),
             |me, _, event, ctx| match event {
-                HarnessAvailabilityEvent::Changed
-                | HarnessAvailabilityEvent::AuthSecretsLoaded
-                | HarnessAvailabilityEvent::AuthSecretsFetchFailed
-                | HarnessAvailabilityEvent::AuthSecretCreated { .. }
-                | HarnessAvailabilityEvent::AuthSecretDeleted { .. } => {
+                HarnessAvailabilityEvent::SecretsLoaded
+                | HarnessAvailabilityEvent::SecretsFetchFailed
+                | HarnessAvailabilityEvent::SecretCreated { .. }
+                | HarnessAvailabilityEvent::SecretDeleted { .. } => {
                     me.orchestration_edit_state
                         .orchestration_config_state
                         .revalidate_after_catalog_change(ctx);
                     me.refresh_active_page(ctx);
                     ctx.notify();
                 }
-                HarnessAvailabilityEvent::AuthSecretCreationFailed { .. }
-                | HarnessAvailabilityEvent::AuthSecretDeletionFailed { .. } => {}
+                HarnessAvailabilityEvent::SecretCreationFailed { .. }
+                | HarnessAvailabilityEvent::SecretDeletionFailed { .. } => {}
             },
         );
 
