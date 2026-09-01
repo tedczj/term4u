@@ -1,37 +1,8 @@
-use ai::skills::{ParsedSkill, SkillProvider, SkillScope};
-use warp_util::host_id::HostId;
-use warp_util::local_or_remote_path::LocalOrRemotePath;
-
 use super::*;
-
-fn bundled_skill(content: &str) -> BundledSkill {
-    let mut bundled_skill = BundledSkill::default();
-    bundled_skill.insert_for_testing(
-        "test-skill",
-        ParsedSkill {
-            name: "test-skill".to_string(),
-            description: "Test skill".to_string(),
-            path: LocalOrRemotePath::Local("/bundled/skills/test-skill/SKILL.md".into()),
-            content: content.to_string(),
-            line_range: None,
-            provider: SkillProvider::Warp,
-            scope: SkillScope::Bundled,
-        },
-        BundledSkillActivation::Always,
-    );
-    bundled_skill
-}
 
 #[test]
 fn unavailable_bundled_context_path_renders_as_empty_string() {
     assert_eq!(display_optional_path(None), "");
-}
-
-fn remote_content<'a>(bundled_skills: &'a BundledSkills, host_id: &HostId) -> Option<&'a str> {
-    bundled_skills
-        .remote(host_id)?
-        .skill("test-skill")
-        .map(|skill| skill.content.as_str())
 }
 
 #[test]

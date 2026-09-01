@@ -286,7 +286,7 @@ impl MainSettingsPageView {
         widgets.push(Box::new(EarnRewardsWidget::default()));
 
         #[cfg(not(target_family = "wasm"))]
-        if IapManager::as_ref(ctx).is_enabled() {
+        if !ChannelState::is_offline() && IapManager::as_ref(ctx).is_enabled() {
             widgets.push(Box::new(IapCredentialsWidget::default()));
             let iap_manager_handle = IapManager::handle(ctx);
             ctx.subscribe_to_model(&iap_manager_handle, |_, _, e, ctx| {

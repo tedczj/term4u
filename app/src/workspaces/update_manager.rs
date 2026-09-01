@@ -51,13 +51,15 @@ pub struct TeamUpdateManager {
 }
 
 impl TeamUpdateManager {
-    #[cfg(test)]
-    pub fn new(
+    pub fn new_local(ctx: &mut ModelContext<Self>) -> Self {
+        let team_client = ServerApiProvider::as_ref(ctx).get_team_client();
+        Self::new_with_client(team_client, None)
+    }
+
+    fn new_with_client(
         team_client: Arc<dyn TeamClient>,
         model_event_sender: Option<SyncSender<ModelEvent>>,
-        ctx: &mut ModelContext<Self>,
     ) -> Self {
-        let _ = ctx;
         Self {
             team_client,
             model_event_sender,
@@ -65,6 +67,16 @@ impl TeamUpdateManager {
             next_poll_abort_handle: None,
             in_flight_request_abort_handle: None,
         }
+    }
+
+    #[cfg(test)]
+    pub fn new(
+        team_client: Arc<dyn TeamClient>,
+        model_event_sender: Option<SyncSender<ModelEvent>>,
+        ctx: &mut ModelContext<Self>,
+    ) -> Self {
+        let _ = ctx;
+        Self::new_with_client(team_client, model_event_sender)
     }
 
     #[cfg(test)]

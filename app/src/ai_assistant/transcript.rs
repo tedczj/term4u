@@ -967,3 +967,7 @@ impl View for Transcript {
         }
     }
 }
+
+#[cfg(test)]
+#[path = "transcript_tests.rs"]
+mod transcript_tests;

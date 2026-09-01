@@ -201,14 +201,18 @@ impl Entity for PersistedWorkspace {
 impl SingletonEntity for PersistedWorkspace {}
 
 impl PersistedWorkspace {
-    #[cfg(test)]
-    pub fn new_for_test(_ctx: &mut ModelContext<Self>) -> Self {
+    pub fn new_local(_ctx: &mut ModelContext<Self>) -> Self {
         Self {
             workspaces: HashMap::new(),
             model_event_sender: None,
             #[cfg(feature = "local_fs")]
             lsp_installation_status: HashMap::new(),
         }
+    }
+
+    #[cfg(test)]
+    pub fn new_for_test(ctx: &mut ModelContext<Self>) -> Self {
+        Self::new_local(ctx)
     }
     /// Given a repo path, enables the specified LSP server. If the workspace doesn't exist, it will be created.
     pub fn enable_lsp_server_for_path(&mut self, path: &Path, server_type: LSPServerType) {

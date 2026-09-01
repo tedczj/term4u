@@ -1917,3 +1917,6 @@ where
 
 // Snapshot upload is cloud-agent-only and only ever runs inside a Linux Docker container, so
 // skip the tests on Windows rather than teach every fixture to emit POSIX paths.
+#[cfg(all(test, not(windows)))]
+#[path = "snapshot_tests.rs"]
+mod tests;

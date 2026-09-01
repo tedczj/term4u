@@ -18,17 +18,22 @@ pub use mcp::{
 use telemetry::{
     AbandonmentPhase, AuthenticationEntrypoint, TuiOnboardingTelemetry, TuiOnboardingTelemetryEvent,
 };
+#[cfg(any(test, not(feature = "offline_hard")))]
 use url::Url;
 pub use user_info::{TuiUserInfoManager, TuiUserInfoManagerEvent, TuiUserInfoSnapshot};
+#[cfg(not(feature = "offline_hard"))]
 use warp_core::telemetry::TelemetryEvent as _;
 use warpui::{AppContext, Entity, SingletonEntity};
 
-use crate::TuiMountFn;
 use crate::ai::mcp::FileBasedMCPManager;
-use crate::auth::auth_manager::{AuthManager, AuthManagerEvent};
+#[cfg(not(feature = "offline_hard"))]
+use crate::auth::AuthStateProvider;
+use crate::auth::auth_manager::AuthManager;
+#[cfg(any(test, not(feature = "offline_hard")))]
+use crate::auth::auth_manager::AuthManagerEvent;
 use crate::auth::auth_state::AuthState;
-use crate::auth::{self, AuthStateProvider};
 use crate::tui_onboarding_markers::TuiOnboardingMarkers;
+use crate::{TuiMountFn, auth};
 
 /// Login state of the headless TUI, observed by the `warp_tui` root view to
 /// decide whether to show the login placeholder or the input UI.
@@ -250,6 +255,7 @@ fn has_validated_identity(auth_state: &AuthState) -> bool {
     auth_state.is_logged_in() && auth_state.user_id().is_some()
 }
 
+#[cfg(any(test, not(feature = "offline_hard")))]
 fn initial_login_phase(auth_state: &AuthState) -> TuiLoginPhase {
     if has_validated_identity(auth_state) {
         TuiLoginPhase::LoggedIn
@@ -258,6 +264,7 @@ fn initial_login_phase(auth_state: &AuthState) -> TuiLoginPhase {
     }
 }
 
+#[cfg(any(test, not(feature = "offline_hard")))]
 fn handle_auth_manager_event(event: &AuthManagerEvent, ctx: &mut AppContext) {
     match event {
         AuthManagerEvent::ReceivedDeviceAuthorizationCode {
@@ -343,6 +350,7 @@ fn authorize_device(ctx: &mut AppContext) {
     });
 }
 
+#[cfg(any(test, not(feature = "offline_hard")))]
 fn tui_verification_url(verification_url: &str, user_code: &str) -> String {
     let Ok(mut verification_url) = Url::parse(verification_url) else {
         return verification_url.to_owned();

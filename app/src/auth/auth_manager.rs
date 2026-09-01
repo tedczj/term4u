@@ -21,12 +21,12 @@ use warpui::r#async::Timer;
 use warpui::clipboard::ClipboardContent;
 use warpui::{Entity, ModelContext, SingletonEntity, UpdateModel};
 
-use super::UserUid;
 use super::auth_state::{AuthState, PersistAction};
 use super::auth_view_modal::{AuthRedirectPayload, AuthViewVariant};
 use super::credentials::{Credentials, FirebaseToken, LoginToken};
 use super::user::User;
 use super::user_properties::UserProperties;
+use super::{AuthStateProvider, UserUid};
 use crate::ai::AIRequestUsageModel;
 use crate::ai::llms::LLMPreferences;
 use crate::ai::persisted_workspace::PersistedWorkspace;
@@ -142,11 +142,7 @@ pub struct AuthManager {
 }
 
 impl AuthManager {
-    #[cfg(any(test, all(feature = "tui", feature = "test-util")))]
-    pub fn new_for_test(ctx: &mut ModelContext<Self>) -> Self {
-        use crate::auth::AuthStateProvider;
-        use crate::server::server_api::ServerApiProvider;
-
+    pub fn new_offline(ctx: &mut ModelContext<Self>) -> Self {
         let server_api_provider = ServerApiProvider::as_ref(ctx);
         let server_api = server_api_provider.get();
         let auth_client = server_api_provider.get_auth_client();
@@ -158,6 +154,11 @@ impl AuthManager {
             auth_client,
             pending_auth_state: None,
         }
+    }
+
+    #[cfg(any(test, all(feature = "tui", feature = "test-util")))]
+    pub fn new_for_test(ctx: &mut ModelContext<Self>) -> Self {
+        Self::new_offline(ctx)
     }
 
     /// Fetches and ultimately sets the user's auth state from an auth payload.

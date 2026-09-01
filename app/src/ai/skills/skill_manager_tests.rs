@@ -624,28 +624,6 @@ fn bundled_test_skill(id: &str, description: &str) -> ParsedSkill {
     }
 }
 
-fn remote_test_path(host_id: &HostId, path: &str) -> LocalOrRemotePath {
-    LocalOrRemotePath::Remote(RemotePath::new(
-        host_id.clone(),
-        StandardizedPath::try_new(path).unwrap(),
-    ))
-}
-
-fn make_remote_home_skill(host_id: &HostId, name: &str, content: &str) -> ParsedSkill {
-    ParsedSkill {
-        name: name.to_string(),
-        description: format!("{name} remote home skill"),
-        path: remote_test_path(
-            host_id,
-            format!("/home/user/.agents/skills/{name}/SKILL.md").as_str(),
-        ),
-        content: content.to_string(),
-        line_range: None,
-        provider: SkillProvider::Agents,
-        scope: SkillScope::Home,
-    }
-}
-
 fn make_remote_skill(host_id: &HostId, name: &str) -> ParsedSkill {
     ParsedSkill {
         name: name.to_string(),

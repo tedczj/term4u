@@ -1825,33 +1825,6 @@ fn finish_restore_fetch_reconnects_sse_when_children_added_to_open_connection() 
     });
 }
 
-/// Captures `ChildSpawned` events emitted by the streamer so the regression
-/// tests below can assert exactly which children were broadcast.
-///
-/// Subscribes from the app context (mirrors the pattern in
-/// `notebooks/link_tests.rs`) so we don't need a real subscriber model.
-fn capture_child_spawns(
-    app: &mut App,
-    streamer: &warpui::ModelHandle<OrchestrationEventStreamer>,
-) -> std::sync::Arc<parking_lot::Mutex<Vec<(AmbientAgentTaskId, String)>>> {
-    let captured: std::sync::Arc<parking_lot::Mutex<Vec<(AmbientAgentTaskId, String)>>> =
-        std::sync::Arc::new(parking_lot::Mutex::new(Vec::new()));
-    let captured_for_closure = captured.clone();
-    app.update(|ctx| {
-        ctx.subscribe_to_model(streamer, move |_, event, _| {
-            if let OrchestrationEventStreamerEvent::ChildSpawned {
-                parent_task_id,
-                run_id,
-            } = event
-            {
-                captured_for_closure
-                    .lock()
-                    .push((*parent_task_id, run_id.clone()));
-            }
-        })
-    });
-    captured
-}
 // ---- Owner-side parent-family ancestor streaming -------------------------
 
 /// Reads the connected filter for a conversation's owner-side SSE.

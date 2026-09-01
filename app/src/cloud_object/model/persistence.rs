@@ -1686,9 +1686,13 @@ impl CloudModel {
             .collect::<HashMap<_, _>>()
     }
 
-    #[cfg(any(test, all(feature = "tui", feature = "test-util")))]
-    pub fn mock(_ctx: &mut ModelContext<Self>) -> Self {
+    pub fn new_local(_ctx: &mut ModelContext<Self>) -> Self {
         Self::new(None, Vec::new(), None)
+    }
+
+    #[cfg(any(test, all(feature = "tui", feature = "test-util")))]
+    pub fn mock(ctx: &mut ModelContext<Self>) -> Self {
+        Self::new_local(ctx)
     }
 
     /// When `emit_events` is false (on the first load after login), per-object events

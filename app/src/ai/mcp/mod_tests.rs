@@ -7,10 +7,9 @@ use warp_managed_secrets::ManagedSecretValue;
 use crate::ai::mcp::parsing::normalize_codex_toml_to_json;
 use crate::ai::mcp::parsing::resolve_json;
 use crate::ai::mcp::{
-    CLIServer, JsonTemplate, MCPProvider, MCPServer, MCPServerExt,
-    ParsedTemplatableMCPServerResult, ServerSentEvents, StaticEnvVar, StaticHeader,
-    TemplatableMCPServer, TemplatableMCPServerInstallation, TemplateVariable, TransportType,
-    VariableType, VariableValue, mcp_provider_from_file_path,
+    JsonTemplate, MCPProvider, MCPServer, MCPServerExt, ParsedTemplatableMCPServerResult,
+    ServerSentEvents, StaticHeader, TemplatableMCPServer, TemplatableMCPServerInstallation,
+    TemplateVariable, TransportType, VariableType, VariableValue, mcp_provider_from_file_path,
 };
 
 #[test]

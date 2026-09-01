@@ -4859,3 +4859,7 @@ impl ConversationStatus {
         matches!(self, ConversationStatus::Error)
     }
 }
+
+#[cfg(test)]
+#[path = "conversation_tests.rs"]
+mod tests;

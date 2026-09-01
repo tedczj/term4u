@@ -1,8 +1,7 @@
 //! OSS-channel `warp-tui` binary and `default-run` target.
 //!
-//! This is what bare `cargo run -p warp_tui` builds, so it hand-builds a
-//! production config and needs no internal `warp-channel-config` generator
-//! (mirrors `app/src/bin/oss.rs`). It is a console application (no GUI window,
+//! This is what bare `cargo run -p warp_tui` builds, so it hand-builds an
+//! offline config and needs no internal `warp-channel-config` generator. It is a console application (no GUI window,
 //! no app bundle), so unlike the GUI binaries it sets no `windows_subsystem`
 //! attribute and embeds no `Info.plist`.
 
@@ -11,9 +10,7 @@ use anyhow::Result;
 #[cfg(not(feature = "offline_hard"))]
 use warp_core::AppId;
 #[cfg(not(feature = "offline_hard"))]
-use warp_core::channel::{
-    Channel, ChannelConfig, ChannelState, ConnectivityMode, OzConfig, WarpServerConfig,
-};
+use warp_core::channel::{Channel, ChannelConfig, ChannelState, ConnectivityMode};
 
 #[cfg(not(feature = "offline_hard"))]
 fn main() -> Result<()> {
@@ -22,9 +19,8 @@ fn main() -> Result<()> {
         ChannelConfig {
             app_id: AppId::new("dev", "warp", "WarpTui"),
             logfile_name: "warp-tui.log".into(),
-            connectivity: ConnectivityMode::Cloud {
-                server: WarpServerConfig::production(),
-                oz: OzConfig::production(),
+            connectivity: ConnectivityMode::Offline {
+                allow_loopback: true,
             },
             mcp_static_config: None,
         },

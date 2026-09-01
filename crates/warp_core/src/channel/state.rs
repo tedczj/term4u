@@ -308,6 +308,19 @@ impl ChannelState {
         }
     }
 
+    pub fn is_offline() -> bool {
+        cfg_if::cfg_if! {
+            if #[cfg(feature = "offline_hard")] {
+                true
+            } else {
+                matches!(
+                    &CHANNEL_STATE.lock().config.connectivity,
+                    ConnectivityMode::Offline { .. }
+                )
+            }
+        }
+    }
+
     pub fn server_root_url() -> Result<Cow<'static, str>, OfflineError> {
         cfg_if::cfg_if! {
             if #[cfg(feature = "test-util")] {

@@ -465,3 +465,7 @@ mod testing {
         }
     }
 }
+
+#[cfg(test)]
+#[path = "task_store_tests.rs"]
+mod tests;

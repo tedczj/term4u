@@ -281,20 +281,22 @@ impl PaneContent for TerminalPane {
         }
 
         let terminal_view_id = self.terminal_view(ctx).id();
-        let manager_model = Manager::handle(ctx);
-        ctx.subscribe_to_model(&manager_model, move |group, model_handle, event, ctx| {
-            if let ManagerEvent::JoinedSession {
-                session_id: _,
-                view_id,
-            } = event
-            {
-                // only take action if the view id is ours
-                if *view_id == terminal_view_id {
-                    let url = retrieve_shared_session_link(model_handle.as_ref(ctx), view_id);
-                    group.handle_pane_link_updated(terminal_pane_id.into(), url, ctx);
+        if ctx.has_singleton_model::<Manager>() {
+            let manager_model = Manager::handle(ctx);
+            ctx.subscribe_to_model(&manager_model, move |group, model_handle, event, ctx| {
+                if let ManagerEvent::JoinedSession {
+                    session_id: _,
+                    view_id,
+                } = event
+                {
+                    // only take action if the view id is ours
+                    if *view_id == terminal_view_id {
+                        let url = retrieve_shared_session_link(model_handle.as_ref(ctx), view_id);
+                        group.handle_pane_link_updated(terminal_pane_id.into(), url, ctx);
+                    }
                 }
-            }
-        });
+            });
+        }
 
         #[cfg(feature = "local_fs")]
         {
@@ -434,7 +436,9 @@ impl PaneContent for TerminalPane {
                 .clone(),
         );
 
-        ctx.unsubscribe_to_model(&Manager::handle(ctx));
+        if ctx.has_singleton_model::<Manager>() {
+            ctx.unsubscribe_to_model(&Manager::handle(ctx));
+        }
 
         #[cfg(feature = "local_fs")]
         {

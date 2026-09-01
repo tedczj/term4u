@@ -5,8 +5,6 @@ use std::sync::mpsc::SyncSender;
 use std::time::Duration;
 
 use chrono::Utc;
-#[cfg(test)]
-pub use cloud_object_client::GetCloudObjectResponse;
 pub use cloud_object_client::InitialLoadResponse;
 use futures::channel::oneshot::{self, Receiver};
 use futures::stream::AbortHandle;
@@ -211,7 +209,7 @@ impl UpdateManager {
         self.on_changed_objects_fetched(response, false /* force_refresh */, ctx);
     }
 
-    #[cfg(any(test, feature = "integration_tests"))]
+    #[cfg(feature = "integration_tests")]
     pub fn spawned_futures(&self) -> &[FutureId] {
         &self.spawned_futures
     }

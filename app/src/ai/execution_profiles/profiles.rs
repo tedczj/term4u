@@ -91,6 +91,11 @@ enum ProfileSource {
 impl ProfileSource {
     /// Resolves the persistence backend for this launch.
     fn for_launch_mode(launch_mode: &LaunchMode) -> Self {
+        if ChannelState::is_offline() && matches!(launch_mode, LaunchMode::App { .. }) {
+            return Self::SettingsCollection {
+                migrates_legacy_cloud_profiles: false,
+            };
+        }
         if !file_backed_execution_profiles_enabled(launch_mode) {
             return Self::LegacyCloudObjects;
         }

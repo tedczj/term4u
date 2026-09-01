@@ -628,3 +628,7 @@ async fn coordinator_loop(
         }
     }
 }
+
+#[cfg(test)]
+#[path = "checkpoint_coordinator_tests.rs"]
+mod tests;

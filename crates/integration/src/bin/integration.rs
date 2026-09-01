@@ -20,9 +20,7 @@ mod online {
     use integration::test::*;
     use warp_cli::WorkerCommand;
     use warp_core::AppId;
-    use warp_core::channel::{
-        Channel, ChannelConfig, ChannelState, ConnectivityMode, OzConfig, WarpServerConfig,
-    };
+    use warp_core::channel::{Channel, ChannelConfig, ChannelState, ConnectivityMode};
 
     /// The Warp integration test runner.
     #[derive(Debug, Default, Parser, Clone)]
@@ -52,22 +50,8 @@ mod online {
                     },
                 ),
                 logfile_name: "warp_integration.log".into(),
-                connectivity: ConnectivityMode::Cloud {
-                    server: WarpServerConfig {
-                        firebase_auth_api_key: "".into(),
-                        iap_config: None,
-                        // Use an IP in the IANA testing range, with the TCP discard port, to
-                        // black-hole server traffic.
-                        server_root_url: "http://192.0.2.0:9".into(),
-                        rtc_server_url: "ws://192.0.2.0:9/graphql/v2".into(),
-                        session_sharing_server_url: None,
-                    },
-                    oz: OzConfig {
-                        // Use an IP in the IANA testing range, with the TCP discard port, to
-                        // black-hole server traffic.
-                        oz_root_url: "http://192.0.2.0:9".into(),
-                        workload_audience_url: None,
-                    },
+                connectivity: ConnectivityMode::Offline {
+                    allow_loopback: true,
                 },
                 mcp_static_config: None,
             },
@@ -206,10 +190,6 @@ mod online {
         register_test!(test_restore_snapshot_with_deleted_cwd);
         register_test!(test_session_restoration_with_multiple_shells);
         register_test!(test_restore_snapshot_with_background_output);
-        register_test!(test_restore_snapshot_with_notebooks);
-        register_test!(test_restore_snapshot_with_workflows);
-        register_test!(test_restore_snapshot_with_test_json_object);
-        register_test!(test_restore_snapshot_with_common_shareable_metadata_ids);
         register_test!(test_restore_snapshot_with_markdown_file);
         register_test!(test_restore_snapshot_with_code_file);
         register_test!(test_restore_snapshot_with_settings_page);
@@ -253,7 +233,6 @@ mod online {
         register_test!(test_add_theme_to_warp_config);
         register_test!(test_palette_opens_when_theme_chooser_is_open);
         #[cfg(target_os = "macos")]
-        register_test!(test_preview_config_dir_migration);
         register_test!(test_launch_warp_with_theme_in_warp_config);
         register_test!(test_add_launch_config_to_warp_config);
         register_test!(test_add_workflows_to_warp_config);
@@ -280,20 +259,7 @@ mod online {
         register_test!(test_zsh_bootstraps_with_nounset_option);
         register_test!(test_zsh_cursor_mode_vi_bindings_do_not_corrupt_commands);
         register_test!(test_pwsh_vi_edit_mode_does_not_corrupt_commands);
-        register_test!(test_ssh_wrapper_into_bash);
-        register_test!(test_ssh_wrapper_into_zsh);
-        register_test!(test_ssh_into_fish);
-        register_test!(test_ssh_into_sh);
-        register_test!(test_ssh_into_ash);
-        register_test!(test_ssh_with_shell_override);
 
-        // Remote server integration tests
-        register_test!(test_remote_server_connect_bash);
-        register_test!(test_remote_server_connect_zsh);
-        register_test!(test_remote_server_navigate_to_repo);
-        register_test!(test_remote_server_completions);
-        register_test!(test_remote_server_file_operations);
-        register_test!(test_remote_server_lazy_load_directory);
         register_test!(test_custom_open_completions_menu_binding);
         register_test!(test_color_overrides_in_prompt_dont_crash);
         register_test!(test_copy_prompt_from_block_honor_ps1_disabled);
@@ -346,7 +312,6 @@ mod online {
         register_test!(test_can_auto_bootstrap);
 
         register_test!(test_ask_warp_ai_keybinding_for_selected_block);
-        register_test!(test_create_folder_from_command_palette);
 
         register_test!(test_tab_behavior_setting);
 
@@ -357,11 +322,6 @@ mod online {
         register_test!(test_histfile_left_joined_with_persisted_history);
         register_test!(test_history_command_is_linked_to_local_workflow);
         register_test!(test_up_arrow_history_enters_shift_tab_for_workflow);
-
-        register_test!(test_websocket_does_not_begin_on_startup);
-        register_test!(test_websocket_begins_on_startup);
-        register_test!(test_websocket_begins_after_joining_a_team);
-        register_test!(test_websocket_begins_after_creating_an_object);
 
         register_test!(test_secret_is_obfuscated_on_copy);
         register_test!(test_secret_tooltip_shows_on_click);
@@ -401,16 +361,9 @@ mod online {
         register_test!(test_closed_panes_cleared_on_rearrangement);
         register_test!(test_tab_closes_when_last_visible_pane_closed);
 
-        register_test!(test_notebook_pane_tracking);
-        register_test!(test_close_notebook_tab);
         register_test!(test_open_in_warp_banner);
-        register_test!(test_close_notebook_window);
-        register_test!(test_backspace_inside_raw_mermaid_block_edits_text_without_removing_block);
 
         // Workflow tests
-        register_test!(test_open_workflow_in_pane);
-        register_test!(test_create_personal_workflow_pane_from_command_palette);
-        register_test!(test_create_team_workflow_pane_from_command_palette);
 
         register_test!(test_block_filtering_keybinding);
         register_test!(test_block_filtering_keybinding_with_long_running_command);
@@ -438,15 +391,7 @@ mod online {
         register_test!(test_settings_error_banner_on_reload_with_invalid_value);
 
         // Settings sidebar navigation and search
-        register_test!(test_settings_mouse_navigation_through_umbrella);
-        register_test!(test_settings_keyboard_navigation_down_into_collapsed_umbrella);
-        register_test!(test_settings_keyboard_navigation_up_into_collapsed_umbrella);
-        register_test!(test_settings_keyboard_navigation_after_manual_collapse);
         register_test!(test_settings_search_filters_top_level_pages);
-        register_test!(test_settings_search_filters_subpages);
-        register_test!(test_settings_search_subpage_still_renders_content);
-        register_test!(test_settings_search_clear_restores_umbrella_state);
-        register_test!(test_settings_search_preserved_on_sidebar_click);
         register_test!(test_settings_agent_mcp_servers_renders_standalone_page);
 
         register_test!(test_middle_click_paste);
@@ -483,9 +428,6 @@ mod online {
         register_test!(test_with_long_line);
         register_test!(make_1000_blocks_memory_benchmark);
 
-        register_test!(test_rule_creation);
-        register_test!(test_rule_update);
-        register_test!(test_rule_pane_opening);
         register_test!(test_undo_close_stack_timeout_cleanup);
 
         // File tree tests

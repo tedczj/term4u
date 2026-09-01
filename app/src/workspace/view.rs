@@ -4555,6 +4555,9 @@ impl Workspace {
     fn subscribe_to_shared_session_manager(ctx: &mut ViewContext<Self>) {
         use terminal::session_sharing::manager::{Manager, ManagerEvent};
 
+        if !ctx.has_singleton_model::<Manager>() {
+            return;
+        }
         let manager = Manager::handle(ctx);
         ctx.subscribe_to_model(&manager, move |me, _, event, ctx| {
             match event {

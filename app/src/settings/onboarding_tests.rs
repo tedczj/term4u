@@ -1,8 +1,7 @@
 use ai::LLMId;
 use chrono::{DateTime, Utc};
+use onboarding::SelectedSettings;
 use onboarding::slides::{AgentAutonomy, AgentDevelopmentSettings};
-use onboarding::{SelectedSettings, UICustomizationSettings};
-use warp_core::features::FeatureFlag;
 use warpui::{App, SingletonEntity};
 
 use crate::LaunchMode;
@@ -14,16 +13,12 @@ use crate::ai::mcp::TemplatableMCPServerManager;
 use crate::auth::AuthStateProvider;
 use crate::cloud_object::model::persistence::{CloudModel, CloudModelEvent};
 use crate::cloud_object::{Revision, ServerAIExecutionProfile, ServerMetadata, ServerPermissions};
-use crate::drive::settings::WarpDriveSettings;
 use crate::network::NetworkStatus;
 use crate::server::cloud_objects::update_manager::UpdateManager;
 use crate::server::ids::{ServerId, SyncId};
 use crate::server::sync_queue::SyncQueue;
-use crate::settings::{
-    AISettings, CodeSettings, PrivacySettings, UsageDisplayUnit, apply_onboarding_settings,
-};
+use crate::settings::{AISettings, PrivacySettings, apply_onboarding_settings};
 use crate::test_util::settings::initialize_settings_for_tests;
-use crate::workspace::tab_settings::TabSettings;
 use crate::workspaces::team_tester::TeamTesterStatus;
 use crate::workspaces::user_workspaces::{TeamContextForOperation, UserWorkspaces};
 

@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 use std::path::PathBuf;
 
+use warp_core::channel::ChannelState;
 use warp_core::context_flag::ContextFlag;
 use warp_core::features::FeatureFlag;
 use warpui::keymap::BindingId;
@@ -25,7 +26,7 @@ use crate::settings::AISettings;
 pub struct DataSourceStore {
     actions_data_source: ModelHandle<CommandBindingDataSource>,
     sessions_data_source: ModelHandle<navigation::DataSource>,
-    warp_drive_data_source: ModelHandle<warp_drive::DataSource>,
+    warp_drive_data_source: Option<ModelHandle<warp_drive::DataSource>>,
     launch_config_data_source: ModelHandle<launch_config::DataSource>,
     new_session_data_source: Option<ModelHandle<NewSessionDataSource>>,
     all_conversation_data_source: ModelHandle<conversations::DataSource>,
@@ -46,8 +47,8 @@ impl DataSourceStore {
         let sessions_data_source =
             ctx.add_model(|_| navigation::DataSource::new(active_session_handle));
 
-        let warp_drive_data_source =
-            ctx.add_model(|ctx| warp_drive::DataSource::new(window_id, ctx));
+        let warp_drive_data_source = (!ChannelState::is_offline())
+            .then(|| ctx.add_model(|ctx| warp_drive::DataSource::new(window_id, ctx)));
 
         let launch_config_data_source = ctx.add_model(launch_config::DataSource::new);
 
@@ -94,7 +95,9 @@ impl DataSourceStore {
                 HashSet::from([QueryFilter::Sessions]),
             );
 
-            if WarpDriveSettings::is_warp_drive_enabled(ctx) {
+            if let Some(warp_drive_data_source) = &self.warp_drive_data_source
+                && WarpDriveSettings::is_warp_drive_enabled(ctx)
+            {
                 let mut warp_drive_filters = HashSet::from([
                     QueryFilter::Notebooks,
                     QueryFilter::Plans,
@@ -107,7 +110,7 @@ impl DataSourceStore {
                 if AISettings::as_ref(ctx).is_any_ai_enabled(ctx) {
                     warp_drive_filters.insert(QueryFilter::AgentModeWorkflows);
                 }
-                mixer.add_sync_source(self.warp_drive_data_source.clone(), warp_drive_filters);
+                mixer.add_sync_source(warp_drive_data_source.clone(), warp_drive_filters);
             }
 
             mixer.add_sync_source(
@@ -213,14 +216,17 @@ impl DataSourceStore {
                 .query_result(*binding_id),
             ItemSummary::Workflow { id } => self
                 .warp_drive_data_source
+                .as_ref()?
                 .as_ref(app)
                 .query_result(id, app),
             ItemSummary::EnvVarCollection { id } => self
                 .warp_drive_data_source
+                .as_ref()?
                 .as_ref(app)
                 .query_result(id, app),
             ItemSummary::Notebook { id } => self
                 .warp_drive_data_source
+                .as_ref()?
                 .as_ref(app)
                 .query_result(id, app),
             ItemSummary::Session { pane_view_locator } => self

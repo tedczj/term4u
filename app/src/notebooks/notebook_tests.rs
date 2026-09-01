@@ -2,7 +2,6 @@ use std::sync::Arc;
 
 use chrono::{Duration, Utc};
 use futures_util::future::BoxFuture;
-use itertools::Itertools;
 use warp_core::ui::appearance::Appearance;
 use warp_editor::editor::EditorView;
 use warpui::r#async::Timer;
@@ -13,18 +12,16 @@ use warpui::{
     ViewHandle, WindowId,
 };
 
-use super::{EDIT_WINDOW_DURATION, NotebookEvent, NotebookView, SAVE_PERIOD};
+use super::{NotebookEvent, NotebookView, SAVE_PERIOD};
 use crate::auth::auth_manager::AuthManager;
 use crate::auth::user::{TEST_USER_EMAIL, TEST_USER_UID};
 use crate::auth::{AuthStateProvider, UserUid};
 use crate::cloud_object::model::actions::ObjectActions;
 use crate::cloud_object::model::persistence::CloudModel;
 use crate::cloud_object::model::view::{CloudViewModel, Editor, EditorState};
-use crate::cloud_object::{
-    Owner, Revision, ServerCloudObject, ServerMetadata, ServerNotebook, ServerPermissions,
-};
+use crate::cloud_object::{Owner, Revision, ServerMetadata, ServerNotebook, ServerPermissions};
 use crate::drive::OpenWarpDriveObjectSettings;
-use crate::editor::{DisplayPoint, EditorAction, InteractionState, SelectAction};
+use crate::editor::{DisplayPoint, EditorAction, SelectAction};
 use crate::network::NetworkStatus;
 use crate::notebooks::active_notebook_data::Mode;
 use crate::notebooks::editor::keys::NotebookKeybindings;
@@ -38,7 +35,7 @@ use crate::server::cloud_objects::update_manager::{InitialLoadResponse, UpdateMa
 use crate::server::ids::ClientId;
 use crate::server::ids::SyncId::ServerId;
 use crate::server::server_api::ServerApiProvider;
-use crate::server::sync_queue::{QueueItem, SyncQueue, SyncQueueEvent};
+use crate::server::sync_queue::{QueueItem, SyncQueue};
 use crate::settings_view::keybindings::KeybindingChangedNotifier;
 use crate::terminal::keys::TerminalKeybindings;
 use crate::test_util::settings::initialize_settings_for_tests;

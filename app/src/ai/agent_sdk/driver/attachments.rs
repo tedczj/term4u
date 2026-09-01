@@ -343,3 +343,7 @@ pub fn process_attachment(
         data: base64_data,
     })
 }
+
+#[cfg(test)]
+#[path = "attachments_tests.rs"]
+mod tests;

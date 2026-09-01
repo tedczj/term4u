@@ -20,7 +20,7 @@ pub use auth_manager::AuthManager;
 pub use auth_state::AuthStateProvider;
 use itertools::Itertools;
 pub use login_failure_notification::LoginFailureReason;
-#[cfg(feature = "tui")]
+#[cfg(all(feature = "tui", any(test, not(feature = "offline_hard"))))]
 use url::Url;
 pub use user_uid::UserUid;
 use warp_core::channel::ChannelState;
@@ -79,6 +79,7 @@ pub fn web_logout_url() -> String {
 /// keeps the logout endpoint from becoming an open redirect if an unexpected
 /// device-authorization response reaches the client.
 #[cfg(feature = "tui")]
+#[cfg(any(test, not(feature = "offline_hard")))]
 pub fn web_logout_url_with_continue(continue_url: &str) -> Option<String> {
     let mut logout_url =
         Url::parse(&web_logout_url()).expect("configured Warp web logout URL must be valid");

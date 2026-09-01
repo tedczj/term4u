@@ -130,6 +130,13 @@ pub(crate) fn create_terminal_view_surface(
     }
 }
 
+impl TerminalManager<TerminalView> {
+    #[cfg(feature = "integration_tests")]
+    pub fn pid(&self) -> Option<u32> {
+        self.pid
+    }
+}
+
 impl TerminalManagerTrait for TerminalManager<TerminalView> {
     fn model(&self) -> Arc<FairMutex<TerminalModel>> {
         self.model.clone()

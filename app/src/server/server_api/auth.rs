@@ -15,8 +15,6 @@ use warp_graphql::queries::api_keys::ApiKeyProperties;
 use warp_graphql::queries::get_user::UserOutput as GqlUserOutput;
 use warp_server_auth::credentials::{AuthToken, FirebaseToken, LoginToken};
 use warp_server_client::auth::AgentIdentity;
-#[cfg(any(test, feature = "test-util"))]
-pub use warp_server_client::auth::MockAuthClient;
 pub use warp_server_client::auth::{
     AuthClient, FetchUserResult, MintCustomTokenError, SyncedUserSettings, UserAuthenticationError,
 };

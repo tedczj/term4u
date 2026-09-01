@@ -8,7 +8,7 @@
 use warp::editor::{CodeEditorModel, CodeEditorModelEvent};
 use warp::tui_export::{AgentConversationEntryId, ConversationSelectionHandle};
 use warp_editor::model::CoreEditorModel;
-use warpui_core::{AppContext, Entity, ModelContext, ModelHandle, SingletonEntity, WindowId};
+use warpui_core::{AppContext, Entity, ModelContext, ModelHandle, WindowId};
 
 use crate::inline_menu::{
     MAX_INLINE_MENU_ROWS, TuiInlineMenuHeader, TuiInlineMenuListState, TuiInlineMenuRow,

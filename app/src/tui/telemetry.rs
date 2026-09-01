@@ -4,6 +4,7 @@ use strum_macros::{EnumDiscriminants, EnumIter};
 use warp_core::telemetry::{EnablementState, TelemetryEvent, TelemetryEventDesc};
 
 use super::TuiLoginPhase;
+#[cfg(any(test, not(feature = "offline_hard")))]
 use crate::server::server_api::auth::UserAuthenticationError;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -91,12 +92,14 @@ impl Outcome {
     }
 }
 
+#[cfg(any(test, not(feature = "offline_hard")))]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(super) enum AuthenticationFailureStage {
     DeviceCodeRequest,
     Authentication,
 }
 
+#[cfg(any(test, not(feature = "offline_hard")))]
 impl AuthenticationFailureStage {
     fn as_str(self) -> &'static str {
         match self {
@@ -106,6 +109,7 @@ impl AuthenticationFailureStage {
     }
 }
 
+#[cfg(any(test, not(feature = "offline_hard")))]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(super) enum AuthenticationFailureReason {
     DeniedAccessToken,
@@ -116,6 +120,7 @@ pub(super) enum AuthenticationFailureReason {
     Unexpected,
 }
 
+#[cfg(any(test, not(feature = "offline_hard")))]
 impl AuthenticationFailureReason {
     fn from_error(error: &UserAuthenticationError) -> Self {
         match error {
@@ -184,6 +189,7 @@ pub(super) enum TuiOnboardingTelemetryEvent {
         entrypoint: AuthenticationEntrypoint,
         attempt: AuthenticationAttempt,
     },
+    #[cfg(any(test, not(feature = "offline_hard")))]
     DeviceAuthorizationReady,
     BrowserLaunch {
         journey: Journey,
@@ -193,6 +199,7 @@ pub(super) enum TuiOnboardingTelemetryEvent {
     LoginUrlCopied {
         outcome: Outcome,
     },
+    #[cfg(any(test, not(feature = "offline_hard")))]
     AuthenticationFailed {
         journey: Journey,
         stage: AuthenticationFailureStage,
@@ -226,6 +233,7 @@ impl TelemetryEvent for TuiOnboardingTelemetryEvent {
                 "entrypoint": entrypoint.as_str(),
                 "attempt": attempt.as_str(),
             })),
+            #[cfg(any(test, not(feature = "offline_hard")))]
             Self::DeviceAuthorizationReady => None,
             Self::BrowserLaunch {
                 journey,
@@ -239,6 +247,7 @@ impl TelemetryEvent for TuiOnboardingTelemetryEvent {
             Self::LoginUrlCopied { outcome } => Some(json!({
                 "outcome": outcome.as_str(),
             })),
+            #[cfg(any(test, not(feature = "offline_hard")))]
             Self::AuthenticationFailed {
                 journey,
                 stage,
@@ -290,9 +299,11 @@ impl TelemetryEventDesc for TuiOnboardingTelemetryEventDiscriminants {
     fn name(&self) -> &'static str {
         match self {
             Self::AuthenticationStarted => "TUI.Onboarding.AuthenticationStarted",
+            #[cfg(any(test, not(feature = "offline_hard")))]
             Self::DeviceAuthorizationReady => "TUI.Onboarding.DeviceAuthorizationReady",
             Self::BrowserLaunch => "TUI.Onboarding.BrowserLaunch",
             Self::LoginUrlCopied => "TUI.Onboarding.LoginUrlCopied",
+            #[cfg(any(test, not(feature = "offline_hard")))]
             Self::AuthenticationFailed => "TUI.Onboarding.AuthenticationFailed",
             Self::Abandoned => "TUI.Onboarding.Abandoned",
             Self::Completed => "TUI.Onboarding.Completed",
@@ -302,9 +313,11 @@ impl TelemetryEventDesc for TuiOnboardingTelemetryEventDiscriminants {
     fn description(&self) -> &'static str {
         match self {
             Self::AuthenticationStarted => "TUI browser authentication started",
+            #[cfg(any(test, not(feature = "offline_hard")))]
             Self::DeviceAuthorizationReady => "TUI device authorization URL became available",
             Self::BrowserLaunch => "TUI attempted to launch the authentication browser",
             Self::LoginUrlCopied => "TUI attempted to copy the authentication URL",
+            #[cfg(any(test, not(feature = "offline_hard")))]
             Self::AuthenticationFailed => "TUI authentication failed",
             Self::Abandoned => "User exited while the TUI authentication UI was visible",
             Self::Completed => "TUI displayed the terminal after interactive authentication",
@@ -323,6 +336,7 @@ struct ActiveFlow {
     started_at: Instant,
     attempt_started_at: Option<Instant>,
     attempts: usize,
+    #[cfg(any(test, not(feature = "offline_hard")))]
     device_authorization_ready: bool,
 }
 
@@ -333,6 +347,7 @@ impl ActiveFlow {
             started_at,
             attempt_started_at: None,
             attempts: 0,
+            #[cfg(any(test, not(feature = "offline_hard")))]
             device_authorization_ready: false,
         }
     }
@@ -375,7 +390,10 @@ impl TuiOnboardingTelemetry {
         };
         flow.attempts += 1;
         flow.attempt_started_at = Some(now);
-        flow.device_authorization_ready = false;
+        #[cfg(any(test, not(feature = "offline_hard")))]
+        {
+            flow.device_authorization_ready = false;
+        }
         TuiOnboardingTelemetryEvent::AuthenticationStarted {
             journey: flow.journey,
             entrypoint,
@@ -388,6 +406,7 @@ impl TuiOnboardingTelemetry {
         self.authentication_started(AuthenticationEntrypoint::OpenBrowser)
     }
 
+    #[cfg(any(test, not(feature = "offline_hard")))]
     pub(super) fn device_authorization_ready(&mut self) -> Option<TuiOnboardingTelemetryEvent> {
         let flow = self.flow.as_mut()?;
         flow.attempt_started_at?;
@@ -415,6 +434,7 @@ impl TuiOnboardingTelemetry {
         })
     }
 
+    #[cfg(any(test, not(feature = "offline_hard")))]
     pub(super) fn authentication_failed(
         &mut self,
         error: &UserAuthenticationError,

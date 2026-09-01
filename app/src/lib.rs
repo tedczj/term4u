@@ -1437,6 +1437,16 @@ fn initialize_local_app(
         )
     });
     ctx.add_singleton_model(|_| UserProfiles::new(restored_user_profiles));
+    ctx.add_singleton_model(cloud_object::model::persistence::CloudModel::new_local);
+    ctx.add_singleton_model(cloud_object::model::view::CloudViewModel::new);
+    ctx.add_singleton_model(ai::document::ai_document_model::AIDocumentModel::new);
+    ctx.add_singleton_model(workspaces::update_manager::TeamUpdateManager::new_local);
+    ctx.add_singleton_model(workspaces::team_tester::TeamTesterStatus::new_local);
+    ctx.add_singleton_model(auth::auth_manager::AuthManager::new_offline);
+    ctx.add_singleton_model(workspace::OneTimeModalModel::new);
+    ctx.add_singleton_model(
+        workspace::bonus_grant_notification_model::BonusGrantNotificationModel::new,
+    );
     ctx.add_singleton_model(|_| AudibleBell::new());
 
     ctx.add_singleton_model(|_| simple_logger::manager::LogManager::new());
@@ -1462,6 +1472,7 @@ fn initialize_local_app(
     ctx.add_singleton_model(LocalWorkflows::new);
     ctx.add_singleton_model(LLMPreferences::new);
     ctx.add_singleton_model(|_| HarnessAvailabilityModel::new_offline());
+    ctx.add_singleton_model(ai::persisted_workspace::PersistedWorkspace::new_local);
     ctx.add_singleton_model(ai::agent_conversations_model::AgentConversationsModel::new);
     ctx.add_singleton_model(|ctx| {
         ai::agent_tips::AITipModel::<ai::AgentTip>::new_for_agent_tips(ctx)

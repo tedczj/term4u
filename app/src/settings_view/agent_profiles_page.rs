@@ -361,23 +361,26 @@ impl AgentProfilesPageView {
             },
         );
 
-        let cloud_model = CloudModel::handle(ctx);
-        ctx.subscribe_to_model(&cloud_model, |me, _, event, ctx| {
-            let added_or_deleted_mcp_servers = matches!(
-                event,
-                CloudModelEvent::ObjectCreated { type_and_id } | CloudModelEvent::ObjectDeleted { type_and_id, .. }
-                if matches!(
-                    type_and_id.object_type(),
-                    ObjectType::GenericStringObject(Json(JsonObjectType::MCPServer))
-                )
-            );
+        if ctx.has_singleton_model::<CloudModel>() {
+            let cloud_model = CloudModel::handle(ctx);
+            ctx.subscribe_to_model(&cloud_model, |me, _, event, ctx| {
+                let added_or_deleted_mcp_servers = matches!(
+                    event,
+                    CloudModelEvent::ObjectCreated { type_and_id }
+                        | CloudModelEvent::ObjectDeleted { type_and_id, .. }
+                    if matches!(
+                        type_and_id.object_type(),
+                        ObjectType::GenericStringObject(Json(JsonObjectType::MCPServer))
+                    )
+                );
 
-            if added_or_deleted_mcp_servers {
-                Self::refresh_mcp_allowlist_dropdown(&me.mcp_allowlist_dropdown, ctx);
-                Self::refresh_mcp_denylist_dropdown(&me.mcp_denylist_dropdown, ctx);
-                ctx.notify();
-            }
-        });
+                if added_or_deleted_mcp_servers {
+                    Self::refresh_mcp_allowlist_dropdown(&me.mcp_allowlist_dropdown, ctx);
+                    Self::refresh_mcp_denylist_dropdown(&me.mcp_denylist_dropdown, ctx);
+                    ctx.notify();
+                }
+            });
+        }
 
         let templatable_manager = TemplatableMCPServerManager::handle(ctx);
         ctx.subscribe_to_model(&templatable_manager, |me, _, _event, ctx| {

@@ -44,7 +44,7 @@ use crate::code_review::comments::{
     AttachedReviewComment, AttachedReviewCommentTarget, CommentOrigin,
 };
 use crate::context_chips::prompt::Prompt;
-use crate::editor::{AutosuggestionLocation, AutosuggestionType, CrdtOperation};
+use crate::editor::{AutosuggestionLocation, AutosuggestionType};
 use crate::features::FeatureFlag;
 use crate::pane_group::focus_state::PaneGroupFocusState;
 use crate::pane_group::pane::PaneStack;
@@ -1366,22 +1366,6 @@ fn ctrl_c_from_shared_viewer_rejected_by_agent_in_control_does_not_arm_cancel_wi
             !armed,
             "a Ctrl-C that never reached the pty must not arm the cancel window"
         );
-    })
-}
-
-fn input_operations_for_buffer_content(app: &mut App, content: &str) -> Vec<CrdtOperation> {
-    let terminal = add_window_with_terminal(app, None);
-    terminal.update(app, |view, ctx| {
-        view.input().update(ctx, |input, ctx| {
-            input.replace_buffer_content(content, ctx);
-        });
-    });
-    terminal.read(app, |view, ctx| {
-        view.input()
-            .as_ref(ctx)
-            .latest_buffer_operations()
-            .cloned()
-            .collect()
     })
 }
 

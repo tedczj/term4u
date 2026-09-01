@@ -7,10 +7,12 @@ pub struct Listener;
 
 #[cfg(any(test, feature = "test-util", feature = "integration_tests"))]
 impl Listener {
+    #[cfg(feature = "integration_tests")]
     pub fn has_current_subscription_abort_handle(&self) -> bool {
         false
     }
 
+    #[cfg(test)]
     pub fn mock(_: &mut warpui::ModelContext<Self>) -> Self {
         Self
     }

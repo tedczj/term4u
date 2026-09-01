@@ -112,29 +112,6 @@ fn cloud_spawn_request(prompt: &str) -> SpawnAgentRequest {
     }
 }
 
-/// A promptless cloud spawn request (`prompt: None`), modeling an empty-prompt
-/// local-to-cloud handoff where the agent skips its initial turn.
-fn promptless_cloud_spawn_request() -> SpawnAgentRequest {
-    SpawnAgentRequest {
-        prompt: None,
-        mode: UserQueryMode::Normal,
-        config: None,
-        title: None,
-        team: None,
-        agent_identity_uid: None,
-        skill: None,
-        attachments: vec![],
-        interactive: None,
-        parent_run_id: None,
-        runtime_skills: vec![],
-        referenced_attachments: vec![],
-        conversation_id: None,
-        initial_snapshot_token: None,
-        snapshot_disabled: None,
-        orchestration_handoff: None,
-    }
-}
-
 fn enter_cloud_setup_with_conversation(
     view: &mut TerminalView,
     ctx: &mut ViewContext<TerminalView>,

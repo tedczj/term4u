@@ -4,15 +4,18 @@ use warpui::{Entity, ModelContext, SingletonEntity};
 pub struct TeamTesterStatus {}
 
 impl TeamTesterStatus {
-    #[cfg(test)]
-    pub fn new(ctx: &mut ModelContext<Self>) -> Self {
-        let _ = ctx;
+    pub fn new_local(_ctx: &mut ModelContext<Self>) -> Self {
         Self {}
     }
 
     #[cfg(test)]
+    pub fn new(ctx: &mut ModelContext<Self>) -> Self {
+        Self::new_local(ctx)
+    }
+
+    #[cfg(test)]
     pub fn mock(ctx: &mut ModelContext<Self>) -> Self {
-        Self::new(ctx)
+        Self::new_local(ctx)
     }
 
     pub fn initiate_data_pollers(&mut self, ctx: &mut ModelContext<Self>) {
