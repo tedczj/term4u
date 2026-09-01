@@ -1,0 +1,205 @@
+UTC 2026-09-01T08:19:37Z
+# Phase 1 blacklist scan before changes
+
+## manifests and lock
+./Cargo.toml:62:mcp = { path = "crates/mcp" }
+./Cargo.toml:403:rmcp = { version = "1.6" }
+./Cargo.toml:407:# `true`). Line tables are enough to symbolicate panics and Sentry stack
+./app/Cargo.toml:104:# offline against the debug-info file uploaded to Sentry by the release
+./app/Cargo.toml:127:mcp.workspace = true
+./app/Cargo.toml:240:rmcp.workspace = true
+./app/Cargo.toml:303:aws-config = { version = "1.8.16", features = ["credentials-login"] }
+./app/Cargo.toml:304:aws-credential-types = "1"
+./app/Cargo.toml:305:aws-sdk-sts = { version = "1", default-features = false, features = ["default-https-client", "rt-tokio"] }
+./app/Cargo.toml:306:aws-types = "1"
+./app/Cargo.toml:462:well_known_mcp_ids = []
+./app/Cargo.toml:463:factory_mcp = []
+./app/Cargo.toml:482:    "mcp_server",
+./app/Cargo.toml:507:    "mcp_grouped_server_context",
+./app/Cargo.toml:516:    "file_based_mcp",
+./app/Cargo.toml:596:    "mcp_server",
+./app/Cargo.toml:621:    "mcp_grouped_server_context",
+./app/Cargo.toml:630:    "file_based_mcp",
+./app/Cargo.toml:712:log_expensive_frames_in_sentry = []
+./app/Cargo.toml:716:mcp_server = []
+./app/Cargo.toml:717:mcp_oauth = []
+./app/Cargo.toml:718:mcp_debugging_ids = []
+./app/Cargo.toml:873:mcp_grouped_server_context = []
+./app/Cargo.toml:915:file_based_mcp = []
+./app/Cargo.toml:974:    "frameworks/default/Sentry-Dynamic-WithARM64e.xcframework/macos-arm64_arm64e_x86_64/Sentry.framework",
+./app/Cargo.toml:985:    "frameworks/default/Sentry-Dynamic-WithARM64e.xcframework/macos-arm64_arm64e_x86_64/Sentry.framework",
+./app/Cargo.toml:996:    "frameworks/dev/Sentry-Dynamic-WithARM64e.xcframework/macos-arm64_arm64e_x86_64/Sentry.framework",
+./Cargo.lock:203: "rmcp",
+./Cargo.lock:1399:name = "aws-config"
+./Cargo.lock:1404: "aws-credential-types",
+./Cargo.lock:1406: "aws-sdk-signin",
+./Cargo.lock:1407: "aws-sdk-sso",
+./Cargo.lock:1408: "aws-sdk-ssooidc",
+./Cargo.lock:1409: "aws-sdk-sts",
+./Cargo.lock:1410: "aws-smithy-async",
+./Cargo.lock:1411: "aws-smithy-http",
+./Cargo.lock:1412: "aws-smithy-json",
+./Cargo.lock:1413: "aws-smithy-runtime",
+./Cargo.lock:1414: "aws-smithy-runtime-api",
+./Cargo.lock:1415: "aws-smithy-types",
+./Cargo.lock:1416: "aws-types",
+./Cargo.lock:1435:name = "aws-credential-types"
+./Cargo.lock:1440: "aws-smithy-async",
+./Cargo.lock:1441: "aws-smithy-runtime-api",
+./Cargo.lock:1442: "aws-smithy-types",
+./Cargo.lock:1474: "aws-credential-types",
+./Cargo.lock:1476: "aws-smithy-async",
+./Cargo.lock:1477: "aws-smithy-http",
+./Cargo.lock:1478: "aws-smithy-runtime",
+./Cargo.lock:1479: "aws-smithy-runtime-api",
+./Cargo.lock:1480: "aws-smithy-types",
+./Cargo.lock:1481: "aws-types",
+./Cargo.lock:1494:name = "aws-sdk-signin"
+./Cargo.lock:1499: "aws-credential-types",
+./Cargo.lock:1501: "aws-smithy-async",
+./Cargo.lock:1502: "aws-smithy-http",
+./Cargo.lock:1503: "aws-smithy-json",
+./Cargo.lock:1504: "aws-smithy-observability",
+./Cargo.lock:1505: "aws-smithy-runtime",
+./Cargo.lock:1506: "aws-smithy-runtime-api",
+./Cargo.lock:1507: "aws-smithy-types",
+./Cargo.lock:1508: "aws-types",
+./Cargo.lock:1518:name = "aws-sdk-sso"
+./Cargo.lock:1523: "aws-credential-types",
+./Cargo.lock:1525: "aws-smithy-async",
+./Cargo.lock:1526: "aws-smithy-http",
+./Cargo.lock:1527: "aws-smithy-json",
+./Cargo.lock:1528: "aws-smithy-observability",
+./Cargo.lock:1529: "aws-smithy-runtime",
+./Cargo.lock:1530: "aws-smithy-runtime-api",
+./Cargo.lock:1531: "aws-smithy-types",
+./Cargo.lock:1532: "aws-types",
+./Cargo.lock:1542:name = "aws-sdk-ssooidc"
+./Cargo.lock:1547: "aws-credential-types",
+./Cargo.lock:1549: "aws-smithy-async",
+./Cargo.lock:1550: "aws-smithy-http",
+./Cargo.lock:1551: "aws-smithy-json",
+./Cargo.lock:1552: "aws-smithy-observability",
+./Cargo.lock:1553: "aws-smithy-runtime",
+./Cargo.lock:1554: "aws-smithy-runtime-api",
+./Cargo.lock:1555: "aws-smithy-types",
+./Cargo.lock:1556: "aws-types",
+./Cargo.lock:1566:name = "aws-sdk-sts"
+./Cargo.lock:1571: "aws-credential-types",
+./Cargo.lock:1573: "aws-smithy-async",
+./Cargo.lock:1574: "aws-smithy-http",
+./Cargo.lock:1575: "aws-smithy-json",
+./Cargo.lock:1576: "aws-smithy-observability",
+./Cargo.lock:1577: "aws-smithy-query",
+./Cargo.lock:1578: "aws-smithy-runtime",
+./Cargo.lock:1579: "aws-smithy-runtime-api",
+./Cargo.lock:1580: "aws-smithy-types",
+./Cargo.lock:1581: "aws-smithy-xml",
+./Cargo.lock:1582: "aws-types",
+./Cargo.lock:1596: "aws-credential-types",
+./Cargo.lock:1597: "aws-smithy-http",
+./Cargo.lock:1598: "aws-smithy-runtime-api",
+./Cargo.lock:1599: "aws-smithy-types",
+./Cargo.lock:1613:name = "aws-smithy-async"
+./Cargo.lock:1624:name = "aws-smithy-http"
+./Cargo.lock:1629: "aws-smithy-runtime-api",
+./Cargo.lock:1630: "aws-smithy-types",
+./Cargo.lock:1645:name = "aws-smithy-http-client"
+./Cargo.lock:1650: "aws-smithy-async",
+./Cargo.lock:1651: "aws-smithy-runtime-api",
+./Cargo.lock:1652: "aws-smithy-types",
+./Cargo.lock:1669:name = "aws-smithy-json"
+./Cargo.lock:1674: "aws-smithy-types",
+./Cargo.lock:1678:name = "aws-smithy-observability"
+./Cargo.lock:1683: "aws-smithy-runtime-api",
+./Cargo.lock:1687:name = "aws-smithy-query"
+./Cargo.lock:1692: "aws-smithy-types",
+./Cargo.lock:1697:name = "aws-smithy-runtime"
+./Cargo.lock:1702: "aws-smithy-async",
+./Cargo.lock:1703: "aws-smithy-http",
+./Cargo.lock:1704: "aws-smithy-http-client",
+./Cargo.lock:1705: "aws-smithy-observability",
+./Cargo.lock:1706: "aws-smithy-runtime-api",
+./Cargo.lock:1707: "aws-smithy-types",
+./Cargo.lock:1722:name = "aws-smithy-runtime-api"
+./Cargo.lock:1727: "aws-smithy-async",
+./Cargo.lock:1728: "aws-smithy-runtime-api-macros",
+./Cargo.lock:1729: "aws-smithy-types",
+./Cargo.lock:1740:name = "aws-smithy-runtime-api-macros"
+./Cargo.lock:1751:name = "aws-smithy-types"
+./Cargo.lock:1777:name = "aws-smithy-xml"
+./Cargo.lock:1786:name = "aws-types"
+./Cargo.lock:1791: "aws-credential-types",
+./Cargo.lock:1792: "aws-smithy-async",
+./Cargo.lock:1793: "aws-smithy-runtime-api",
+./Cargo.lock:1794: "aws-smithy-types",
+./Cargo.lock:7819:name = "mcp"
+./Cargo.lock:7834: "rmcp",
+./Cargo.lock:10991:name = "rmcp"
+./Cargo.lock:11006: "rmcp-macros",
+./Cargo.lock:11020:name = "rmcp-macros"
+./Cargo.lock:14283: "aws-config",
+./Cargo.lock:14284: "aws-credential-types",
+./Cargo.lock:14285: "aws-sdk-sts",
+./Cargo.lock:14286: "aws-types",
+./Cargo.lock:14394: "mcp",
+./Cargo.lock:14437: "rmcp",
+./crates/mcp/Cargo.toml:2:name = "mcp"
+./crates/mcp/Cargo.toml:20:rmcp = { workspace = true, features = ["client"] }
+./crates/mcp/Cargo.toml:36:rmcp = { workspace = true, features = ["client", "client-side-sse", "auth", "transport-streamable-http-client-reqwest", "transport-child-process"] }
+./crates/ai/Cargo.toml:49:rmcp.workspace = true
+
+## source/product/resource paths
+app/assets/bundled/svg/sentry.svg
+app/src/ai/agent_sdk/mcp.rs
+app/src/ai/agent_sdk/mcp_config.rs
+app/src/ai/blocklist/action_model/execute/call_mcp_tool.rs
+app/src/ai/blocklist/action_model/execute/call_mcp_tool_tests.rs
+app/src/ai/blocklist/action_model/execute/read_mcp_resource.rs
+app/src/ai/mcp
+app/src/ai/mcp/dummy_file_mcp_watcher.rs
+app/src/ai/mcp/file_mcp_watcher.rs
+app/src/ai/mcp/file_mcp_watcher_tests.rs
+app/src/drive/items/mcp_server.rs
+app/src/drive/items/mcp_server_collection.rs
+app/src/server/server_api/managed_mcp.rs
+app/src/settings_view/mcp_servers
+app/src/settings_view/mcp_servers/destructive_mcp_confirmation_dialog.rs
+app/src/settings_view/mcp_servers_page.rs
+app/src/settings_view/mcp_servers_page_tests.rs
+app/src/tui/mcp.rs
+app/src/tui/mcp_tests.rs
+crates/cloud_object_models/src/mcp.rs
+crates/graphql/src/api/mcp_gallery_template.rs
+crates/graphql/src/api/mutations/create_managed_mcp_client_config.rs
+crates/mcp
+crates/persistence/migrations/2025-04-04-215441_add_mcp_pane
+crates/persistence/migrations/2025-05-17-184527_add_mcp_environment_variable_table
+crates/persistence/migrations/2025-07-11-103143_add_running_mcp_servers_table
+crates/persistence/migrations/2025-10-17-175754_add_templatable_mcp_installation_table
+crates/persistence/migrations/2025-10-21-013820_recreate_mcp_server_installations
+crates/persistence/migrations/2025-11-10-162538_recreate_mcp_server_installations
+crates/warp_cli/src/mcp.rs
+crates/warp_cli/src/mcp_tests.rs
+crates/warp_tui/src/mcp_install_flow.rs
+crates/warp_tui/src/mcp_install_flow_tests.rs
+crates/warp_tui/src/mcp_menu.rs
+crates/warp_tui/src/mcp_menu_tests.rs
+resources/bundled/mcp_skills
+resources/bundled/skills/add-mcp-server
+resources/bundled/skills/factory-mcp
+resources/bundled/skills/tui-migrate-setup/scripts/merge_mcp_config.py
+resources/bundled/skills/tui-migrate-setup/tests/fixtures/destination_mcp.json
+resources/bundled/skills/tui-migrate-setup/tests/fixtures/source_mcp.json
+resources/bundled/skills/tui-migrate-setup/tests/test_merge_mcp_config.py
+
+## product bins
+crates/warp_tui/Cargo.toml:11:[[bin]]
+crates/warp_tui/Cargo.toml:12:name = "term4u-tui"
+crates/warp_tui/Cargo.toml:15:[[bin]]
+crates/warp_tui/Cargo.toml:16:name = "warp-tui-oss"
+app/Cargo.toml:16:[[bin]]
+app/Cargo.toml:17:name = "term4u"
+app/Cargo.toml:21:[[bin]]
+app/Cargo.toml:22:name = "warp-oss"
+app/Cargo.toml:26:[[bin]]

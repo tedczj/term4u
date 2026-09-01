@@ -1,0 +1,97 @@
+UTC 2026-09-01T08:20:04Z
+$ grep blacklist cargo-tree-local-only.txt
+1620:│   ├── rmcp v1.6.0
+1639:│   │   ├── rmcp-macros v1.6.0 (proc-macro)
+2119:├── aws-config v1.8.16
+2120:│   ├── aws-credential-types v1.2.14
+2121:│   │   ├── aws-smithy-async v1.2.14
+2125:│   │   ├── aws-smithy-runtime-api v1.12.0
+2126:│   │   │   ├── aws-smithy-async v1.2.14 (*)
+2127:│   │   │   ├── aws-smithy-runtime-api-macros v1.0.0 (proc-macro)
+2131:│   │   │   ├── aws-smithy-types v1.4.7
+2174:│   │   ├── aws-smithy-types v1.4.7 (*)
+2177:│   │   ├── aws-credential-types v1.2.14 (*)
+2179:│   │   │   ├── aws-credential-types v1.2.14 (*)
+2180:│   │   │   ├── aws-smithy-http v0.63.6
+2181:│   │   │   │   ├── aws-smithy-runtime-api v1.12.0 (*)
+2182:│   │   │   │   ├── aws-smithy-types v1.4.7 (*)
+2194:│   │   │   ├── aws-smithy-runtime-api v1.12.0 (*)
+2195:│   │   │   ├── aws-smithy-types v1.4.7 (*)
+2219:│   │   ├── aws-smithy-async v1.2.14 (*)
+2220:│   │   ├── aws-smithy-http v0.63.6 (*)
+2221:│   │   ├── aws-smithy-runtime v1.11.1
+2222:│   │   │   ├── aws-smithy-async v1.2.14 (*)
+2223:│   │   │   ├── aws-smithy-http v0.63.6 (*)
+2224:│   │   │   ├── aws-smithy-http-client v1.1.12
+2225:│   │   │   │   ├── aws-smithy-async v1.2.14 (*)
+2226:│   │   │   │   ├── aws-smithy-runtime-api v1.12.0 (*)
+2227:│   │   │   │   ├── aws-smithy-types v1.4.7 (*)
+2241:│   │   │   ├── aws-smithy-observability v0.2.6
+2242:│   │   │   │   └── aws-smithy-runtime-api v1.12.0 (*)
+2243:│   │   │   ├── aws-smithy-runtime-api v1.12.0 (*)
+2244:│   │   │   ├── aws-smithy-types v1.4.7 (*)
+2256:│   │   ├── aws-smithy-runtime-api v1.12.0 (*)
+2257:│   │   ├── aws-smithy-types v1.4.7 (*)
+2258:│   │   ├── aws-types v1.3.15
+2259:│   │   │   ├── aws-credential-types v1.2.14 (*)
+2260:│   │   │   ├── aws-smithy-async v1.2.14 (*)
+2261:│   │   │   ├── aws-smithy-runtime-api v1.12.0 (*)
+2262:│   │   │   ├── aws-smithy-types v1.4.7 (*)
+2273:│   ├── aws-sdk-signin v1.9.0
+2274:│   │   ├── aws-credential-types v1.2.14 (*)
+2276:│   │   ├── aws-smithy-async v1.2.14 (*)
+2277:│   │   ├── aws-smithy-http v0.63.6 (*)
+2278:│   │   ├── aws-smithy-json v0.62.5
+2279:│   │   │   └── aws-smithy-types v1.4.7 (*)
+2280:│   │   ├── aws-smithy-observability v0.2.6 (*)
+2281:│   │   ├── aws-smithy-runtime v1.11.1 (*)
+2282:│   │   ├── aws-smithy-runtime-api v1.12.0 (*)
+2283:│   │   ├── aws-smithy-types v1.4.7 (*)
+2284:│   │   ├── aws-types v1.3.15 (*)
+2291:│   ├── aws-sdk-sso v1.98.0
+2292:│   │   ├── aws-credential-types v1.2.14 (*)
+2294:│   │   ├── aws-smithy-async v1.2.14 (*)
+2295:│   │   ├── aws-smithy-http v0.63.6 (*)
+2296:│   │   ├── aws-smithy-json v0.62.5 (*)
+2297:│   │   ├── aws-smithy-observability v0.2.6 (*)
+2298:│   │   ├── aws-smithy-runtime v1.11.1 (*)
+2299:│   │   ├── aws-smithy-runtime-api v1.12.0 (*)
+2300:│   │   ├── aws-smithy-types v1.4.7 (*)
+2301:│   │   ├── aws-types v1.3.15 (*)
+2308:│   ├── aws-sdk-ssooidc v1.100.0
+2309:│   │   ├── aws-credential-types v1.2.14 (*)
+2311:│   │   ├── aws-smithy-async v1.2.14 (*)
+2312:│   │   ├── aws-smithy-http v0.63.6 (*)
+2313:│   │   ├── aws-smithy-json v0.62.5 (*)
+2314:│   │   ├── aws-smithy-observability v0.2.6 (*)
+2315:│   │   ├── aws-smithy-runtime v1.11.1 (*)
+2316:│   │   ├── aws-smithy-runtime-api v1.12.0 (*)
+2317:│   │   ├── aws-smithy-types v1.4.7 (*)
+2318:│   │   ├── aws-types v1.3.15 (*)
+2325:│   ├── aws-sdk-sts v1.103.0
+2326:│   │   ├── aws-credential-types v1.2.14 (*)
+2328:│   │   ├── aws-smithy-async v1.2.14 (*)
+2329:│   │   ├── aws-smithy-http v0.63.6 (*)
+2330:│   │   ├── aws-smithy-json v0.62.5 (*)
+2331:│   │   ├── aws-smithy-observability v0.2.6 (*)
+2332:│   │   ├── aws-smithy-query v0.60.15
+2333:│   │   │   ├── aws-smithy-types v1.4.7 (*)
+2335:│   │   ├── aws-smithy-runtime v1.11.1 (*)
+2336:│   │   ├── aws-smithy-runtime-api v1.12.0 (*)
+2337:│   │   ├── aws-smithy-types v1.4.7 (*)
+2338:│   │   ├── aws-smithy-xml v0.60.15
+2340:│   │   ├── aws-types v1.3.15 (*)
+2346:│   ├── aws-smithy-async v1.2.14 (*)
+2347:│   ├── aws-smithy-http v0.63.6 (*)
+2348:│   ├── aws-smithy-json v0.62.5 (*)
+2349:│   ├── aws-smithy-runtime v1.11.1 (*)
+2350:│   ├── aws-smithy-runtime-api v1.12.0 (*)
+2351:│   ├── aws-smithy-types v1.4.7 (*)
+2352:│   ├── aws-types v1.3.15 (*)
+2420:├── aws-credential-types v1.2.14 (*)
+2421:├── aws-sdk-sts v1.103.0 (*)
+2422:├── aws-types v1.3.15 (*)
+3026:├── mcp v0.1.0 (/Users/ted/workspace/term4u/crates/mcp)
+3038:│   ├── rmcp v1.6.0 (*)
+3195:├── rmcp v1.6.0 (*)
+grep_exit=0

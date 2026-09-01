@@ -1,0 +1,428 @@
+UTC 2026-09-01T08:19:37Z
+# Existing network/build-chain bypass inventory before phase 1
+
+## reqwest outside crates/http_client and approved local_control exception
+./crates/asset_cache/src/lib.rs:9:use reqwest::Url;
+./crates/asset_cache/src/lib.rs:147:            let response = reqwest::get(url).await?;
+./crates/asset_cache/src/lib.rs:149:            // On non-web platforms, reqwest expects that it is operating within
+./crates/asset_cache/src/lib.rs:151:            // so reqwest's expectations are met.
+./crates/asset_cache/src/lib.rs:152:            let response = async_compat::Compat::new(async move { reqwest::get(url).await }).await?;
+./crates/warp_errors/src/lib.rs:15:// dependencies (reqwest/tokio/websocket), so they are feature-gated and enabled by `warp_core`;
+./crates/warp_errors/src/lib.rs:17:#[cfg(feature = "reqwest-errors")]
+./crates/warp_errors/src/lib.rs:18:mod reqwest;
+./crates/warp_errors/src/reqwest.rs:5:impl ErrorExt for reqwest::Error {
+./crates/warp_errors/src/reqwest.rs:47:register_error!(reqwest::Error);
+./crates/warp_multi_agent_client/src/lib.rs:24:    EventSource(Box<reqwest_eventsource::Error>),
+./crates/warp_multi_agent_client/src/lib.rs:83:            Ok(reqwest_eventsource::Event::Message(message_event)) => {
+./crates/warp_multi_agent_client/src/lib.rs:86:            Ok(reqwest_eventsource::Event::Open) => None,
+./crates/ui_components/examples/library.rs:39:    // Initialize the TLS provider so reqwest can make HTTPS requests.
+./app/src/integration_testing/agent_mode/llm_judge/llm_generate.rs:2:use reqwest::blocking::Client;
+./app/src/integration_testing/agent_mode/llm_judge/mod.rs:5:use reqwest::blocking::Client;
+./crates/warp_server_client/src/network_logging.rs:128:        request: &reqwest::Request,
+./crates/warp_server_client/src/network_logging.rs:140:    pub fn response(response: &reqwest::Response, timestamp: DateTime<FixedOffset>) -> Self {
+./crates/warp_server_client/src/network_logging.rs:149:    /// tests where we don't have a real `reqwest` request/response handy.
+./crates/warp_server_client/src/base_client.rs:391:            if let Err(reqwest_eventsource::Error::InvalidStatusCode(status, ref response)) = event
+./crates/graphql/src/client.rs:6:use reqwest::header::CONTENT_TYPE;
+./crates/graphql/src/client.rs:45:    RequestError(#[source] reqwest::Error),
+./crates/graphql/src/client.rs:56:    ResponseError(#[source] reqwest::Error),
+./crates/graphql/src/client.rs:94:) -> Result<Request, reqwest::Error>
+./app/src/server/server_api.rs:36:use reqwest::StatusCode;
+./app/src/server/server_api.rs:129:/// * Using `reqwest` decoding utilities
+./app/src/server/server_api.rs:135:    Transport(reqwest::Error),
+./app/src/server/server_api.rs:155:    Transport(#[source] reqwest::Error),
+./app/src/server/server_api.rs:203:impl From<reqwest::Error> for AIApiError {
+./app/src/server/server_api.rs:204:    fn from(err: reqwest::Error) -> Self {
+./app/src/server/server_api.rs:216:    /// Converts a reqwest error to an AIApiError, using response headers to distinguish
+./app/src/server/server_api.rs:219:        err: reqwest::Error,
+./app/src/server/server_api.rs:232:    /// Converts a transport-level reqwest error (no HTTP response) to an AIApiError.
+./app/src/server/server_api.rs:233:    fn from_transport_error(err: reqwest::Error) -> Self {
+./app/src/server/server_api.rs:234:        // Unfortunately, `reqwest` reports some non-decoding errors as decoding errors (e.g.
+./app/src/server/server_api.rs:283:        err: reqwest_eventsource::Error,
+./app/src/server/server_api.rs:286:            reqwest_eventsource::Error::InvalidStatusCode(
+./app/src/server/server_api.rs:294:            reqwest_eventsource::Error::InvalidStatusCode(status, res) => Self::ErrorStatus(
+./app/src/server/server_api.rs:300:            reqwest_eventsource::Error::Transport(err) => Self::from_transport_error(err),
+./app/src/server/server_api.rs:303:                // On WASM, `reqwest_eventsource::Error` doesn't implement `Into<anyhow::Error>` or
+./app/src/server/server_api.rs:478:    /// The returned `EventSourceStream` yields `reqwest_eventsource::Event`
+./app/src/server/sync_queue.rs:1681:            if let Some(err) = cause.downcast_ref::<reqwest::Error>() {
+./app/src/server/server_api/presigned_upload_tests.rs:159:/// a multipart payload can be asserted without depending on reqwest's boundary.
+./app/src/server/server_api/presigned_upload.rs:119:    /// Consume this body and produce a `reqwest::Body` for the upload
+./app/src/server/server_api/presigned_upload.rs:121:    fn into_reqwest_body(self) -> impl Future<Output = Result<reqwest::Body>> + Send;
+./app/src/server/server_api/presigned_upload.rs:135:    async fn into_reqwest_body(self) -> Result<reqwest::Body> {
+./app/src/server/server_api/presigned_upload.rs:136:        Ok(reqwest::Body::from(self))
+./app/src/server/server_api/presigned_upload.rs:160:        // safe: reqwest will still stream the actual bytes, and any PUT paths
+./app/src/server/server_api/presigned_upload.rs:192:    async fn into_reqwest_body(self) -> Result<reqwest::Body> {
+./app/src/server/server_api/presigned_upload.rs:196:        Ok(reqwest::Body::wrap_stream(
+./app/src/server/server_api/presigned_upload.rs:261:    body: impl Into<reqwest::Body>,
+./app/src/server/server_api/presigned_upload.rs:299:        let reqwest_body = body.into_reqwest_body().await?;
+./app/src/server/server_api/presigned_upload.rs:300:        send_upload_request(http_client, target, reqwest_body, length, error_context).await
+./app/src/server/server_api/presigned_upload.rs:346:) -> Result<reqwest::multipart::Form> {
+./app/src/server/server_api/presigned_upload.rs:347:    use reqwest::multipart::{Form, Part};
+./app/src/server/server_api/presigned_upload.rs:359:    let content_body = body.into_reqwest_body().await?;
+./app/src/ai/agent_events/driver.rs:267:                Ok(reqwest_eventsource::Event::Open) => Some(Ok(AgentEventSourceItem::Open)),
+./app/src/ai/agent_events/driver.rs:268:                Ok(reqwest_eventsource::Event::Message(message)) => {
+./app/src/ai/agent_events/driver.rs:279:                        reqwest_eventsource::Error::InvalidStatusCode(status_code, response) => {
+./app/src/ai/agent_events/driver.rs:293:                        reqwest_eventsource::Error::Transport(err) => {
+./app/src/ai/agent_events/message_hydrator.rs:10:use reqwest::Error as ReqwestError;
+./app/src/ai/agent_events/message_hydrator.rs:232:            .downcast_ref::<ReqwestError>()
+./app/src/ai/agent_events/message_hydrator.rs:247:fn is_transient_message_read_transport_error(err: &ReqwestError) -> bool {
+./crates/mcp/src/oauth.rs:263:    http_client: reqwest::Client,
+./crates/mcp/src/oauth.rs:265:) -> Result<(AuthClient<reqwest::Client>, bool), AuthError> {
+./crates/mcp/src/sse_transport/reqwest_impl.rs:2:// originally located at `crates/rmcp/src/transport/common/reqwest/sse_client.rs`.
+./crates/mcp/src/sse_transport/reqwest_impl.rs:10:use reqwest::header::ACCEPT;
+./crates/mcp/src/sse_transport/reqwest_impl.rs:18:impl From<reqwest::Error> for SseTransportError<reqwest::Error> {
+./crates/mcp/src/sse_transport/reqwest_impl.rs:19:    fn from(e: reqwest::Error) -> Self {
+./crates/mcp/src/sse_transport/reqwest_impl.rs:24:impl SseClient for reqwest::Client {
+./crates/mcp/src/sse_transport/reqwest_impl.rs:25:    type Error = reqwest::Error;
+./crates/mcp/src/sse_transport/reqwest_impl.rs:62:        match response.headers().get(reqwest::header::CONTENT_TYPE) {
+./crates/mcp/src/sse_transport/reqwest_impl.rs:79:impl SseClientTransport<reqwest::Client> {
+./crates/mcp/src/sse_transport/reqwest_impl.rs:80:    /// Creates a new transport using reqwest with the specified SSE endpoint.
+./crates/mcp/src/sse_transport/reqwest_impl.rs:83:    /// reqwest client.
+./crates/mcp/src/sse_transport/reqwest_impl.rs:86:    ) -> Result<Self, SseTransportError<reqwest::Error>> {
+./crates/mcp/src/sse_transport/reqwest_impl.rs:88:            reqwest::Client::default(),
+./crates/mcp/src/sse_transport/mod.rs:6:mod reqwest_impl;
+./crates/mcp/src/runtime.rs:23:type ReqwestHttpTransport = rmcp::transport::StreamableHttpClientTransport<reqwest::Client>;
+./crates/mcp/src/runtime.rs:24:type ReqwestSseTransport = crate::sse_transport::SseClientTransport<reqwest::Client>;
+./crates/mcp/src/runtime.rs:76:fn build_header_map(headers: &HashMap<String, String>) -> reqwest::header::HeaderMap {
+./crates/mcp/src/runtime.rs:80:/// Builds a reqwest client with custom headers for MCP HTTP/SSE connections.
+./crates/mcp/src/runtime.rs:84:) -> Result<reqwest::Client, rmcp::RmcpError> {
+./crates/mcp/src/runtime.rs:87:    reqwest::Client::builder()
+./crates/mcp/src/runtime.rs:91:            rmcp::RmcpError::transport_creation::<ReqwestHttpTransport>(format!(
+./crates/mcp/src/runtime.rs:274:                    .map_err(rmcp::RmcpError::transport_creation::<ReqwestSseTransport>)?;
+./crates/mcp/src/runtime.rs:287:                                rmcp::RmcpError::transport_creation::<ReqwestSseTransport>(e)
+./crates/mcp/src/runtime.rs:299:                        .map_err(rmcp::RmcpError::transport_creation::<ReqwestSseTransport>)?
+./crates/mcp/src/runtime.rs:340:    Http(Option<rmcp::transport::auth::AuthClient<reqwest::Client>>),
+./crates/mcp/src/runtime.rs:342:    Sse(Option<rmcp::transport::auth::AuthClient<reqwest::Client>>),
+./crates/mcp/src/runtime.rs:357:    use reqwest::StatusCode;
+./crates/mcp/src/runtime.rs:359:    fn unexpected_error(status: reqwest::StatusCode) -> rmcp::RmcpError {
+./crates/mcp/src/runtime.rs:360:        rmcp::RmcpError::transport_creation::<ReqwestHttpTransport>(format!(
+./crates/mcp/src/runtime.rs:369:                return Err(rmcp::RmcpError::transport_creation::<ReqwestHttpTransport>(
+./crates/mcp/src/runtime.rs:384:                    .map_err(rmcp::RmcpError::transport_creation::<ReqwestHttpTransport>)?;
+./crates/mcp/src/runtime.rs:417:    auth_client: Option<&rmcp::transport::auth::AuthClient<reqwest::Client>>,
+./crates/mcp/src/runtime.rs:418:) -> Result<reqwest::StatusCode, rmcp::RmcpError> {
+./crates/mcp/src/runtime.rs:439:            .map_err(rmcp::RmcpError::transport_creation::<ReqwestHttpTransport>)?;
+./crates/mcp/src/runtime.rs:446:        .map_err(rmcp::RmcpError::transport_creation::<ReqwestHttpTransport>)?;
+./crates/mcp/src/oauth_tests.rs:226:                    reqwest::get(callback_url)
+./crates/mcp/src/oauth_tests.rs:237:        make_authenticated_client(&format!("{origin}/mcp"), reqwest::Client::new(), context)
+./app/src/ai/agent/mod.rs:760:    fn is_transient_network_transport_error(error: &reqwest::Error) -> bool {
+./app/src/ai/agent/mod.rs:761:        // If reqwest has an HTTP status, the server responded. Preserve the existing generic
+./crates/warpui_core/src/core/app.rs:741:    /// that `warpui_core` does not depend on `reqwest`.
+./crates/warpui_core/src/core/app.rs:870:    /// Used to load fallback fonts without pulling `reqwest` into `warpui_core`.
+./app/src/ai/agent_sdk/test_support.rs:3:/// Build a reqwest-backed `http_client::Client` with TLS/proxy disabled and the connection
+./app/src/ai/agent_sdk/test_support.rs:6:/// The pool setting is the key bit: reqwest's default 90-second idle timeout holds sockets
+./app/src/ai/agent_sdk/test_support.rs:10:    let builder = reqwest::ClientBuilder::new()
+./app/src/ai/agent_sdk/ambient.rs:1146:                Some(Ok(reqwest_eventsource::Event::Open)) => {}
+./app/src/ai/agent_sdk/ambient.rs:1147:                Some(Ok(reqwest_eventsource::Event::Message(message))) => {
+./app/src/ai/agent_sdk/driver/snapshot_tests.rs:29:// reqwest round-trip, retry classification, manifest folding — runs as in production.
+
+## direct socket/listener/DNS APIs
+crates/serve-wasm/src/main.rs:47:    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
+crates/editor/test_data/test_rust_file.rs:13://! this module: [`File`]s, [`TcpStream`]s, and sometimes even [`Vec<T>`]s. For
+crates/editor/test_data/test_rust_file.rs:283://! [`TcpStream`]: crate::net::TcpStream
+crates/editor/test_data/test_rust_file.rs:691:    ///    on Linux, this method will call the `recv` syscall for a [`TcpStream`],
+crates/editor/test_data/test_rust_file.rs:737:    /// [`TcpStream`]: crate::net::TcpStream
+app/src/local_control/mod.rs:213:            .block_on(tokio::net::TcpListener::bind(SocketAddr::from((
+app/src/local_control/mod.rs:316:) -> Result<tokio::net::UnixListener, ControlError> {
+app/src/local_control/mod.rs:327:    let listener = tokio::net::UnixListener::bind(&socket_path).map_err(|err| {
+app/src/local_control/mod.rs:346:async fn run_credential_broker(listener: tokio::net::UnixListener, state: ControlServerState) {
+app/src/local_control/mod.rs:366:    mut stream: tokio::net::UnixStream,
+app/src/local_control/mod.rs:410:fn ensure_same_user_peer(stream: &tokio::net::UnixStream) -> Result<(), ControlError> {
+app/src/local_control/mod.rs:416:fn ensure_peer_uid(stream: &tokio::net::UnixStream, expected_uid: u32) -> Result<(), ControlError> {
+app/src/local_control/mod_tests.rs:39:    let (stream, _peer) = tokio::net::UnixStream::pair().expect("socket pair");
+app/src/local_control/mod_tests.rs:53:    let (stream, _peer) = tokio::net::UnixStream::pair().expect("socket pair");
+crates/websocket/src/proxy.rs:19:use tokio::net::TcpStream;
+crates/websocket/src/proxy.rs:68:/// the underlying `TcpStream` via the upgrade mechanism.
+crates/websocket/src/proxy.rs:72:) -> anyhow::Result<TcpStream> {
+crates/websocket/src/proxy.rs:83:            let connect = TcpStream::connect((&*proxy.host, proxy.port));
+crates/websocket/src/proxy.rs:139:    // 5. Downcast back to the underlying TcpStream.
+crates/websocket/src/proxy.rs:140:    let downcast = upgraded.downcast::<TokioIo<TcpStream>>().map_err(|_| {
+crates/websocket/src/proxy.rs:141:        anyhow::anyhow!("Failed to downcast upgraded proxy connection to TcpStream")
+crates/websocket/src/proxy.rs:148:async fn connect_to_loopback_proxy(proxy: &ProxyInfo) -> std::io::Result<TcpStream> {
+crates/websocket/src/proxy.rs:154:        match TcpStream::connect(address).await {
+crates/websocket/src/native.rs:13:use tokio::net::TcpStream;
+crates/websocket/src/native.rs:22:pub struct WebSocket(WebSocketStream<ClientStream<TcpStream>>);
+crates/websocket/src/native.rs:66:) -> anyhow::Result<WebSocketStream<ClientStream<TcpStream>>> {
+crates/websocket/src/native.rs:83:        match TcpStream::connect(address).await {
+crates/http_client/src/offline_tests.rs:5:use tokio::net::TcpListener;
+crates/http_client/src/offline_tests.rs:22:    let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+crates/websocket/src/proxy_tests.rs:4:use tokio::net::TcpListener;
+crates/websocket/src/proxy_tests.rs:334:    let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+crates/websocket/src/proxy_tests.rs:371:    let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+crates/websocket/src/proxy_tests.rs:397:    let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+crates/websocket/src/proxy_tests.rs:432:    let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+crates/http_server/src/lib.rs:52:            let listener = match tokio::net::TcpListener::bind(addr).await {
+crates/ai/src/grok_subscription/oauth.rs:27:use std::net::{Shutdown, TcpListener, TcpStream};
+crates/ai/src/grok_subscription/oauth.rs:77:    listener: TcpListener,
+crates/ai/src/grok_subscription/oauth.rs:255:fn bind_callback_listener() -> anyhow::Result<TcpListener> {
+crates/ai/src/grok_subscription/oauth.rs:256:    let listener = TcpListener::bind((REDIRECT_HOST, REDIRECT_PORT)).with_context(|| {
+crates/ai/src/grok_subscription/oauth.rs:272:    listener: TcpListener,
+crates/ai/src/grok_subscription/oauth.rs:322:    listener: &TcpListener,
+crates/ai/src/grok_subscription/oauth.rs:357:    mut stream: TcpStream,
+crates/ai/src/grok_subscription/oauth.rs:436:    stream: &mut TcpStream,
+crates/ai/src/grok_subscription/oauth.rs:486:fn write_response(stream: &mut TcpStream, status: &str, body: &str, origin: Option<&str>) {
+crates/ai/src/grok_subscription/oauth_tests.rs:61:fn bind_test_listener() -> (TcpListener, std::net::SocketAddr) {
+crates/ai/src/grok_subscription/oauth_tests.rs:67:        let Ok(listener) = TcpListener::bind((REDIRECT_HOST, port)) else {
+crates/ai/src/grok_subscription/oauth_tests.rs:114:        TcpListener::bind(address).expect("cancelled callback listener should release its port");
+crates/ai/src/grok_subscription/oauth_tests.rs:131:        let mut stream = TcpStream::connect(address).expect("test browser should connect");
+crates/ai/src/grok_subscription/oauth_tests.rs:155:    TcpListener::bind(address).expect("released listener should free its port immediately");
+crates/ai/src/grok_subscription/oauth_tests.rs:178:        let mut stream = TcpStream::connect(address).expect("test browser should connect");
+crates/ai/src/grok_subscription/oauth_tests.rs:211:fn accept_test_connection(listener: &TcpListener) -> TcpStream {
+crates/ai/src/grok_subscription/oauth_tests.rs:249:    let stalled_client = TcpStream::connect(address).expect("stalled client should connect");
+crates/local_control/src/client.rs:29:use std::os::unix::net::UnixStream;
+crates/local_control/src/client.rs:123:    let mut stream = UnixStream::connect(path).map_err(|err| {
+crates/local_control/src/client_tests.rs:18:    let listener = std::os::unix::net::UnixListener::bind(&socket_path).expect("broker binds");
+crates/mcp/src/oauth/loopback.rs:6:use tokio::net::TcpListener;
+crates/mcp/src/oauth/loopback.rs:16:    listener: TcpListener,
+crates/mcp/src/oauth/loopback.rs:22:        let listener = TcpListener::bind(("127.0.0.1", 0))
+crates/mcp/src/oauth_tests.rs:9:use tokio::net::TcpStream;
+crates/mcp/src/oauth_tests.rs:33:    let mut stream = TcpStream::connect(address)
+crates/mcp/src/oauth_tests.rs:163:    let listener = tokio::net::TcpListener::bind(("127.0.0.1", 0))
+
+## font URL fallback
+crates/asset_cache/src/lib.rs:34:pub fn url_source(url: impl Into<String>) -> AssetSource {
+crates/asset_cache/src/lib.rs:108:pub fn url_source_with_persistence(url: impl Into<String>, cache_dir: &Path) -> AssetSource {
+crates/asset_cache/src/lib.rs:136:            Some(dir) => url_source_with_persistence(url, dir),
+crates/asset_cache/src/lib.rs:137:            None => url_source(url),
+crates/editor/src/content/edit.rs:86:        asset_cache::url_source(source)
+crates/editor/src/content/edit.rs:127:        asset_cache::url_source(source)
+crates/editor/src/content/edit.rs:444:                    .push((styling_start..url_start, base_style_and_font));
+app/src/settings_view/main_page.rs:648:                asset_cache::url_source_with_persistence(url, &warp_core::paths::cache_dir())
+app/src/notebooks/editor/view.rs:1117:            Self::handle_fallback_font_event,
+app/src/notebooks/editor/view.rs:1305:    fn handle_fallback_font_event(
+app/src/font_fallback.rs:8:fn url_for_font(family_name: &str, font_file: &str) -> String {
+app/src/font_fallback.rs:20:        font_urls: Arc::new(vec![
+app/src/font_fallback.rs:21:            url_for_font("hack-nerd-font", "HackNerdFont-Bold.ttf"),
+app/src/font_fallback.rs:22:            url_for_font("hack-nerd-font", "HackNerdFont-BoldItalic.ttf"),
+app/src/font_fallback.rs:23:            url_for_font("hack-nerd-font", "HackNerdFont-Italic.ttf"),
+app/src/font_fallback.rs:24:            url_for_font("hack-nerd-font", "HackNerdFont-Regular.ttf"),
+app/src/font_fallback.rs:29:        font_urls: Arc::new(vec![url_for_font(
+app/src/font_fallback.rs:36:        font_urls: Arc::new(vec![
+app/src/font_fallback.rs:37:            url_for_font("noto-sans-arabic", "NotoSansArabic-Bold.ttf"),
+app/src/font_fallback.rs:38:            url_for_font("noto-sans-arabic", "NotoSansArabic-Regular.ttf"),
+app/src/font_fallback.rs:43:        font_urls: Arc::new(vec![
+app/src/font_fallback.rs:44:            url_for_font("noto-sans-bengali", "NotoSansBengali-Bold.ttf"),
+app/src/font_fallback.rs:45:            url_for_font("noto-sans-bengali", "NotoSansBengali-Regular.ttf"),
+app/src/font_fallback.rs:50:        font_urls: Arc::new(vec![
+app/src/font_fallback.rs:51:            url_for_font("noto-sans-devanagari", "NotoSansDevanagari-Bold.ttf"),
+app/src/font_fallback.rs:52:            url_for_font("noto-sans-devanagari", "NotoSansDevanagari-Regular.ttf"),
+app/src/font_fallback.rs:57:        font_urls: Arc::new(vec![
+app/src/font_fallback.rs:58:            url_for_font("noto-sans-hk", "NotoSansHK-Bold.ttf"),
+app/src/font_fallback.rs:59:            url_for_font("noto-sans-hk", "NotoSansHK-Regular.ttf"),
+app/src/font_fallback.rs:64:        font_urls: Arc::new(vec![
+app/src/font_fallback.rs:65:            url_for_font("noto-sans-jp", "NotoSansJP-Bold.ttf"),
+app/src/font_fallback.rs:66:            url_for_font("noto-sans-jp", "NotoSansJP-Regular.ttf"),
+app/src/font_fallback.rs:71:        font_urls: Arc::new(vec![
+app/src/font_fallback.rs:72:            url_for_font("noto-sans-kr", "NotoSansKR-Bold.ttf"),
+app/src/font_fallback.rs:73:            url_for_font("noto-sans-kr", "NotoSansKR-Regular.ttf"),
+app/src/font_fallback.rs:78:        font_urls: Arc::new(vec![
+app/src/font_fallback.rs:79:            url_for_font("noto-sans-sc", "NotoSansSC-Bold.ttf"),
+app/src/font_fallback.rs:80:            url_for_font("noto-sans-sc", "NotoSansSC-Regular.ttf"),
+app/src/font_fallback.rs:85:        font_urls: Arc::new(vec![url_for_font(
+app/src/font_fallback.rs:92:        font_urls: Arc::new(vec![
+app/src/font_fallback.rs:93:            url_for_font("noto-sans-symbols", "NotoSansSymbols-Bold.ttf"),
+app/src/font_fallback.rs:94:            url_for_font("noto-sans-symbols", "NotoSansSymbols-Regular.ttf"),
+app/src/font_fallback.rs:99:        font_urls: Arc::new(vec![
+app/src/font_fallback.rs:100:            url_for_font("noto-sans-tc", "NotoSansTC-Bold.ttf"),
+app/src/font_fallback.rs:101:            url_for_font("noto-sans-tc", "NotoSansTC-Regular.ttf"),
+app/src/font_fallback.rs:106:pub fn fallback_font_fn(ch: char) -> Option<ExternalFontFamily> {
+app/src/appearance.rs:378:                    .glyph_for_char(font_id, 'm', false /* include_fallback_fonts */);
+app/src/lib.rs:1276:    ctx.set_fallback_font_source_provider(|url| ::asset_cache::url_source(url));
+app/src/lib.rs:1953:    // For now, we only specify application-level fallback fonts on web.
+app/src/lib.rs:1955:    ctx.set_fallback_font_fn(font_fallback::fallback_font_fn);
+crates/ui_components/examples/library.rs:679:                                    asset_source: ::asset_cache::url_source(
+app/src/workspace/view/vertical_tabs_tests.rs:23:    terminal_title_fallback_font, uses_outer_group_container, visible_pane_ids_for_detail_target,
+app/src/workspace/view/vertical_tabs_tests.rs:212:        terminal_title_fallback_font(&agent_text),
+app/src/workspace/view/vertical_tabs_tests.rs:265:        terminal_title_fallback_font(&agent_text),
+app/src/workspace/view/vertical_tabs_tests.rs:291:        terminal_title_fallback_font(&agent_text),
+app/src/ui_components/avatar.rs:53:                let mut image = Image::new(asset_cache::url_source(url), CacheOption::BySize)
+app/src/workspace/view/vertical_tabs.rs:155:fn terminal_title_fallback_font(agent_text: &TerminalAgentText) -> TerminalPrimaryLineFont {
+app/src/workspace/view/vertical_tabs.rs:3802:                    terminal_title_fallback_font(&agent_text),
+app/src/workspace/view/vertical_tabs.rs:4105:                terminal_title_fallback_font(&agent_text),
+app/src/workspace/view/vertical_tabs.rs:5286:            terminal_title_fallback_font(&agent_text),
+app/src/workspace/view/vertical_tabs.rs:6837:        terminal_title_fallback_font(&agent_text),
+app/src/workspace/view/vertical_tabs.rs:7350:                        terminal_title_fallback_font(&agent_text),
+app/src/ai/artifacts/mod.rs:422:                asset_source: asset_cache::url_source(data.download_url),
+crates/asset_macro/src/lib.rs:110:        ::asset_cache::url_source(::warp_util::assets::make_absolute_url( #url ))
+crates/warpui_core/src/fonts/external_fallback.rs:16:    pub font_urls: Arc<Vec<String>>,
+crates/warpui_core/src/fonts/external_fallback.rs:29:/// Specifies the different locations that can request a fallback font. Used to
+crates/warpui_core/src/fonts/external_fallback.rs:30:/// clear the appropriate cache when a fallback font is loaded.
+crates/warpui_core/src/fonts/external_fallback.rs:57:/// Handles notifying listeners when an external fallback font has loaded.
+crates/warpui_core/src/fonts/external_fallback.rs:65:    pub(crate) fn loaded_fallback_font(&mut self, ctx: &mut ModelContext<Self>) {
+crates/warpui_core/src/fonts/external_fallback.rs:78:        self.fallback_font_fn
+crates/warpui_core/src/fonts/external_fallback.rs:80:            .and_then(|fallback_font_fn| (fallback_font_fn)(ch))
+crates/warpui_core/src/fonts/external_fallback.rs:83:    /// Checks if the application specified a fallback font for the given char.
+crates/warpui_core/src/fonts/external_fallback.rs:84:    /// If yes, the UI framework will lazy load the fallback font and trigger
+crates/warpui_core/src/fonts/external_fallback.rs:86:    pub(crate) fn request_fallback_font_for_char(
+crates/warpui_core/src/fonts/external_fallback.rs:91:        let Some(fallback_font_family) = self.app_fallback_family_for_char(ch) else {
+crates/warpui_core/src/fonts/external_fallback.rs:97:            .contains_key(fallback_font_family.name)
+crates/warpui_core/src/fonts/external_fallback.rs:103:            .entry(fallback_font_family)
+crates/warpui_core/src/fonts/external_fallback.rs:122:    pub(crate) fn set_fallback_font_fn(
+crates/warpui_core/src/fonts/external_fallback.rs:124:        fallback_font_fn: Box<dyn Fn(char) -> Option<ExternalFontFamily> + Send + Sync>,
+crates/warpui_core/src/fonts/external_fallback.rs:126:        self.font_fallback_cache.fallback_font_fn = Some(fallback_font_fn);
+crates/warpui_core/src/fonts/external_fallback.rs:133:    /// Checks for a matching glyph in the fallback fonts loaded by the application.
+crates/warpui_core/src/fonts/external_fallback.rs:146:        let fallback_font = self.select_font(*fallback_family, properties);
+crates/warpui_core/src/fonts/external_fallback.rs:148:        self.glyph_for_char(fallback_font, ch, false)
+crates/warpui_core/src/fonts/text_layout_system.rs:16:    /// Checks if the application specified a fallback font for the given char.
+crates/warpui_core/src/fonts/text_layout_system.rs:17:    /// If yes, the UI framework will lazy load the fallback font and trigger
+crates/warpui_core/src/fonts/text_layout_system.rs:19:    pub(crate) fn request_fallback_font_for_char(
+crates/warpui_core/src/fonts/text_layout_system.rs:24:        self.cache.request_fallback_font_for_char(ch, source)
+crates/warpui_core/src/platform/mod.rs:385:    fn fallback_fonts(&self, character: char, font_id: FontId) -> Vec<FontId>;
+crates/warpui_core/src/image_cache.rs:29:    load_svg_fallback_fonts(&mut fontdb);
+crates/warpui_core/src/image_cache.rs:33:fn load_svg_fallback_fonts(fontdb: &mut usvg::fontdb::Database) {
+crates/warpui_core/src/fonts.rs:214:    glyphs_by_char: DashMap<(FontId, char), Option<(GlyphId, FontId)>>, // Also caching font id here for possible fallback fonts.
+crates/warpui_core/src/fonts.rs:227:    fallback_font_fn: Option<Box<dyn Fn(char) -> Option<ExternalFontFamily> + Send + Sync>>,
+crates/warpui_core/src/fonts.rs:439:    /// Checks for a matching glyph in the system fallback fonts.
+crates/warpui_core/src/fonts.rs:442:            .fallback_fonts(ch, font)
+crates/warpui_core/src/fonts.rs:449:    // a fallback font if the font does not contain the glyph
+crates/warpui_core/src/fonts.rs:454:        include_fallback_fonts: bool,
+crates/warpui_core/src/fonts.rs:456:        let mut should_check_fallback_fonts = false;
+crates/warpui_core/src/fonts.rs:468:                if include_fallback_fonts {
+crates/warpui_core/src/fonts.rs:469:                    // For getting glyph id from fallback fonts, we should drop the entry
+crates/warpui_core/src/fonts.rs:471:                    should_check_fallback_fonts = true;
+crates/warpui_core/src/fonts.rs:476:        if should_check_fallback_fonts {
+crates/warpui_core/src/fonts.rs:477:            self.font_fallback_cache.request_fallback_font_for_char(
+crates/warpui_core/src/core/app.rs:740:    /// fallback font from a URL string. Injected by the application layer so
+crates/warpui_core/src/core/app.rs:743:    fallback_font_source_provider: Option<Box<dyn Fn(&str) -> AssetSource>>,
+crates/warpui_core/src/core/app.rs:840:            fallback_font_source_provider: None,
+crates/warpui_core/src/core/app.rs:870:    /// Used to load fallback fonts without pulling `reqwest` into `warpui_core`.
+crates/warpui_core/src/core/app.rs:871:    pub fn set_fallback_font_source_provider(
+crates/warpui_core/src/core/app.rs:875:        self.fallback_font_source_provider = Some(Box::new(provider));
+crates/warpui_core/src/core/app.rs:3703:                    log::warn!("Unable to load requested fallback font because it was evicted");
+crates/warpui_core/src/core/app.rs:3706:                    log::warn!("Unable to load requested fallback font: {e:?}");
+crates/warpui_core/src/core/app.rs:3742:                model.loaded_fallback_font(ctx);
+crates/warpui_core/src/core/app.rs:3780:        let Some(fallback_font_source_provider) = self.fallback_font_source_provider.as_ref()
+crates/warpui_core/src/core/app.rs:3785:                    "No fallback_font_source_provider registered; cannot load fallback fonts"
+crates/warpui_core/src/core/app.rs:3797:            let mut asset_sources = Vec::with_capacity(fallback_family.font_urls.len());
+crates/warpui_core/src/core/app.rs:3798:            let mut futures = Vec::with_capacity(fallback_family.font_urls.len());
+crates/warpui_core/src/core/app.rs:3799:            for fallback_font in fallback_family.font_urls.as_ref() {
+crates/warpui_core/src/core/app.rs:3800:                let asset_source = fallback_font_source_provider(fallback_font);
+crates/warpui_core/src/core/app.rs:4565:    /// A way for applications to specify custom fallback fonts.
+crates/warpui_core/src/core/app.rs:4571:    /// the fallback font function specifies a fallback font family, the font
+crates/warpui_core/src/core/app.rs:4574:    pub fn set_fallback_font_fn(
+crates/warpui_core/src/core/app.rs:4579:            cache.set_fallback_font_fn(Box::new(f));
+crates/warpui_core/src/platform/test/delegate.rs:545:    fn fallback_fonts(
+crates/warpui_core/src/text_layout.rs:196:                    text_layout_system.request_fallback_font_for_char(
+crates/warpui_core/src/text_layout.rs:259:                text_layout_system.request_fallback_font_for_char(
+crates/warpui/src/windowing/winit/fonts/linux.rs:135:    /// Returns a list of fallback fonts that match the `family_name` and given `properties`, in order of closeness.
+crates/warpui/src/windowing/winit/fonts/linux.rs:136:    pub fn fallback_fonts(
+crates/warpui/src/windowing/winit/fonts/linux.rs:156:        // reduces the overall set of fallback fonts we need to load.
+crates/warpui/src/windowing/winit/fonts/linux.rs:160:        let fallback_fonts = sort_fonts
+crates/warpui/src/windowing/winit/fonts/linux.rs:170:        Ok(fallback_fonts)
+crates/warpui/src/windowing/winit/fonts/windows.rs:123:    pub fn get_fallback_fonts_for_character(
+crates/warpui/src/windowing/winit/fonts/windows.rs:161:        // Load fallback fonts for the requested character.
+crates/warpui/src/windowing/winit/fonts/windows.rs:179:        let fallback_font_vec = fallback_result
+crates/warpui/src/windowing/winit/fonts/windows.rs:182:            .flat_map(|fallback_font| {
+crates/warpui/src/windowing/winit/fonts/windows.rs:184:                    fallback_font_path_handle(&fallback_font.font).or_else(|| {
+crates/warpui/src/windowing/winit/fonts/windows.rs:189:                        let handle = fallback_font.font.handle()?;
+crates/warpui/src/windowing/winit/fonts/windows.rs:196:        Ok(fallback_font_vec)
+crates/warpui/src/windowing/winit/fonts/windows.rs:256:/// fallback fonts returned by `IDWriteFontFallback::MapCharacters` against the system font
+crates/warpui/src/windowing/winit/fonts/windows.rs:258:fn fallback_font_path_handle(font: &font_kit::loaders::directwrite::Font) -> Option<FontHandle> {
+crates/warpui/src/windowing/winit/fonts.rs:297:    pub fn fallback_fonts(
+crates/warpui/src/windowing/winit/fonts.rs:302:        loader.fallback_fonts(family_name, properties)
+crates/warpui/src/windowing/winit/fonts.rs:322:    pub fn fallback_fonts(_family_name: &str, _properties: Properties) -> Result<Vec<FontHandle>> {
+crates/warpui/src/windowing/winit/fonts.rs:401:    fallback_fonts: DashMap<FontId, Vec<FontId>>,
+crates/warpui/src/windowing/winit/fonts.rs:503:            fallback_fonts: Default::default(),
+crates/warpui/src/windowing/winit/fonts.rs:807:    /// and `fallback_fonts`). Only removes faces that the per-face cache marks
+crates/warpui/src/windowing/winit/fonts.rs:854:                        self.fallback_fonts.remove(&font_id);
+crates/warpui/src/windowing/winit/fonts.rs:855:                        for mut entry in self.fallback_fonts.iter_mut() {
+crates/warpui/src/windowing/winit/fonts.rs:890:    /// Loads all of the fallback fonts for the `font_id` with a given `family_name` and set of `properties`.
+crates/warpui/src/windowing/winit/fonts.rs:891:    /// Noops if fallback fonts for the font are already loaded.
+crates/warpui/src/windowing/winit/fonts.rs:893:    fn load_fallback_fonts(&self, font_id: FontId, family_name: &str, properties: Properties) {
+crates/warpui/src/windowing/winit/fonts.rs:894:        if self.fallback_fonts.contains_key(&font_id) {
+crates/warpui/src/windowing/winit/fonts.rs:898:        if let Ok(fallback_fonts) = loader::fallback_fonts(family_name, properties) {
+crates/warpui/src/windowing/winit/fonts.rs:899:            let fallback_fonts = fallback_fonts
+crates/warpui/src/windowing/winit/fonts.rs:904:            self.fallback_fonts.insert(font_id, fallback_fonts);
+crates/warpui/src/windowing/winit/fonts.rs:908:    /// On Windows, this is a no-op. We retrieve fallback fonts dynamically as needed.
+crates/warpui/src/windowing/winit/fonts.rs:910:    fn load_fallback_fonts(&self, _font_id: FontId, _family_name: &str, _properties: Properties) {}
+crates/warpui/src/windowing/winit/fonts.rs:1197:    fn fallback_fonts(&self, character: char, font_id: FontId) -> Vec<FontId> {
+crates/warpui/src/windowing/winit/fonts.rs:1198:        self.text_layout_system.fallback_fonts(character, font_id)
+crates/warpui/src/windowing/winit/fonts.rs:1517:                self.load_fallback_fonts(best_match, &family_name, properties);
+crates/warpui/src/windowing/winit/fonts.rs:1525:    fn fallback_fonts(&self, _ch: char, font_id: FontId) -> Vec<FontId> {
+crates/warpui/src/windowing/winit/fonts.rs:1526:        self.fallback_fonts
+crates/warpui/src/windowing/winit/fonts.rs:1533:    fn fallback_fonts(&self, character: char, font_id: FontId) -> Vec<FontId> {
+crates/warpui/src/windowing/winit/fonts.rs:1534:        self.get_fallback_fonts_for_character(character, font_id)
+crates/warpui/src/windowing/winit/fonts.rs:1536:                log::warn!("Unable to fetch fallback fonts for character {character:?}: {err:?}");
+crates/warpui/examples/image/root_view.rs:31:        let asset_source = ::asset_cache::url_source(
+crates/warpui/src/platform/mac/fonts.rs:191:    fallback_fonts: DashMap<FontId, Arc<Vec<FontId>>>,
+crates/warpui/src/platform/mac/fonts.rs:275:            fallback_fonts: Default::default(),
+crates/warpui/src/platform/mac/fonts.rs:316:    pub fn fallback_fonts(&self, font_id: FontId) -> Vec<FontId> {
+crates/warpui/src/platform/mac/fonts.rs:317:        self.fallback_fonts
+crates/warpui/src/platform/mac/fonts.rs:364:        let mut fallback_fonts: Vec<FontId> = list
+crates/warpui/src/platform/mac/fonts.rs:377:            fallback_fonts.push(font);
+crates/warpui/src/platform/mac/fonts.rs:380:        fallback_fonts
+crates/warpui/src/platform/mac/fonts.rs:397:    // Convert a CTFontDescriptor to font_id. This function does not load fallback fonts
+crates/warpui/src/platform/mac/fonts.rs:450:                // Make sure we've loaded fallback fonts for the selected font.
+crates/warpui/src/platform/mac/fonts.rs:451:                if !self.fallback_fonts.contains_key(&font_id) {
+crates/warpui/src/platform/mac/fonts.rs:452:                    self.fallback_fonts.insert(
+crates/warpui/src/platform/mac/fonts.rs:501:        // Not one of ours — a genuine Core Text substitution/fallback font — so register it.
+crates/warpui/src/platform/mac/fonts.rs:578:    fn fallback_fonts(&self, _ch: char, font_id: FontId) -> Vec<FontId> {
+crates/warpui/src/platform/mac/fonts.rs:579:        self.fallback_fonts(font_id)
+
+## build/run downloads
+flake.nix:101:            curl
+flake.nix:270:            curl
+script/deploy_remote_server_to_test_vm:13:#   On Linux, install curl, sha256sum, tar, and sshpass.
+script/install_cargo_bundle:25:# $CARGO_HOME/bin), and a plain `cargo binstall` would then skip the install and
+script/install_cargo_bundle:38:    cargo binstall --force --no-confirm "cargo-bundle@${CARGO_BUNDLE_VERSION}"
+script/install_cargo_build_deps:14:    cargo binstall --force -y diesel_cli
+script/install_rust:21:  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh $CI_FLAGS
+script/run:88:install_common_skills_or_continue() {
+script/run:89:  if ! ./script/resolve_common_skills install_common_skills -- --repo-root "${REPO_ROOT}" "$@"; then
+script/run:102:      install_common_skills_or_continue "${COMMON_SKILLS_ARGS[@]}" --force
+script/run:104:      install_common_skills_or_continue --force --prompt-for-target
+script/run:108:      install_common_skills_or_continue "${COMMON_SKILLS_ARGS[@]}" --if-needed --quiet
+script/run:110:      install_common_skills_or_continue --if-needed --prompt-for-target --quiet
+script/wasm/run:8:cargo install wasm-bindgen-cli --version "$WASM_BINDGEN_VERSION"
+script/install_cargo_release_deps:35:# `cargo binstall` would then skip the install and leave `cargo about` broken. `--force`
+script/install_cargo_release_deps:43:  cargo binstall --force --no-confirm "cargo-about@${CARGO_ABOUT_VERSION}"
+script/wasm/install_build_deps:21:cargo binstall --force -y wasm-bindgen-cli --version "$WASM_BINDGEN_VERSION"
+script/wasm/install_build_deps:22:cargo binstall --force -y wasm-opt
+script/wasm/install_build_deps:27:curl -L https://github.com/getsentry/symbolicator/releases/download/26.3.1/wasm-split-Linux-x86_64 -o wasm-split
+script/install_cargo_test_deps:10:cargo install --git https://github.com/wgsl-analyzer/wgsl-analyzer --tag "2025-06-28" wgslfmt
+script/install_cargo_test_deps:15:cargo binstall --secure --no-confirm --no-discover-github-token cargo-nextest
+script/bootstrap:41:      warpdotdev/common-skills/scripts/install_common_skills.
+script/bootstrap:44:      If unset, ./script/resolve_common_skills executes the raw script from
+script/bootstrap:129:maybe_install_common_skills() {
+script/bootstrap:137:      if ! ./script/resolve_common_skills install_common_skills -- --repo-root "${REPO_ROOT}" "${target_args[@]}" --if-needed; then
+script/bootstrap:141:      if ! ./script/resolve_common_skills install_common_skills -- --repo-root "${REPO_ROOT}" --if-needed --prompt-for-target; then
+script/bootstrap:172:  maybe_install_common_skills
+script/bootstrap:176:  maybe_install_common_skills
+script/install_cargo_binstall:20:#   curl -sSfL https://api.github.com/repos/cargo-bins/cargo-binstall/releases/tags/v<version> \
+script/install_cargo_binstall:89:# `cargo install`, which compiles it and its whole dependency tree from source and
+script/install_cargo_binstall:111:    # GitHub's release-asset CDN intermittently fails with errors curl's --retry
+script/install_cargo_binstall:117:        if curl -L --proto '=https' --tlsv1.2 -sSf \
+.github/workflows/notify-docs-settings-changed.yml:54:          curl -s -X POST \
+script/resolve_common_skills:8:RESOLVER_NAME="resolve_common_skills"
+script/resolve_common_skills:30:  if ! command -v curl >/dev/null 2>&1; then
+script/resolve_common_skills:31:    echo "error: curl is required to fetch ${raw_url}" >&2
+script/resolve_common_skills:36:  if curl -fsSL "${raw_url}" -o "${temp_script}"; then
+script/linux/install_build_deps:21:    curl
+script/linux/install_build_deps:58:  curl -fsSL -o /tmp/protoc.zip \
+script/linux/install_linuxdeploy:41:    curl -fL "$APPIMAGE_RELEASE_URL" --output "$APPIMAGE_PATH"
+.github/workflows/ci.yml:504:          sudo apt-get install -y curl sshpass xz-utils
+.github/workflows/ci.yml:550:          cargo binstall diesel_cli
+.github/workflows/ci.yml:665:          cargo binstall --force -y cargo-deny
+.github/workflows/ci.yml:677:          cargo install --git https://github.com/wgsl-analyzer/wgsl-analyzer --tag "2025-06-28" wgslfmt && \
+script/linux/install_test_deps:34:    curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | warp_sudo gpg --batch --yes --dearmor -o /usr/share/keyrings/cloud.google.gpg
+script/warp_sudo:13:# so pipes like `curl ... | warp_sudo apt-key add -` continue to work.
+script/linux/configure_musl_toolchain:143:    for required_command in curl sha256sum tar; do
+script/linux/configure_musl_toolchain:167:      curl -fsSL --retry 3 "$archive_url" -o "$download_dir/$archive_name" || exit 1
+script/macos/bootstrap:39:    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+script/macos/bootstrap:46:    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+script/macos/bootstrap:64:brew install getsentry/tools/sentry-cli
+.github/workflows/create_release.yml:242:        uses: warpdotdev/setup-sentry-cli@8ae49c71bd731e547de697f75770727f86c95ecd # v2.0.0
+.github/workflows/create_release.yml:368:        uses: warpdotdev/setup-sentry-cli@8ae49c71bd731e547de697f75770727f86c95ecd # v2.0.0
+.github/workflows/create_release.yml:620:        uses: warpdotdev/setup-sentry-cli@8ae49c71bd731e547de697f75770727f86c95ecd # v2.0.0
+.github/workflows/create_release.yml:779:        uses: warpdotdev/setup-sentry-cli@8ae49c71bd731e547de697f75770727f86c95ecd # v2.0.0
+.github/workflows/create_release.yml:800:          sentry-cli debug-files check "$dsym_dwarf_path"
+.github/workflows/create_release.yml:801:          sentry-cli upload-dif "$dsym_path"
+.github/workflows/create_release.yml:1174:        uses: warpdotdev/setup-sentry-cli@8ae49c71bd731e547de697f75770727f86c95ecd # v2.0.0
+.github/workflows/create_release.yml:1428:        uses: warpdotdev/setup-sentry-cli@8ae49c71bd731e547de697f75770727f86c95ecd # v2.0.0
+.github/workflows/create_release.yml:1703:        uses: warpdotdev/setup-sentry-cli@8ae49c71bd731e547de697f75770727f86c95ecd # v2.0.0
+.github/workflows/create_release.yml:1986:        uses: warpdotdev/setup-sentry-cli@8ae49c71bd731e547de697f75770727f86c95ecd # v2.0.0
+.github/workflows/create_release.yml:2261:          curl.exe --fail --silent --show-error --head \
+.github/workflows/create_release.yml:2518:          curl.exe --fail --silent --show-error --head \
+.github/workflows/create_release.yml:2539:        uses: warpdotdev/setup-sentry-cli@8ae49c71bd731e547de697f75770727f86c95ecd # v2.0.0
+.github/workflows/create_release.yml:2726:      # This runner has no upstream match: matbour/setup-sentry-cli has no win32/arm64 entry
+.github/workflows/create_release.yml:2728:      # fork adds that entry (submitted upstream as matbour/setup-sentry-cli#24, not yet in a
+.github/workflows/create_release.yml:2732:        uses: warpdotdev/setup-sentry-cli@8ae49c71bd731e547de697f75770727f86c95ecd # v2.0.0
+.github/workflows/create_release.yml:2983:          TOKEN="$(npx obtain-github-app-installation-access-token ci ${{ secrets.GH_APP_CREDENTIALS_TOKEN }})"

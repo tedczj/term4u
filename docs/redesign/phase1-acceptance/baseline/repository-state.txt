@@ -1,0 +1,8 @@
+UTC 2026-09-01T08:19:23Z
+$ git rev-parse HEAD
+47110e95e5ffe9029c325bc013a59b657ada0251
+$ git status --porcelain=v2 --untracked-files=no
+$ git status --short (captured before acceptance directory creation)
+<empty>
+$ rg -o FIRST_REAL_USE...
+FIRST_REAL_USE: 未发生
