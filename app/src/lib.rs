@@ -291,7 +291,6 @@ use crate::workspaces::user_workspaces::UserWorkspaces;
 
 /// Our embedded application assets.
 pub static ASSETS: warp_assets::Assets = warp_assets::Assets;
-const TUI_SECURE_STORAGE_SERVICE_SUFFIX: &str = ".tui";
 
 /// Launch mode for how to start up Warp.
 #[allow(clippy::large_enum_variant)]
@@ -372,14 +371,15 @@ impl LaunchMode {
     /// distinct code-signing identity and would otherwise prompt for the user's
     /// login password when the TUI accesses them.
     fn secure_storage_service_name<'a>(&self, data_domain: &'a str) -> Cow<'a, str> {
-        match self {
-            LaunchMode::Tui { .. } => {
-                Cow::Owned(format!("{data_domain}{TUI_SECURE_STORAGE_SERVICE_SUFFIX}"))
-            }
+        use warp_core::product_identity::{self, ProductFrontend};
+
+        let frontend = match self {
+            LaunchMode::Tui { .. } => ProductFrontend::Tui,
             LaunchMode::App { .. } | LaunchMode::CommandLine { .. } | LaunchMode::Test { .. } => {
-                Cow::Borrowed(data_domain)
+                ProductFrontend::Gui
             }
-        }
+        };
+        product_identity::keyring_service(data_domain, frontend)
     }
 
     fn take_test_driver(&mut self) -> Option<TestDriver> {

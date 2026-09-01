@@ -1,13 +1,13 @@
 use anyhow::Result;
-use warp_core::AppId;
 use warp_core::channel::{Channel, ChannelConfig, ChannelState, ConnectivityMode};
+use warp_core::product_identity::{self, GUI_LOG_FILE};
 
 fn main() -> Result<()> {
     let mut state = ChannelState::new(
         Channel::Oss,
         ChannelConfig {
-            app_id: AppId::new("dev", "warp", "WarpOss"),
-            logfile_name: "term4u.log".into(),
+            app_id: product_identity::app_id(),
+            logfile_name: GUI_LOG_FILE.into(),
             connectivity: ConnectivityMode::Offline {
                 allow_loopback: true,
             },
@@ -22,37 +22,4 @@ fn main() -> Result<()> {
 }
 
 #[cfg(all(not(feature = "extern_plist"), target_os = "macos"))]
-embed_plist::embed_info_plist_bytes!(r#"
-    <?xml version="1.0" encoding="UTF-8"?>
-    <!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-    <plist version="1.0">
-    <dict>
-    <key>CFBundleDevelopmentRegion</key>
-    <string>English</string>
-    <key>CFBundleDisplayName</key>
-    <string>WarpOss</string>
-    <key>CFBundleExecutable</key>
-    <string>warp-oss</string>
-    <key>CFBundleIdentifier</key>
-    <string>dev.warp.WarpOss</string>
-    <key>CFBundleInfoDictionaryVersion</key>
-    <string>6.0</string>
-    <key>CFBundleName</key>
-    <string>WarpOss</string>
-    <key>CFBundlePackageType</key>
-    <string>APPL</string>
-    <key>CFBundleShortVersionString</key>
-    <string>0.1.0</string>
-    <key>LSApplicationCategoryType</key>
-    <string>public.app-category.developer-tools</string>
-    <key>NSHighResolutionCapable</key>
-    <true/>
-    <key>UIDesignRequiresCompatibility</key>
-    <true/>
-    <key>CFBundleURLTypes</key>
-    <array><dict><key>CFBundleURLName</key><string>Custom App</string><key>CFBundleURLSchemes</key><array><string>warposs</string></array></dict></array>
-    <key>NSHumanReadableCopyright</key>
-    <string>© 2026, Denver Technologies, Inc</string>
-    </dict>
-    </plist>
-"#.as_bytes());
+embed_plist::embed_info_plist!("../../Term4u.Info.plist");

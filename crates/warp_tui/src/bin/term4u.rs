@@ -1,13 +1,13 @@
 use anyhow::Result;
-use warp_core::AppId;
 use warp_core::channel::{Channel, ChannelConfig, ChannelState, ConnectivityMode};
+use warp_core::product_identity::{self, TUI_LOG_FILE};
 
 fn main() -> Result<()> {
     let mut state = ChannelState::new(
         Channel::Oss,
         ChannelConfig {
-            app_id: AppId::new("dev", "warp", "WarpOss"),
-            logfile_name: "term4u-tui.log".into(),
+            app_id: product_identity::app_id(),
+            logfile_name: TUI_LOG_FILE.into(),
             connectivity: ConnectivityMode::Offline {
                 allow_loopback: true,
             },

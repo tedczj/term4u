@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
     <key>CFBundleIdentifier</key>
-    <string>dev.warp.WarpDockTilePlugin</string>
+    <string>dev.term4u.Term4uDockTilePlugin</string>
     <key>CFBundleExecutable</key>
     <string>WarpDockTilePlugin</string>
     <key>CFBundleName</key>

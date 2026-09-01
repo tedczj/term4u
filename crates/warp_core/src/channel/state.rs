@@ -13,6 +13,7 @@ use crate::channel::config::{ChannelConfig, ConnectivityMode, IapConfig, McpOAut
 #[cfg(not(feature = "offline_hard"))]
 use crate::channel::config::{OzConfig, WarpServerConfig};
 use crate::features::FeatureFlag;
+use crate::product_identity::{self, GUI_LOG_FILE, URL_SCHEME};
 
 lazy_static! {
     static ref CHANNEL_STATE: Mutex<ChannelState> = Mutex::new(ChannelState::init());
@@ -48,7 +49,7 @@ pub struct ChannelState {
 impl ChannelState {
     pub fn init() -> Self {
         let channel = Channel::Oss;
-        let app_id = AppId::new("dev", "warp", "WarpOss");
+        let app_id = product_identity::app_id();
         cfg_if::cfg_if! {
             if #[cfg(feature = "offline_hard")] {
                 let connectivity = ConnectivityMode::Offline { allow_loopback: true };
@@ -64,7 +65,7 @@ impl ChannelState {
             additional_features: Default::default(),
             config: ChannelConfig {
                 app_id,
-                logfile_name: "".into(),
+                logfile_name: GUI_LOG_FILE.into(),
                 connectivity,
                 mcp_static_config: None,
             },
@@ -78,10 +79,7 @@ impl ChannelState {
         MOCK_SERVER.lock()
     }
 
-    pub fn new(channel: Channel, mut config: ChannelConfig) -> Self {
-        if let Some(app_id) = app_id_from_bundle() {
-            config.app_id = app_id;
-        }
+    pub fn new(channel: Channel, config: ChannelConfig) -> Self {
         Self {
             channel,
             additional_features: Default::default(),
@@ -412,7 +410,7 @@ impl ChannelState {
             // Dummy value--integration tests shouldn't support URL schemes.
             Channel::Integration => "warpintegration",
             Channel::Local => "warplocal",
-            Channel::Oss => "warposs",
+            Channel::Oss => URL_SCHEME,
         }
     }
 }
@@ -440,29 +438,3 @@ fn derive_http_origin_from_ws_url(ws_url: &str) -> Option<String> {
 #[cfg(all(test, not(feature = "test-util")))]
 #[path = "state_tests.rs"]
 mod tests;
-
-fn app_id_from_bundle() -> Option<AppId> {
-    // On macOS, attempt to determine the app ID from the containing bundle,
-    // falling back to the channel-keyed "default" ID if we cannot retrieve
-    // bundle information.
-    //
-    // We skip this for tests, as the call to `mainBundle` can take 30+ms,
-    // which is a significant portion of the total test runtime.
-    #[cfg(all(target_os = "macos", not(feature = "test-util")))]
-    {
-        use objc2_foundation::NSBundle;
-
-        let bundle = NSBundle::mainBundle();
-        if let Some(bundle_identifier) = bundle.bundleIdentifier() {
-            let app_id = bundle_identifier.to_string();
-            if !app_id.is_empty() {
-                return Some(
-                    AppId::parse(&app_id)
-                        .expect("macOS bundle identifier has an unexpected format"),
-                );
-            }
-        }
-    }
-
-    None
-}

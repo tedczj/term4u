@@ -589,7 +589,7 @@ fn test_warp_tui_matches_binaries_and_launchers() {
     assert!(CLIAgent::WarpTui.matches_command("warp-preview", None));
     assert!(CLIAgent::WarpTui.matches_command("warp-dev", None));
     assert!(CLIAgent::WarpTui.matches_command("warp-tui", None));
-    assert!(CLIAgent::WarpTui.matches_command("warp-tui-oss", None));
+    assert!(CLIAgent::WarpTui.matches_command("term4u-tui", None));
     // The dev launcher script.
     assert!(CLIAgent::WarpTui.matches_command("./script/run-tui", None));
     assert!(CLIAgent::WarpTui.matches_command("script/run-tui", None));
@@ -639,7 +639,7 @@ fn test_warp_tui_variant_properties() {
             "warp-preview",
             "warp-dev",
             "warp-tui",
-            "warp-tui-oss",
+            "term4u-tui",
             "run-tui",
         ]
     );

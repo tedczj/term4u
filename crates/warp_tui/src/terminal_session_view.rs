@@ -412,7 +412,7 @@ fn tui_cli_shell_command(channel: Channel, arguments: &str) -> String {
         Channel::Stable => "warp",
         Channel::Dev => "warp-dev",
         Channel::Preview => "warp-preview",
-        Channel::Oss => "warp-oss",
+        Channel::Oss => warp_core::product_identity::GUI_BINARY_NAME,
         Channel::Integration => "warp-integration",
     };
     format!("{launcher} {arguments}")

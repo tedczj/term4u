@@ -21,6 +21,7 @@ use directories::BaseDirs;
 
 use crate::AppId;
 use crate::channel::{Channel, ChannelState};
+use crate::product_identity;
 
 /// The name of the directory in which to put non-global Warp-specific files.
 ///
@@ -37,7 +38,7 @@ fn base_warp_config_dir_name() -> String {
         // Preview shares the same directory as Stable for backward
         // compatibility — existing users already have config in `.warp`.
         Channel::Stable | Channel::Preview => WARP_CONFIG_DIR.to_owned(),
-        Channel::Oss => format!("{WARP_CONFIG_DIR}-oss"),
+        Channel::Oss => product_identity::MACOS_GUI_CONFIG_DIR.to_owned(),
         Channel::Dev => format!("{WARP_CONFIG_DIR}-dev"),
         Channel::Integration => format!("{WARP_CONFIG_DIR}-integration"),
         Channel::Local => format!("{WARP_CONFIG_DIR}-local"),
@@ -101,7 +102,7 @@ fn macos_config_dir_name_for(channel: Channel, data_profile: Option<&str>) -> St
     let base_dir_name = match channel {
         Channel::Stable => WARP_CONFIG_DIR.to_owned(),
         Channel::Preview => format!("{WARP_CONFIG_DIR}-preview"),
-        Channel::Oss => format!("{WARP_CONFIG_DIR}-oss"),
+        Channel::Oss => product_identity::MACOS_GUI_CONFIG_DIR.to_owned(),
         Channel::Dev => format!("{WARP_CONFIG_DIR}-dev"),
         Channel::Integration => format!("{WARP_CONFIG_DIR}-integration"),
         Channel::Local => format!("{WARP_CONFIG_DIR}-local"),
@@ -130,13 +131,11 @@ pub fn data_dir() -> PathBuf {
 
 /// Returns the GUI application ID for the current channel.
 ///
-/// Most TUI channel binaries use the same application ID as the GUI. The OSS
-/// TUI is the exception: it uses `WarpTui`, while the corresponding GUI uses
-/// `WarpOss`.
+/// Product front-ends use the same canonical application ID.
 #[cfg(any(not(target_os = "macos"), test))]
 fn gui_app_id_for_channel(channel: Channel, current_app_id: AppId) -> AppId {
     match channel {
-        Channel::Oss => AppId::new("dev", "warp", "WarpOss"),
+        Channel::Oss => product_identity::app_id(),
         Channel::Stable
         | Channel::Preview
         | Channel::Dev
@@ -203,16 +202,12 @@ pub fn gui_mcp_config_file_path() -> Option<PathBuf> {
     warp_home_mcp_config_file_path()
 }
 
-/// Returns the macOS config directory name for the TUI front-end (`warp-tui`)
-/// for the current channel.
-///
-/// This mirrors [`macos_config_dir_name`] but under a `.warp_cli*` directory so
-/// the TUI keeps its settings separate from the GUI's `.warp*` directory. Like
-/// the GUI names, these are persisted on disk as directory names and must not be
-/// changed once established.
 #[cfg(target_os = "macos")]
 fn macos_tui_config_dir_name() -> String {
-    macos_config_dir_name().replacen(WARP_CONFIG_DIR, ".warp_cli", 1)
+    match ChannelState::data_profile() {
+        Some(profile) => format!("{}-{profile}", product_identity::MACOS_TUI_CONFIG_DIR),
+        None => product_identity::MACOS_TUI_CONFIG_DIR.to_owned(),
+    }
 }
 
 /// Returns the path to the directory where non-portable configuration files for
@@ -269,28 +264,11 @@ pub fn state_dir() -> PathBuf {
         .to_owned()
 }
 
-/// Returns the path to the secure directory for non-portable application state data.
+/// Returns the secure state directory when a platform-specific namespace is required.
 ///
-/// Prefer this over [`state_dir`] where possible.
-///
-/// On macOS, this will use the App Group container directory if available.
-pub fn secure_state_dir() -> Option<PathBuf> {
-    // Do not use the secure state directory in integration tests, which have a temporary home directory instead.
-    if ChannelState::channel() == Channel::Integration {
-        return None;
-    }
-
-    #[cfg(target_os = "macos")]
-    if let Some(app_group_root) = app_group_container_path() {
-        // The macOS project_path is the bundle ID (i.e. `dev.warp.Warp-Stable`).
-        let project_dirs = project_dirs()?;
-        return Some(
-            app_group_root
-                .join("Library/Application Support")
-                .join(project_dirs.project_path()),
-        );
-    }
-
+/// Term4u deliberately uses the canonical application-ID state directory directly and has no
+/// App Group fallback.
+pub const fn secure_state_dir() -> Option<PathBuf> {
     None
 }
 
@@ -371,8 +349,8 @@ fn project_dirs_for_app_id(
             // directories like "warp-terminal" and "warp-terminal-dev", to
             // match our Linux package name.
             let base_app_name = match app_id.application_name() {
+                "Term4u" => product_identity::LINUX_XDG_APP_DIR.to_owned(),
                 "Warp" => "Warp-Terminal".to_owned(),
-                "WarpOss" => "Warp-Oss".to_owned(),
                 other if other.starts_with("Warp") => other.replace("Warp", "Warp-Terminal-"),
                 _ => app_id.application_name().to_owned(),
             };
@@ -386,42 +364,6 @@ fn project_dirs_for_app_id(
         base_app_name
     };
     directories::ProjectDirs::from(app_id.qualifier(), app_id.organization(), &app_name)
-}
-
-/// Returns the path to the app's secure group container on macOS.
-///
-/// Returns `None` if the container URL cannot be resolved or converted.
-///
-/// See:
-/// * [Configuring app groups](https://developer.apple.com/documentation/Xcode/configuring-app-groups)
-/// * The [App Groups entitlement](https://developer.apple.com/documentation/bundleresources/entitlements/com.apple.security.application-groups?language=objc)
-/// * [`containerURLForSecurityApplicationGroupIdentifier`](https://developer.apple.com/documentation/foundation/filemanager/containerurl(forsecurityapplicationgroupidentifier:)?language=objc)
-#[cfg(target_os = "macos")]
-pub fn app_group_container_path() -> Option<PathBuf> {
-    use std::sync::LazyLock;
-    static CONTAINER_PATH: LazyLock<Option<PathBuf>> = LazyLock::new(|| {
-        use objc2_foundation::{NSFileManager, NSString};
-
-        let fm = NSFileManager::defaultManager();
-        // Keep in sync with Entitlements.plist
-        let group_id = format!("{}.dev.warp", crate::macos::APPLE_TEAM_ID);
-        let group_id = NSString::from_str(&group_id);
-        // containerURLForSecurityApplicationGroupIdentifier always returns a value on macOS (unlike iOS).
-        // We have to double-check that the path points to a directory we can actually use. In addition to
-        // macOS returning a path that may not exist, processes may list the container directory without
-        // having permissions to read to or write from it.
-        if let Some(url) = fm.containerURLForSecurityApplicationGroupIdentifier(&group_id)
-            && let Some(ns_path) = url.path()
-        {
-            let path = PathBuf::from(ns_path.to_string());
-            if tempfile::tempfile_in(&path).is_ok() {
-                return Some(path);
-            }
-        }
-
-        None
-    });
-    LazyLock::force(&CONTAINER_PATH).clone()
 }
 
 /// Returns the path to resources included in the Warp distribution.

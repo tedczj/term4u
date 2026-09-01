@@ -3,6 +3,8 @@ mod state;
 
 use std::fmt;
 
+use crate::product_identity::GUI_BINARY_NAME;
+
 pub use config::*;
 pub use state::*;
 
@@ -55,7 +57,7 @@ impl Channel {
             Channel::Preview => "oz-preview",
             Channel::Local => "oz-local",
             Channel::Integration => "oz-integration",
-            Channel::Oss => "warp-oss",
+            Channel::Oss => GUI_BINARY_NAME,
         }
     }
 
@@ -67,7 +69,7 @@ impl Channel {
             Channel::Preview => "warpctrl-preview",
             Channel::Local => "warpctrl-local",
             Channel::Integration => "warpctrl-integration",
-            Channel::Oss => "warpctrl-oss",
+            Channel::Oss => GUI_BINARY_NAME,
         }
     }
 }
@@ -80,7 +82,7 @@ impl fmt::Display for Channel {
             Channel::Dev => "dev",
             Channel::Integration => "integration",
             Channel::Local => "local",
-            Channel::Oss => "warp-oss",
+            Channel::Oss => GUI_BINARY_NAME,
         })
     }
 }

@@ -1,7 +1,7 @@
 [package]
 name = "warp_tui"
 edition = "2024"
-description = "Warp Agent CLI"
+description = "Term4u headless terminal interface"
 authors.workspace = true
 publish.workspace = true
 license.workspace = true
@@ -11,10 +11,6 @@ default-run = "term4u-tui"
 [[bin]]
 name = "term4u-tui"
 path = "src/bin/term4u.rs"
-
-[[bin]]
-name = "warp-tui-oss"
-path = "src/bin/oss.rs"
 
 [dependencies]
 ai.workspace = true

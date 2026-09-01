@@ -183,7 +183,7 @@ impl CLIAgent {
                 "warp-preview",
                 "warp-dev",
                 "warp-tui",
-                "warp-tui-oss",
+                warp_core::product_identity::TUI_BINARY_NAME,
                 "run-tui",
             ],
             CLIAgent::Unknown => &[],

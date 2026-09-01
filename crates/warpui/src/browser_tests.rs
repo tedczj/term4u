@@ -17,15 +17,8 @@ fn safe_browser_open_url_accepts_browser_safe_urls() {
 }
 
 #[test]
-fn safe_browser_open_url_accepts_warp_channel_urls() {
-    for scheme in [
-        "warp",
-        "warppreview",
-        "warpdev",
-        "warplocal",
-        "warposs",
-        "warpintegration",
-    ] {
+fn safe_browser_open_url_accepts_product_and_test_urls() {
+    for scheme in ["term4u", "warpintegration"] {
         let url = format!("{scheme}://action/focus_cloud_mode");
         assert_eq!(safe_browser_open_url(&url).as_deref(), Some(url.as_str()));
     }
