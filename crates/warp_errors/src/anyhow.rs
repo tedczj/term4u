@@ -5,9 +5,6 @@ use super::registration::AnyErrorRegistration;
 pub trait AnyhowErrorExt {
     /// Returns whether or not an error is something that is actionable by our engineering team.
     fn is_actionable(&self) -> bool;
-
-    /// Reports the error.
-    fn report_error(&self);
 }
 
 impl AnyhowErrorExt for anyhow::Error {
@@ -22,6 +19,4 @@ impl AnyhowErrorExt for anyhow::Error {
 
         true
     }
-
-    fn report_error(&self) {}
 }

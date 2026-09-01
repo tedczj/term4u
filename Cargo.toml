@@ -404,8 +404,8 @@ rmcp = { version = "1.6" }
 
 [profile.release]
 # Use line-tables-only (debug = 1) rather than full debuginfo (debug = 2 /
-# `true`). Line tables are enough to symbolicate panics and Sentry stack
-# traces with file/line info, but they omit the per-variable/type DWARF that
+# `true`). Line tables are enough to symbolicate panics and local stack traces with file/line
+# info, but they omit the per-variable/type DWARF that
 # dominates DWARF size. Dropping the type info significantly reduces rustc's
 # peak memory during ThinLTO + codegen (which was OOM-killing release builds
 # on CI), at the cost of not being able to inspect locals/types when

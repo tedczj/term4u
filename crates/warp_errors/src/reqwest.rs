@@ -19,7 +19,7 @@ impl ErrorExt for reqwest::Error {
         }
 
         // If we're getting a capacity error from the server, then that should trip a server-side
-        // alert. A duplicate report in Sentry isn't helpful.
+        // alert. Logging the same expected network error repeatedly is not helpful.
         if self.status() == Some(StatusCode::TOO_MANY_REQUESTS) {
             return false;
         }

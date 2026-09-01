@@ -830,17 +830,6 @@ fn run_internal(mut launch_mode: LaunchMode) -> Result<()> {
         web_intent_parser::set_context_flags_from_current_url();
     }
 
-    // Collect errors that occur in run_internal() before the Sentry client is initialized,
-    // so they can be replayed to Sentry once it's ready.
-    #[cfg_attr(
-        not(all(
-            feature = "release_bundle",
-            any(windows, any(target_os = "linux", target_os = "freebsd"))
-        )),
-        expect(unused_mut)
-    )]
-    let mut pre_sentry_errors: Vec<anyhow::Error> = Vec::new();
-
     #[cfg(all(
         feature = "release_bundle",
         any(target_os = "linux", target_os = "freebsd")
@@ -860,9 +849,7 @@ fn run_internal(mut launch_mode: LaunchMode) -> Result<()> {
             // it's better to run a second instance than potentially end up in a
             // state where Warp refuses to run even a first instance.
             Err(err) => {
-                let err = anyhow::Error::from(err).context("Failed to forward startup args");
-                report_error!(&err);
-                pre_sentry_errors.push(err);
+                report_error!(anyhow::Error::from(err).context("Failed to forward startup args"));
             }
         }
     }
@@ -883,9 +870,7 @@ fn run_internal(mut launch_mode: LaunchMode) -> Result<()> {
             // it's better to run a second instance than potentially end up in a
             // state where Warp refuses to run even a first instance.
             Err(err) => {
-                let err = anyhow::Error::from(err).context("Failed to forward startup args");
-                report_error!(&err);
-                pre_sentry_errors.push(err);
+                report_error!(anyhow::Error::from(err).context("Failed to forward startup args"));
             }
         }
     }
@@ -1080,13 +1065,7 @@ fn run_internal(mut launch_mode: LaunchMode) -> Result<()> {
         ctx.add_singleton_model(move |ctx| {
             plugin::PluginHost::new(ctx).expect("Could not instantiate PluginHost")
         });
-        let app_state = initialize_app(
-            &launch_mode,
-            timer,
-            startup_toml_parse_error,
-            ctx,
-            pre_sentry_errors,
-        );
+        let app_state = initialize_app(&launch_mode, timer, startup_toml_parse_error, ctx);
 
         FeatureFlag::UseTantivySearch.set_enabled(true);
 
@@ -1118,9 +1097,7 @@ pub(crate) fn initialize_app(
     timer: IntervalTimer,
     startup_toml_parse_error: Option<warpui_extras::user_preferences::Error>,
     ctx: &mut warpui::AppContext,
-    pre_sentry_errors: impl IntoIterator<Item = anyhow::Error>,
 ) -> Option<AppState> {
-    let _ = pre_sentry_errors;
     initialize_local_app(launch_mode, timer, startup_toml_parse_error, ctx)
 }
 

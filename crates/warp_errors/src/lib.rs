@@ -1,12 +1,8 @@
-//! Explicit error reporting for Warp.
+//! Local error logging for Term4u.
 //!
-//! Provides the [`report_error!`] / [`report_if_error!`] macros and the machinery they depend on
-//! (`ErrorExt`, `AnyhowErrorExt`, `register_error!`, `ReportErrorLogMode`). This is a leaf crate
-//! that depends only on third-party crates, so any crate in the workspace can report errors to
-//! Sentry without creating a dependency cycle with `warp_core`.
-//!
-//! Errors reported via these macros are captured to Sentry directly (structured, via
-//! `capture_anyhow`/`capture_error`); plain `log::error!` is log-only.
+//! Provides the [`report_error!`] / [`report_if_error!`] compatibility macros and their error
+//! classification machinery. Reports are written only to the local logger; this crate has no
+//! transport, uploader, remote SDK, or network behavior.
 
 mod anyhow;
 mod registration;
@@ -46,12 +42,10 @@ pub enum ReportErrorLogMode {
     OncePerRun,
 }
 
-/// Reports an error encountered during execution.
+/// Logs an error encountered during execution.
 ///
-/// If the error is actionable, it is captured to Sentry (via `capture_anyhow`/`capture_error`) and
-/// logged at the Error level; otherwise it is logged at the Warn level and not reported. Plain
-/// `log::error!` no longer creates Sentry events (see `sentry_log_filter` in `warp_logging`), so
-/// `report_error!` is the explicit way to send an error to Sentry.
+/// Actionable errors use Error level and expected/environmental errors use Warn level. The macro
+/// never sends or queues data.
 #[macro_export]
 macro_rules! report_error {
     (@log $err:expr) => {{
@@ -59,7 +53,6 @@ macro_rules! report_error {
         use $crate::{AnyhowErrorExt as _, ErrorExt as _, LOG_TARGET};
         let err = $err;
         let log_level = if err.is_actionable() {
-            err.report_error();
             log::Level::Error
         } else {
             log::Level::Warn
@@ -80,10 +73,7 @@ macro_rules! report_error {
             $crate::report_error!(@log_extra $err, { $($fields)* });
         }
     }};
-    // Reports `err` (capturing to Sentry when actionable) and attaches the given fields as a
-    // structured Sentry context block ("details"), keeping per-instance specifics out of the
-    // message so grouping stays stable. The fields are also appended to the local log line so
-    // local/breadcrumb detail is retained.
+    // Logs `err` with structured context fields appended to the local line.
     (@log_extra $err:expr, { $($fields:tt)* }) => {{
         #[allow(unused_imports)]
         use $crate::{AnyhowErrorExt as _, ErrorExt as _, LOG_TARGET};
@@ -93,7 +83,6 @@ macro_rules! report_error {
         $crate::report_error!(@fields __fields $($fields)*);
         let __suffix = $crate::format_context_suffix(&__fields);
         if err.is_actionable() {
-            $crate::with_error_context(&__fields, || err.report_error());
             log::log!(target: LOG_TARGET, log::Level::Error, "{:#}{}", err, __suffix);
         } else {
             log::log!(target: LOG_TARGET, log::Level::Warn, "{:#}{}", err, __suffix);
@@ -203,13 +192,7 @@ macro_rules! report_if_error {
     }};
 }
 
-#[doc(hidden)]
-pub fn with_error_context(_fields: &[(&'static str, String)], report: impl FnOnce()) {
-    report();
-}
-
-/// Formats `report_error!` context fields for the local log line. This log line is not what Sentry
-/// groups on, so it can carry the full per-instance detail.
+/// Formats `report_error!` context fields for the local log line.
 #[doc(hidden)]
 pub fn format_context_suffix(fields: &[(&'static str, String)]) -> String {
     if fields.is_empty() {
@@ -231,8 +214,6 @@ pub fn format_context_suffix(fields: &[(&'static str, String)]) -> String {
 pub trait ErrorExt: RegisteredError + std::error::Error {
     /// Returns whether or not an error is something that is actionable by our engineering team.
     fn is_actionable(&self) -> bool;
-
-    fn report_error(&self) {}
 }
 
 #[cfg(test)]
