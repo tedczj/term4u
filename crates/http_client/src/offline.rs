@@ -2,7 +2,6 @@ use std::net::IpAddr;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
-#[cfg(test)]
 use offline_guard::OutboundRefused;
 use offline_guard::loopback_addrs;
 use reqwest::dns::{Addrs, Name, Resolve, Resolving};
@@ -67,7 +66,6 @@ fn is_loopback_host(host: &str) -> bool {
             .is_ok_and(|ip| ip.is_loopback())
 }
 
-#[cfg(test)]
 pub fn is_outbound_refused(error: &(dyn std::error::Error + 'static)) -> bool {
     let mut source = Some(error);
     while let Some(error) = source {

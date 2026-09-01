@@ -3,6 +3,11 @@ pub mod iap;
 #[cfg(all(not(target_family = "wasm"), any(feature = "offline_hard", test)))]
 mod offline;
 
+#[cfg(all(not(target_family = "wasm"), feature = "offline_hard"))]
+pub fn is_outbound_refused(error: &(dyn std::error::Error + 'static)) -> bool {
+    offline::is_outbound_refused(error)
+}
+
 use std::future::Future;
 use std::pin::Pin;
 use std::sync::Arc;

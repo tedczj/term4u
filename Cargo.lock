@@ -1048,14 +1048,12 @@ name = "asset_cache"
 version = "0.0.0"
 dependencies = [
  "anyhow",
- "async-compat",
  "async-fs",
  "base64 0.22.1",
  "bytes",
- "cfg-if",
  "futures",
+ "http_client",
  "log",
- "reqwest",
  "url",
  "warp_errors",
  "warpui_core",

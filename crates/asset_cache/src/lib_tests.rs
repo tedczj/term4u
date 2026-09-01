@@ -1,5 +1,12 @@
 use super::*;
 
+#[cfg(all(feature = "offline_hard", not(target_family = "wasm")))]
+use std::io::{Read, Write};
+#[cfg(all(feature = "offline_hard", not(target_family = "wasm")))]
+use std::net::TcpListener;
+#[cfg(all(feature = "offline_hard", not(target_family = "wasm")))]
+use std::time::{Duration, Instant};
+
 /// Drive the fetch closure of an [`AssetSource::Async`] to completion.
 fn fetch_bytes(source: &AssetSource) -> Result<Bytes> {
     match source {
@@ -58,6 +65,37 @@ fn data_uri_source_rejects_oversized_payload() {
     let huge = "A".repeat(MAX_DATA_URI_PAYLOAD_BYTES + 1);
     let source = format!("data:image/png;base64,{huge}");
     assert!(data_uri_source(&source).is_none());
+}
+
+#[cfg(all(feature = "offline_hard", not(target_family = "wasm")))]
+#[test]
+fn offline_hard_rejects_non_loopback_url_immediately() {
+    let started = Instant::now();
+    let error = fetch_bytes(&url_source("http://asset-cache.test.invalid/font.woff2"))
+        .expect_err("non-loopback fetch must fail");
+
+    assert!(started.elapsed() < Duration::from_secs(1));
+    assert!(http_client::is_outbound_refused(error.as_ref()));
+}
+
+#[cfg(all(feature = "offline_hard", not(target_family = "wasm")))]
+#[test]
+fn offline_hard_reads_loopback_url() {
+    let listener = TcpListener::bind("127.0.0.1:0").expect("bind loopback fixture");
+    let address = listener.local_addr().unwrap();
+    let server = std::thread::spawn(move || {
+        let (mut stream, _) = listener.accept().expect("accept asset request");
+        let mut request = [0_u8; 1024];
+        let _ = stream.read(&mut request).expect("read asset request");
+        stream
+            .write_all(b"HTTP/1.1 200 OK\r\nContent-Length: 5\r\nConnection: close\r\n\r\nasset")
+            .expect("write asset response");
+    });
+
+    let bytes = fetch_bytes(&url_source(format!("http://{address}/font.woff2")))
+        .expect("loopback asset fetch should succeed");
+    server.join().unwrap();
+    assert_eq!(bytes.as_ref(), b"asset");
 }
 
 #[test]

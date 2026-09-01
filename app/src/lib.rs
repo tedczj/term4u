@@ -33,8 +33,6 @@ mod drive;
 mod dynamic_libraries;
 mod env_vars;
 mod external_secrets;
-#[cfg(target_family = "wasm")]
-mod font_fallback;
 mod global_resource_handles;
 mod gpu_state;
 mod input_classifier;
@@ -1250,7 +1248,6 @@ fn initialize_local_app(
     ctx.add_singleton_model(::ai::api_keys::ApiKeyManager::new);
     ai::custom_endpoints::init(launch_mode, ctx);
     ctx.add_singleton_model(AntivirusInfo::new);
-    ctx.set_fallback_font_source_provider(|url| ::asset_cache::url_source(url));
     ctx.set_default_binding_validator(is_binding_cross_platform);
 
     ctx.add_singleton_model(|_| SettingsPaneManager::new());
@@ -1926,10 +1923,6 @@ fn launch(ctx: &mut warpui::AppContext, app_state: Option<AppState>, launch_mode
     IntervalTimer::handle(ctx).update(ctx, |timer, _ctx| {
         timer.mark_interval_end("KEYBINDINGS_LOADED");
     });
-
-    // For now, we only specify application-level fallback fonts on web.
-    #[cfg(target_family = "wasm")]
-    ctx.set_fallback_font_fn(font_fallback::fallback_font_fn);
 
     match launch_mode {
         // The TUI front-end runs its own mount in the run closure and returns

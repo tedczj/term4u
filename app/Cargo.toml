@@ -561,6 +561,7 @@ nld_heuristic_v1 = ["input_classifier/nld_heuristic_v1"]
 nld_heuristic_v2 = ["input_classifier/nld_heuristic_v2"]
 nld_prompt_history_match = []
 offline_hard = [
+    "asset_cache/offline_hard",
     "warp_core/offline_hard",
     "http_client/offline_hard",
     "websocket/offline_hard",

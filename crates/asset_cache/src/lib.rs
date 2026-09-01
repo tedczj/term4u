@@ -6,7 +6,7 @@ use anyhow::Result;
 use base64::Engine as _;
 use base64::prelude::BASE64_STANDARD;
 use bytes::Bytes;
-use reqwest::Url;
+use url::Url;
 use warpui_core::assets::asset_cache::{
     Asset, AssetCache, AssetSource, AssetState, AsyncAssetId, AsyncAssetType,
 };
@@ -142,18 +142,8 @@ impl AssetCacheExt for AssetCache {
 
 /// Fetches a file from the given `url` to memory.
 async fn fetch_file_to_memory(url: Url) -> Result<Bytes, anyhow::Error> {
-    cfg_if::cfg_if! {
-        if #[cfg(target_family = "wasm")] {
-            let response = reqwest::get(url).await?;
-        } else {
-            // On non-web platforms, reqwest expects that it is operating within
-            // a Tokio-compatible runtime, so use async-compat to wrap the call
-            // so reqwest's expectations are met.
-            let response = async_compat::Compat::new(async move { reqwest::get(url).await }).await?;
-        }
-    }
-    let content = response.error_for_status()?.bytes().await?;
-    Ok(content)
+    let response = http_client::Client::new().get(url).send().await?;
+    Ok(response.error_for_status()?.bytes().await?)
 }
 
 /// Given a url and a directory where cached artifacts are stored, returns a unique
