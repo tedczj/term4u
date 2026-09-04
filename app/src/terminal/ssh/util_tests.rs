@@ -24,18 +24,6 @@ fn ssh_gcloud_ssh_parsing() {
 }
 
 #[test]
-fn ssh_elastic_beanstalk_parsing() {
-    assert!(parse_interactive_ssh_command("eb").is_none());
-    assert!(parse_interactive_ssh_command("eb ss").is_none());
-    assert!(parse_interactive_ssh_command("eb ssh").is_none());
-    assert!(parse_interactive_ssh_command("command eb ssh").is_none());
-
-    assert!(parse_interactive_ssh_command("command eb ssh --profile my-profile").is_some());
-    assert!(parse_interactive_ssh_command("eb ssh --profile my-profile").is_some());
-    assert!(parse_interactive_ssh_command("eb ssh --profile my-profile my-env").is_some());
-}
-
-#[test]
 fn ssh_digital_ocean_droplet_parsing() {
     assert!(parse_interactive_ssh_command("doctl").is_none());
     assert!(parse_interactive_ssh_command("doctl compute").is_none());

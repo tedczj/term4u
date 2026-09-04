@@ -23,3 +23,6 @@ reqwest = { workspace = true, optional = true }
 [target.'cfg(not(target_family = "wasm"))'.dependencies]
 tokio = { workspace = true, optional = true }
 websocket = { workspace = true, optional = true }
+
+[dev-dependencies]
+serial_test = "0.8.0"

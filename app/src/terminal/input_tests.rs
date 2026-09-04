@@ -41,8 +41,6 @@ use crate::ai::blocklist::{AIQueryHistory, BlocklistAIPermissions, ResponseStrea
 use crate::ai::execution_profiles::profiles::AIExecutionProfilesModel;
 use crate::ai::harness_availability::HarnessAvailabilityModel;
 use crate::ai::llms::{LLMId, LLMPreferences};
-use crate::ai::mcp::gallery::MCPGalleryManager;
-use crate::ai::mcp::templatable_manager::TemplatableMCPServerManager;
 use crate::ai::outline::RepoOutlines;
 use crate::ai::persisted_workspace::PersistedWorkspace;
 use crate::ai::restored_conversations::RestoredAgentConversations;
@@ -99,7 +97,6 @@ use crate::terminal::resizable_data::ResizableData;
 use crate::terminal::shell::ShellType;
 use crate::terminal::universal_developer_input::UniversalDeveloperInputButtonBarEvent;
 use crate::terminal::view::Event as TerminalViewEvent;
-use crate::terminal::view::inline_banner::ByoLlmAuthBannerSessionState;
 use crate::terminal::writeable_pty::command_history::update_command_history;
 use crate::test_util::settings::initialize_settings_for_tests;
 use crate::themes::theme::AnsiColorIdentifier;
@@ -231,7 +228,6 @@ pub fn initialize_app(app: &mut App) {
     app.add_singleton_model(TeamTesterStatus::mock);
     app.add_singleton_model(TeamUpdateManager::mock);
     app.add_singleton_model(UpdateManager::mock);
-    app.add_singleton_model(|_| MCPGalleryManager::new_local());
     app.add_singleton_model(Listener::mock);
     app.add_singleton_model(|_| Appearance::mock());
     app.add_singleton_model(PrivacySettings::mock);
@@ -286,7 +282,6 @@ pub fn initialize_app(app: &mut App) {
         CodebaseIndexManager::new_for_test(ServerApiProvider::as_ref(ctx).get(), ctx)
     });
     app.add_singleton_model(|_| IgnoredSuggestionsModel::new(vec![]));
-    app.add_singleton_model(|_| TemplatableMCPServerManager::default());
     app.add_singleton_model(|ctx| {
         AIExecutionProfilesModel::new(&crate::LaunchMode::new_for_unit_test(), ctx)
     });
@@ -324,12 +319,11 @@ pub fn initialize_app(app: &mut App) {
     app.add_singleton_model(|_| ToastStack);
     app.add_singleton_model(|_| PricingInfoModel::new());
     app.add_singleton_model(crate::ai::pricing_promotion::PricingPromotionState::new);
-    app.add_singleton_model(ByoLlmAuthBannerSessionState::new);
     app.add_singleton_model(AgentConversationsModel::new);
     app.add_singleton_model(PersistedWorkspace::new_for_test);
     app.add_singleton_model(|ctx| crate::ai::agent_tips::AITipModel::new_for_agent_tips(ctx));
-    // `LocalShellState` captures the user's interactive login-shell PATH (used
-    // for MCP/sbx executable resolution). Tests don't exercise that capture, so
+    // `LocalShellState` captures the user's interactive login-shell PATH for executable
+    // resolution. Tests don't exercise that capture, so
     // register the singleton in its `NotLoaded` state to satisfy callers that
     // look it up via `LocalShellState::handle(ctx)`.
     app.add_singleton_model(|_| LocalShellState::NotLoaded);

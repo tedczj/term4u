@@ -68,7 +68,6 @@ use crate::server::ids::{ServerId, SyncId};
 use crate::server::server_api::ServerTime;
 use crate::server::telemetry::{LaunchConfigUiLocation, TelemetryEvent};
 use crate::settings::{AISettings, QuakeModeSettings, ThemeSettings, apply_onboarding_settings};
-use crate::settings_view::mcp_servers_page::MCPServersSettingsPage;
 use crate::settings_view::{OpenTeamsSettingsModalArgs, SettingsSection, flags};
 use crate::terminal::available_shells::AvailableShell;
 use crate::terminal::general_settings::GeneralSettings;
@@ -77,7 +76,7 @@ use crate::terminal::shell::ShellType;
 use crate::terminal::view::{TerminalAction, cell_size_and_padding};
 use crate::themes::onboarding_theme_picker_themes;
 use crate::themes::theme::{AnsiColorIdentifier, Blend, Fill, ThemeKind, WarpThemeConfig};
-use crate::uri::{OpenMCPSettingsArgs, OpenSettingsArgs};
+use crate::uri::OpenSettingsArgs;
 use crate::util::bindings::{self, is_binding_pty_compliant};
 use crate::util::traffic_lights::{TrafficLightData, TrafficLightMouseStates, traffic_light_data};
 use crate::view_components::DismissibleToast;
@@ -403,15 +402,6 @@ pub fn init(app: &mut AppContext) {
     app.add_action(
         "root_view:open_settings_in_existing_window",
         RootView::open_settings_in_existing_window,
-    );
-
-    app.add_global_action(
-        "root_view:open_mcp_settings_in_new_window",
-        open_mcp_settings_in_new_window,
-    );
-    app.add_action(
-        "root_view:open_mcp_settings_in_existing_window",
-        RootView::open_mcp_settings_in_existing_window,
     );
 
     app.add_global_action(
@@ -1034,29 +1024,6 @@ fn open_settings_in_new_window(args: &OpenSettingsArgs, ctx: &mut AppContext) {
         {
             let window_id = ctx.window_id();
             ctx.dispatch_typed_action_for_view(window_id, workspace_view_handle.id(), &action);
-        }
-    });
-}
-
-/// MCP servers need to wait for initial load to complete, so we have this action in addition
-/// to the general-purpose [`open_settings_page_in_new_window`].
-fn open_mcp_settings_in_new_window(args: &OpenMCPSettingsArgs, ctx: &mut AppContext) {
-    let autoinstall = args.autoinstall.clone();
-    let root_handle = open_new_window_get_handles(None, ctx).1;
-    root_handle.update(ctx, |root_view, ctx| {
-        if let AuthOnboardingState::Terminal(workspace_view_handle) =
-            &root_view.auth_onboarding_state
-        {
-            let initial_load_complete = UpdateManager::as_ref(ctx).initial_load_complete();
-            workspace_view_handle.update(ctx, |_, ctx| {
-                let _ = ctx.spawn(initial_load_complete, move |workspace, _, ctx| {
-                    workspace.open_mcp_servers_page(
-                        MCPServersSettingsPage::List,
-                        autoinstall.as_deref(),
-                        ctx,
-                    )
-                });
-            });
         }
     });
 }
@@ -2839,33 +2806,6 @@ impl RootView {
             ctx.windows().show_window_and_focus_app(window_id);
         } else {
             report_error!("Auth not complete before trying to open settings");
-        }
-        true
-    }
-
-    /// Opens the MCP servers settings page in an existing window, optionally triggering auto-install.
-    /// Waits for `initial_load_complete` before opening so gallery data is available for autoinstall.
-    pub fn open_mcp_settings_in_existing_window(
-        &mut self,
-        args: &OpenMCPSettingsArgs,
-        ctx: &mut ViewContext<Self>,
-    ) -> bool {
-        if let AuthOnboardingState::Terminal(handle) = &self.auth_onboarding_state {
-            let autoinstall = args.autoinstall.clone();
-            let initial_load_complete = UpdateManager::as_ref(ctx).initial_load_complete();
-            handle.update(ctx, |_, ctx| {
-                let _ = ctx.spawn(initial_load_complete, move |workspace, _, ctx| {
-                    workspace.open_mcp_servers_page(
-                        MCPServersSettingsPage::List,
-                        autoinstall.as_deref(),
-                        ctx,
-                    )
-                });
-            });
-            let window_id = ctx.window_id();
-            ctx.windows().show_window_and_focus_app(window_id);
-        } else {
-            report_error!("Auth not complete before trying to open MCP settings page");
         }
         true
     }

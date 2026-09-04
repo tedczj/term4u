@@ -65,7 +65,7 @@ fn test_gui_app_id_uses_canonical_product_identity() {
 }
 
 #[test]
-fn test_gui_config_and_mcp_paths_resolve_explicit_sources() {
+fn test_gui_config_path_resolves_product_namespace() {
     let home_dir = home_dir().expect("Should be able to compute home directory");
     let gui_config_dir = gui_config_local_dir().expect("GUI config path should resolve");
 
@@ -83,8 +83,6 @@ fn test_gui_config_and_mcp_paths_resolve_explicit_sources() {
             unimplemented!("Need to update tests for current platform!");
         }
     }
-
-    assert_eq!(gui_mcp_config_file_path(), warp_home_mcp_config_file_path());
 }
 #[test]
 fn test_warp_home_config_dir_path() {
@@ -101,28 +99,12 @@ fn test_warp_home_config_dir_path() {
 }
 
 #[test]
-fn test_warp_home_skills_and_mcp_paths() {
+fn test_warp_home_skills_path() {
     let Some(config_dir) = warp_home_config_dir() else {
         panic!("Should be able to compute Warp home config directory");
     };
 
     assert_eq!(warp_home_skills_dir(), Some(config_dir.join("skills")));
-    assert_eq!(
-        warp_home_mcp_config_file_path(),
-        Some(config_dir.join(".mcp.json"))
-    );
-}
-
-#[test]
-fn test_tui_mcp_config_path_is_separate_from_gui() {
-    let tui_mcp_path = tui_mcp_config_file_path();
-
-    assert_eq!(tui_mcp_path, tui_config_local_dir().join(".mcp.json"));
-    assert_ne!(
-        Some(tui_mcp_path),
-        warp_home_mcp_config_file_path(),
-        "GUI and TUI MCP configuration must remain isolated"
-    );
 }
 #[test]
 fn test_cache_dir_path() {

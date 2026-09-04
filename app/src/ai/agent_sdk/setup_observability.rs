@@ -186,9 +186,7 @@ pub(crate) enum SetupStep {
     SkillRepoClone,
     TerminalBootstrap,
     CloudProviderSetup,
-    McpServerStartup,
     AgentProfileConfiguration,
-    ProfileMcpServerStartup,
     SharedSessionEstablishment,
     GlobalSkillResolution,
     GlobalSkillRepoClone,
@@ -196,8 +194,6 @@ pub(crate) enum SetupStep {
     CacheSetup,
     EnvironmentSetupCommands,
     EnvironmentCodebaseIndexing,
-    FileBasedMcpDiscovery,
-    FileBasedMcpReadiness,
     EnvironmentSkillLoading,
     GlobalSkillLoading,
     SkillsDirsLoading,
@@ -242,14 +238,8 @@ impl SetupStep {
             Self::CloudProviderSetup => {
                 span_and_name!("setup_cloud_provider_setup")
             }
-            Self::McpServerStartup => {
-                span_and_name!("setup_mcp_server_startup")
-            }
             Self::AgentProfileConfiguration => {
                 span_and_name!("setup_agent_profile_configuration")
-            }
-            Self::ProfileMcpServerStartup => {
-                span_and_name!("setup_profile_mcp_server_startup")
             }
             Self::SharedSessionEstablishment => {
                 span_and_name!("setup_shared_session_establishment")
@@ -271,12 +261,6 @@ impl SetupStep {
             }
             Self::EnvironmentCodebaseIndexing => {
                 span_and_name!("setup_environment_codebase_indexing")
-            }
-            Self::FileBasedMcpDiscovery => {
-                span_and_name!("setup_file_based_mcp_discovery")
-            }
-            Self::FileBasedMcpReadiness => {
-                span_and_name!("setup_file_based_mcp_readiness")
             }
             Self::EnvironmentSkillLoading => {
                 span_and_name!("setup_environment_skill_loading")

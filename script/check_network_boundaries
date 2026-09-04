@@ -1,0 +1,134 @@
+#!/usr/bin/env python3
+"""Reject direct outbound-network constructors outside the guarded boundary crates."""
+
+from __future__ import annotations
+
+import re
+import sys
+import tempfile
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+SOURCE_ROOTS = ("app", "crates", "crates-local")
+ALLOWED_PREFIXES = (
+    "crates/http_client/",
+    "crates/websocket/",
+    "crates/local_control/",
+    "crates-local/offline_guard/",
+)
+EXCLUDED_PARTS = {".git", "target", "test_data"}
+PATTERNS = (
+    ("reqwest client construction", re.compile(
+        r"reqwest\s*::\s*(?:blocking\s*::\s*)?Client(?:Builder)?\s*::\s*(?:new|builder|default)\s*\("
+    )),
+    ("reqwest one-shot request", re.compile(r"reqwest\s*::\s*get\s*\(")),
+    ("direct TCP connection", re.compile(r"\bTcpStream\s*::\s*connect\s*\(")),
+    ("direct UDP connection", re.compile(r"\bUdpSocket\s*::\s*connect\s*\(")),
+    ("direct DNS lookup", re.compile(r"\b(?:lookup_host|ToSocketAddrs::to_socket_addrs)\s*\(")),
+    ("direct WebSocket connection", re.compile(r"\bconnect_async(?:_with_tls_connector)?\s*\(")),
+)
+
+
+def is_test_source(relative: str) -> bool:
+    path = Path(relative)
+    return (
+        path.name.endswith("_tests.rs")
+        or path.name == "test_support.rs"
+        or "tests" in path.parts
+    )
+
+
+def is_allowed(relative: str) -> bool:
+    return relative.startswith(ALLOWED_PREFIXES) or is_test_source(relative)
+
+
+def source_files(root: Path) -> list[Path]:
+    files: list[Path] = []
+    for source_root in SOURCE_ROOTS:
+        directory = root / source_root
+        if not directory.exists():
+            continue
+        for path in directory.rglob("*.rs"):
+            if not EXCLUDED_PARTS.intersection(path.relative_to(root).parts):
+                files.append(path)
+    return sorted(files)
+
+
+def scan(root: Path) -> list[str]:
+    violations: list[str] = []
+    for path in source_files(root):
+        relative = path.relative_to(root).as_posix()
+        if is_allowed(relative):
+            continue
+        try:
+            lines = path.read_text(encoding="utf-8").splitlines()
+        except UnicodeDecodeError:
+            continue
+        in_block_comment = False
+        for number, original_line in enumerate(lines, 1):
+            line = original_line
+            if in_block_comment:
+                if "*/" not in line:
+                    continue
+                line = line.split("*/", 1)[1]
+                in_block_comment = False
+            while "/*" in line:
+                before, after = line.split("/*", 1)
+                if "*/" in after:
+                    line = before + after.split("*/", 1)[1]
+                else:
+                    line = before
+                    in_block_comment = True
+                    break
+            line = line.split("//", 1)[0]
+            for description, pattern in PATTERNS:
+                if pattern.search(line):
+                    violations.append(f"{relative}:{number}: {description}: {original_line.strip()}")
+    return violations
+
+
+def run_self_test() -> int:
+    with tempfile.TemporaryDirectory(prefix="network-boundaries-") as temporary:
+        root = Path(temporary)
+        allowed = root / "crates/http_client/src/lib.rs"
+        allowed.parent.mkdir(parents=True)
+        allowed.write_text("fn guarded() { let _ = reqwest::Client::new(); }\n")
+        test_source = root / "app/src/loopback_tests.rs"
+        test_source.parent.mkdir(parents=True)
+        test_source.write_text("fn loopback() { let _ = TcpStream::connect(addr); }\n")
+        if violations := scan(root):
+            print("self-test FAIL: allowed samples were rejected", file=sys.stderr)
+            print("\n".join(violations), file=sys.stderr)
+            return 1
+        print("self-test PASS: allowed boundary and test samples accepted")
+
+        forbidden = root / "app/src/feature.rs"
+        forbidden.write_text("fn bypass() { let _ = reqwest::Client::new(); }\n")
+        violations = scan(root)
+        if len(violations) != 1 or "app/src/feature.rs" not in violations[0]:
+            print("self-test FAIL: out-of-bound sample was not rejected", file=sys.stderr)
+            print("\n".join(violations), file=sys.stderr)
+            return 1
+        print("self-test PASS: out-of-bound network client rejected")
+    return 0
+
+
+def main() -> int:
+    if sys.argv[1:] == ["--self-test"]:
+        return run_self_test()
+    if sys.argv[1:]:
+        print("usage: check_network_boundaries [--self-test]", file=sys.stderr)
+        return 2
+
+    root = Path(__import__("os").environ.get("NETWORK_BOUNDARY_SCAN_ROOT", ROOT)).resolve()
+    violations = scan(root)
+    if violations:
+        print("ERROR: direct network access exists outside guarded boundary crates:", file=sys.stderr)
+        print("\n".join(violations), file=sys.stderr)
+        return 1
+    print("OK: network constructors stay inside guarded boundary crates")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

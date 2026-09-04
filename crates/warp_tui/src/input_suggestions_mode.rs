@@ -18,8 +18,6 @@ pub(crate) enum TuiInputSuggestionsMode {
     ModelSelector,
     TeamSelector,
     SkillMenu,
-    Mcp,
-    McpInstall,
     PromptAndCommandHistory,
     CompletionSuggestions,
     ReadOnlyMenu(TuiReadOnlyMenuKind),
@@ -40,8 +38,6 @@ impl TuiInputSuggestionsMode {
             | Self::ModelSelector
             | Self::TeamSelector
             | Self::SkillMenu
-            | Self::Mcp
-            | Self::McpInstall
             | Self::PromptAndCommandHistory
             | Self::CompletionSuggestions => None,
         }
@@ -98,8 +94,6 @@ impl TuiInputSuggestionsModeModel {
             | TuiInputSuggestionsMode::ModelSelector
             | TuiInputSuggestionsMode::TeamSelector
             | TuiInputSuggestionsMode::SkillMenu
-            | TuiInputSuggestionsMode::Mcp
-            | TuiInputSuggestionsMode::McpInstall
             | TuiInputSuggestionsMode::PromptAndCommandHistory
             | TuiInputSuggestionsMode::CompletionSuggestions
             | TuiInputSuggestionsMode::ReadOnlyMenu(_) => false,

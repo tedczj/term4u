@@ -668,13 +668,10 @@ impl ConvertAPIToolCallToAIAgentAction for api::message::ToolCall {
                 create_standard_action(apply_file_diffs.into())
             }
             api::message::tool_call::Tool::ReadMcpResource(read_mcp_resource) => {
-                create_standard_action(read_mcp_resource.into())
+                create_standard_action(read_mcp_resource.try_into()?)
             }
             api::message::tool_call::Tool::CallMcpTool(call_mcp_tool) => {
-                match call_mcp_tool.try_into() {
-                    Ok(call_mcp_tool_action) => create_standard_action(call_mcp_tool_action),
-                    Err(error) => Err(error),
-                }
+                create_standard_action(call_mcp_tool.try_into()?)
             }
             api::message::tool_call::Tool::SuggestNewConversation(suggest_new_conversation) => {
                 create_standard_action(suggest_new_conversation.into())

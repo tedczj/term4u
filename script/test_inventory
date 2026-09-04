@@ -3,6 +3,8 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 BASE=docs/redesign/baseline
+BASELINE="$BASE/phase1-before.txt"
+DELETED_TEST_IDS="$BASE/deleted-test-ids.txt"
 LIST_CMD=(cargo nextest list --workspace --exclude command-signatures-v2 --message-format json)
 
 list_tests() {
@@ -19,7 +21,45 @@ print("\n".join(sorted(tests)))
 '
 }
 
-case "${1:-}" in
+verify_inventory() {
+  test -f "$BASELINE"
+  if [[ ! -f "$DELETED_TEST_IDS" ]]; then
+    echo "ERROR: missing $DELETED_TEST_IDS" >&2
+    return 1
+  fi
+
+  local current disappeared unlisted stale
+  current=$(mktemp "${TMPDIR:-/tmp}/term4u-current-tests.XXXXXX")
+  disappeared=$(mktemp "${TMPDIR:-/tmp}/term4u-disappeared-tests.XXXXXX")
+  unlisted=$(mktemp "${TMPDIR:-/tmp}/term4u-unlisted-tests.XXXXXX")
+  stale=$(mktemp "${TMPDIR:-/tmp}/term4u-stale-deleted-tests.XXXXXX")
+  trap "rm -f '$current' '$disappeared' '$unlisted' '$stale'" EXIT
+
+  list_tests > "$current"
+  comm -23 <(sort "$BASELINE") <(sort "$current") > "$disappeared"
+  comm -23 <(sort "$disappeared") <(sort "$DELETED_TEST_IDS") > "$unlisted"
+  comm -13 <(sort "$disappeared") <(sort "$DELETED_TEST_IDS") > "$stale"
+
+  if [[ -s "$unlisted" ]]; then
+    echo "ERROR: tests disappeared outside deleted-test-ids.txt:" >&2
+    cat "$unlisted" >&2
+    return 1
+  fi
+  if [[ -s "$stale" ]]; then
+    echo "ERROR: deleted-test-ids.txt contains tests that did not disappear:" >&2
+    cat "$stale" >&2
+    return 1
+  fi
+  echo "OK: every disappeared test is explicitly listed in deleted-test-ids.txt"
+  echo "Baseline tests: $(wc -l < "$BASELINE" | tr -d ' ')"
+  echo "Current tests: $(wc -l < "$current" | tr -d ' ')"
+  echo "Deleted tests: $(wc -l < "$disappeared" | tr -d ' ')"
+}
+
+case "${1:-verify}" in
+  verify)
+    verify_inventory
+    ;;
   list)
     list_tests
     ;;
@@ -40,7 +80,7 @@ case "${1:-}" in
       echo "OK: no tests disappeared"
       exit 0
     fi
-    whitelist="$BASE/deleted-test-ids.txt"
+    whitelist="$DELETED_TEST_IDS"
     if [[ ! -f "$whitelist" ]]; then
       echo "ERROR: tests disappeared, but $whitelist does not exist:" >&2
       cat /tmp/term4u-disappeared-tests.txt >&2
@@ -57,7 +97,7 @@ case "${1:-}" in
     python3 script/lib/classify_tests.py --out "$BASE"
     ;;
   *)
-    echo "usage: $0 {list|snapshot NAME|diff BEFORE AFTER|classify}" >&2
+    echo "usage: $0 {verify|list|snapshot NAME|diff BEFORE AFTER|classify}" >&2
     exit 2
     ;;
 esac

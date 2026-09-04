@@ -91,52 +91,6 @@ pub fn classify_driver_error(error: &AgentDriverError) -> (AgentTaskState, TaskS
         ),
 
         // --- User-side errors (task → FAILED) ---
-        AgentDriverError::MCPServerNotFound(uuid) => (
-            AgentTaskState::Failed,
-            TaskStatusUpdate::with_error_code(
-                format!(
-                    "MCP server {uuid} was not found. Verify the server exists in your Warp Drive and the UUID is correct."
-                ),
-                PlatformErrorCode::EnvironmentSetupFailed,
-            ),
-        ),
-        AgentDriverError::ManagedMcpResolutionFailed { uid, message } => (
-            AgentTaskState::Failed,
-            TaskStatusUpdate::with_error_code(
-                format!("Managed MCP server {uid} could not be resolved: {message}"),
-                PlatformErrorCode::EnvironmentSetupFailed,
-            ),
-        ),
-        AgentDriverError::MCPStartupFailed { details } => {
-            let server_lines = details
-                .iter()
-                .map(|detail| format!("- {detail}"))
-                .collect::<Vec<_>>()
-                .join("\n");
-            (
-                AgentTaskState::Failed,
-                TaskStatusUpdate::with_error_code(
-                    format!(
-                        "One or more MCP servers failed to start:\n\n{server_lines}\n\nCheck that each server's configuration is valid and that it is reachable from the agent's environment."
-                    ),
-                    PlatformErrorCode::EnvironmentSetupFailed,
-                ),
-            )
-        }
-        AgentDriverError::MCPJsonParseError(msg) => (
-            AgentTaskState::Failed,
-            TaskStatusUpdate::with_error_code(
-                format!("Failed to parse MCP server JSON configuration: {msg}"),
-                PlatformErrorCode::EnvironmentSetupFailed,
-            ),
-        ),
-        AgentDriverError::MCPMissingVariables => (
-            AgentTaskState::Failed,
-            TaskStatusUpdate::with_error_code(
-                "MCP server configuration is missing required variables. Provide all required environment variables or template values.",
-                PlatformErrorCode::EnvironmentSetupFailed,
-            ),
-        ),
         AgentDriverError::ProfileError(name) => (
             AgentTaskState::Failed,
             TaskStatusUpdate::with_error_code(
@@ -265,13 +219,6 @@ pub fn classify_driver_error(error: &AgentDriverError) -> (AgentTaskState, TaskS
             TaskStatusUpdate::with_error_code(
                 format!("Failed to fetch task metadata: {err}"),
                 PlatformErrorCode::InternalError,
-            ),
-        ),
-        AgentDriverError::AwsBedrockCredentialsFailed(msg) => (
-            AgentTaskState::Failed,
-            TaskStatusUpdate::with_error_code(
-                format!("Failed to initialize AWS Bedrock credentials: {msg}"),
-                PlatformErrorCode::EnvironmentSetupFailed,
             ),
         ),
         AgentDriverError::ConversationLoadFailed(msg) => (

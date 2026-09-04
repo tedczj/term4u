@@ -3,7 +3,7 @@ description: A shared set of setup steps to prepare the runtime environment.
 inputs:
   target_os:
     required: true
-    description: The target OS that we're building for ("macos", "linux", "windows", or "wasm").
+    description: The target OS that we're building for ("macos", "linux", or "wasm").
   is_self_hosted:
     required: true
     description: Whether or not the workflow is running on a self-hosted runner.
@@ -25,16 +25,6 @@ runs:
       shell: bash
       run: echo "GH_TOKEN=${{ github.token }}" >> $GITHUB_ENV
 
-    - name: Set up git for Windows
-      if: ${{ inputs.target_os == 'windows' }}
-      shell: bash
-      run: git config --system core.longpaths true
-
-    - name: Set CARGO_HOME location
-      if: ${{ inputs.target_os == 'windows' }}
-      shell: bash
-      run: echo "CARGO_HOME=C:\cargo" >> $GITHUB_ENV
-
     - name: Determine repository root
       id: repo-root
       shell: bash
@@ -43,9 +33,7 @@ runs:
         # Derive the repository root from the action path.
         REPO_ROOT=$(cd "${{ github.action_path }}/../../.." && pwd)
         echo "path=$REPO_ROOT" >> $GITHUB_OUTPUT
-        # Normalize $GITHUB_WORKSPACE through cd/pwd so that path formats
-        # match on Windows (where $GITHUB_WORKSPACE uses backslashes but
-        # pwd produces MSYS-style forward-slash paths).
+        # Normalize $GITHUB_WORKSPACE through cd/pwd before comparing paths.
         WORKSPACE=$(cd "$GITHUB_WORKSPACE" && pwd)
         if [ "$REPO_ROOT" = "$WORKSPACE" ]; then
           echo "is-workspace-root=true" >> $GITHUB_OUTPUT
@@ -70,7 +58,7 @@ runs:
         git lfs ls-files --size
 
     - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
-      if: ${{ inputs.is_self_hosted != 'true' && !startsWith(runner.name, 'nsc-runner') }}
+      if: ${{ inputs.is_self_hosted != 'true' }}
       with:
         # Make sure x86_64-unknown-linux-gnu and wasm32-unknown-unknown builds
         # don't share a cache, despite running on the same _host_ architecture.
@@ -78,14 +66,6 @@ runs:
         # Only cache runs on the master branch (caches on feature branches
         # are not reusable).
         save-if: ${{ github.ref == 'refs/heads/master' }}
-
-    - name: Set up Namespace cache
-      if: ${{ startsWith(runner.name, 'nsc-runner') }}
-      uses: namespacelabs/nscloud-cache-action@a90bb5d4b27522ce881c6e98eebd7d7e6d1653f9 # v1.4.2
-      with:
-        cache: |
-          rust
-          ${{ inputs.target_os == 'macos' && 'brew' || '' }}
 
     # The script pins the binstall version, verifies the archive against an
     # in-repo SHA-256, retries transient download failures, and skips the
@@ -137,11 +117,6 @@ runs:
           else
             ./script/linux/install_build_deps
           fi
-        elif ${{ inputs.target_os == 'windows' }}; then
-          ./script/windows/install_build_deps.ps1
-          if ${{ inputs.install_release_deps == 'true' }}; then
-            ./script/install_cargo_release_deps
-          fi
         elif ${{ inputs.target_os == 'wasm' }}; then
           # Update the apt cache before installing dependencies - it can be slow, so the install scripts
           # don't do it (to avoid doing it more than once).
@@ -167,17 +142,10 @@ runs:
       id: install_protoc
       # Install protoc for generating rust bindings of protobuf APIs.
       uses: ConorMacBride/install-package@3e7ad059e07782ee54fa35f827df52aae0626f30 # v1
-      # Don't fail the job here so the Windows (winget) and macOS (brew) fallbacks
-      # below have a chance to run.
+      # Don't fail the job here so the macOS (brew) fallback below has a chance to run.
       continue-on-error: true
       with:
         brew: protobuf
-        choco: protoc
-
-    - name: Install protoc via winget (fallback for Windows)
-      if: ${{ inputs.target_os == 'windows' && steps.install_protoc.outcome == 'failure' }}
-      shell: pwsh
-      run: winget install Google.Protobuf
 
     - name: Install protoc via brew without index update (fallback for macOS)
       if: ${{ inputs.target_os == 'macos' && steps.install_protoc.outcome == 'failure' }}
@@ -191,8 +159,8 @@ runs:
       run: HOMEBREW_NO_AUTO_UPDATE=1 brew install protobuf
 
     - name: Fail if protoc install did not succeed
-      # Windows and macOS surface failures via their fallback steps above.
-      if: ${{ inputs.target_os != 'windows' && inputs.target_os != 'macos' && steps.install_protoc.outcome == 'failure' }}
+      # macOS surfaces failures via its fallback step above.
+      if: ${{ inputs.target_os != 'macos' && steps.install_protoc.outcome == 'failure' }}
       shell: bash
       run: |
         echo "::error::protoc install step failed on ${{ inputs.target_os }}"

@@ -3,10 +3,10 @@ mod state;
 
 use std::fmt;
 
-use crate::product_identity::GUI_BINARY_NAME;
-
 pub use config::*;
 pub use state::*;
+
+use crate::product_identity::GUI_BINARY_NAME;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Channel {

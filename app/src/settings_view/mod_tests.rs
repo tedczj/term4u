@@ -95,7 +95,6 @@ fn match_data_countable_zero_is_not_truthy() {
 fn subpage_display_names_are_correct() {
     assert_eq!(SettingsSection::WarpAgent.to_string(), "Warp Agent");
     assert_eq!(SettingsSection::AgentProfiles.to_string(), "Profiles");
-    assert_eq!(SettingsSection::AgentMCPServers.to_string(), "MCP servers");
     assert_eq!(SettingsSection::Knowledge.to_string(), "Knowledge");
     assert_eq!(
         SettingsSection::ThirdPartyCLIAgents.to_string(),
@@ -141,7 +140,6 @@ const ALL_SECTIONS: &[SettingsSection] = &[
     SettingsSection::Warpify,
     SettingsSection::WarpAgent,
     SettingsSection::AgentProfiles,
-    SettingsSection::AgentMCPServers,
     SettingsSection::Knowledge,
     SettingsSection::ThirdPartyCLIAgents,
     SettingsSection::CodeIndexing,
@@ -175,7 +173,6 @@ fn all_sections_list_is_exhaustive() {
             | SettingsSection::Warpify
             | SettingsSection::WarpAgent
             | SettingsSection::AgentProfiles
-            | SettingsSection::AgentMCPServers
             | SettingsSection::Knowledge
             | SettingsSection::ThirdPartyCLIAgents
             | SettingsSection::CodeIndexing
@@ -263,10 +260,6 @@ fn from_slug_accepts_legacy_spellings() {
         Some(SettingsSection::AgentProfiles)
     );
     assert_eq!(
-        SettingsSection::from_slug("AgentMCPServers"),
-        Some(SettingsSection::AgentMCPServers)
-    );
-    assert_eq!(
         SettingsSection::from_slug("ThirdPartyCLIAgents"),
         Some(SettingsSection::ThirdPartyCLIAgents)
     );
@@ -293,11 +286,7 @@ fn from_slug_accepts_legacy_spellings() {
 }
 
 #[test]
-fn from_slug_maps_superseded_page_names_to_the_page_that_replaced_them() {
-    // `AI`, `Code` and `MCP Servers` named pages that have since been split or
-    // moved. Persisted sessions and warpctrl callers still use them, so they
-    // resolve here, at the boundary, rather than existing as sections of their
-    // own that every caller would have to remember to normalize.
+fn from_slug_maps_supported_superseded_page_names_to_the_page_that_replaced_them() {
     assert_eq!(
         SettingsSection::from_slug("AI"),
         Some(SettingsSection::WarpAgent)
@@ -305,10 +294,6 @@ fn from_slug_maps_superseded_page_names_to_the_page_that_replaced_them() {
     assert_eq!(
         SettingsSection::from_slug("Code"),
         Some(SettingsSection::CodeIndexing)
-    );
-    assert_eq!(
-        SettingsSection::from_slug("MCP Servers"),
-        Some(SettingsSection::AgentMCPServers)
     );
 }
 
@@ -331,7 +316,6 @@ use nav::{SettingsNavItem, SettingsUmbrella};
 const AGENT_SUBPAGES: &[SettingsSection] = &[
     SettingsSection::WarpAgent,
     SettingsSection::AgentProfiles,
-    SettingsSection::AgentMCPServers,
     SettingsSection::Knowledge,
     SettingsSection::ThirdPartyCLIAgents,
 ];
@@ -422,8 +406,8 @@ fn expanded_umbrella_produces_section_stop_per_subpage() {
 
     let stops = build_nav_stops(&nav_items, |_| true);
 
-    // Expect: Account, WarpAgent, AgentProfiles, AgentMCPServers, Knowledge,
-    // ThirdPartyCLIAgents, BillingAndUsage, <Code umbrella>,
+    // Expect: Account, WarpAgent, AgentProfiles, Knowledge, ThirdPartyCLIAgents,
+    // BillingAndUsage, <Code umbrella>,
     // <Cloud platform umbrella>, Teams.
     let sections: Vec<_> = stops
         .iter()
@@ -438,7 +422,6 @@ fn expanded_umbrella_produces_section_stop_per_subpage() {
             "Account",
             "WarpAgent",
             "AgentProfiles",
-            "AgentMCPServers",
             "Knowledge",
             "ThirdPartyCLIAgents",
             "BillingAndUsage",
@@ -657,8 +640,7 @@ fn arrow_up_from_billing_and_usage_with_collapsed_agents_lands_on_last_subpage()
 #[test]
 fn arrow_up_into_collapsed_umbrella_respects_search_filter_for_last_subpage() {
     let nav_items = realistic_nav_items();
-    // Hide the last two AI subpages; the last *visible* subpage of the
-    // still-collapsed Agents umbrella should be AgentMCPServers.
+    // Hide the last two AI subpages; the last visible subpage is AgentProfiles.
     let is_visible = |section: SettingsSection| {
         !matches!(
             section,
@@ -667,16 +649,14 @@ fn arrow_up_into_collapsed_umbrella_respects_search_filter_for_last_subpage() {
     };
     let stops = build_nav_stops(&nav_items, is_visible);
 
-    // From BillingAndUsage, Up should land on the last *visible* AI subpage
-    // (AgentMCPServers), not on the filtered-out Knowledge/ThirdPartyCLIAgents
-    // or on the first subpage WarpAgent.
+    // From BillingAndUsage, Up should land on the last visible AI subpage.
     let next = simulate_cycle(
         &nav_items,
         &stops,
         SettingsSection::BillingAndUsage,
         CycleDirection::Up,
     );
-    assert_eq!(next, SettingsSection::AgentMCPServers);
+    assert_eq!(next, SettingsSection::AgentProfiles);
 }
 
 #[test]
@@ -727,8 +707,7 @@ fn arrow_down_across_adjacent_collapsed_umbrellas() {
 #[test]
 fn arrow_down_collapsed_umbrella_respects_search_filter() {
     let nav_items = realistic_nav_items();
-    // Search filter hides WarpAgent and AgentProfiles so the first visible AI
-    // subpage is AgentMCPServers.
+    // Search filter hides WarpAgent and AgentProfiles so Knowledge is first.
     let is_visible = |section: SettingsSection| {
         !matches!(
             section,
@@ -737,16 +716,14 @@ fn arrow_down_collapsed_umbrella_respects_search_filter() {
     };
     let stops = build_nav_stops(&nav_items, is_visible);
 
-    // From Account, Down should land on AgentMCPServers (first visible
-    // subpage of the still-collapsed Agents umbrella), not on WarpAgent /
-    // AgentProfiles.
+    // From Account, Down should land on the first visible Agents subpage.
     let next = simulate_cycle(
         &nav_items,
         &stops,
         SettingsSection::Account,
         CycleDirection::Down,
     );
-    assert_eq!(next, SettingsSection::AgentMCPServers);
+    assert_eq!(next, SettingsSection::Knowledge);
 }
 
 // ── PageType filter lifecycle across a rebuild (APP-4922) ────────────────────

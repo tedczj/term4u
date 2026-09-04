@@ -77,9 +77,6 @@ pub enum FailedOutputPresentation {
     ContextWindowExceeded {
         message: String,
     },
-    AwsBedrockCredentialsExpiredOrInvalid {
-        fallback_message: String,
-    },
     GeminiEnterpriseCredentialsExpiredOrInvalid {
         fallback_message: String,
     },
@@ -142,14 +139,6 @@ pub fn failed_output_presentation(
                  Double-check that your API key is correct."
             ),
         },
-        RenderableAIError::AwsBedrockCredentialsExpiredOrInvalid { model_name } => {
-            FailedOutputPresentation::AwsBedrockCredentialsExpiredOrInvalid {
-                fallback_message: format!(
-                    "{ERROR_APOLOGY_TEXT}\n\nAWS credentials expired or missing for {model_name}. \
-                     Please refresh your AWS credentials."
-                ),
-            }
-        }
         RenderableAIError::GeminiEnterpriseCredentialsExpiredOrInvalid => {
             FailedOutputPresentation::GeminiEnterpriseCredentialsExpiredOrInvalid {
                 fallback_message: format!(
@@ -376,7 +365,7 @@ pub fn usage_label(
     format!("{base}{suffix}")
 }
 
-/// Renders a secondary button with an MCP/skill provider icon and a text label.
+/// Renders a secondary button with a provider icon and text label.
 pub(crate) fn render_provider_icon_button<F>(
     button_label: &str,
     button_handle: MouseStateHandle,

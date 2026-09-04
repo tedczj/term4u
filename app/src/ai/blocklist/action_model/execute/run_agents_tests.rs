@@ -18,7 +18,6 @@ use crate::ai::blocklist::{
 use crate::ai::document::ai_document_model::{AIDocumentModel, AIDocumentSaveStatus};
 use crate::ai::execution_profiles::RunAgentsPermission;
 use crate::ai::execution_profiles::profiles::AIExecutionProfilesModel;
-use crate::ai::mcp::templatable_manager::TemplatableMCPServerManager;
 use crate::ai::orchestration::populate_default_auth_secret_for_execution;
 use crate::ai::orchestration::settings::OrchestrationSettings;
 use crate::appearance::Appearance;
@@ -185,7 +184,6 @@ fn initialize_run_agents_test(app: &mut App, mode: ExecutionMode) -> RunAgentsTe
     app.add_singleton_model(CloudModel::mock);
     app.add_singleton_model(|_| Appearance::mock());
     app.add_singleton_model(|_| AIDocumentModel::new_for_test());
-    app.add_singleton_model(|_| TemplatableMCPServerManager::default());
     app.add_singleton_model(|ctx| {
         AIExecutionProfilesModel::new(&LaunchMode::new_for_unit_test(), ctx)
     });

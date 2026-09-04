@@ -79,6 +79,7 @@ fn report_if_error_once_per_run(result: Result<(), anyhow::Error>) {
 }
 
 #[test]
+#[serial_test::serial]
 fn report_error_log_mode_controls_log_frequency() {
     init_logger();
 
@@ -116,6 +117,7 @@ fn report_error_log_mode_controls_log_frequency() {
 }
 
 #[test]
+#[serial_test::serial]
 fn new_macro_forms_log_as_expected() {
     init_logger();
 

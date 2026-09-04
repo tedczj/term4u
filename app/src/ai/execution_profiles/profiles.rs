@@ -6,7 +6,6 @@ use anyhow::Context as _;
 #[cfg(not(feature = "agent_mode_evals"))]
 use indexmap::IndexMap;
 use settings::Setting as _;
-use uuid::Uuid;
 use warp_core::channel::ChannelState;
 use warp_core::features::FeatureFlag;
 use warp_core::user_preferences::GetUserPreferences;
@@ -1471,39 +1470,6 @@ impl AIExecutionProfilesModel {
         );
     }
 
-    pub fn set_mcp_permissions(
-        &mut self,
-        profile_id: &ExecutionProfileId,
-        mcp_permissions: &ActionPermission,
-        ctx: &mut ModelContext<Self>,
-    ) {
-        self.edit_profile_internal(
-            profile_id,
-            |profile| {
-                if profile.mcp_permissions == *mcp_permissions {
-                    return false;
-                }
-
-                if mcp_permissions == &ActionPermission::AlwaysAllow {
-                    profile.mcp_allowlist.clear();
-                } else if mcp_permissions == &ActionPermission::AlwaysAsk {
-                    profile.mcp_denylist.clear();
-                }
-                profile.mcp_permissions = *mcp_permissions;
-                true
-            },
-            ctx,
-        );
-
-        send_telemetry_from_ctx!(
-            TelemetryEvent::AIExecutionProfileSettingUpdated {
-                setting_type: "mcp_permissions".to_string(),
-                setting_value: format!("{mcp_permissions:?}"),
-            },
-            ctx
-        );
-    }
-
     pub fn set_computer_use(
         &mut self,
         profile_id: &ExecutionProfileId,
@@ -1840,110 +1806,6 @@ impl AIExecutionProfilesModel {
         );
     }
 
-    pub fn add_to_mcp_allowlist(
-        &mut self,
-        profile_id: &ExecutionProfileId,
-        id: &Uuid,
-        ctx: &mut ModelContext<Self>,
-    ) {
-        self.edit_profile_internal(
-            profile_id,
-            |profile| {
-                if !profile.mcp_allowlist.contains(id) {
-                    profile.mcp_allowlist.push(*id);
-                    return true;
-                }
-                false
-            },
-            ctx,
-        );
-
-        send_telemetry_from_ctx!(
-            TelemetryEvent::AIExecutionProfileAddedToAllowlist {
-                list_type: "mcp".to_string(),
-                value: id.to_string(),
-            },
-            ctx
-        );
-    }
-
-    pub fn remove_from_mcp_allowlist(
-        &mut self,
-        profile_id: &ExecutionProfileId,
-        id: &Uuid,
-        ctx: &mut ModelContext<Self>,
-    ) {
-        self.edit_profile_internal(
-            profile_id,
-            |profile| {
-                let original_len = profile.mcp_allowlist.len();
-                profile.mcp_allowlist.retain(|p| p != id);
-                profile.mcp_allowlist.len() != original_len
-            },
-            ctx,
-        );
-
-        send_telemetry_from_ctx!(
-            TelemetryEvent::AIExecutionProfileRemovedFromAllowlist {
-                list_type: "mcp".to_string(),
-                value: id.to_string(),
-            },
-            ctx
-        );
-    }
-
-    pub fn add_to_mcp_denylist(
-        &mut self,
-        profile_id: &ExecutionProfileId,
-        id: &Uuid,
-        ctx: &mut ModelContext<Self>,
-    ) {
-        self.edit_profile_internal(
-            profile_id,
-            |profile| {
-                if !profile.mcp_denylist.contains(id) {
-                    profile.mcp_denylist.push(*id);
-                    return true;
-                }
-                false
-            },
-            ctx,
-        );
-
-        send_telemetry_from_ctx!(
-            TelemetryEvent::AIExecutionProfileAddedToDenylist {
-                list_type: "mcp".to_string(),
-                value: id.to_string(),
-            },
-            ctx
-        );
-    }
-
-    pub fn remove_from_mcp_denylist(
-        &mut self,
-        profile_id: &ExecutionProfileId,
-        id: &Uuid,
-        ctx: &mut ModelContext<Self>,
-    ) {
-        self.edit_profile_internal(
-            profile_id,
-            |profile| {
-                let original_len = profile.mcp_denylist.len();
-                profile.mcp_denylist.retain(|p| p != id);
-                profile.mcp_denylist.len() != original_len
-            },
-            ctx,
-        );
-
-        send_telemetry_from_ctx!(
-            TelemetryEvent::AIExecutionProfileRemovedFromDenylist {
-                list_type: "mcp".to_string(),
-                value: id.to_string(),
-            },
-            ctx
-        );
-    }
-
     /// `edit_profile_internal` edits an AIExecutionProfile and upserts the changed profile to the cloud
     /// Parameters:
     /// * `profile_id`: The id of the profile to edit
@@ -2100,17 +1962,6 @@ impl AIExecutionProfilesModel {
                 folder_id: _,
             } => {
                 self.handle_ai_execution_profile_deleted(*id, ctx);
-            }
-            CloudModelEvent::ObjectDeleted {
-                type_and_id:
-                    CloudObjectTypeAndId::GenericStringObject {
-                        object_type: GenericStringObjectFormat::Json(JsonObjectType::MCPServer),
-                        id: _,
-                    },
-                folder_id: _,
-            } => {
-                // Legacy MCP servers are converted to templatable on startup;
-                // no action needed when a legacy cloud object is deleted.
             }
             CloudModelEvent::ObjectUpdated {
                 type_and_id:

@@ -33,8 +33,6 @@ use crate::ai::agent_conversations_model::AgentConversationsModel;
 use crate::ai::blocklist::BlocklistAIHistoryModel;
 use crate::ai::blocklist::agent_view::orchestration_pill_bar_model::OrchestrationPillBarModel;
 use crate::ai::execution_profiles::profiles::AIExecutionProfilesModel;
-#[cfg(not(target_family = "wasm"))]
-use crate::ai::mcp::TemplatableMCPServerManager;
 use crate::ai::request_usage_model::AIRequestUsageModel;
 use crate::ai_assistant::requests::REQUEST_LIMIT_INFO_CACHE_KEY;
 use crate::cloud_object::model::persistence::CloudModel;
@@ -276,12 +274,6 @@ pub fn log_out(app: &mut AppContext) {
 
     AuthManager::handle(app).update(app, |auth_manager, ctx| {
         auth_manager.log_out(ctx);
-    });
-    // Detach built-in Warp-hosted MCP servers; they authenticate with the
-    // credentials that were just cleared.
-    #[cfg(not(target_family = "wasm"))]
-    TemplatableMCPServerManager::handle(app).update(app, |manager, ctx| {
-        manager.sync_builtin_servers(false, ctx);
     });
     AIRequestUsageModel::handle(app).update(app, |usage_model, ctx| {
         usage_model.reset_server_availability(ctx);

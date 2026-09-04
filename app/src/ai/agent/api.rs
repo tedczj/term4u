@@ -3,7 +3,6 @@ mod convert_from;
 mod convert_to;
 mod r#impl;
 
-use std::path::Path;
 use std::pin::Pin;
 use std::sync::Arc;
 
@@ -15,7 +14,6 @@ pub use convert_from::{
 };
 use futures_lite::Stream;
 pub use r#impl::generate_multi_agent_output;
-use mcp::TemplatableMCPServerInfo;
 use serde::Serialize;
 use warp_core::channel::{Channel, ChannelState};
 use warp_core::execution_mode::AppExecutionMode;
@@ -23,14 +21,13 @@ use warp_core::features::FeatureFlag;
 use warp_core::user_preferences::GetUserPreferences;
 use warpui::{AppContext, EntityId, SingletonEntity as _};
 
-use super::{AIAgentInput, MCPContext, MCPServer, RequestMetadata, ServerOutputId, Suggestions};
+use super::{AIAgentInput, RequestMetadata, ServerOutputId, Suggestions};
 use crate::ai::agent::conversation::AIConversationId;
 use crate::ai::agent_tasks::AmbientAgentTaskId;
 use crate::ai::blocklist::{BlocklistAIPermissions, RequestInput, SessionContext};
 use crate::ai::execution_profiles::AIExecutionProfileAppExt;
 use crate::ai::execution_profiles::profiles::AIExecutionProfilesModel;
 use crate::ai::llms::{LLMId, LLMPreferences};
-use crate::ai::mcp::TemplatableMCPServerManager;
 use crate::server::server_api::AIApiError;
 use crate::settings::AISettings;
 use crate::terminal::safe_mode_settings::get_secret_obfuscation_mode;
@@ -135,7 +132,6 @@ pub struct RequestParams {
     pub is_memory_enabled: bool,
     pub warp_drive_context_enabled: bool,
     pub context_window_limit: Option<u32>,
-    pub mcp_context: Option<MCPContext>,
     pub planning_enabled: bool,
     should_redact_secrets: bool,
 
@@ -208,7 +204,6 @@ impl RequestParams {
             is_memory_enabled: false,
             warp_drive_context_enabled: false,
             context_window_limit: None,
-            mcp_context: None,
             planning_enabled: false,
             should_redact_secrets: false,
             member_byo_credentials_allowed: false,
@@ -242,81 +237,12 @@ impl RequestParams {
         let is_memory_enabled = ai_settings.is_memory_enabled(app);
         let warp_drive_context_enabled = ai_settings.is_warp_drive_context_enabled(app);
 
-        // Build MCP context - either grouped by server or flat lists based on feature flag
-        let mcp_context = if FeatureFlag::MCPGroupedServerContext.is_enabled() {
-            // Group MCP tools and resources by server
-            let templatable_manager = TemplatableMCPServerManager::as_ref(app);
-
-            let mut active_servers: Vec<&TemplatableMCPServerInfo> = templatable_manager
-                .get_active_templatable_servers()
-                .values()
-                .copied()
-                .collect();
-
-            // If file-based MCP servers are enabled, add active servers in scope of
-            // the user's current working directory
-            if let Some(cwd) = session_context.current_working_directory() {
-                active_servers.extend(
-                    templatable_manager
-                        .get_active_file_based_servers(Path::new(cwd), app)
-                        .values(),
-                );
-            }
-
-            // Include any ephemeral MCP servers started via the Oz CLI.
-            active_servers.extend(
-                templatable_manager
-                    .get_active_cli_spawned_servers()
-                    .values(),
-            );
-
-            // Include built-in Warp-hosted servers (e.g. the Factory MCP).
-            active_servers.extend(templatable_manager.get_active_builtin_servers().values());
-
-            let servers: Vec<MCPServer> = active_servers
-                .into_iter()
-                .map(|server| MCPServer {
-                    name: server.name().to_string(),
-                    description: server.description().unwrap_or_default().to_string(),
-                    id: server.installation_id().to_string(),
-                    resources: server.resources().to_vec(),
-                    tools: server.tools().to_vec(),
-                })
-                .collect();
-
-            if servers.is_empty() {
-                None
-            } else {
-                #[allow(deprecated)]
-                Some(MCPContext {
-                    resources: vec![],
-                    tools: vec![],
-                    servers,
-                })
-            }
-        } else {
-            // Flat lists of resources and tools
-            let templatable_mcp_manager = TemplatableMCPServerManager::as_ref(app);
-            let resources = templatable_mcp_manager
-                .resources()
-                .cloned()
-                .collect::<Vec<_>>();
-            let tools = templatable_mcp_manager.tools().cloned().collect::<Vec<_>>();
-
-            #[allow(deprecated)]
-            (!resources.is_empty() || !tools.is_empty()).then_some(MCPContext {
-                resources,
-                tools,
-                servers: vec![],
-            })
-        };
-
         let should_redact_secrets = get_secret_obfuscation_mode(app).should_redact_secret();
 
         let user_workspaces = UserWorkspaces::as_ref(app);
         let api_key_manager = ApiKeyManager::as_ref(app);
-        // Bedrock and Gemini Enterprise are admin-configured host credentials rather than member
-        // BYO keys, so they deliberately skip this gate.
+        // Gemini Enterprise credentials are admin-configured rather than member BYO keys, so they
+        // deliberately skip this gate.
         let member_byo_credentials_allowed = user_workspaces.are_member_byo_keys_allowed(scope);
         let is_byo_enabled =
             user_workspaces.is_byo_api_key_enabled(app) && member_byo_credentials_allowed;
@@ -325,11 +251,7 @@ impl RequestParams {
             crate::ai::geap_credentials::current_geap_policy(scope, app).mint_binding();
         #[cfg(target_family = "wasm")]
         let geap_binding: Option<::ai::api_keys::GeapMintBinding> = None;
-        let api_keys = api_key_manager.api_keys_for_request(
-            is_byo_enabled,
-            user_workspaces.is_aws_bedrock_credentials_enabled(scope, app),
-            geap_binding,
-        );
+        let api_keys = api_key_manager.api_keys_for_request(is_byo_enabled, geap_binding);
         let is_custom_inference_enabled = user_workspaces.is_byo_endpoint_enabled(app)
             && user_workspaces.are_member_byo_endpoints_allowed(scope);
         let custom_model_providers =
@@ -411,7 +333,6 @@ impl RequestParams {
             computer_use_model: request_input.computer_use_model_id.clone(),
             is_memory_enabled,
             warp_drive_context_enabled,
-            mcp_context,
             planning_enabled: true,
             should_redact_secrets,
             member_byo_credentials_allowed,

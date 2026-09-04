@@ -143,7 +143,6 @@ impl InteractiveSshCommand {
 
 pub enum SshLikeCommand {
     Gcloud,
-    ElasticBeanstalk,
     DigitalOceanDroplet,
 }
 
@@ -169,9 +168,6 @@ lazy_static! {
     /// Matches "gcloud compute ssh" for connecting to GCP VMs.
     static ref GCLOUD_REGEX: Regex = Regex::new(r"^gcloud\s+compute\s+ssh\s.+").expect("gcloud SSH regex invalid");
 
-    /// Matches "eb ssh" for connecting to AWS Elastic Beanstalk VMs.
-    static ref ELASTIC_BEANSTALK_REGEX: Regex = Regex::new(r"^eb\s+ssh\s.+").expect("elastic beanstalk SSH regex invalid");
-
     /// Matches "doctl compute ssh" for connecting to a digital ocean droplet.
     static ref DIGITAL_OCEAN_DROPLET_REGEX: Regex = Regex::new(r"^doctl\s+compute\s+ssh\s.+").expect("digital ocean SSH regex invalid");
 }
@@ -187,8 +183,6 @@ impl SshWarpifyCommand {
             Some(SshWarpifyCommand::Ssh)
         } else if GCLOUD_REGEX.is_match(command) {
             Some(SshWarpifyCommand::SshLike(SshLikeCommand::Gcloud))
-        } else if ELASTIC_BEANSTALK_REGEX.is_match(command) {
-            Some(SshWarpifyCommand::SshLike(SshLikeCommand::ElasticBeanstalk))
         } else if DIGITAL_OCEAN_DROPLET_REGEX.is_match(command) {
             Some(SshWarpifyCommand::SshLike(
                 SshLikeCommand::DigitalOceanDroplet,
@@ -203,9 +197,6 @@ pub fn parse_interactive_ssh_command(command: &str) -> Option<InteractiveSshComm
     match SshWarpifyCommand::matches(command) {
         Some(SshWarpifyCommand::Ssh) => InteractiveSshCommand::parse_ssh_command(command),
         Some(SshWarpifyCommand::SshLike(SshLikeCommand::Gcloud)) => {
-            Some(InteractiveSshCommand::default())
-        }
-        Some(SshWarpifyCommand::SshLike(SshLikeCommand::ElasticBeanstalk)) => {
             Some(InteractiveSshCommand::default())
         }
         Some(SshWarpifyCommand::SshLike(SshLikeCommand::DigitalOceanDroplet)) => {

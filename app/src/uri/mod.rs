@@ -12,8 +12,6 @@ use std::str::FromStr;
 use anyhow::{Result, anyhow, ensure};
 use itertools::Itertools;
 use url::Url;
-#[cfg(not(target_family = "wasm"))]
-use warp_errors::report_error;
 use warp_terminal::session_sharing_types::common::SessionId;
 use warp_util::path::LineAndColumnArg;
 use warpui::notification::UserNotification;
@@ -55,13 +53,6 @@ use crate::{
 
 const DESKTOP_REDIRECT_URI_PATH: &str = "/desktop_redirect";
 
-/// Args for opening the MCP settings page via deeplink, with optional auto-install.
-/// The `autoinstall` value is the raw query param string; it is matched case-insensitively
-/// against gallery titles in `autoinstall_from_gallery`.
-pub struct OpenMCPSettingsArgs {
-    pub autoinstall: Option<String>,
-}
-
 /// Args for the `warp://settings` deeplink family, dispatched to the
 /// `root_view:open_settings_in_{existing,new}_window` actions.
 pub enum OpenSettingsArgs {
@@ -95,8 +86,6 @@ pub enum UriHost {
     /// A host prefix for a general-purpose home/landing page. Unlike other intent URIs, the home
     /// page behavior may change over time and vary from platform to platform.
     Home,
-    /// Actions related to MCP servers (e.g.: oauth callbacks).
-    Mcp,
     /// Opens a new tab with the Codex model and starts a conversation.
     Codex,
     /// Actions triggered from Linear integrations (e.g. work on issue).
@@ -123,7 +112,6 @@ impl FromStr for UriHost {
             "drive" => Ok(Self::Drive),
             "settings" => Ok(Self::Settings),
             "home" => Ok(Self::Home),
-            "mcp" => Ok(Self::Mcp),
             "codex" => Ok(Self::Codex),
             "linear" => Ok(Self::Linear),
             "tab_config" if FeatureFlag::TabConfigs.is_enabled() => Ok(Self::TabConfig),
@@ -355,7 +343,6 @@ impl UriHost {
                 // - warp://settings/teams?invite={email} - opens team settings with invite modal
                 // - warp://settings/billing_and_usage - opens billing and usage settings page
                 // - warp://settings/environments - opens environments settings page
-                // - warp://settings/mcp - opens MCP servers settings page
                 // - warp://settings/platform - opens platform settings page
                 // - warp://settings/appearance - opens appearance settings page (themes, fonts, etc.)
                 // - warp://settings/warp_agent - opens the Warp Agent settings page (inference / API keys)
@@ -384,19 +371,6 @@ impl UriHost {
                         );
                     }
                     Some("environments") => {}
-                    Some("mcp") => {
-                        // warp://settings/mcp?autoinstall=<name> auto-installs a gallery MCP server.
-                        // The value is matched case-insensitively against gallery titles.
-                        let autoinstall = query_string.get("autoinstall").map(|v| v.to_string());
-                        let args = OpenMCPSettingsArgs { autoinstall };
-                        dispatch_action_in_new_or_existing_window(
-                            primary_window_id,
-                            "root_view:open_mcp_settings_in_existing_window",
-                            "root_view:open_mcp_settings_in_new_window",
-                            &args,
-                            ctx,
-                        );
-                    }
                     // No special sub-page: route the bare host, the `q` (search) and
                     // `widget` (scroll-to) query params, and the simple section
                     // sub-pages (e.g. billing_and_usage, platform, appearance,
@@ -461,16 +435,6 @@ impl UriHost {
             }
             UriHost::Home => {
                 ctx.dispatch_global_action("root_view::open_new", &());
-            }
-            UriHost::Mcp => {
-                #[cfg(not(target_family = "wasm"))]
-                {
-                    let result = crate::ai::mcp::TemplatableMCPServerManager::handle(ctx)
-                        .update(ctx, |manager, _ctx| manager.handle_oauth_callback(url));
-                    if let Err(e) = result {
-                        report_error!(e.context("Failed to handle MCP OAuth callback"));
-                    }
-                }
             }
             UriHost::Codex => {
                 dispatch_action_in_new_or_existing_window(
@@ -560,8 +524,6 @@ impl UriHost {
             Self::Launch | Self::SharedSession | Self::Conversation | Self::Home => W::Nothing,
             // This will actually be handled by [`Action::window_behavior_hint`].
             Self::Action => W::Nothing,
-            // TODO(vorporeal): probably want to focus the window with the MCP pane open
-            Self::Mcp => W::Nothing,
             // Codex opens a new tab with AI mode, use default behavior
             Self::Codex => W::default(),
             // Linear deeplink opens a new tab with agent view
@@ -1490,7 +1452,6 @@ fn validate_custom_uri(url: &Url) -> Result<UriHost> {
         | UriHost::Drive
         | UriHost::Team
         | UriHost::Settings
-        | UriHost::Mcp
         | UriHost::Codex
         | UriHost::Linear
         | UriHost::TabConfig

@@ -43,7 +43,7 @@ jobs:
         contains(github.event.comment.body, '@docubot') || inputs.prompt
       )
       && github.actor != 'github-actions[bot]'
-    runs-on: namespace-profile-ubuntu-20-04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:

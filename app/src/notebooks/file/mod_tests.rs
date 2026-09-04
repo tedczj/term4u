@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use pathfinder_geometry::vector::vec2f;
@@ -33,6 +33,13 @@ use crate::test_util::settings::initialize_settings_for_tests;
 use crate::workspace::ActiveSession;
 use crate::workspaces::user_workspaces::UserWorkspaces;
 use crate::{GlobalResourceHandles, GlobalResourceHandlesProvider};
+
+fn workspace_readme_path() -> PathBuf {
+    Path::new(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .expect("app belongs to a Cargo workspace")
+        .join("README.md")
+}
 
 fn init_app(app: &mut App) {
     initialize_settings_for_tests(app);
@@ -74,9 +81,10 @@ fn test_load_local() {
         init_app(&mut app);
         let (_, handle) = app.add_window(WindowStyle::NotStealFocus, FileNotebookView::new);
         let session = Arc::new(Session::test());
+        let readme_path = workspace_readme_path();
         handle
             .update(&mut app, |file_notebook, ctx| {
-                file_notebook.open_local("../README.md", Some(session), ctx);
+                file_notebook.open_local(&readme_path, Some(session), ctx);
 
                 let file_id = file_notebook
                     .file_id
@@ -92,12 +100,7 @@ fn test_load_local() {
 
         app.read(|ctx| {
             assert_eq!(&handle.as_ref(ctx).title(), "README.md");
-            let location = handle
-                .as_ref(ctx)
-                .location
-                .as_ref()
-                .expect("Location should be set");
-            assert_eq!(location.breadcrumbs, "..");
+            assert!(handle.as_ref(ctx).location.is_some());
 
             let editor = handle.as_ref(ctx).editor.as_ref(ctx);
             assert!(!editor.is_editable(ctx));
@@ -235,14 +238,15 @@ fn test_load_before_session() {
     App::test((), |mut app| async move {
         init_app(&mut app);
         let (window_id, handle) = app.add_window(WindowStyle::NotStealFocus, FileNotebookView::new);
+        let readme_path = workspace_readme_path();
 
         // Open a file we know exists to verify that the view can render.
         handle
             .update(&mut app, |file_notebook, ctx| {
-                file_notebook.open_local("../README.md", None, ctx);
+                file_notebook.open_local(&readme_path, None, ctx);
                 match &file_notebook.file_state {
                     FileState::Loading(SourceFile::FileBased { path, .. }) => {
-                        assert_eq!(path.to_local_path(), Some(Path::new("../README.md")))
+                        assert_eq!(path.to_local_path(), Some(readme_path.as_path()))
                     }
                     other => panic!("Expected FileState::Loading(FileBased), got {other:?}"),
                 }
@@ -260,7 +264,7 @@ fn test_load_before_session() {
             .await;
 
         handle.read(&app, |view, _| {
-            let expected_path = dunce::canonicalize("../README.md").expect("Path exists");
+            let expected_path = dunce::canonicalize(&readme_path).expect("Path exists");
 
             assert_eq!(view.title(), expected_path.display().to_string());
             assert!(view.location.is_none());

@@ -82,12 +82,6 @@ pub enum AnthropicMethod {
     /// Direct Anthropic API key.
     #[command(name = "api-key")]
     ApiKey(AnthropicApiKeyArgs),
-    /// Anthropic API key via Amazon Bedrock.
-    #[command(name = "bedrock-api-key")]
-    BedrockApiKey(BedrockApiKeyArgs),
-    /// Anthropic Bedrock authentication via AWS access keys.
-    #[command(name = "bedrock-access-key")]
-    BedrockAccessKey(BedrockAccessKeyArgs),
 }
 
 /// Fields shared by all provider-specific secret creation subcommands.
@@ -112,21 +106,6 @@ pub struct AnthropicApiKeyArgs {
 
     #[clap(flatten)]
     pub value: ValueArgs,
-}
-
-/// Arguments for creating an Anthropic Bedrock API key secret.
-#[derive(Debug, Clone, Args)]
-pub struct BedrockApiKeyArgs {
-    #[clap(flatten)]
-    pub common: CommonSecretCreateArgs,
-
-    /// Bedrock API key. If not provided, prompts interactively.
-    #[arg(long = "bedrock-api-key")]
-    pub bedrock_api_key: Option<String>,
-
-    /// AWS region for the Bedrock endpoint. If not provided, prompts interactively.
-    #[arg(long = "region")]
-    pub region: Option<String>,
 }
 
 #[derive(Debug, Clone, Args)]
@@ -158,29 +137,6 @@ pub struct OpenAiApiKeyArgs {
     /// in non-interactive mode the harness uses the provider's default endpoint.
     #[arg(long = "base-url")]
     pub base_url: Option<String>,
-}
-
-/// Arguments for creating an Anthropic Bedrock access key secret.
-#[derive(Debug, Clone, Args)]
-pub struct BedrockAccessKeyArgs {
-    #[clap(flatten)]
-    pub common: CommonSecretCreateArgs,
-
-    /// AWS access key ID. If not provided, prompts interactively.
-    #[arg(long = "access-key-id")]
-    pub access_key_id: Option<String>,
-
-    /// AWS secret access key. If not provided, prompts interactively.
-    #[arg(long = "secret-access-key")]
-    pub secret_access_key: Option<String>,
-
-    /// AWS session token. If not provided, prompts interactively.
-    #[arg(long = "session-token")]
-    pub session_token: Option<String>,
-
-    /// AWS region for the Bedrock endpoint. If not provided, prompts interactively.
-    #[arg(long = "region")]
-    pub region: Option<String>,
 }
 
 #[derive(Debug, Clone, Args)]
@@ -236,9 +192,6 @@ pub enum SecretType {
     AnthropicApiKey,
     // Not exposed via the CLI `--type` flag; constructed internally for provider subcommands.
     #[value(skip)]
-    AnthropicBedrockApiKey,
-    // Not exposed via the CLI `--type` flag; constructed internally for provider subcommands.
-    #[value(skip)]
     OpenaiApiKey,
 }
 
@@ -247,7 +200,6 @@ impl fmt::Display for SecretType {
         match self {
             SecretType::RawValue => write!(f, "raw-value"),
             SecretType::AnthropicApiKey => write!(f, "anthropic-api-key"),
-            SecretType::AnthropicBedrockApiKey => write!(f, "anthropic-bedrock-api-key"),
             SecretType::OpenaiApiKey => write!(f, "openai-api-key"),
         }
     }

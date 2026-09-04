@@ -58,13 +58,6 @@ fn command_registry_filters_explicit_surface_metadata() {
     ));
     assert_eq!(EXIT.kind, SlashCommandKind::Exit);
     assert_eq!(EXIT.supported_surfaces, SlashCommandSurfaces::TuiOnly);
-    assert_eq!(ADD_MCP.kind, SlashCommandKind::AddMcp);
-    assert!(matches!(
-        ADD_MCP.supported_surfaces,
-        SlashCommandSurfaces::GuiOnly {
-            icon_path: "bundled/svg/dataflow.svg"
-        }
-    ));
 }
 
 #[test]
@@ -77,12 +70,6 @@ fn command_registry_contains_commands_for_both_surfaces() {
             .map(|command| command.supported_surfaces),
         Some(SlashCommandSurfaces::TuiOnly)
     );
-    assert!(matches!(
-        registry
-            .get_command_with_name(ADD_MCP.name)
-            .map(|command| command.supported_surfaces),
-        Some(SlashCommandSurfaces::GuiOnly { .. })
-    ));
 }
 
 #[test]

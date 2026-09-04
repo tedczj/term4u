@@ -31,6 +31,7 @@ fn empty_blockgrid(
 }
 
 #[test]
+#[serial_test::serial(secret_regexes)]
 fn test_secret_redacted_after_byte_processing() {
     crate::model::secrets::set_user_and_enterprise_secret_regexes(
         [&Regex::new("ABCD").expect("Should be able to construct regex")],
@@ -65,6 +66,7 @@ fn test_secret_redacted_after_byte_processing() {
 }
 
 #[test]
+#[serial_test::serial(secret_regexes)]
 fn test_secret_redacted_after_multibyte_prefix() {
     let secret = "AAAAC3NzaC1lZDI1NTE5AAAAIThisIsNotARealKeyItIsJustForTestingWarpRedact";
     crate::model::secrets::set_user_and_enterprise_secret_regexes(
@@ -100,6 +102,7 @@ fn test_secret_redacted_after_multibyte_prefix() {
 }
 
 #[test]
+#[serial_test::serial(secret_regexes)]
 fn test_secret_with_word_boundaries_redacted_after_multibyte_prefix() {
     crate::model::secrets::set_user_and_enterprise_secret_regexes(
         [&Regex::new(r"\bTOKEN123\b").expect("Should be able to construct regex")],
@@ -132,6 +135,7 @@ fn test_secret_with_word_boundaries_redacted_after_multibyte_prefix() {
 }
 
 #[test]
+#[serial_test::serial(secret_regexes)]
 fn test_secret_redacted_after_multiple_byte_processing() {
     crate::model::secrets::set_user_and_enterprise_secret_regexes(
         [&Regex::new("ABCD").expect("Should be able to construct regex")],
@@ -172,6 +176,7 @@ fn test_secret_redacted_after_multiple_byte_processing() {
 }
 
 #[test]
+#[serial_test::serial(secret_regexes)]
 fn test_secret_redaction_unobfuscated_secret_remains_after_byte_processing() -> anyhow::Result<()> {
     crate::model::secrets::set_user_and_enterprise_secret_regexes(
         [&Regex::new("ABCD").expect("Should be able to construct regex")],
@@ -230,6 +235,7 @@ fn test_secret_redaction_unobfuscated_secret_remains_after_byte_processing() -> 
 }
 
 #[test]
+#[serial_test::serial(secret_regexes)]
 fn test_secret_redaction_secret_remains_after_resize() {
     crate::model::secrets::set_user_and_enterprise_secret_regexes(
         [&Regex::new("ABCD").expect("Should be able to construct regex")],
@@ -267,6 +273,7 @@ fn test_secret_redaction_secret_remains_after_resize() {
 }
 
 #[test]
+#[serial_test::serial(secret_regexes)]
 fn test_bytes_processed_for_secrets_after_turning_redaction() {
     crate::model::secrets::set_user_and_enterprise_secret_regexes(
         [&Regex::new("abcd").expect("Should be able to construct regex")],
@@ -298,6 +305,7 @@ fn test_bytes_processed_for_secrets_after_turning_redaction() {
 }
 
 #[test]
+#[serial_test::serial(secret_regexes)]
 fn test_bytes_processed_for_secrets_after_turning_redaction_on() {
     crate::model::secrets::set_user_and_enterprise_secret_regexes(
         [&Regex::new("abcd").expect("Should be able to construct regex")],
@@ -324,6 +332,7 @@ fn test_bytes_processed_for_secrets_after_turning_redaction_on() {
 }
 
 #[test]
+#[serial_test::serial(secret_regexes)]
 fn test_bytes_processed_for_secrets_after_turning_redaction_off_then_on() {
     crate::model::secrets::set_user_and_enterprise_secret_regexes(
         [&Regex::new("abcd").expect("Should be able to construct regex")],
@@ -359,6 +368,7 @@ fn test_bytes_processed_for_secrets_after_turning_redaction_off_then_on() {
 }
 
 #[test]
+#[serial_test::serial(secret_regexes)]
 fn test_bytes_processed_for_secrets_after_turning_redaction_on_then_off() {
     crate::model::secrets::set_user_and_enterprise_secret_regexes(
         [&Regex::new("abcd").expect("Should be able to construct regex")],

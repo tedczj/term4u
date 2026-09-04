@@ -73,8 +73,6 @@ pub trait IntegrationsClient: 'static + IntegrationsClientBounds {
     /// * `environment_uid` - The UID of the environment to associate with this integration
     /// * `base_prompt` - Optional base prompt for the integration
     /// * `model_id` - Optional model ID for the integration
-    /// * `mcp_servers_json` - Optional JSON string encoding a map[string]MCPServerConfig (ambient agent spec)
-    /// * `remove_mcp_server_names` - Optional list of MCP server names to remove (applies on update)
     /// * `worker_host` - Optional worker host ID for self-hosted workers
     /// * `enabled` - Whether the integration should be enabled on creation
     #[allow(clippy::too_many_arguments)]
@@ -85,8 +83,6 @@ pub trait IntegrationsClient: 'static + IntegrationsClientBounds {
         environment_uid: Option<String>,
         base_prompt: Option<String>,
         model_id: Option<String>,
-        mcp_servers_json: Option<String>,
-        remove_mcp_server_names: Option<Vec<String>>,
         worker_host: Option<String>,
         enabled: bool,
     ) -> Result<CreateSimpleIntegrationOutput>;
@@ -159,8 +155,6 @@ impl IntegrationsClient for crate::server::offline_api::OfflineApi {
         environment_uid: Option<String>,
         base_prompt: Option<String>,
         model_id: Option<String>,
-        mcp_servers_json: Option<String>,
-        remove_mcp_server_names: Option<Vec<String>>,
         worker_host: Option<String>,
         enabled: bool,
     ) -> Result<CreateSimpleIntegrationOutput> {
@@ -170,8 +164,6 @@ impl IntegrationsClient for crate::server::offline_api::OfflineApi {
             environment_uid,
             base_prompt,
             model_id,
-            mcp_servers_json,
-            remove_mcp_server_names,
             worker_host,
             enabled,
         );
@@ -259,8 +251,6 @@ impl IntegrationsClient for ServerApi {
         environment_uid: Option<String>,
         base_prompt: Option<String>,
         model_id: Option<String>,
-        mcp_servers_json: Option<String>,
-        remove_mcp_server_names: Option<Vec<String>>,
         worker_host: Option<String>,
         enabled: bool,
     ) -> Result<CreateSimpleIntegrationOutput> {
@@ -269,8 +259,6 @@ impl IntegrationsClient for ServerApi {
                 base_prompt,
                 environment_uid,
                 model_id,
-                mcp_servers_json,
-                remove_mcp_server_names,
                 worker_host,
             },
             enabled,

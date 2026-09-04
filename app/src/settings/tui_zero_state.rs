@@ -196,16 +196,6 @@ define_settings_group!(TuiZeroStateSettings, settings: [
         toml_path: "appearance.zero_state.show_project_info",
         description: "Whether the Warp Agent CLI zero state shows the project path and its discovered rules and skills.",
     },
-    show_mcp: TuiZeroStateShowMcpSetting {
-        type: bool,
-        default: true,
-        supported_platforms: SupportedPlatforms::DESKTOP,
-        sync_to_cloud: SyncToCloud::Never,
-        surface: settings::SettingSurfaces::TUI,
-        private: false,
-        toml_path: "appearance.zero_state.show_mcp",
-        description: "Whether the Warp Agent CLI zero state shows the MCP section.",
-    },
     show_animation: TuiZeroStateShowAnimationSetting {
         type: bool,
         default: true,

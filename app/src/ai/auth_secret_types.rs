@@ -61,25 +61,6 @@ pub fn build_managed_secret_value(
         ManagedSecretType::AnthropicApiKey => Ok(ManagedSecretValue::anthropic_api_key(
             field_values[0].clone(),
         )),
-        ManagedSecretType::AnthropicBedrockApiKey => {
-            Ok(ManagedSecretValue::anthropic_bedrock_api_key(
-                field_values[0].clone(),
-                field_values[1].clone(),
-            ))
-        }
-        ManagedSecretType::AnthropicBedrockAccessKey => {
-            let session_token = if field_values[2].trim().is_empty() {
-                None
-            } else {
-                Some(field_values[2].clone())
-            };
-            Ok(ManagedSecretValue::anthropic_bedrock_access_key(
-                field_values[0].clone(),
-                field_values[1].clone(),
-                session_token,
-                field_values[3].clone(),
-            ))
-        }
         ManagedSecretType::OpenaiApiKey => {
             let base_url = field_values
                 .get(1)
@@ -119,66 +100,14 @@ static CODEX_AUTH_SECRET_TYPES: [AuthSecretTypeInfo; 1] = [AuthSecretTypeInfo {
     ],
 }];
 
-static CLAUDE_AUTH_SECRET_TYPES: [AuthSecretTypeInfo; 3] = [
-    AuthSecretTypeInfo {
-        display_name: "Anthropic API Key",
-        secret_type: ManagedSecretType::AnthropicApiKey,
-        learn_more_url: CLAUDE_LEARN_MORE_URL,
-        fields: &[AuthSecretTypeField {
-            label: "ANTHROPIC_API_KEY",
-            placeholder: Some("sk-ant-..."),
-            optional: false,
-            sensitive: true,
-        }],
-    },
-    AuthSecretTypeInfo {
-        display_name: "Bedrock API Key",
-        secret_type: ManagedSecretType::AnthropicBedrockApiKey,
-        learn_more_url: CLAUDE_LEARN_MORE_URL,
-        fields: &[
-            AuthSecretTypeField {
-                label: "AWS_BEARER_TOKEN_BEDROCK",
-                placeholder: Some("Bearer token"),
-                optional: false,
-                sensitive: true,
-            },
-            AuthSecretTypeField {
-                label: "AWS_REGION",
-                placeholder: Some("us-east-1"),
-                optional: false,
-                sensitive: false,
-            },
-        ],
-    },
-    AuthSecretTypeInfo {
-        display_name: "Bedrock Access Key",
-        secret_type: ManagedSecretType::AnthropicBedrockAccessKey,
-        learn_more_url: CLAUDE_LEARN_MORE_URL,
-        fields: &[
-            AuthSecretTypeField {
-                label: "AWS_ACCESS_KEY_ID",
-                placeholder: Some("AKIA..."),
-                optional: false,
-                sensitive: true,
-            },
-            AuthSecretTypeField {
-                label: "AWS_SECRET_ACCESS_KEY",
-                placeholder: Some("Secret access key"),
-                optional: false,
-                sensitive: true,
-            },
-            AuthSecretTypeField {
-                label: "AWS_SESSION_TOKEN",
-                placeholder: Some("Session token (temporary credentials only)"),
-                optional: true,
-                sensitive: true,
-            },
-            AuthSecretTypeField {
-                label: "AWS_REGION",
-                placeholder: Some("us-east-1"),
-                optional: false,
-                sensitive: false,
-            },
-        ],
-    },
-];
+static CLAUDE_AUTH_SECRET_TYPES: [AuthSecretTypeInfo; 1] = [AuthSecretTypeInfo {
+    display_name: "Anthropic API Key",
+    secret_type: ManagedSecretType::AnthropicApiKey,
+    learn_more_url: CLAUDE_LEARN_MORE_URL,
+    fields: &[AuthSecretTypeField {
+        label: "ANTHROPIC_API_KEY",
+        placeholder: Some("sk-ant-..."),
+        optional: false,
+        sensitive: true,
+    }],
+}];

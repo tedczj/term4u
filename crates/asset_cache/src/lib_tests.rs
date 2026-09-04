@@ -1,11 +1,14 @@
-use super::*;
-
 #[cfg(all(feature = "offline_hard", not(target_family = "wasm")))]
 use std::io::{Read, Write};
 #[cfg(all(feature = "offline_hard", not(target_family = "wasm")))]
 use std::net::TcpListener;
 #[cfg(all(feature = "offline_hard", not(target_family = "wasm")))]
-use std::time::{Duration, Instant};
+use std::time::Duration;
+
+#[cfg(all(feature = "offline_hard", not(target_family = "wasm")))]
+use instant::Instant;
+
+use super::*;
 
 /// Drive the fetch closure of an [`AssetSource::Async`] to completion.
 fn fetch_bytes(source: &AssetSource) -> Result<Bytes> {

@@ -29,7 +29,5 @@
   "powershell.codeFormatting.whitespaceAroundOperator": true,
   "powershell.codeFormatting.whitespaceBeforeOpenBrace": true,
   "powershell.codeFormatting.whitespaceBeforeOpenParen": true,
-  "powershell.codeFormatting.whitespaceInsideBrace": true,
-  "powershell.scriptAnalysis.enable": true,
-  "powershell.scriptAnalysis.settingsPath": "./.PSScriptAnalyzerSettings.psd1",
+  "powershell.codeFormatting.whitespaceInsideBrace": true
 }

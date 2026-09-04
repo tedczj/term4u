@@ -131,18 +131,6 @@ fn should_show_host_icon_for_model(
             .is_some_and(|config| config.enabled)
 }
 
-pub fn should_show_bedrock_icon_for_model(
-    llm: &LLMInfo,
-    scope: &dyn TeamScope,
-    app: &AppContext,
-) -> bool {
-    should_show_host_icon_for_model(
-        llm,
-        &LLMModelHost::AwsBedrock,
-        UserWorkspaces::as_ref(app).is_aws_bedrock_credentials_enabled(scope, app),
-    )
-}
-
 pub fn should_show_gemini_enterprise_agent_platform_icon_for_model(
     llm: &LLMInfo,
     scope: &dyn TeamScope,
@@ -159,7 +147,6 @@ pub fn should_show_gemini_enterprise_agent_platform_icon_for_model(
 pub struct ModelIconFlags {
     pub is_custom_router: bool,
     pub is_auto: bool,
-    pub is_using_bedrock: bool,
     pub is_using_gemini_enterprise: bool,
 }
 
@@ -172,8 +159,6 @@ pub fn model_leading_icon(llm: &LLMInfo, flags: ModelIconFlags) -> Icon {
         Icon::Dataflow
     } else if flags.is_auto {
         Icon::Agent
-    } else if flags.is_using_bedrock {
-        Icon::Aws
     } else if flags.is_using_gemini_enterprise {
         Icon::GeminiEnterpriseAgentPlatform
     } else {
@@ -268,7 +253,6 @@ pub struct LLMSpec {
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum LLMModelHost {
     DirectApi,
-    AwsBedrock,
     CustomEndpoint,
     GeminiEnterprise,
     #[serde(other)]

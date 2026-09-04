@@ -74,7 +74,6 @@ pub enum AgentTipKind {
     CodebaseContext,
     WarpDrive,
     General,
-    Mcp,
     SlashCommands,
     /// Tips about adding context (files, blocks, URLs, images, @-mentions, rules)
     Context,
@@ -194,20 +193,6 @@ static DEFAULT_TIPS: LazyLock<Vec<AgentTip>> = LazyLock::new(|| {
             binding_name: Some(TOGGLE_RIGHT_PANEL_BINDING_NAME),
             action: None,
             kind: AgentTipKind::Code,
-        },
-        AgentTip {
-            description: "`/add-mcp` to add an MCP server to your workspace.".to_string(),
-            link: Some("https://docs.warp.dev/agents/capabilities/mcp".to_string()),
-            binding_name: None,
-            action: None,
-            kind: AgentTipKind::Mcp,
-        },
-        AgentTip {
-            description: "`/open-mcp-servers` to view and share MCP servers with your team.".to_string(),
-            link: None,
-            binding_name: None,
-            action: None,
-            kind: AgentTipKind::Mcp,
         },
         AgentTip {
             description: "`/create-environment` to turn a repo into a remote docker environment an agent can run in.".to_string(),

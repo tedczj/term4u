@@ -2,7 +2,6 @@ use clap::{Args, Subcommand};
 
 use crate::config_file::ConfigFileArgs;
 use crate::environment::{EnvironmentCreateArgs, EnvironmentUpdateArgs};
-use crate::mcp::MCPSpec;
 use crate::model::ModelArgs;
 use crate::scope::ObjectScope;
 use crate::skill::SkillSpec;
@@ -102,16 +101,6 @@ pub struct CreateScheduleArgs {
     #[command(flatten)]
     pub scope: ObjectScope,
 
-    /// MCP servers to configure for this schedule.
-    ///
-    /// Can be specified as:
-    /// - A path to a JSON file containing MCP configuration
-    /// - Inline JSON with MCP server configuration
-    ///
-    /// Can be specified multiple times to include multiple servers.
-    #[arg(long = "mcp", value_name = "SPEC")]
-    pub mcp_specs: Vec<MCPSpec>,
-
     /// Prompt for what the scheduled agent should do.
     #[arg(long = "prompt", short = 'p')]
     pub prompt: Option<String>,
@@ -170,22 +159,6 @@ pub struct UpdateScheduleArgs {
 
     #[command(flatten)]
     pub config_file: ConfigFileArgs,
-
-    /// MCP servers to configure for this schedule.
-    ///
-    /// Can be specified as:
-    /// - A path to a JSON file containing MCP configuration
-    /// - Inline JSON with MCP server configuration
-    ///
-    /// Can be specified multiple times to include multiple servers.
-    #[arg(long = "mcp", value_name = "SPEC")]
-    pub mcp_specs: Vec<MCPSpec>,
-
-    /// Remove MCP servers from this schedule by server name.
-    ///
-    /// This removes the server entry whose key matches `SERVER_NAME`.
-    #[arg(long = "remove-mcp", value_name = "SERVER_NAME")]
-    pub remove_mcp: Vec<String>,
 
     /// Update the scheduled agent's prompt.
     #[arg(long = "prompt", short = 'p')]

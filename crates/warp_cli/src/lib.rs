@@ -30,7 +30,6 @@ pub mod harness_support;
 pub mod integration;
 pub mod json_filter;
 pub mod local_control;
-pub mod mcp;
 pub mod memory_store;
 pub mod model;
 pub mod provider;
@@ -430,8 +429,6 @@ impl Args {
 
   <dim>$</dim> <bold>{bin_name} agent run --prompt "Build anything"</bold>
 
-  <dim>$</dim> <bold>{bin_name} mcp list</bold>
-
 <bold><underline>Learn more:</underline></bold>
 * Use <bold>{bin_name} help</bold> to learn more about each command
 * Read the documentation at https://docs.warp.dev/reference/cli
@@ -557,10 +554,6 @@ pub enum CliCommand {
     #[command(subcommand)]
     Environment(crate::environment::EnvironmentCommand),
 
-    /// Manage MCP servers.
-    #[command(subcommand)]
-    MCP(crate::mcp::MCPCommand),
-
     /// Manage runs.
     #[command(subcommand, alias = "task")]
     Run(crate::task::TaskCommand),
@@ -626,7 +619,6 @@ impl CliCommand {
         match self {
             CliCommand::Agent(command) => command.as_str_for_tracing(),
             CliCommand::Environment(command) => command.as_str_for_tracing(),
-            CliCommand::MCP(command) => command.as_str_for_tracing(),
             CliCommand::Run(command) => command.as_str_for_tracing(),
             CliCommand::Model(command) => command.as_str_for_tracing(),
             CliCommand::Login => "login",

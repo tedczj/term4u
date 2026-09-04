@@ -305,8 +305,8 @@ pub(crate) async fn perform_rotation(
     Ok(())
 }
 
-/// Build the rotated-suffix path for `base_path`. e.g. `mcp/srv.log` with `n=2`
-/// becomes `mcp/srv.log.2`. Operating on the raw `OsString` rather than via
+/// Build the rotated-suffix path for `base_path`. For example, `lsp/server.log` with `n=2`
+/// becomes `lsp/server.log.2`. Operating on the raw `OsString` rather than via
 /// `set_extension` is intentional — we append a suffix, we don't replace one,
 /// and `set_extension("log.2")` would strip a legitimate trailing `.log`.
 pub(crate) fn path_with_suffix(base: &std::path::Path, n: usize) -> PathBuf {

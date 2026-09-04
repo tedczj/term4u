@@ -56,6 +56,30 @@ fn start_recording_rejects_unparseable_window_id() {
 }
 
 #[test]
+fn upstream_mcp_tools_are_decode_only_tombstones() {
+    let read_error = AIAgentActionType::try_from(api::message::tool_call::ReadMcpResource {
+        server_id: "server".to_owned(),
+        uri: "resource".to_owned(),
+    })
+    .expect_err("resource tool must be rejected");
+    let call_error = AIAgentActionType::try_from(api::message::tool_call::CallMcpTool {
+        server_id: "server".to_owned(),
+        name: "tool".to_owned(),
+        args: None,
+    })
+    .expect_err("tool call must be rejected");
+
+    assert!(matches!(
+        read_error,
+        ToolToAIAgentActionError::UnsupportedProtocolTool("read_mcp_resource")
+    ));
+    assert!(matches!(
+        call_error,
+        ToolToAIAgentActionError::UnsupportedProtocolTool("call_mcp_tool")
+    ));
+}
+
+#[test]
 fn start_recording_without_target_records_whole_screen() {
     let action =
         AIAgentActionType::try_from(start_recording(None)).expect("absent target should convert");

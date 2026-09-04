@@ -416,15 +416,6 @@ impl AmbientAgentRunner {
                 .user_id()
                 .map(UserWorkspaces::upgrade_link);
 
-            let cli_mcp_servers =
-                match super::mcp_config::build_mcp_servers_from_specs(&args.mcp_specs) {
-                    Ok(mcp_servers) => mcp_servers,
-                    Err(err) => {
-                        super::report_fatal_error(err, ctx);
-                        return;
-                    }
-                };
-
             // When using a third-party harness, --model specifies a harness-specific
             // model identifier (e.g. "sonnet", "claude-opus-4-8" for Claude Code;
             // "gpt-5.5" for Codex) rather than an Oz model ID. Route it directly
@@ -455,7 +446,6 @@ impl AmbientAgentRunner {
                         None
                     },
                     base_prompt: None,
-                    mcp_servers: cli_mcp_servers,
                     profile_id: None,
                     worker_host: args.worker_host.clone(),
                     skill_spec: None,

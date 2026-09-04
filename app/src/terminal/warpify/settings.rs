@@ -262,9 +262,6 @@ lazy_static! {
         // Matches commands that spawn a pipenv subshell.
         PIPENV_SUBSHELL_COMMAND_REGEX.clone(),
 
-        // https://github.com/warpdotdev/Warp/issues/2736
-        Regex::new(r"^aws-vault\s+exec\b").expect("aws-vault regex invalid"),
-
         // https://flox.dev/docs/reference/command-reference/flox-activate/
         // https://github.com/flox/flox/issues/2784
         Regex::new(r"^flox\s+(-\S+\s+)*activate\b").expect("flox activate regex invalid"),

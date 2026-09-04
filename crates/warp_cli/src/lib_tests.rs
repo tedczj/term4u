@@ -271,71 +271,6 @@ fn agent_run_accepts_model() {
 }
 
 #[test]
-fn agent_run_accepts_hidden_bedrock_inference_role_flag() {
-    let args = Args::try_parse_from([
-        "warp",
-        "agent",
-        "run",
-        "--prompt",
-        "hello",
-        "--bedrock-inference-role",
-        "arn:aws:iam::123456789012:role/test",
-        "--bedrock-role-region",
-        "us-east-1",
-    ])
-    .unwrap();
-
-    let Some(Command::CommandLine(boxed_cmd)) = args.command else {
-        panic!("Expected `warp agent run` command");
-    };
-    let CliCommand::Agent(AgentCommand::Run(run_args)) = boxed_cmd.as_ref() else {
-        panic!("Expected `warp agent run` command");
-    };
-
-    assert_eq!(
-        run_args.bedrock_inference_role.as_deref(),
-        Some("arn:aws:iam::123456789012:role/test")
-    );
-    assert_eq!(run_args.bedrock_role_region.as_deref(), Some("us-east-1"));
-}
-
-#[test]
-fn agent_run_rejects_bedrock_inference_role_without_region() {
-    let err = Args::try_parse_from([
-        "warp",
-        "agent",
-        "run",
-        "--prompt",
-        "hello",
-        "--bedrock-inference-role",
-        "arn:aws:iam::123456789012:role/test",
-    ])
-    .expect_err("--bedrock-inference-role must require --bedrock-role-region");
-    assert!(
-        err.to_string().contains("--bedrock-role-region"),
-        "expected error to reference --bedrock-role-region, got: {err}"
-    );
-}
-
-#[test]
-fn agent_run_rejects_bedrock_role_region_without_role() {
-    let err = Args::try_parse_from([
-        "warp",
-        "agent",
-        "run",
-        "--prompt",
-        "hello",
-        "--bedrock-role-region",
-        "us-east-1",
-    ])
-    .expect_err("--bedrock-role-region must require --bedrock-inference-role");
-    assert!(
-        err.to_string().contains("--bedrock-inference-role"),
-        "expected error to reference --bedrock-inference-role, got: {err}"
-    );
-}
-
-#[test]
 fn agent_run_parses_repeated_repository_head_override_json() {
     let args = Args::try_parse_from([
         "warp",
@@ -1209,34 +1144,6 @@ fn agent_run_cloud_accepts_agent_flag() {
 }
 
 #[test]
-fn agent_run_cloud_accepts_mcp() {
-    let uuid = uuid::Uuid::parse_str("550e8400-e29b-41d4-a716-446655440000").unwrap();
-
-    let args = Args::try_parse_from([
-        "warp",
-        "agent",
-        "run-cloud",
-        "--prompt",
-        "hello",
-        "--mcp",
-        "550e8400-e29b-41d4-a716-446655440000",
-    ])
-    .unwrap();
-
-    let Some(Command::CommandLine(boxed_cmd)) = args.command else {
-        panic!("Expected `warp agent run-cloud` command");
-    };
-    let CliCommand::Agent(AgentCommand::RunCloud(run_args)) = boxed_cmd.as_ref() else {
-        panic!("Expected `warp agent run-cloud` command");
-    };
-
-    assert!(matches!(
-        run_args.mcp_specs.as_slice(),
-        [crate::mcp::MCPSpec::Uuid(parsed_uuid)] if *parsed_uuid == uuid
-    ));
-}
-
-#[test]
 fn agent_run_cloud_accepts_run_ambient_alias() {
     // Ensure backwards compatibility: run-ambient should still work as an alias
     let args = Args::try_parse_from(["warp", "agent", "run-ambient", "--prompt", "hello"]).unwrap();
@@ -1912,92 +1819,6 @@ fn integration_update_accepts_model() {
 }
 
 #[test]
-fn integration_create_accepts_mcp_json() {
-    let json = r#"{"my-server":{"command":"echo"}}"#;
-
-    let args =
-        Args::try_parse_from(["warp", "integration", "create", "slack", "--mcp", json]).unwrap();
-
-    let Some(Command::CommandLine(boxed_cmd)) = args.command else {
-        panic!("Expected `warp integration create` command");
-    };
-    let CliCommand::Integration(IntegrationCommand::Create(args)) = boxed_cmd.as_ref() else {
-        panic!("Expected `warp integration create` command");
-    };
-
-    assert!(matches!(
-        args.mcp_specs.as_slice(),
-        [crate::mcp::MCPSpec::Json(parsed_json)] if parsed_json == json
-    ));
-}
-
-#[test]
-fn integration_update_accepts_mcp_json_and_remove_mcp() {
-    let json = r#"{"my-server":{"command":"echo"}}"#;
-
-    let args = Args::try_parse_from([
-        "warp",
-        "integration",
-        "update",
-        "slack",
-        "--mcp",
-        json,
-        "--remove-mcp",
-        "existing",
-    ])
-    .unwrap();
-
-    let Some(Command::CommandLine(boxed_cmd)) = args.command else {
-        panic!("Expected `warp integration update` command");
-    };
-    let CliCommand::Integration(IntegrationCommand::Update(args)) = boxed_cmd.as_ref() else {
-        panic!("Expected `warp integration update` command");
-    };
-
-    assert!(matches!(
-        args.mcp_specs.as_slice(),
-        [crate::mcp::MCPSpec::Json(parsed_json)] if parsed_json == json
-    ));
-    assert_eq!(args.remove_mcp, vec!["existing".to_string()]);
-}
-
-#[test]
-fn schedule_create_accepts_mcp_json() {
-    let json = r#"{"my-server":{"command":"echo"}}"#;
-
-    let args = Args::try_parse_from([
-        "warp",
-        "schedule",
-        "create",
-        "--name",
-        "test",
-        "--cron",
-        "0 9 * * 1",
-        "--prompt",
-        "hello",
-        "--mcp",
-        json,
-    ])
-    .unwrap();
-
-    let Some(Command::CommandLine(boxed_cmd)) = args.command else {
-        panic!("Expected `warp schedule create` command");
-    };
-    let CliCommand::Schedule(schedule_cmd) = boxed_cmd.as_ref() else {
-        panic!("Expected `warp schedule create` command");
-    };
-
-    let Some(ScheduleSubcommand::Create(create_args)) = schedule_cmd.subcommand() else {
-        panic!("Expected `warp schedule create` subcommand");
-    };
-
-    assert!(matches!(
-        create_args.mcp_specs.as_slice(),
-        [crate::mcp::MCPSpec::Json(parsed_json)] if parsed_json == json
-    ));
-}
-
-#[test]
 fn schedule_create_accepts_team_scope() {
     let args = Args::try_parse_from([
         "warp",
@@ -2213,40 +2034,6 @@ fn schedule_update_accepts_file() {
             .and_then(|p| p.to_str()),
         Some("schedule.json")
     );
-}
-
-#[test]
-fn schedule_update_accepts_mcp_json_and_remove_mcp() {
-    let json = r#"{"my-server":{"command":"echo"}}"#;
-
-    let args = Args::try_parse_from([
-        "warp",
-        "schedule",
-        "update",
-        "schedule-id",
-        "--mcp",
-        json,
-        "--remove-mcp",
-        "existing",
-    ])
-    .unwrap();
-
-    let Some(Command::CommandLine(boxed_cmd)) = args.command else {
-        panic!("Expected `warp schedule update` command");
-    };
-    let CliCommand::Schedule(schedule_cmd) = boxed_cmd.as_ref() else {
-        panic!("Expected `warp schedule update` command");
-    };
-
-    let Some(ScheduleSubcommand::Update(update_args)) = schedule_cmd.subcommand() else {
-        panic!("Expected `warp schedule update` subcommand");
-    };
-
-    assert!(matches!(
-        update_args.mcp_specs.as_slice(),
-        [crate::mcp::MCPSpec::Json(parsed_json)] if parsed_json == json
-    ));
-    assert_eq!(update_args.remove_mcp, vec!["existing".to_string()]);
 }
 
 #[test]

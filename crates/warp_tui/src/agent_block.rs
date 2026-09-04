@@ -241,9 +241,6 @@ fn render_failure_section(
     let body_style = builder.muted_text_style();
     match presentation {
         FailedOutputPresentation::Message(message)
-        | FailedOutputPresentation::AwsBedrockCredentialsExpiredOrInvalid {
-            fallback_message: message,
-        }
         | FailedOutputPresentation::GeminiEnterpriseCredentialsExpiredOrInvalid {
             fallback_message: message,
         } => TuiText::from_spans([
@@ -328,9 +325,6 @@ fn render_usage_notice(app: &AppContext) -> Box<dyn TuiElement> {
 fn failure_text(presentation: &FailedOutputPresentation, app: &AppContext) -> String {
     match presentation {
         FailedOutputPresentation::Message(message)
-        | FailedOutputPresentation::AwsBedrockCredentialsExpiredOrInvalid {
-            fallback_message: message,
-        }
         | FailedOutputPresentation::GeminiEnterpriseCredentialsExpiredOrInvalid {
             fallback_message: message,
         }

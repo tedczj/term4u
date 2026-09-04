@@ -68,7 +68,6 @@ use crate::ai::blocklist::code_block::{
     render_code_block_with_warp_text,
 };
 use crate::ai::blocklist::history_model::BlocklistAIHistoryModel;
-use crate::ai::blocklist::inline_action::aws_bedrock_credentials_error::AwsBedrockCredentialsErrorView;
 use crate::ai::blocklist::inline_action::gemini_enterprise_credentials_error::GeminiEnterpriseCredentialsErrorView;
 use crate::ai::blocklist::inline_action::inline_action_header::{
     INLINE_ACTION_HEADER_VERTICAL_PADDING, INLINE_ACTION_HORIZONTAL_PADDING,
@@ -83,7 +82,6 @@ use crate::ai::blocklist::view_util::{
 };
 use crate::ai::blocklist::{BlocklistAIActionModel, ShellCommandExecutor, TextLocation};
 use crate::ai::loading::shimmering_warp_loading_text;
-use crate::ai::mcp::TemplatableMCPServerManager;
 use crate::code::editor::view::CodeEditorView;
 use crate::code::editor_management::CodeSource;
 use crate::notebooks::editor::{markdown_table_appearance, rich_text_styles};
@@ -362,20 +360,6 @@ pub fn render_warping_indicator<V: View>(
                 LOAD_OUTPUT_MESSAGE_FOR_SEARCH_CODEBASE.to_owned()
             }
             Some(AIAgentActionType::Grep { .. }) => LOAD_OUTPUT_MESSAGE_FOR_GREP.to_owned(),
-            Some(AIAgentActionType::CallMCPTool {
-                server_id, name, ..
-            }) => {
-                match server_id
-                    .as_ref()
-                    .and_then(|id| TemplatableMCPServerManager::get_mcp_name(id, app))
-                {
-                    Some(server) => format!("Calling \"{name}\" MCP tool on {server}..."),
-                    None => format!("Calling \"{name}\" MCP tool..."),
-                }
-            }
-            Some(AIAgentActionType::ReadMCPResource { name, .. }) => {
-                format!("Reading \"{name}\" MCP resource...")
-            }
             Some(AIAgentActionType::FileGlob { .. })
             | Some(AIAgentActionType::FileGlobV2 { .. }) => {
                 LOAD_OUTPUT_MESSAGE_FOR_FILE_GLOB.to_owned()
@@ -3069,7 +3053,6 @@ pub struct FailedOutputProps<'a> {
     pub error: &'a RenderableAIError,
     pub invalid_api_key_button_handle: &'a MouseStateHandle,
     pub subscribe_button_handle: &'a MouseStateHandle,
-    pub aws_bedrock_credentials_error_view: Option<&'a ViewHandle<AwsBedrockCredentialsErrorView>>,
     pub gemini_enterprise_credentials_error_view:
         Option<&'a ViewHandle<GeminiEnterpriseCredentialsErrorView>>,
     pub is_ai_input_enabled: bool,
@@ -3107,14 +3090,6 @@ pub fn render_failed_output(props: FailedOutputProps, app: &AppContext) -> Box<d
                 .with_icon(inline_action_icons::cancelled_icon(appearance).finish())
                 .render(app)
                 .finish();
-        }
-        FailedOutputPresentation::AwsBedrockCredentialsExpiredOrInvalid { fallback_message } => {
-            // Use the rich stateful view if it exists, otherwise show a simple error message
-            if let Some(view) = props.aws_bedrock_credentials_error_view {
-                return ChildView::new(view).finish();
-            }
-            // Fallback for contexts that don't have the stateful view (e.g. CLI subagent)
-            fallback_message
         }
         FailedOutputPresentation::GeminiEnterpriseCredentialsExpiredOrInvalid {
             fallback_message,

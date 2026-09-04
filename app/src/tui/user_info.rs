@@ -1,6 +1,6 @@
 //! TUI-facing snapshot of the signed-in account and its organization.
 //!
-//! Mirrors [`crate::tui::TuiMcpManager`]: one app-side singleton model that
+//! One app-side singleton model that
 //! joins data scattered across auth/workspace singletons into a single plain
 //! snapshot the headless `warp_tui` front-end can read without depending on
 //! `warp_server_auth` or the workspace client directly. Both the `/status`

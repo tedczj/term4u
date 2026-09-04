@@ -9,7 +9,7 @@ use warpui::{AppContext, SingletonEntity as _};
 use crate::terminal::local_shell::LocalShellState;
 use crate::util::path::{resolve_executable, resolve_executable_in_path};
 /// Resolves `sbx` using the PATH captured from the user's interactive login
-/// shell, matching how MCP servers and LSP find binaries.
+/// shell, matching how LSP and other subprocesses find binaries.
 ///
 /// Falls back to the process's `PATH` if the interactive PATH capture
 /// fails.

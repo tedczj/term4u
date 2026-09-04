@@ -20,6 +20,9 @@ pub enum Error {
     #[error("Failed to decode protobuf multi-agent response event")]
     ProtobufDecode(#[source] prost::DecodeError),
 
+    #[error("AWS Bedrock is not supported")]
+    AwsBedrockUnsupported,
+
     #[error("Multi-agent eventsource stream failed: {0:?}")]
     EventSource(Box<reqwest_eventsource::Error>),
 }
@@ -162,6 +165,29 @@ fn decode_response_event(data: &str) -> Result<warp_multi_agent_api::ResponseEve
     let decoded_data = BASE64_URL_SAFE
         .decode(data.trim_matches('"'))
         .map_err(Error::Base64Decode)?;
-    warp_multi_agent_api::ResponseEvent::decode(decoded_data.as_slice())
-        .map_err(Error::ProtobufDecode)
+    let event = warp_multi_agent_api::ResponseEvent::decode(decoded_data.as_slice())
+        .map_err(Error::ProtobufDecode)?;
+    if response_uses_unsupported_bedrock_provider(&event) {
+        return Err(Error::AwsBedrockUnsupported);
+    }
+    Ok(event)
 }
+
+fn response_uses_unsupported_bedrock_provider(event: &warp_multi_agent_api::ResponseEvent) -> bool {
+    use warp_multi_agent_api::response_event::Type;
+    use warp_multi_agent_api::response_event::stream_finished::Reason;
+
+    matches!(
+        &event.r#type,
+        Some(Type::Finished(finished))
+            if matches!(
+                &finished.reason,
+                Some(Reason::InvalidApiKey(error))
+                    if error.provider == warp_multi_agent_api::LlmProvider::AwsBedrock as i32
+            )
+    )
+}
+
+#[cfg(test)]
+#[path = "lib_tests.rs"]
+mod tests;

@@ -11,11 +11,10 @@ pub mod text {
     use crate::AIAgentActionResultType;
     use crate::ai::agent::{
         AIAgentActionType, AIAgentInput, AIAgentOutput, AIAgentOutputMessageType, AIAgentTodo,
-        ArtifactCreatedData, CallMCPToolResult, FileGlobResult, FileGlobV2Result, GrepResult,
-        ReadFilesResult, ReadMCPResourceResult, RequestCommandOutputResult, RequestFileEditsResult,
-        SearchCodebaseResult, SuggestNewConversationResult, SuggestPromptResult, TodoOperation,
-        UploadArtifactResult, WebFetchStatus, WebSearchStatus,
-        WriteToLongRunningShellCommandResult,
+        ArtifactCreatedData, FileGlobResult, FileGlobV2Result, GrepResult, ReadFilesResult,
+        RequestCommandOutputResult, RequestFileEditsResult, SearchCodebaseResult,
+        SuggestNewConversationResult, SuggestPromptResult, TodoOperation, UploadArtifactResult,
+        WebFetchStatus, WebSearchStatus, WriteToLongRunningShellCommandResult,
     };
 
     /// Format an agent input as a human-readable string. For action results, it's assumed that
@@ -162,96 +161,6 @@ pub mod text {
                     FileGlobV2Result::Error(error) => writeln!(w, "find failed: {error}"),
                     FileGlobV2Result::Cancelled => writeln!(w, "{CANCELLED_MESSAGE}"),
                 },
-                AIAgentActionResultType::ReadMCPResource(result) => match result {
-                    ReadMCPResourceResult::Success { resource_contents } => {
-                        for resource in resource_contents {
-                            write!(w, "- ")?;
-                            match resource {
-                                rmcp::model::ResourceContents::TextResourceContents {
-                                    uri,
-                                    mime_type,
-                                    text,
-                                    ..
-                                } => writeln!(
-                                    w,
-                                    "{uri} ({})\n{text}",
-                                    mime_type.as_deref().unwrap_or("text/plain")
-                                )?,
-                                rmcp::model::ResourceContents::BlobResourceContents {
-                                    uri,
-                                    mime_type,
-                                    ..
-                                } => writeln!(
-                                    w,
-                                    "{uri} ({})",
-                                    mime_type.as_deref().unwrap_or("text/plain")
-                                )?,
-                            }
-                        }
-                        Ok(())
-                    }
-                    ReadMCPResourceResult::Error(error) => {
-                        writeln!(w, "Reading MCP resource failed: {error}")
-                    }
-                    ReadMCPResourceResult::Cancelled => writeln!(w, "{CANCELLED_MESSAGE}"),
-                },
-                AIAgentActionResultType::CallMCPTool(result) => {
-                    match result {
-                        CallMCPToolResult::Success { result } => {
-                            for content in &result.content {
-                                write!(w, "- ")?;
-                                match &content.raw {
-                                    rmcp::model::RawContent::Text(text_content) => {
-                                        writeln!(w, "{}", text_content.text)?;
-                                    }
-                                    rmcp::model::RawContent::Image(image_content) => {
-                                        writeln!(w, "{} image", image_content.mime_type)?;
-                                    }
-                                    rmcp::model::RawContent::Resource(embedded_resource) => {
-                                        match &embedded_resource.resource {
-                                        rmcp::model::ResourceContents::TextResourceContents {
-                                            uri,
-                                            mime_type,
-                                            text,
-                                            ..
-                                        } => {
-                                            writeln!(w, "{uri} ({})\n{text}", mime_type.as_deref().unwrap_or("text/plain"))?;
-                                        }
-                                        rmcp::model::ResourceContents::BlobResourceContents {
-                                            uri,
-                                            mime_type,
-                                            ..
-                                        } => {
-                                            writeln!(w, "{uri} ({})", mime_type.as_deref().unwrap_or("text/plain"))?;
-                                        }
-                                    };
-                                    }
-                                    rmcp::model::RawContent::Audio(audio_content) => {
-                                        writeln!(w, "{} audio", audio_content.mime_type)?;
-                                    }
-                                    rmcp::model::RawContent::ResourceLink(raw_resource) => {
-                                        let rmcp::model::RawResource {
-                                            uri,
-                                            mime_type,
-                                            name,
-                                            ..
-                                        } = raw_resource;
-                                        writeln!(
-                                            w,
-                                            "{name}: {uri} ({})",
-                                            mime_type.as_deref().unwrap_or("unknown")
-                                        )?;
-                                    }
-                                }
-                            }
-                            Ok(())
-                        }
-                        CallMCPToolResult::Error(error) => {
-                            writeln!(w, "Calling MCP tool failed: {error}")
-                        }
-                        CallMCPToolResult::Cancelled => writeln!(w, "{CANCELLED_MESSAGE}"),
-                    }
-                }
                 AIAgentActionResultType::ReadSkill(result) => match result {
                     ReadSkillResult::Success { content } => {
                         writeln!(w, "Skill read successfully: {}", content.file_name)
@@ -375,21 +284,6 @@ pub mod text {
                             write!(w, " in {path}")?;
                         }
                         writeln!(w)?;
-                    }
-                    AIAgentActionType::ReadMCPResource {
-                        server_id: _,
-                        name,
-                        uri,
-                    } => match uri {
-                        Some(uri) => writeln!(w, "Reading MCP resource {uri}")?,
-                        None => writeln!(w, "Reading MCP resource {name}")?,
-                    },
-                    AIAgentActionType::CallMCPTool {
-                        server_id: _,
-                        name,
-                        input,
-                    } => {
-                        writeln!(w, "MCP tool call {name}({input:#})")?;
                     }
                     AIAgentActionType::SuggestNewConversation { .. } => (),
                     AIAgentActionType::SuggestPrompt { .. } => (),
@@ -582,11 +476,10 @@ pub mod json {
     use crate::ai::agent::comment::ReviewComment;
     use crate::ai::agent::{
         AIAgentActionType, AIAgentInput, AIAgentOutput, AIAgentOutputMessage,
-        AIAgentOutputMessageType, AIAgentTodo, ArtifactCreatedData, CallMCPToolResult, FileContext,
-        FileGlobResult, FileGlobV2Result, GrepResult, ReadFilesFailedFile, ReadFilesResult,
-        ReadMCPResourceResult, RequestCommandOutputResult, RequestFileEditsResult,
-        SearchCodebaseResult, SubagentCall, TodoOperation, UploadArtifactResult,
-        WriteToLongRunningShellCommandResult,
+        AIAgentOutputMessageType, AIAgentTodo, ArtifactCreatedData, FileContext, FileGlobResult,
+        FileGlobV2Result, GrepResult, ReadFilesFailedFile, ReadFilesResult,
+        RequestCommandOutputResult, RequestFileEditsResult, SearchCodebaseResult, SubagentCall,
+        TodoOperation, UploadArtifactResult, WriteToLongRunningShellCommandResult,
     };
     use crate::code::buffer_location::LocalOrRemotePath;
 
@@ -675,14 +568,6 @@ pub mod json {
             patterns: &'a [String],
             path: Option<&'a str>,
         },
-        ReadMcpResource {
-            name: &'a str,
-            uri: Option<&'a str>,
-        },
-        CallMcpTool {
-            name: &'a str,
-            input: &'a serde_json::Value,
-        },
     }
 
     #[derive(Serialize)]
@@ -695,8 +580,6 @@ pub mod json {
         SearchCodebase(JsonFileCollectionResult<'a>),
         Grep(JsonFileCollectionResult<'a>),
         FileGlob(JsonFileCollectionResult<'a>),
-        ReadMcpResource(JsonReadMcpResourceResult<'a>),
-        CallMcpTool(JsonCallMcpToolResult<'a>),
     }
 
     #[derive(Serialize)]
@@ -755,16 +638,6 @@ pub mod json {
         #[serde(skip_serializing_if = "Vec::is_empty")]
         lines: Vec<Range<usize>>,
     }
-    #[derive(Serialize)]
-    struct JsonReadMcpResourceResult<'a> {
-        resource_contents: &'a [rmcp::model::ResourceContents],
-    }
-
-    #[derive(Serialize)]
-    struct JsonCallMcpToolResult<'a> {
-        result: &'a rmcp::model::CallToolResult,
-    }
-
     #[derive(Serialize)]
     struct JsonTodo<'a> {
         title: &'a str,
@@ -1007,26 +880,6 @@ pub mod json {
                     }),
                     FileGlobResult::Cancelled => Some(JsonMessage::ToolCanceled),
                 },
-                AIAgentActionResultType::ReadMCPResource(result) => match result {
-                    ReadMCPResourceResult::Success { resource_contents } => {
-                        Some(JsonMessage::ToolResult(JsonToolResult::ReadMcpResource(
-                            JsonReadMcpResourceResult { resource_contents },
-                        )))
-                    }
-                    ReadMCPResourceResult::Error(error) => Some(JsonMessage::ToolError {
-                        error: Cow::Borrowed(error.as_str()),
-                    }),
-                    ReadMCPResourceResult::Cancelled => Some(JsonMessage::ToolCanceled),
-                },
-                AIAgentActionResultType::CallMCPTool(result) => match result {
-                    CallMCPToolResult::Success { result } => Some(JsonMessage::ToolResult(
-                        JsonToolResult::CallMcpTool(JsonCallMcpToolResult { result }),
-                    )),
-                    CallMCPToolResult::Error(error) => Some(JsonMessage::ToolError {
-                        error: Cow::Borrowed(error.as_str()),
-                    }),
-                    CallMCPToolResult::Cancelled => Some(JsonMessage::ToolCanceled),
-                },
                 _ => None,
             }
         }
@@ -1107,22 +960,6 @@ pub mod json {
                     } => Some(JsonMessage::ToolCall(JsonToolCall::FileGlob {
                         patterns,
                         path: search_dir.as_deref(),
-                    })),
-                    AIAgentActionType::ReadMCPResource {
-                        server_id: _,
-                        name,
-                        uri,
-                    } => Some(JsonMessage::ToolCall(JsonToolCall::ReadMcpResource {
-                        name,
-                        uri: uri.as_deref(),
-                    })),
-                    AIAgentActionType::CallMCPTool {
-                        server_id: _,
-                        name,
-                        input,
-                    } => Some(JsonMessage::ToolCall(JsonToolCall::CallMcpTool {
-                        name,
-                        input,
                     })),
                     // TODO(AGENT-2281): implement
                     AIAgentActionType::UseComputer(_use_computer_request) => None,

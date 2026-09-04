@@ -702,9 +702,6 @@ pub enum RenderableAIError {
         provider: String,
         model_name: String,
     },
-    AwsBedrockCredentialsExpiredOrInvalid {
-        model_name: String,
-    },
     GeminiEnterpriseCredentialsExpiredOrInvalid,
     /// A transient network failure (lost connection or truncated response stream). Carries its
     /// own complete user-facing copy; `kind` preserves the structured cause (including the raw
@@ -765,10 +762,6 @@ impl RenderableAIError {
 
     pub fn is_invalid_api_key(&self) -> bool {
         matches!(self, Self::InvalidApiKey { .. })
-    }
-
-    pub fn is_aws_bedrock_credentials_error(&self) -> bool {
-        matches!(self, Self::AwsBedrockCredentialsExpiredOrInvalid { .. })
     }
 
     /// Returns true if an automatic resume will be attempted for this error.
@@ -901,12 +894,6 @@ impl Display for RenderableAIError {
             }
             Self::InvalidApiKey { provider, .. } => {
                 write!(f, "Invalid API key for {provider}")
-            }
-            Self::AwsBedrockCredentialsExpiredOrInvalid { model_name } => {
-                write!(
-                    f,
-                    "AWS Bedrock credentials expired or invalid for {model_name}"
-                )
             }
             Self::GeminiEnterpriseCredentialsExpiredOrInvalid => {
                 write!(f, "Gemini Enterprise credentials expired or invalid")
@@ -1422,8 +1409,6 @@ impl AIAgentActionResult {
                 | AIAgentActionResultType::SearchCodebase(SearchCodebaseResult::Cancelled)
                 | AIAgentActionResultType::Grep(GrepResult::Cancelled)
                 | AIAgentActionResultType::FileGlob(FileGlobResult::Cancelled)
-                | AIAgentActionResultType::ReadMCPResource(ReadMCPResourceResult::Cancelled)
-                | AIAgentActionResultType::CallMCPTool(CallMCPToolResult::Cancelled)
                 | AIAgentActionResultType::SuggestNewConversation(
                     SuggestNewConversationResult::Cancelled,
                 )
@@ -2162,30 +2147,6 @@ impl AIAgentOutputMessage {
             citations: vec![],
         }
     }
-}
-
-// Information about what MCP capabilities the client has, to
-// be provided as context for Agent Mode requests.
-#[derive(Debug, Clone)]
-#[cfg_attr(target_family = "wasm", allow(dead_code))]
-pub struct MCPContext {
-    // Old flat structure (deprecated but kept for backward compatibility)
-    #[deprecated]
-    pub resources: Vec<rmcp::model::Resource>,
-    #[deprecated]
-    pub tools: Vec<rmcp::model::Tool>,
-    // New grouped structure
-    pub servers: Vec<MCPServer>,
-}
-
-#[derive(Debug, Clone)]
-#[cfg_attr(target_family = "wasm", allow(dead_code))]
-pub struct MCPServer {
-    pub id: String,
-    pub name: String,
-    pub description: String,
-    pub resources: Vec<rmcp::model::Resource>,
-    pub tools: Vec<rmcp::model::Tool>,
 }
 
 /// Contains context that may be attached to a user query.

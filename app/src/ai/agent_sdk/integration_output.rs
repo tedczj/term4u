@@ -2,7 +2,6 @@ use chrono::{DateTime, Utc};
 use comfy_table::presets::UTF8_FULL;
 use comfy_table::{Cell, Table};
 use serde::Serialize;
-use serde_json::{Map, Value};
 use warp_cli::agent::OutputFormat;
 use warp_graphql::queries::get_simple_integrations::{
     ListedSimpleIntegrationConfig, SimpleIntegration, SimpleIntegrationConnectionStatus,
@@ -50,97 +49,6 @@ pub fn print_integrations(graphql_output: &SimpleIntegrationsOutput, output_form
             }
         }
     }
-}
-
-fn render_labeled_wrapped_lines(label: &str, lines: &[String], width: usize) -> String {
-    let indent = " ".repeat(label.len() + 2); // align under "{label}: "
-    let mut out = String::new();
-
-    for (idx, line) in lines.iter().enumerate() {
-        let wrapped = crate::ai::agent_sdk::text_layout::word_wrap(line, width);
-        for (widx, wline) in wrapped.iter().enumerate() {
-            if !out.is_empty() {
-                out.push('\n');
-            }
-            if idx == 0 && widx == 0 {
-                out.push_str(&format!("{label}: {wline}"));
-            } else {
-                out.push_str(&indent);
-                out.push_str(wline);
-            }
-        }
-    }
-
-    out
-}
-
-fn format_mcp_server_display(name: &str, config: &Value) -> String {
-    let Some(obj) = config.as_object() else {
-        return name.to_string();
-    };
-
-    if let Some(url) = obj
-        .get("url")
-        .and_then(Value::as_str)
-        .map(str::trim)
-        .filter(|s| !s.is_empty())
-    {
-        return format!("{name}: {url}");
-    }
-
-    if let Some(command) = obj
-        .get("command")
-        .and_then(Value::as_str)
-        .map(str::trim)
-        .filter(|s| !s.is_empty())
-    {
-        let args = obj
-            .get("args")
-            .and_then(Value::as_array)
-            .map(|arr| {
-                arr.iter()
-                    .filter_map(Value::as_str)
-                    .map(str::to_string)
-                    .collect::<Vec<String>>()
-            })
-            .unwrap_or_default();
-
-        if args.is_empty() {
-            return format!("{name}: {command}");
-        }
-
-        return format!("{name}: {command} {}", args.join(" "));
-    }
-
-    if let Some(warp_id) = obj
-        .get("warp_id")
-        .and_then(Value::as_str)
-        .map(str::trim)
-        .filter(|s| !s.is_empty())
-    {
-        return format!("{name}: warp_id={warp_id}");
-    }
-
-    name.to_string()
-}
-
-fn mcp_server_display_lines(config: &ListedSimpleIntegrationConfig) -> Vec<String> {
-    let json = config.mcp_servers_json.trim();
-    if json.is_empty() || json == "{}" {
-        return Vec::new();
-    }
-
-    let Ok(map) = serde_json::from_str::<Map<String, Value>>(json) else {
-        return Vec::new();
-    };
-
-    let mut entries: Vec<(String, Value)> = map.into_iter().collect();
-    entries.sort_by(|a, b| a.0.cmp(&b.0));
-
-    entries
-        .into_iter()
-        .map(|(name, cfg)| format_mcp_server_display(&name, &cfg))
-        .collect()
 }
 
 fn print_integration_card(integration: &SimpleIntegration) {
@@ -204,15 +112,6 @@ fn print_integration_card(integration: &SimpleIntegration) {
             MAX_LINE_WIDTH,
         );
         table.add_row(vec![base_prompt_row]);
-    }
-
-    // MCP servers row (only if present).
-    if let Some(config) = &integration.integration_config {
-        let lines = mcp_server_display_lines(config);
-        if !lines.is_empty() {
-            let row = render_labeled_wrapped_lines("MCP servers", &lines, MAX_LINE_WIDTH);
-            table.add_row(vec![row]);
-        }
     }
 
     // Timestamps: keep created/updated in a single row, no label.

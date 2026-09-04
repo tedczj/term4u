@@ -48,7 +48,7 @@ pub struct DirectoryWatcher {
 
     /// Paths that must be watched (and indexed) even when they are gitignored
     /// or beyond the tree's size limit — e.g. skill provider directories that
-    /// consumers (LSP, MCP) need live updates for.
+    /// consumers such as language servers need live updates for.
     #[cfg_attr(not(feature = "local_fs"), allow(dead_code))]
     force_included_paths: Vec<PathBuf>,
 }
@@ -113,7 +113,7 @@ impl DirectoryWatcher {
 
     /// Registers paths that must be watched even when gitignored. Mirrors
     /// `LocalRepoMetadataModel::register_force_included_paths` but applies to
-    /// the watcher backing `Repository` subscribers (LSP, MCP). Must be called
+    /// the watcher backing `Repository` subscribers. Must be called
     /// before repositories begin watching to take effect on already-registered
     /// watches.
     pub fn register_force_included_paths(&mut self, paths: impl IntoIterator<Item = PathBuf>) {

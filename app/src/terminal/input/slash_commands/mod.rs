@@ -484,9 +484,6 @@ impl Input {
 
         // Handle the slash command action based on its kind
         match command.kind {
-            SlashCommandKind::AddMcp => {
-                ctx.dispatch_typed_action(&TerminalAction::OpenAddMCPPane);
-            }
             SlashCommandKind::AddPrompt => {
                 ctx.dispatch_typed_action(&TerminalAction::OpenAddPromptPane);
             }
@@ -861,9 +858,6 @@ impl Input {
                 ctx.dispatch_typed_action(&TerminalAction::ToggleCodeReviewPane {
                     entrypoint: CodeReviewPaneEntrypoint::SlashCommand,
                 });
-            }
-            SlashCommandKind::OpenMcpServers | SlashCommandKind::Mcp => {
-                ctx.dispatch_typed_action(&TerminalAction::OpenViewMCPPane);
             }
             SlashCommandKind::OpenSettingsFile => {
                 if !FeatureFlag::SettingsFile.is_enabled() || !cfg!(feature = "local_fs") {

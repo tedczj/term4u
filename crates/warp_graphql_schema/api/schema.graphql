@@ -513,10 +513,6 @@ type AvailableLlms {
   preferredCodexModelId: String
 }
 
-type AwsProviderConfig {
-  roleArn: String!
-}
-
 type BillingCycleUsageHistory {
   currentPeriodEnd: Time!
   currentPeriodStart: Time!
@@ -1008,23 +1004,6 @@ type CreateManagedSecretOutput implements Response {
 }
 
 union CreateManagedSecretResult = CreateManagedSecretOutput | UserFacingError
-
-input CreateManagedMcpClientConfigInput {
-  uid: ID!
-}
-
-type CreateManagedMcpClientConfigOutput implements Response {
-  transportKind: ManagedMcpTransportKind!
-  mcpConfigJson: String!
-  proxyUrl: String
-  proxyToken: String
-  authorizationHeaderName: String
-  authorizationHeaderValue: String
-  expiresAt: Time
-  responseContext: ResponseContext!
-}
-
-union CreateManagedMcpClientConfigResult = CreateManagedMcpClientConfigOutput | UserFacingError
 
 input CreateNotebookInput {
   aiDocumentId: String
@@ -1687,10 +1666,8 @@ enum GenericStringObjectFormat {
   JsonAIFact
   JsonCloudEnvironment
   JsonEnvVarCollection
-  JsonMCPServer
   JsonPreference
   JsonScheduledAmbientAgent
-  JsonTemplatableMCPServer
   JsonWorkflowEnum
 }
 
@@ -2066,7 +2043,6 @@ type ListedSimpleIntegrationConfig {
   environmentUid: String!
   harness: ListedHarnessConfig
   harnessAuthSecrets: ListedHarnessAuthSecretsConfig
-  mcpServersJson: String!
   modelId: String!
   secrets: [SecretRefOutput!]
   workerHost: String
@@ -2114,13 +2090,7 @@ type LlmHostSettings {
   the STS exchange. Empty means the federated token is used directly.
   """
   gcpSaEmail: String
-
-  """
-  IAM role ARN that Oz Cloud Agents assume via the OIDC trust flow to obtain credentials for AWS Bedrock requests.
-  """
-  oidcAssumeRoleArn: String
   optOutOfNewModels: Boolean!
-  region: String
 }
 
 type LlmHostSettingsEntry {
@@ -2132,9 +2102,7 @@ type LlmHostSettingsEntry {
 input LlmHostSettingsInput {
   enabled: Boolean
   enablementSetting: HostEnablementSetting
-  oidcAssumeRoleArn: String
   optOutOfNewModels: Boolean
-  region: String
 }
 
 input LlmHostSettingsInputEntry {
@@ -2166,7 +2134,6 @@ LLM model hosting provider type.
 Add self-hosted and other cloud providers here as needed.
 """
 enum LlmModelHost {
-  AWS_BEDROCK
   CUSTOM_ENDPOINT
   DIRECT_API
   GEMINI_ENTERPRISE
@@ -2254,29 +2221,6 @@ type LlmUsageMetadata {
   requestMultiplier: Int! @deprecated(reason: "Use creditMultiplier instead")
 }
 
-"""A template for the MCP Gallery."""
-type MCPGalleryTemplate {
-  description: String!
-  galleryItemId: String!
-  instructionsInMarkdown: String
-  jsonTemplate: MCPJsonTemplate!
-  template: String!
-  title: String!
-  version: Int!
-}
-
-"""A JSON template with variables for an MCP server configuration."""
-type MCPJsonTemplate {
-  json: String!
-  variables: [MCPTemplateVariable!]!
-}
-
-"""A variable in an MCP JSON template."""
-type MCPTemplateVariable {
-  allowedValues: [String!]
-  key: String!
-}
-
 type ManagedSecret {
   createdAt: Time!
 
@@ -2299,27 +2243,6 @@ type ManagedSecret {
 """A managed secret value representing an Anthropic API key."""
 type ManagedSecretAnthropicApiKeyValue {
   apiKey: String!
-}
-
-"""
-A managed secret value representing Anthropic Bedrock access key credentials.
-"""
-type ManagedSecretAnthropicBedrockAccessKeyValue {
-  awsAccessKeyId: String!
-  awsRegion: String!
-  awsSecretAccessKey: String!
-
-  """
-  Optional AWS session token. Only required when using temporary credentials
-  (e.g. STS-issued credentials). Persistent IAM access keys do not need one.
-  """
-  awsSessionToken: String
-}
-
-"""A managed secret value representing an Anthropic Bedrock API key."""
-type ManagedSecretAnthropicBedrockApiKeyValue {
-  awsBearerTokenBedrock: String!
-  awsRegion: String!
 }
 
 """ManagedSecretConfig contains configuration for managed secrets."""
@@ -2360,23 +2283,16 @@ type ManagedSecretRawValue {
   value: String!
 }
 
-enum ManagedMcpTransportKind {
-  URL
-  COMMAND
-}
-
 """Type of Warp-managed secret values."""
 enum ManagedSecretType {
   ANTHROPIC_API_KEY
-  ANTHROPIC_BEDROCK_ACCESS_KEY
-  ANTHROPIC_BEDROCK_API_KEY
   DOCKER_REGISTRY
   DOTENVX
   OPENAI_API_KEY
   RAW_VALUE
 }
 
-union ManagedSecretValue = ManagedSecretAnthropicApiKeyValue | ManagedSecretAnthropicBedrockAccessKeyValue | ManagedSecretAnthropicBedrockApiKeyValue | ManagedSecretDockerRegistryValue | ManagedSecretOpenAiApiKeyValue | ManagedSecretRawValue
+union ManagedSecretValue = ManagedSecretAnthropicApiKeyValue | ManagedSecretDockerRegistryValue | ManagedSecretOpenAiApiKeyValue | ManagedSecretRawValue
 
 input ManagedSecretsInput {
   """Pagination cursor, currently unused."""
@@ -2651,7 +2567,7 @@ enum PlatformErrorCode {
   CONTENT_POLICY_VIOLATION
 
   """
-  Client-side environment setup failed (clone, setup command, MCP, etc.).
+  Client-side environment setup failed (clone, setup command, etc.).
   """
   ENVIRONMENT_SETUP_FAILED
 
@@ -2733,7 +2649,6 @@ input ProvideNegativeFeedbackResponseForAiConversationInput {
 }
 
 type ProvidersConfig {
-  aws: AwsProviderConfig
   gcp: GcpProviderConfig
 }
 
@@ -3132,7 +3047,6 @@ type RootMutation {
   createFileArtifactUploadTarget(input: CreateFileArtifactUploadTargetInput!, requestContext: RequestContext!): CreateFileArtifactUploadTargetResult!
   createFolder(input: CreateFolderInput!, requestContext: RequestContext!): CreateFolderResult!
   createGenericStringObject(input: CreateGenericStringObjectInput!, requestContext: RequestContext!): CreateGenericStringObjectResult!
-  createManagedMcpClientConfig(input: CreateManagedMcpClientConfigInput!, requestContext: RequestContext!): CreateManagedMcpClientConfigResult!
   createManagedSecret(input: CreateManagedSecretInput!, requestContext: RequestContext!): CreateManagedSecretResult!
   createNotebook(input: CreateNotebookInput!, requestContext: RequestContext!): CreateNotebookResult!
   createSimpleIntegration(input: CreateSimpleIntegrationInput!, requestContext: RequestContext!): CreateSimpleIntegrationResult!
@@ -3543,9 +3457,7 @@ input SimpleIntegrationConfig {
   environmentUid: String
   harness: HarnessInput
   harnessAuthSecrets: HarnessAuthSecretsInput
-  mcpServersJson: String
   modelId: String
-  removeMcpServerNames: [String!]
   secrets: [SecretRefInput!]
   workerHost: String
 }
@@ -4075,11 +3987,9 @@ type ToolCallStats {
 """Tool usage statistics for a conversation."""
 type ToolUsageMetadata {
   applyFileDiffStats: ApplyFileDiffStats!
-  callMcpToolStats: ToolCallStats!
   fileGlobStats: ToolCallStats!
   grepStats: ToolCallStats!
   readFilesStats: ToolCallStats!
-  readMcpResourceStats: ToolCallStats!
   readShellCommandOutputStats: ToolCallStats!
   runCommandStats: ToolCallStats!
   runCommandsExecuted: Int!
@@ -4452,7 +4362,6 @@ type UpdatedCloudObjectsOutput implements Response {
   deletedObjectUids: DeletedObjectUids!
   folders: [Folder!]
   genericStringObjects: [GenericStringObject!]
-  mcpGallery: [MCPGalleryTemplate!]
   notebooks: [Notebook!]
   responseContext: ResponseContext!
   userProfiles: [PublicUserProfile!]

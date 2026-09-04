@@ -107,8 +107,6 @@ impl DocumentActionPresentation {
                 | AIAgentActionType::Grep { .. }
                 | AIAgentActionType::FileGlob { .. }
                 | AIAgentActionType::FileGlobV2 { .. }
-                | AIAgentActionType::ReadMCPResource { .. }
-                | AIAgentActionType::CallMCPTool { .. }
                 | AIAgentActionType::SuggestNewConversation { .. }
                 | AIAgentActionType::SuggestPrompt(_)
                 | AIAgentActionType::InitProject

@@ -26,16 +26,13 @@ use super::codex_transcript::{
     parse_session_meta, rehydrate_codex_transcript,
 };
 use super::json_utils::read_json_file_or_default;
-use super::{
-    HarnessRunner, JSONMCPServer, ResumePayload, SavePoint, ThirdPartyHarness, write_temp_file,
-};
+use super::{HarnessRunner, ResumePayload, SavePoint, ThirdPartyHarness, write_temp_file};
 use crate::ai::agent::conversation::AIConversationId;
 use crate::ai::agent_sdk::setup_observability::{
     OzRunTimelineEvent, SetupClientEventReporter, SetupStep,
 };
 use crate::ai::agent_tasks::AmbientAgentTaskId;
 use crate::ai::agent_tasks::task::HarnessModelConfig;
-use crate::ai::mcp::JSONTransportType;
 use crate::server::server_api::ServerApi;
 use crate::server::server_api::harness_support::{HarnessSupportClient, upload_to_target};
 use crate::terminal::CLIAgent;
@@ -129,7 +126,6 @@ impl ThirdPartyHarness for CodexHarness {
         resume: Option<ResumePayload>,
         resolved_env_vars: &HashMap<OsString, OsString>,
         resolved_secrets: &HashMap<String, ManagedSecretValue>,
-        resolved_mcp_servers: &HashMap<String, JSONMCPServer>,
         third_party_harness_model_config: Option<&HarnessModelConfig>,
     ) -> Result<Box<dyn HarnessRunner>, AgentDriverError> {
         // Prepare the environment config files.
@@ -138,7 +134,6 @@ impl ThirdPartyHarness for CodexHarness {
             system_prompt,
             resolved_env_vars,
             resolved_secrets,
-            resolved_mcp_servers,
             third_party_harness_model_config,
         )
         .map_err(|error| AgentDriverError::HarnessConfigSetupFailed {
@@ -522,7 +517,6 @@ fn prepare_codex_environment_config(
     system_prompt: Option<&str>,
     resolved_env_vars: &HashMap<OsString, OsString>,
     resolved_secrets: &HashMap<String, ManagedSecretValue>,
-    resolved_mcp_servers: &HashMap<String, JSONMCPServer>,
     third_party_harness_model_config: Option<&HarnessModelConfig>,
 ) -> Result<()> {
     let codex_dir = codex_config_dir()?;
@@ -544,7 +538,6 @@ fn prepare_codex_environment_config(
     prepare_codex_config_toml(
         &codex_dir.join(CODEX_CONFIG_TOML_FILE_NAME),
         working_dir,
-        resolved_mcp_servers,
         third_party_harness_model_config,
         openai_base_url.as_deref(),
     )?;
@@ -742,7 +735,6 @@ fn resolve_openai_base_url_from_secret(
 fn prepare_codex_config_toml(
     config_toml_path: &Path,
     working_dir: &Path,
-    resolved_mcp_servers: &HashMap<String, JSONMCPServer>,
     third_party_harness_model_config: Option<&HarnessModelConfig>,
     openai_base_url: Option<&str>,
 ) -> Result<()> {
@@ -787,8 +779,6 @@ fn prepare_codex_config_toml(
         let key = child_repo.to_string_lossy().into_owned();
         set_codex_project_trust_level(&mut doc, &key, CODEX_TRUST_LEVEL_TRUSTED);
     }
-
-    write_codex_mcp_servers(&mut doc, resolved_mcp_servers);
 
     if let Some(parent) = config_toml_path.parent() {
         fs::create_dir_all(parent).with_context(|| {
@@ -909,69 +899,4 @@ fn set_codex_project_trust_level(
         .expect("project entry is a table");
     proj_tbl.set_implicit(false);
     proj_tbl["trust_level"] = toml_edit::value(trust_level);
-}
-
-/// Write resolved MCP servers into `[mcp_servers.<name>]` sections in the Codex config.
-fn write_codex_mcp_servers(
-    doc: &mut toml_edit::DocumentMut,
-    servers: &HashMap<String, JSONMCPServer>,
-) {
-    if servers.is_empty() {
-        return;
-    }
-    if !doc.contains_table("mcp_servers") {
-        let mut tbl = toml_edit::Table::new();
-        tbl.set_implicit(true);
-        doc.insert("mcp_servers", toml_edit::Item::Table(tbl));
-    }
-    let mcp_tbl = doc["mcp_servers"]
-        .as_table_mut()
-        .expect("mcp_servers table inserted above");
-
-    for (name, server) in servers {
-        let entry = mcp_tbl
-            .entry(name)
-            .or_insert_with(toml_edit::table)
-            .as_table_mut()
-            .expect("mcp_servers entry is a table");
-        entry.set_implicit(false);
-
-        match &server.transport_type {
-            JSONTransportType::CLIServer {
-                command,
-                args,
-                env,
-                working_directory,
-            } => {
-                entry["command"] = toml_edit::value(command.as_str());
-                if !args.is_empty() {
-                    let mut arr = toml_edit::Array::new();
-                    for arg in args {
-                        arr.push(arg.as_str());
-                    }
-                    entry["args"] = toml_edit::value(arr);
-                }
-                if !env.is_empty() {
-                    let mut env_tbl = toml_edit::InlineTable::new();
-                    for (k, v) in env {
-                        env_tbl.insert(k, v.as_str().into());
-                    }
-                    entry["env"] = toml_edit::value(env_tbl);
-                }
-                if let Some(cwd) = working_directory {
-                    entry["cwd"] = toml_edit::value(cwd.as_str());
-                }
-            }
-            JSONTransportType::SSEServer { url, headers } => {
-                entry["url"] = toml_edit::value(url.as_str());
-                if !headers.is_empty() {
-                    let mut hdrs_tbl = toml_edit::InlineTable::new();
-                    for (k, v) in headers {
-                        hdrs_tbl.insert(k, v.as_str().into());
-                    }
-                    entry["http_headers"] = toml_edit::value(hdrs_tbl);
-                }
-            }
-        }
-    }
 }

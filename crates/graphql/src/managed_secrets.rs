@@ -5,8 +5,6 @@ use crate::schema;
 #[derive(cynic::Enum, Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum ManagedSecretType {
     AnthropicApiKey,
-    AnthropicBedrockAccessKey,
-    AnthropicBedrockApiKey,
     DockerRegistry,
     Dotenvx,
     OpenaiApiKey,
@@ -18,8 +16,6 @@ impl ManagedSecretType {
     pub fn envelope_name(&self) -> &str {
         match self {
             ManagedSecretType::AnthropicApiKey => "anthropic_api_key",
-            ManagedSecretType::AnthropicBedrockAccessKey => "anthropic_bedrock_access_key",
-            ManagedSecretType::AnthropicBedrockApiKey => "anthropic_bedrock_api_key",
             ManagedSecretType::DockerRegistry => "docker_registry",
             ManagedSecretType::Dotenvx => "dotenvx",
             ManagedSecretType::OpenaiApiKey => "openai_api_key",

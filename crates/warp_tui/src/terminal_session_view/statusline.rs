@@ -19,8 +19,7 @@ use warpui_core::{AppContext, ViewContext};
 use super::{
     CTRL_C_EXIT_HINT, CTRL_C_KILL_CHILD_HINT, ConversationRestoreState, LOADING_CONVERSATION_HINT,
     RUNNING_COMMAND_DETACH_HINT, SHELL_MODE_HINT, TuiConversationRestoreOrigin,
-    TuiTerminalSessionAction, TuiTerminalSessionView, render_mcp_install_footer,
-    render_mcp_menu_footer,
+    TuiTerminalSessionAction, TuiTerminalSessionView,
 };
 use crate::transient_hint::TransientHintTone;
 use crate::tui_builder::TuiUiBuilder;
@@ -443,8 +442,7 @@ impl TuiTerminalSessionView {
     /// replacing hint — the ctrl-c exit confirmation while armed, the
     /// conversation-list loading hint, an active transient notice, or the
     /// interrupt hint for a manually attached running command — occupies the
-    /// whole row instead. An open MCP install flow or management menu similarly
-    /// replaces the statusline with its controls. An empty resolved configuration
+    /// whole row instead. An empty resolved configuration
     /// consumes no row.
     pub(super) fn render_footer(&self, ctx: &AppContext) -> TuiFlex {
         let builder = TuiUiBuilder::from_app(ctx);
@@ -454,20 +452,6 @@ impl TuiTerminalSessionView {
             && self.voice_statusline_is_available(shell_mode, ctx);
         if let Some(hint) = self.footer_hint(voice_statusline_visible, ctx) {
             return hint.render(&builder);
-        }
-        if self.mcp_install_flow.as_ref(ctx).is_open(ctx) {
-            return render_mcp_install_footer(
-                &builder,
-                self.mcp_install_flow.as_ref(ctx).primary_action_hint(),
-            );
-        }
-        if self.mcp_menu.as_ref(ctx).is_open(ctx) {
-            let menu = self.mcp_menu.as_ref(ctx);
-            return render_mcp_menu_footer(
-                &builder,
-                menu.selected_primary_action(ctx),
-                menu.can_log_out_selected(ctx),
-            );
         }
         let git_metadata = self.git_status_metadata(ctx);
         let mut ordered = Vec::new();

@@ -674,7 +674,7 @@ impl TerminalDriver {
     /// Returns a future that resolves when (optional) session sharing has started.
     ///
     /// This is separate from `wait_for_session_bootstrapped` so that callers can:
-    /// - wait for terminal bootstrap early (e.g. before starting MCP servers)
+    /// - wait for terminal bootstrap before configuring the run
     /// - wait for session sharing later (e.g. right before running visible commands)
     pub fn wait_for_session_shared(
         &mut self,

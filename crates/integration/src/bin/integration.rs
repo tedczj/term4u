@@ -53,7 +53,6 @@ mod online {
                 connectivity: ConnectivityMode::Offline {
                     allow_loopback: true,
                 },
-                mcp_static_config: None,
             },
         ));
 
@@ -392,7 +391,6 @@ mod online {
 
         // Settings sidebar navigation and search
         register_test!(test_settings_search_filters_top_level_pages);
-        register_test!(test_settings_agent_mcp_servers_renders_standalone_page);
 
         register_test!(test_middle_click_paste);
 

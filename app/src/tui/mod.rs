@@ -5,16 +5,9 @@
 //! the TUI observes, mounts the TUI immediately (so it renders right away), and
 //! leaves device authorization behind an explicit welcome-screen action. The
 //! authentication gate remains visible until the browser flow completes.
-mod mcp;
 mod telemetry;
 mod user_info;
 
-pub use mcp::{
-    TuiMcpAction, TuiMcpConfigDiagnostic, TuiMcpFileScope, TuiMcpFileSource, TuiMcpInstallRequest,
-    TuiMcpManager, TuiMcpManagerEvent, TuiMcpServerId, TuiMcpServerSnapshot, TuiMcpServerSource,
-    TuiMcpServerStatus, TuiMcpSnapshot, TuiMcpSyncedTemplateProvenance, TuiMcpTemplateVariable,
-    TuiMcpTransport, TuiMcpVariableValue,
-};
 use telemetry::{
     AbandonmentPhase, AuthenticationEntrypoint, TuiOnboardingTelemetry, TuiOnboardingTelemetryEvent,
 };
@@ -25,7 +18,6 @@ pub use user_info::{TuiUserInfoManager, TuiUserInfoManagerEvent, TuiUserInfoSnap
 use warp_core::telemetry::TelemetryEvent as _;
 use warpui::{AppContext, Entity, SingletonEntity};
 
-use crate::ai::mcp::FileBasedMCPManager;
 #[cfg(not(feature = "offline_hard"))]
 use crate::auth::AuthStateProvider;
 use crate::auth::auth_manager::AuthManager;
@@ -222,7 +214,6 @@ pub(crate) fn init(mount: TuiMountFn, ctx: &mut AppContext) {
         browser_flow: TuiAuthBrowserFlow::DirectDeviceAuthorization,
         telemetry: TuiOnboardingTelemetry::new(logged_in),
     });
-    ctx.add_singleton_model(TuiMcpManager::new);
     #[cfg(feature = "offline_hard")]
     ctx.add_singleton_model(TuiUserInfoManager::new_offline);
     #[cfg(not(feature = "offline_hard"))]
@@ -245,10 +236,6 @@ pub(crate) fn init(mount: TuiMountFn, ctx: &mut AppContext) {
     // Mount the TUI now so it renders immediately; signed-out users see the
     // welcome screen before explicitly starting browser authentication.
     mount(ctx);
-
-    if logged_in {
-        activate_global_mcp_servers(ctx);
-    }
 }
 
 fn has_validated_identity(auth_state: &AuthState) -> bool {
@@ -309,7 +296,6 @@ fn handle_auth_manager_event(event: &AuthManagerEvent, ctx: &mut AppContext) {
             TuiOnboardingMarkers::handle(ctx).update(ctx, |markers, ctx| {
                 markers.load_current_account(ctx);
             });
-            activate_global_mcp_servers(ctx);
         }
         AuthManagerEvent::AuthFailed(err) => {
             let event = TuiLoginModel::handle(ctx)
@@ -365,12 +351,6 @@ fn tui_verification_url(verification_url: &str, user_code: &str) -> String {
     query.append_pair("source", "warp-agent-cli");
     drop(query);
     verification_url.into()
-}
-
-fn activate_global_mcp_servers(ctx: &mut AppContext) {
-    FileBasedMCPManager::handle(ctx).update(ctx, |manager, ctx| {
-        manager.activate_global_warp_servers(ctx);
-    });
 }
 
 /// Starts device authorization from a signed-out screen, preserving any required web logout.

@@ -134,7 +134,7 @@ pub use crate::ai::harness_availability::{
     HarnessAvailabilityModel, HarnessModelInfo,
 };
 pub use crate::ai::llms::{
-    LLMId, LLMInfo, LLMPreferences, LLMPreferencesEvent, should_show_bedrock_icon_for_model,
+    LLMId, LLMInfo, LLMPreferences, LLMPreferencesEvent,
     should_show_gemini_enterprise_agent_platform_icon_for_model, should_show_key_icon_for_model,
 };
 pub use crate::ai::orchestration::{
@@ -247,11 +247,7 @@ pub use crate::terminal::{
 pub use crate::themes::default_themes::{dark_theme, light_theme};
 pub use crate::throttle::throttle;
 pub use crate::tui::{
-    TuiMcpAction, TuiMcpConfigDiagnostic, TuiMcpFileScope, TuiMcpFileSource, TuiMcpInstallRequest,
-    TuiMcpManager, TuiMcpManagerEvent, TuiMcpServerId, TuiMcpServerSnapshot, TuiMcpServerSource,
-    TuiMcpServerStatus, TuiMcpSnapshot, TuiMcpSyncedTemplateProvenance, TuiMcpTemplateVariable,
-    TuiMcpTransport, TuiMcpVariableValue, TuiUserInfoManager, TuiUserInfoManagerEvent,
-    TuiUserInfoSnapshot, log_out_tui,
+    TuiUserInfoManager, TuiUserInfoManagerEvent, TuiUserInfoSnapshot, log_out_tui,
 };
 pub use crate::tui_onboarding_markers::{
     TuiOnboardingMarker, TuiOnboardingMarkers, TuiOnboardingMarkersEvent,
@@ -344,12 +340,4 @@ pub fn tui_completion_context_has_exact_command(
 pub fn agent_conversations_cloud_metadata_load_failed(app: &warpui::AppContext) -> bool {
     crate::ai::agent_conversations_model::AgentConversationsModel::as_ref(app)
         .cloud_conversation_metadata_load_failed()
-}
-
-/// Resolves the user-facing name for an MCP server from its installation/template
-/// UUID. Returns `None` when the server is unknown (e.g. a legacy/flat MCP call
-/// with no server id, or the server is not installed). Used by the TUI to surface
-/// tool/server identity in permission cards and transcript labels.
-pub fn mcp_server_name_for_id(uuid: &uuid::Uuid, app: &warpui::AppContext) -> Option<String> {
-    crate::ai::mcp::TemplatableMCPServerManager::get_mcp_name(uuid, app)
 }

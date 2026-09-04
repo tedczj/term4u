@@ -26,7 +26,6 @@ use crate::ai::blocklist::{
 use crate::ai::execution_profiles::profiles::AIExecutionProfilesModel;
 use crate::ai::harness_availability::HarnessAvailabilityModel;
 use crate::ai::llms::{LLMId, LLMPreferences};
-use crate::ai::mcp::templatable_manager::TemplatableMCPServerManager;
 use crate::ai::orchestration::settings::OrchestrationSettings;
 use crate::ai::request_usage_model::AIRequestUsageModel;
 use crate::auth::AuthStateProvider;
@@ -347,7 +346,6 @@ pub fn register_tui_session_view_test_singletons(app: &mut warpui::App) {
     app.add_singleton_model(CloudModel::mock);
     app.add_singleton_model(|_| crate::appearance::Appearance::mock());
 
-    app.add_singleton_model(|_| TemplatableMCPServerManager::default());
     app.add_singleton_model(LLMPreferences::new);
     app.add_singleton_model(|_| HarnessAvailabilityModel::new_offline());
     app.add_singleton_model(BlocklistAIPermissions::new);
@@ -383,7 +381,6 @@ pub fn register_tui_session_view_test_singletons(app: &mut warpui::App) {
     });
     app.add_singleton_model(|ctx| ServerExperiments::new_from_cache(vec![], ctx));
 
-    app.add_singleton_model(crate::tui::TuiMcpManager::new_for_test);
     app.add_singleton_model(crate::tui::TuiUserInfoManager::new_for_test);
     app.add_singleton_model(|ctx| {
         crate::changelog_model::ChangelogModel::new(ServerApiProvider::as_ref(ctx).get())

@@ -76,9 +76,6 @@ fi
 brew install pkgconf
 brew install llvm
 
-# Install PSScriptAnalyzer for PowerShell linting
-pwsh -Command "Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser"
-
 if ! [ "$(command -v docker)" ]; then
     brew install --cask docker
 fi

@@ -62,19 +62,9 @@
 /app/resources/tab_configs/ @moirahuang
 /crates/warp_util/src/worktree_names.rs @moirahuang
 
-# MCP and skills
-/app/src/ai/mcp/ @peicodes @vkodithala
+# Skills
 /app/src/ai/skills/ @peicodes @vkodithala
-/crates/mcp/ @peicodes @vkodithala
 /resources/bundled/skills/feedback/ @captainsafia
-
-# File-based MCP (overrides MCP and skills above)
-/app/src/ai/mcp/file_based_manager.rs @vkodithala
-/app/src/ai/mcp/file_based_manager_tests.rs @vkodithala
-/app/src/ai/mcp/file_mcp_watcher.rs @vkodithala
-/app/src/ai/mcp/file_mcp_watcher_tests.rs @vkodithala
-/app/src/ai/mcp/dummy_file_based_manager.rs @vkodithala
-/app/src/ai/mcp/dummy_file_mcp_watcher.rs @vkodithala
 
 # Conversation management / credit usage footer / input UI / natural-language detection
 /app/src/ai/active_agent_views_model.rs @harryalbert
@@ -193,8 +183,6 @@
 /app/src/linear.rs @Legoben @jefflloyd @vorporeal @bnavetta
 /app/src/server/server_api/integrations.rs @Legoben @jefflloyd @vorporeal @bnavetta
 /app/src/ai/agent_sdk/oauth_flow.rs @Legoben @jefflloyd @vorporeal @bnavetta
-/app/src/ai/mcp/manager/oauth.rs @Legoben @jefflloyd @vorporeal @bnavetta
-/app/src/ai/mcp/templatable_manager/oauth.rs @Legoben @jefflloyd @vorporeal @bnavetta
 
 # Self-hosted agents
 /crates/remote_server/ @kevinyang372 @alokedesai
@@ -231,7 +219,6 @@
 # OS-level bootstrap scripts
 /script/linux/bootstrap @acarl005
 /script/macos/bootstrap @acarl005
-/script/windows/bootstrap.ps1 @acarl005
 
 # Shell completions in the Warp CLI
 /crates/warp_cli/src/completions.rs @zachbai @szgupta @alokedesai

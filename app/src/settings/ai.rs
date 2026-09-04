@@ -1606,64 +1606,6 @@ define_settings_group!(AISettings, settings: [
         surface: settings::SettingSurfaces::GUI,
         private: true,
     }
-    // Whether to use locally loaded AWS credentials for Bedrock-enabled requests.
-    aws_bedrock_credentials_enabled: AwsBedrockCredentialsEnabled {
-        type: bool,
-        default: false,
-        supported_platforms: SupportedPlatforms::DESKTOP,
-        sync_to_cloud: SyncToCloud::Globally(RespectUserSyncSetting::Yes),
-        surface: settings::SettingSurfaces::GUI,
-        private: false,
-        toml_path: "cloud_platform.third_party_api_keys.aws_bedrock_credentials_enabled",
-        description: "Whether Warp should use your local AWS credentials for Bedrock-enabled requests.",
-    }
-    // Whether to automatically run the AWS login command when Bedrock credentials are expired.
-    //
-    // When true, the configured login command will be run automatically without asking.
-    // When false (default), a prompt will be shown asking for permission.
-    aws_bedrock_auto_login: AwsBedrockAutoLogin {
-        type: bool,
-        default: false,
-        supported_platforms: SupportedPlatforms::DESKTOP,
-        sync_to_cloud: SyncToCloud::Globally(RespectUserSyncSetting::Yes),
-        surface: settings::SettingSurfaces::GUI,
-        private: false,
-        toml_path: "cloud_platform.third_party_api_keys.aws_bedrock_auto_login",
-        description: "Whether to automatically run the AWS login command when Bedrock credentials expire.",
-    }
-    // Command to run to refresh AWS credentials when using Bedrock auto-login.
-    aws_bedrock_auth_refresh_command: AwsBedrockAuthRefreshCommand {
-        type: String,
-        default: "aws login".to_string(),
-        supported_platforms: SupportedPlatforms::DESKTOP,
-        sync_to_cloud: SyncToCloud::Globally(RespectUserSyncSetting::Yes),
-        surface: settings::SettingSurfaces::GUI,
-        private: false,
-        toml_path: "cloud_platform.third_party_api_keys.aws_bedrock_auth_refresh_command",
-        description: "The command to run to refresh AWS credentials for Bedrock.",
-    }
-    // AWS profile name to use when loading credentials from the local AWS credential/config chain.
-    aws_bedrock_profile: AwsBedrockProfile {
-        type: String,
-        default: "default".to_string(),
-        supported_platforms: SupportedPlatforms::DESKTOP,
-        sync_to_cloud: SyncToCloud::Globally(RespectUserSyncSetting::Yes),
-        surface: settings::SettingSurfaces::GUI,
-        private: false,
-        toml_path: "cloud_platform.third_party_api_keys.aws_bedrock_profile",
-        description: "The AWS profile name to use for Bedrock credentials.",
-    }
-    // Whether the AWS Bedrock login banner has been permanently dismissed.
-    //
-    // Not a user-visible setting - we model it as a setting so we can track state.
-    aws_bedrock_login_banner_dismissed: AwsBedrockLoginBannerDismissed {
-        type: bool,
-        default: false,
-        supported_platforms: SupportedPlatforms::DESKTOP,
-        sync_to_cloud: SyncToCloud::Globally(RespectUserSyncSetting::Yes),
-        surface: settings::SettingSurfaces::GUI,
-        private: true,
-    }
     // Whether to mint and attach Gemini Enterprise (GEAP) credentials to eligible agent
     // requests, routing them through the workspace's Google Cloud project. Only consulted
     // when the admin sets the GEAP host to RESPECT_USER_SETTING; ENFORCE bypasses it.
@@ -1761,15 +1703,6 @@ define_settings_group!(AISettings, settings: [
         surface: settings::SettingSurfaces::GUI,
         private: true,
     }
-
-    mcp_execution_path: MCPExecutionPath {
-        type: Option<String>,
-        default: None,
-        supported_platforms: SupportedPlatforms::ALL,
-        sync_to_cloud: SyncToCloud::Never,
-        surface: settings::SettingSurfaces::GUI,
-        private: true,
-    },
 
     // This is not a user-visible setting - its merely a one-time flag to track if the agents 3 launch modal
     // has been shown to the user.
@@ -2029,20 +1962,6 @@ define_settings_group!(AISettings, settings: [
         description: "Whether computer use is enabled for cloud agent conversations.",
     }
 
-
-    // Whether file-based MCP servers from third-party AI tools (e.g. Claude, Codex) should
-    // be automatically detected and spawned. Warp-native config files (.warp/.mcp.json) are
-    // always detected and spawned, regardless of this setting.
-    file_based_mcp_enabled: FileBasedMcpEnabled {
-        type: bool,
-        default: false,
-        supported_platforms: SupportedPlatforms::DESKTOP,
-        sync_to_cloud: SyncToCloud::Globally(RespectUserSyncSetting::Yes),
-        surface: settings::SettingSurfaces::GUI,
-        private: false,
-        toml_path: "agents.mcp_servers.file_based_mcp_enabled",
-        description: "Whether third-party file-based MCP servers are automatically detected.",
-    }
 
     // Controls how agent thinking/reasoning traces are displayed.
     thinking_display_mode: ThinkingDisplayMode,
@@ -2395,21 +2314,6 @@ impl AISettings {
         self.is_any_ai_enabled(app) && *self.warp_drive_context_enabled
     }
 
-    pub fn is_file_based_mcp_enabled(&self, app: &warpui::AppContext) -> bool {
-        if !FeatureFlag::FileBasedMcp.is_enabled() || !self.is_any_ai_enabled(app) {
-            return false;
-        }
-        // NOTE: we intentionally do not force-enable this in Cloud Mode. Previously
-        // we auto-spawned file-based MCPs in autonomous execution, but that bypassed
-        // the user's explicit opt-in and let any MCP config checked into a repo run
-        // arbitrary commands as part of a cloud agent run. Respecting the toggle
-        // closes that attack surface; cloud agents that need project-scoped MCP
-        // servers should surface an explicit, auditable opt-in. A more robust
-        // solution (e.g. per-environment allowlisting, signed configs) should be
-        // explored in the future.
-        *self.file_based_mcp_enabled
-    }
-
     pub fn is_orchestration_enabled(&self, app: &warpui::AppContext) -> bool {
         self.is_any_ai_enabled(app)
     }
@@ -2623,11 +2527,6 @@ impl AISettings {
     }
 
     pub fn is_ask_user_question_permissions_editable(&self, app: &AppContext) -> bool {
-        self.is_any_ai_enabled(app)
-    }
-
-    pub fn is_mcp_permission_editable(&self, app: &AppContext) -> bool {
-        // TODO: Allow workspace overrides on MCP permissions.
         self.is_any_ai_enabled(app)
     }
 

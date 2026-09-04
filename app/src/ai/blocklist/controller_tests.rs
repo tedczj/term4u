@@ -2,10 +2,7 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use std::time::SystemTime;
 
-use ai::api_keys::{
-    ApiKeyManager, AwsCredentials, AwsCredentialsState, CustomEndpointParams, GeapCredentials,
-    GeapCredentialsState,
-};
+use ai::api_keys::{ApiKeyManager, CustomEndpointParams, GeapCredentials, GeapCredentialsState};
 use chrono::Local;
 use uuid::Uuid;
 use warp_core::features::FeatureFlag;
@@ -714,7 +711,7 @@ fn two_teams_of_opposing_byo_policy() -> (Team, Team) {
 
 /// This is `RequestParams::new`'s construction-time regression fence: member keys and
 /// endpoints are included or stripped by the requesting window's own team, while org-level
-/// (AWS Bedrock, GEAP) credentials survive either team's policy.
+/// GEAP credentials survive either team's policy.
 #[test]
 fn passive_suggestions_request_params_scope_member_byo_credentials_by_the_windows_team() {
     App::test((), |mut app| async move {
@@ -722,20 +719,11 @@ fn passive_suggestions_request_params_scope_member_byo_credentials_by_the_window
         initialize_app_for_terminal_view(&mut app);
 
         let (mut team_a, mut team_b) = two_teams_of_opposing_byo_policy();
-        // Bedrock/GEAP are team-scoped host settings, so both teams need them configured
-        // identically: this fences that org-level credentials survive either team's policy,
-        // as opposed to `team_byo`, which the two teams deliberately disagree on.
+        // GEAP is a team-scoped host setting, so both teams need it configured identically. This
+        // fences that org-level credentials survive either team's policy, unlike `team_byo`,
+        // which the two teams deliberately disagree on.
         for team in [&mut team_a, &mut team_b] {
             team.settings.llm_settings.enabled = true;
-            team.settings.llm_settings.host_configs.insert(
-                LLMModelHost::AwsBedrock,
-                LlmHostSettings {
-                    enabled: true,
-                    enablement_setting: HostEnablementSetting::Enforce,
-                    gcp_audience: None,
-                    gcp_sa_email: None,
-                },
-            );
             team.settings.llm_settings.host_configs.insert(
                 LLMModelHost::GeminiEnterprise,
                 LlmHostSettings {
@@ -769,18 +757,6 @@ fn passive_suggestions_request_params_scope_member_byo_credentials_by_the_window
                     api_key: "endpoint-key".to_string(),
                     models: vec![("member-model".to_string(), None, None)],
                     schema: Default::default(),
-                },
-                ctx,
-            );
-            manager.set_aws_credentials_state(
-                AwsCredentialsState::Loaded {
-                    credentials: AwsCredentials::new(
-                        "access-key".to_string(),
-                        "secret-key".to_string(),
-                        None,
-                        None,
-                    ),
-                    loaded_at: SystemTime::now(),
                 },
                 ctx,
             );
@@ -830,10 +806,6 @@ fn passive_suggestions_request_params_scope_member_byo_credentials_by_the_window
             "team A's policy allows members to use their own keys"
         );
         assert!(
-            keys_a.aws_credentials.is_some(),
-            "Bedrock credentials are org-level and must survive either team's policy"
-        );
-        assert!(
             keys_a.google_cloud_credentials.is_some(),
             "GEAP credentials are org-level and must survive either team's policy"
         );
@@ -847,16 +819,12 @@ fn passive_suggestions_request_params_scope_member_byo_credentials_by_the_window
         );
 
         let params_b = build_params(&terminal_b, &mut app);
-        let keys_b = params_b.api_keys.expect(
-            "Bedrock/GEAP credentials must keep api_keys populated even once member keys are stripped",
-        );
+        let keys_b = params_b
+            .api_keys
+            .expect("GEAP credentials keep api_keys populated when member keys are stripped");
         assert!(
             keys_b.anthropic.is_empty(),
             "team B's policy disallows members from using their own keys"
-        );
-        assert!(
-            keys_b.aws_credentials.is_some(),
-            "a restrictive team_byo policy must not strip org-level Bedrock credentials"
         );
         assert!(
             keys_b.google_cloud_credentials.is_some(),

@@ -52,7 +52,6 @@ pub fn main() -> Result<()> {
                     workload_audience_url: None,
                 },
             },
-            mcp_static_config: None,
         },
     ));
 

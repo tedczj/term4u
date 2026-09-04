@@ -10,7 +10,6 @@ use crate::SortOrderArg;
 use crate::config_file::ConfigFileArgs;
 use crate::environment::EnvironmentCreateArgs;
 use crate::json_filter::JsonOutput;
-use crate::mcp::MCPSpec;
 use crate::model::ModelArgs;
 use crate::scope::ObjectScope;
 use crate::share::ShareArgs;
@@ -450,27 +449,6 @@ pub struct RunAgentArgs {
     pub gui: bool,
     #[command(flatten)]
     pub share: ShareArgs,
-    /// MCP servers to start before executing the agent.
-    ///
-    /// Can be specified as:
-    /// - A path to a JSON file containing MCP configuration
-    /// - Inline JSON with MCP server configuration
-    ///
-    /// Can be specified multiple times to include multiple servers.
-    #[arg(long = "mcp", value_name = "SPEC")]
-    pub mcp_specs: Vec<MCPSpec>,
-    /// LEGACY: MCP servers to start before executing the agent, identified by UUID.
-    #[arg(long = "mcp-server", value_name = "UUID", hide = true)]
-    pub mcp_servers: Vec<uuid::Uuid>,
-    /// Fail the run when any requested MCP server fails to start.
-    ///
-    /// By default, MCP servers that don't start within the startup timeout are
-    /// skipped and the agent runs without their tools.
-    #[arg(long = "strict-mcp-startup")]
-    pub strict_mcp_startup: bool,
-    /// Maximum time to wait for requested MCP servers to start (e.g. `30s`, `1m`).
-    #[arg(long = "mcp-startup-timeout", value_name = "DURATION")]
-    pub mcp_startup_timeout: Option<humantime::Duration>,
     /// Cloud environment to use, identified by ID.
     #[arg(long = "environment", short = 'e', value_name = "ID")]
     pub environment: Option<String>,
@@ -525,26 +503,6 @@ pub struct RunAgentArgs {
     /// Whether we are running the agent in a sandboxed environment.
     #[arg(long = "sandboxed", hide = true)]
     pub sandboxed: bool,
-    /// IAM role ARN to use for federated AWS Bedrock credentials for this run.
-    #[arg(
-        long = "bedrock-inference-role",
-        value_name = "ROLE_ARN",
-        requires = "bedrock_role_region",
-        hide = true
-    )]
-    pub bedrock_inference_role: Option<String>,
-
-    /// AWS region to use for the STS `AssumeRoleWithWebIdentity` call that
-    /// mints federated Bedrock credentials. Required together with
-    /// `--bedrock-inference-role`.
-    #[arg(
-        long = "bedrock-role-region",
-        value_name = "REGION",
-        requires = "bedrock_inference_role",
-        hide = true
-    )]
-    pub bedrock_role_region: Option<String>,
-
     #[command(flatten)]
     pub computer_use: HiddenComputerUseArgs,
 
@@ -594,15 +552,6 @@ pub struct RunAgentArgs {
     /// Remove the origin remote from environment repositories after setup.
     #[arg(long = "remove-repository-origins", requires = "task_id", hide = true)]
     pub remove_repository_origins: bool,
-}
-
-impl RunAgentArgs {
-    /// Combine `mcp_specs` with legacy `mcp_servers` (UUIDs) into a single list.
-    pub fn all_mcp_specs(&self) -> Vec<MCPSpec> {
-        let mut specs = self.mcp_specs.clone();
-        specs.extend(self.mcp_servers.iter().cloned().map(MCPSpec::Uuid));
-        specs
-    }
 }
 
 #[derive(Debug, Clone, Args)]
@@ -676,16 +625,6 @@ pub struct RunCloudArgs {
     /// run. Pass the current run ID when a factory foreman spawns a sibling.
     #[arg(long = "parent-run-id", value_name = "RUN_ID")]
     pub parent_run_id: Option<String>,
-
-    /// MCP servers to start before executing the agent.
-    ///
-    /// Can be specified as:
-    /// - A path to a JSON file containing MCP configuration
-    /// - Inline JSON with MCP server configuration
-    ///
-    /// Can be specified multiple times to include multiple servers.
-    #[arg(long = "mcp", value_name = "SPEC")]
-    pub mcp_specs: Vec<MCPSpec>,
 
     /// The environment to run this ambient agent in.
     #[command(flatten)]

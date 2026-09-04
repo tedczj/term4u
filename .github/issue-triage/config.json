@@ -96,10 +96,6 @@
       "color": "c2e0c6",
       "description": "Launch configurations, workflows, tab configs, and automation entry points."
     },
-    "area:mcp": {
-      "color": "bfdadc",
-      "description": "MCP server integrations, tool connections, and resource providers."
-    },
     "area:onboarding": {
       "color": "f9d0c4",
       "description": "First-run experience, onboarding flows, and related callouts."

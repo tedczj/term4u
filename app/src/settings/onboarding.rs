@@ -193,8 +193,6 @@ fn apply_agent_settings(
         if !team_autonomy_settings.has_override_for_execute_commands() {
             profiles.set_execute_commands(&default_profile_id, &permissions.execute_commands, ctx);
         }
-        // Note: MCP permissions don't have an admin-level override, so always set them
-        profiles.set_mcp_permissions(&default_profile_id, &permissions.mcp_permissions, ctx);
         if !team_autonomy_settings.has_override_for_write_to_pty() {
             profiles.set_write_to_pty(&default_profile_id, &permissions.write_to_pty, ctx);
         }
@@ -206,7 +204,6 @@ struct OnboardingAutonomyPermissions {
     apply_code_diffs: ActionPermission,
     read_files: ActionPermission,
     execute_commands: ActionPermission,
-    mcp_permissions: ActionPermission,
     write_to_pty: WriteToPtyPermission,
 }
 
@@ -222,24 +219,20 @@ fn action_permissions_for_onboarding_autonomy(
             apply_code_diffs: ActionPermission::AlwaysAllow,
             read_files: ActionPermission::AlwaysAllow,
             execute_commands: ActionPermission::AlwaysAllow,
-            mcp_permissions: ActionPermission::AlwaysAllow,
             write_to_pty: WriteToPtyPermission::AlwaysAllow,
         },
-        // Partial autonomy: reads are always allowed, applying code diffs
-        // always asks, and the agent decides on command / MCP execution
-        // (asking only for sensitive actions).
+        // Partial autonomy allows reads, asks before code diffs, and lets the agent decide command
+        // execution.
         AgentAutonomy::Partial => OnboardingAutonomyPermissions {
             apply_code_diffs: ActionPermission::AlwaysAsk,
             read_files: ActionPermission::AlwaysAllow,
             execute_commands: ActionPermission::AgentDecides,
-            mcp_permissions: ActionPermission::AgentDecides,
             write_to_pty: WriteToPtyPermission::AlwaysAsk,
         },
         AgentAutonomy::None => OnboardingAutonomyPermissions {
             apply_code_diffs: ActionPermission::AlwaysAsk,
             read_files: ActionPermission::AlwaysAsk,
             execute_commands: ActionPermission::AlwaysAsk,
-            mcp_permissions: ActionPermission::AlwaysAsk,
             write_to_pty: WriteToPtyPermission::AlwaysAsk,
         },
     }

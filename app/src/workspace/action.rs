@@ -545,7 +545,6 @@ pub enum WorkspaceAction {
         query: String,
     },
     OpenAIFactCollection,
-    OpenMCPServerCollection,
     /// Open the Environment Management pane in Create mode.
     OpenEnvironmentManagementPane,
     ToggleAIDocumentPane {
@@ -729,9 +728,6 @@ pub enum WorkspaceAction {
     /// Reset the build plan migration modal dismissed state (for debugging)
     #[cfg(debug_assertions)]
     ResetBuildPlanMigrationModalState,
-    /// Reset the AWS Bedrock login banner dismissed state (for debugging).
-    #[cfg(debug_assertions)]
-    DebugResetAwsBedrockLoginBannerDismissed,
     /// Open the Oz Launch Modal (for debugging)
     #[cfg(debug_assertions)]
     OpenOzLaunchModal,
@@ -1166,7 +1162,6 @@ impl WorkspaceAction {
             | TabHoverWidthStart { .. }
             | TabHoverWidthEnd
             | OpenAIFactCollection
-            | OpenMCPServerCollection
             | FocusTerminalViewInWorkspace { .. }
             | FocusPane(..)
             | ShiftSelectTabRange { .. }
@@ -1226,7 +1221,6 @@ impl WorkspaceAction {
             #[cfg(debug_assertions)]
             OpenBuildPlanMigrationModal
             | ResetBuildPlanMigrationModalState
-            | DebugResetAwsBedrockLoginBannerDismissed
             | OpenOzLaunchModal
             | ResetOzLaunchModalState
             | OpenOpenWarpLaunchModal

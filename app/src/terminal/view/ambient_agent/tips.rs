@@ -113,10 +113,6 @@ pub fn get_cloud_mode_tips() -> Vec<CloudModeTip> {
             Some("https://docs.warp.dev/platform/overview/"),
         ),
         CloudModeTip::new(
-            "Configure MCP servers to give Oz cloud agents access to GitHub, Linear, and Sentry.",
-            Some("https://docs.warp.dev/agents/capabilities/mcp"),
-        ),
-        CloudModeTip::new(
             "Use `oz agent run` to kick off tasks without opening the Warp terminal.",
             Some("https://docs.warp.dev/platform/overview/"),
         ),
@@ -171,10 +167,6 @@ pub fn get_cloud_mode_tips() -> Vec<CloudModeTip> {
         CloudModeTip::new(
             "Pause and resume scheduled agents without deleting them using `oz schedule pause`.",
             Some("https://docs.warp.dev/platform/triggers/scheduled-agents"),
-        ),
-        CloudModeTip::new(
-            "Use `oz mcp list` to see which MCP servers are available to your agents.",
-            Some("https://docs.warp.dev/agents/capabilities/mcp"),
         ),
         CloudModeTip::new(
             "Build an internal Slack bot that delegates coding tasks to Oz agents.",

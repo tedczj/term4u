@@ -39,8 +39,7 @@ use warp::tui_export::{
     ShellCommandExecutorEvent, SizeInfo, SizeUpdate, SkillReference, SlashCommandDataSource as _,
     SlashCommandKind, SlashCommandSelectionBehavior, StartAgentExecutorEvent, StartAgentRequest,
     StaticCommand, TelemetryEvent, TerminalModel, TerminalSurface, TerminalSurfaceInit,
-    TranscriptScope, TuiMcpAction, TuiMcpManager, TuiMcpServerId, TuiMcpVariableValue,
-    TuiOnboardingMarker, TuiOnboardingMarkers, TuiOnboardingMarkersEvent,
+    TranscriptScope, TuiOnboardingMarker, TuiOnboardingMarkers, TuiOnboardingMarkersEvent,
     TuiSlashCommandDataSource, TuiSlashCommandDataSourceArgs, TuiUpArrowHistoryItemKind,
     TuiUserInfoManager, TuiUserInfoManagerEvent, TuiZeroStateDataSource, UserTakeOverReason,
     UserWorkspaces, UserWorkspacesEvent, WAKEUP_THROTTLE_PERIOD, WarpConfig, WarpConfigUpdateEvent,
@@ -106,10 +105,6 @@ use crate::keybindings::{
     TUI_BINDING_GROUP, binding_hint,
 };
 use crate::link::TuiLink;
-use crate::mcp_install_flow::{
-    TuiMcpInstallFlowAction, TuiMcpInstallFlowEvent, TuiMcpInstallFlowModel,
-};
-use crate::mcp_menu::{TuiMcpMenuEvent, TuiMcpMenuModel};
 use crate::model_menu::{TuiModelMenuEvent, TuiModelMenuModel};
 use crate::orchestration_block::TuiOrchestrationBlock;
 use crate::orchestration_model::{TuiOrchestrationModel, TuiOrchestrationSnapshot};
@@ -287,23 +282,6 @@ impl BlockingInputSource {
     }
 }
 
-fn render_mcp_install_footer(
-    builder: &TuiUiBuilder,
-    primary_action_hint: Option<&'static str>,
-) -> TuiFlex {
-    let mut spans = Vec::new();
-    if let Some(hint) = primary_action_hint {
-        spans.extend([
-            ("Enter".to_owned(), builder.primary_text_style()),
-            (format!(" {hint}  "), builder.muted_text_style()),
-        ]);
-    }
-    spans.extend([
-        ("Esc".to_owned(), builder.primary_text_style()),
-        (" to cancel".to_owned(), builder.muted_text_style()),
-    ]);
-    TuiFlex::row().child(TuiText::from_spans(spans).truncate().finish())
-}
 /// Events emitted by the TUI terminal session surface.
 pub(crate) enum TuiTerminalSessionEvent {
     ExecuteCommand(Box<ExecuteCommandEvent>),
@@ -467,44 +445,6 @@ fn bordered_input(
         .finish()
 }
 
-fn mcp_primary_action_hint(action: TuiMcpAction) -> Option<&'static str> {
-    match action {
-        TuiMcpAction::Enable(_) => Some("to install and enable"),
-        TuiMcpAction::Start(_) => Some("to start"),
-        TuiMcpAction::Stop(_) => Some("to stop"),
-        TuiMcpAction::Retry(_) => Some("to retry"),
-        TuiMcpAction::ReopenAuthorization(_) => Some("to authenticate"),
-        TuiMcpAction::LogOut(_) | TuiMcpAction::ReloadConfig => None,
-    }
-}
-
-fn render_mcp_menu_footer(
-    builder: &TuiUiBuilder,
-    primary_action: Option<TuiMcpAction>,
-    can_log_out: bool,
-) -> TuiFlex {
-    let mut spans = Vec::new();
-    if let Some(hint) = primary_action.and_then(mcp_primary_action_hint) {
-        spans.extend([
-            ("Enter".to_owned(), builder.primary_text_style()),
-            (format!(" {hint}  "), builder.muted_text_style()),
-        ]);
-    }
-    if can_log_out {
-        spans.extend([
-            ("Ctrl+R".to_owned(), builder.primary_text_style()),
-            (
-                " to log out & remove credentials  ".to_owned(),
-                builder.muted_text_style(),
-            ),
-        ]);
-    }
-    spans.extend([
-        ("Esc".to_owned(), builder.primary_text_style()),
-        (" to close".to_owned(), builder.muted_text_style()),
-    ]);
-    TuiFlex::row().child(TuiText::from_spans(spans).truncate().finish())
-}
 /// Entry point that requested conversation restoration.
 #[derive(Clone, Copy, Debug)]
 pub(crate) enum TuiConversationRestoreOrigin {
@@ -693,8 +633,6 @@ pub(crate) struct TuiTerminalSessionView {
     model_menu: ModelHandle<TuiModelMenuModel>,
     team_menu: ModelHandle<TuiTeamMenuModel>,
     skills_menu: ModelHandle<TuiSkillMenuModel>,
-    mcp_menu: ModelHandle<TuiMcpMenuModel>,
-    mcp_install_flow: ModelHandle<TuiMcpInstallFlowModel>,
     completion_menu: ModelHandle<TuiCompletionMenuModel>,
     slash_commands_source: ModelHandle<TuiSlashCommandDataSource>,
     conversation_selection: ConversationSelectionHandle,
@@ -1073,51 +1011,6 @@ impl TuiTerminalSessionView {
             );
         }
     }
-    fn handle_accepted_mcp_install_action(
-        &mut self,
-        action: TuiMcpInstallFlowAction,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        match action {
-            TuiMcpInstallFlowAction::ProvideValue { key, value } => {
-                let result = self
-                    .mcp_install_flow
-                    .update(ctx, |flow, ctx| flow.apply_value(key, value, ctx));
-                match result {
-                    Ok(Some(completion)) => {
-                        self.mcp_install_flow
-                            .update(ctx, |flow, ctx| flow.dismiss(ctx));
-                        self.install_and_enable_mcp(
-                            completion.id,
-                            completion.name,
-                            completion.values,
-                            ctx,
-                        );
-                    }
-                    Ok(None) => {}
-                    Err(message) => self.show_error_hint(message, ctx),
-                }
-            }
-        }
-        ctx.notify();
-    }
-
-    fn install_and_enable_mcp(
-        &mut self,
-        id: TuiMcpServerId,
-        name: String,
-        values: Vec<TuiMcpVariableValue>,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        let result = TuiMcpManager::handle(ctx).update(ctx, |manager, ctx| {
-            manager.install_and_enable(id, values, ctx)
-        });
-        match result {
-            Ok(_) => self.show_success_hint(format!("{name} installed and starting"), ctx),
-            Err(message) => self.show_error_hint(message, ctx),
-        }
-    }
-
     fn focus_blocking_input_source(source: BlockingInputSource, ctx: &mut ViewContext<Self>) {
         match source {
             BlockingInputSource::LongRunningCommand => ctx.focus_self(),
@@ -1733,23 +1626,6 @@ impl TuiTerminalSessionView {
         ctx.subscribe_to_model(&skills_menu, |_, _, _: &TuiSkillMenuEvent, ctx| {
             ctx.notify();
         });
-        let mcp_menu = ctx.add_model(|ctx| {
-            TuiMcpMenuModel::new(input_editor_model.clone(), suggestions_mode.clone(), ctx)
-        });
-        ctx.subscribe_to_model(&mcp_menu, |_, _, event, ctx| {
-            let TuiMcpMenuEvent::Updated = event;
-            ctx.notify();
-        });
-        let mcp_install_flow = ctx.add_model(|_| {
-            TuiMcpInstallFlowModel::new(input_editor_model.clone(), suggestions_mode.clone())
-        });
-        ctx.subscribe_to_model(&mcp_install_flow, |view, _, event, ctx| match event {
-            TuiMcpInstallFlowEvent::Updated => ctx.notify(),
-            TuiMcpInstallFlowEvent::Dismissed => {
-                view.mcp_menu.update(ctx, |menu, ctx| menu.open(ctx));
-                ctx.notify();
-            }
-        });
         let prompt_and_command_history_menu = ctx.add_model(|ctx| {
             TuiPromptAndCommandHistoryMenuModel::new(
                 input_editor_model.clone(),
@@ -1819,8 +1695,6 @@ impl TuiTerminalSessionView {
             TuiInlineMenu::new(model_menu.clone()),
             TuiInlineMenu::new(team_menu.clone()),
             TuiInlineMenu::new(skills_menu.clone()),
-            TuiInlineMenu::new(mcp_menu.clone()),
-            TuiInlineMenu::new(mcp_install_flow.clone()),
             TuiInlineMenu::new(prompt_and_command_history_menu.clone()),
             TuiInlineMenu::new(completion_menu.clone()),
         ];
@@ -1968,12 +1842,6 @@ impl TuiTerminalSessionView {
             }
             TuiInputViewEvent::AcceptedTeam(team_uid) => {
                 view.handle_accepted_team(*team_uid, ctx);
-            }
-            TuiInputViewEvent::AcceptedMcp(action) => {
-                view.handle_accepted_mcp_action(*action, ctx);
-            }
-            TuiInputViewEvent::AcceptedMcpInstall(action) => {
-                view.handle_accepted_mcp_install_action(action.clone(), ctx);
             }
             TuiInputViewEvent::AcceptedPromptAndCommandHistory { text, kind } => {
                 view.handle_accepted_prompt_and_command_history(text.clone(), kind.clone(), ctx);
@@ -2303,8 +2171,6 @@ impl TuiTerminalSessionView {
             model_menu,
             team_menu,
             skills_menu,
-            mcp_menu,
-            mcp_install_flow,
             completion_menu,
             slash_commands_source,
             conversation_selection,
@@ -4361,43 +4227,6 @@ impl TuiTerminalSessionView {
         RootTuiView::switch_window_to_team(ctx.window_id(), team_uid, ctx);
         self.team_menu.update(ctx, |menu, ctx| menu.dismiss(ctx));
     }
-    fn handle_accepted_mcp_action(&mut self, action: TuiMcpAction, ctx: &mut ViewContext<Self>) {
-        match action {
-            TuiMcpAction::Enable(id) => {
-                let request = TuiMcpManager::handle(ctx)
-                    .update(ctx, |model, ctx| model.prepare_install(id, ctx));
-                match request {
-                    Ok(request) => {
-                        self.mcp_menu.update(ctx, |menu, ctx| menu.dismiss(ctx));
-                        if request.variables.is_empty() {
-                            self.install_and_enable_mcp(request.id, request.name, Vec::new(), ctx);
-                        } else if !self
-                            .mcp_install_flow
-                            .update(ctx, |flow, ctx| flow.start(request, ctx))
-                        {
-                            self.show_error_hint(
-                                "Unable to open the MCP installation flow".to_owned(),
-                                ctx,
-                            );
-                        }
-                    }
-                    Err(message) => self.show_error_hint(message, ctx),
-                }
-            }
-            TuiMcpAction::Start(_)
-            | TuiMcpAction::Stop(_)
-            | TuiMcpAction::Retry(_)
-            | TuiMcpAction::LogOut(_)
-            | TuiMcpAction::ReopenAuthorization(_)
-            | TuiMcpAction::ReloadConfig => {
-                TuiMcpManager::handle(ctx).update(ctx, |model, ctx| {
-                    model.apply_action(action, ctx);
-                });
-            }
-        }
-        ctx.notify();
-    }
-
     fn handle_accepted_prompt_and_command_history(
         &mut self,
         text: String,
@@ -4687,10 +4516,6 @@ impl TuiTerminalSessionView {
                 self.skills_menu.update(ctx, |menu, ctx| menu.open(ctx));
                 record_static_slash_command_accepted(command.name, true, ctx);
             }
-            SlashCommandKind::Mcp => {
-                self.mcp_menu.update(ctx, |menu, ctx| menu.open(ctx));
-                record_static_slash_command_accepted(command.name, true, ctx);
-            }
             SlashCommandKind::Status => {
                 self.input_view.update(ctx, |input, ctx| input.clear(ctx));
                 self.suggestions_mode.update(ctx, |mode, ctx| {
@@ -4892,7 +4717,6 @@ impl TuiTerminalSessionView {
                 self.toggle_theme(command.name, argument.map(String::as_str), ctx);
             }
             SlashCommandKind::CloudAgent
-            | SlashCommandKind::AddMcp
             | SlashCommandKind::CreateEnvironment
             | SlashCommandKind::CreateDockerSandbox
             | SlashCommandKind::EditSkill
@@ -4906,7 +4730,6 @@ impl TuiTerminalSessionView {
             | SlashCommandKind::Index
             | SlashCommandKind::Init
             | SlashCommandKind::OpenProjectRules
-            | SlashCommandKind::OpenMcpServers
             | SlashCommandKind::OpenSettingsFile
             | SlashCommandKind::Changelog
             | SlashCommandKind::Feedback

@@ -982,7 +982,7 @@ pub fn resolve_executable(command: &str) -> Option<Cow<'_, Path>> {
 ///
 /// Intended for callers that have a specific PATH to search (e.g. one
 /// captured from the user's interactive login shell, matching how
-/// MCP/LSP find binaries). Callers that want the process's PATH should
+/// language servers find binaries). Callers that want the process's PATH should
 /// use [`resolve_executable`] instead.
 #[cfg(not(target_family = "wasm"))]
 pub fn resolve_executable_in_path<'a>(

@@ -463,65 +463,6 @@ impl From<FileGlobV2Result> for FileGlobResult {
     }
 }
 
-impl TryFrom<ReadMCPResourceResult> for api::request::input::tool_call_result::Result {
-    type Error = ConvertToAPITypeError;
-
-    fn try_from(result: ReadMCPResourceResult) -> Result<Self, Self::Error> {
-        match result {
-            ReadMCPResourceResult::Success { resource_contents } => Ok(
-                api::request::input::tool_call_result::Result::ReadMcpResource(
-                    api::ReadMcpResourceResult {
-                        result: Some(api::read_mcp_resource_result::Result::Success(
-                            api::read_mcp_resource_result::Success {
-                                contents: resource_contents
-                                    .into_iter()
-                                    .map(convert_mcp_resource_content)
-                                    .collect(),
-                            },
-                        )),
-                    },
-                ),
-            ),
-            ReadMCPResourceResult::Error(error) => Ok(
-                api::request::input::tool_call_result::Result::ReadMcpResource(
-                    api::ReadMcpResourceResult {
-                        result: Some(api::read_mcp_resource_result::Result::Error(
-                            api::read_mcp_resource_result::Error { message: error },
-                        )),
-                    },
-                ),
-            ),
-            ReadMCPResourceResult::Cancelled => Err(ConvertToAPITypeError::Ignore),
-        }
-    }
-}
-
-impl TryFrom<CallMCPToolResult> for api::request::input::tool_call_result::Result {
-    type Error = ConvertToAPITypeError;
-
-    fn try_from(result: CallMCPToolResult) -> Result<Self, Self::Error> {
-        match result {
-            CallMCPToolResult::Success { result } => {
-                Ok(api::request::input::tool_call_result::Result::CallMcpTool(
-                    api::CallMcpToolResult {
-                        result: Some(convert_mcp_tool_call_result(result)),
-                    },
-                ))
-            }
-            CallMCPToolResult::Error(error) => {
-                Ok(api::request::input::tool_call_result::Result::CallMcpTool(
-                    api::CallMcpToolResult {
-                        result: Some(api::call_mcp_tool_result::Result::Error(
-                            api::call_mcp_tool_result::Error { message: error },
-                        )),
-                    },
-                ))
-            }
-            CallMCPToolResult::Cancelled => Err(ConvertToAPITypeError::Ignore),
-        }
-    }
-}
-
 impl TryFrom<ReadSkillResult> for api::request::input::tool_call_result::Result {
     type Error = ConvertToAPITypeError;
 
@@ -921,36 +862,6 @@ impl From<DocumentContext> for Vec<api::DocumentContent> {
     }
 }
 
-fn convert_mcp_resource_content(val: rmcp::model::ResourceContents) -> api::McpResourceContent {
-    use api::mcp_resource_content::*;
-    match val {
-        rmcp::model::ResourceContents::TextResourceContents {
-            uri,
-            mime_type,
-            text,
-            ..
-        } => api::McpResourceContent {
-            uri,
-            content_type: Some(ContentType::Text(Text {
-                content: text,
-                mime_type: mime_type.unwrap_or_default(),
-            })),
-        },
-        rmcp::model::ResourceContents::BlobResourceContents {
-            uri,
-            mime_type,
-            blob,
-            ..
-        } => api::McpResourceContent {
-            uri,
-            content_type: Some(ContentType::Binary(Binary {
-                data: blob.into_bytes(),
-                mime_type: mime_type.unwrap_or_default(),
-            })),
-        },
-    }
-}
-
 impl From<CreateDocumentsResult> for AIAgentActionResultType {
     fn from(result: CreateDocumentsResult) -> Self {
         AIAgentActionResultType::CreateDocuments(result)
@@ -1110,53 +1021,6 @@ fn convert_platform(
         interaction_types::Platform::LinuxX11 => Platform::LinuxX11,
         interaction_types::Platform::LinuxWayland => Platform::LinuxWayland,
     }
-}
-
-fn convert_mcp_tool_call_result(
-    val: rmcp::model::CallToolResult,
-) -> api::call_mcp_tool_result::Result {
-    if val.is_error.unwrap_or_default() {
-        return api::call_mcp_tool_result::Result::Error(api::call_mcp_tool_result::Error {
-            message: val
-                .structured_content
-                .map(|content| content.to_string())
-                .unwrap_or_default(),
-        });
-    }
-
-    use api::call_mcp_tool_result::success::{self, result};
-    api::call_mcp_tool_result::Result::Success(api::call_mcp_tool_result::Success {
-        results: val
-            .content
-            .into_iter()
-            .filter_map(|content| {
-                use rmcp::model::RawContent::*;
-                match content.raw {
-                    Text(raw_text_content) => Some(result::Result::Text(result::Text {
-                        text: raw_text_content.text,
-                    })),
-                    Image(raw_image_content) => Some(result::Result::Image(result::Image {
-                        data: raw_image_content.data.into_bytes(),
-                        mime_type: raw_image_content.mime_type,
-                    })),
-                    Resource(raw_embedded_resource) => Some(result::Result::Resource(
-                        convert_mcp_resource_content(raw_embedded_resource.resource),
-                    )),
-                    Audio(_) => {
-                        log::warn!("Audio content not supported");
-                        None
-                    }
-                    ResourceLink(_) => {
-                        log::warn!("Resource link content not supported");
-                        None
-                    }
-                }
-            })
-            .map(|result| success::Result {
-                result: Some(result),
-            })
-            .collect(),
-    })
 }
 
 impl TryFrom<FetchConversationResult> for api::request::input::tool_call_result::Result {

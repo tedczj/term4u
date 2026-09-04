@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use ai::api_keys::{ApiKeyManager, AwsCredentialsState};
+use ai::api_keys::ApiKeyManager;
 use anyhow::Context as _;
 use chrono::{DateTime, Local, Utc};
 use futures::channel::oneshot::{self, Receiver};
@@ -522,16 +522,7 @@ impl AIRequestUsageModel {
 
     /// Whether a local BYO path is usable under `scope`'s team policy.
     fn has_usable_byo_inference_path<S: TeamScope + ?Sized>(scope: &S, ctx: &AppContext) -> bool {
-        if Self::has_usable_member_byo_inference_path(scope, ctx) {
-            return true;
-        }
-        let user_workspaces = UserWorkspaces::as_ref(ctx);
-        let api_keys = ApiKeyManager::as_ref(ctx);
-        user_workspaces.is_aws_bedrock_credentials_enabled(scope, ctx)
-            && matches!(
-                api_keys.aws_credentials_state(),
-                AwsCredentialsState::Loaded { .. }
-            )
+        Self::has_usable_member_byo_inference_path(scope, ctx)
     }
 
     fn has_usable_member_byo_inference_path<S: TeamScope + ?Sized>(

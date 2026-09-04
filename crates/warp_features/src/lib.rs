@@ -263,9 +263,6 @@ pub enum FeatureFlag {
     /// Allows AI to call the grep tool.
     GrepTool,
 
-    /// MCP server v0 functionality.
-    McpServer,
-
     /// Enables image as context for AM.
     ImageAsContext,
 
@@ -423,9 +420,6 @@ pub enum FeatureFlag {
     /// Enables API key management UI in settings
     APIKeyManagement,
 
-    /// Enables OAuth support for MCP.
-    McpOauth,
-
     /// Enables attaching diff sets (multiple hunks from multiple files) as context in Agent Mode.
     DiffSetAsContext,
 
@@ -484,17 +478,11 @@ pub enum FeatureFlag {
     /// Enables the artifact command for uploading and downloading CLI artifacts.
     ArtifactCommand,
 
-    /// Groups MCP tools and resources by their originating server when sending context to the AI backend.
-    MCPGroupedServerContext,
-
     /// Enables the web search UI (when the model executes a web search).
     WebSearchUI,
 
     /// Enables the web fetch UI (when the model fetches content from URLs).
     WebFetchUI,
-
-    /// Displays debugging IDs for MCP servers, installations, and gallery items.
-    McpDebuggingIds,
 
     /// Enables rendering of images in markdown files and AI responses.
     MarkdownImages,
@@ -680,9 +668,6 @@ pub enum FeatureFlag {
     /// Updated tab styling (background colors, border, close button positioning, margins).
     NewTabStyling,
 
-    /// Enables file-based MCP server support via .mcp.json files in repo roots.
-    FileBasedMcp,
-
     /// Enables passing user query arguments to skill invocations ($ARGUMENTS, $N).
     SkillArguments,
 
@@ -745,7 +730,6 @@ pub enum FeatureFlag {
 
     /// Detects the word "figma" in the terminal input in real-time and shows a
     /// contextual button above the input.
-    FigmaDetection,
 
     /// Enables header rows on all inline menus (label, tabs, resize handle).
     InlineMenuHeaders,
@@ -916,11 +900,6 @@ pub enum FeatureFlag {
     /// compute (docker image, instance shape, setup commands) by runner ID.
     CloudRunners,
 
-    /// Renders MCP tool-call request and response JSON as an interactive
-    /// collapsible tree with typed colors and per-row Copy JSON, instead of
-    /// a flat pretty-printed blob.
-    McpJsonTreeView,
-
     /// Renders supported solid box-drawing characters (`U+2500..=U+257F`)
     /// procedurally as cell-filling rectangles instead of from the font,
     /// eliminating seams between adjacent box-drawing cells in the terminal.
@@ -935,17 +914,6 @@ pub enum FeatureFlag {
     /// Gates the account-first onboarding flow, including the reordered
     /// pre-auth slides and post-auth account offer.
     AccountFirstOnboarding,
-
-    /// Accepts well-known non-UUID managed MCP ids (e.g. `"linear"`) as
-    /// `warp_id` values in MCP configs and as bare identifiers in CLI
-    /// `--mcp` arguments, resolved server-side at run setup.
-    WellKnownMcpIds,
-
-    /// Automatically attaches the Warp-hosted Factory MCP server
-    /// (`/api/v1/mcp/factory`) to agents as a built-in MCP server,
-    /// authenticated with the logged-in user's session token. No manual MCP
-    /// setup or API key required.
-    FactoryMcp,
 
     /// Gates client-side display of the real dollar cost (from `RequestCost.cost_in_cents`)
     /// alongside credits in the GUI footer and TUI. Mirrors the server-side
@@ -1043,7 +1011,6 @@ pub const DOGFOOD_FLAGS: &[FeatureFlag] = &[
     FeatureFlag::PromptCacheExpiryWarning,
     FeatureFlag::JupyterNotebookRendering,
     FeatureFlag::MultiLevelOrchestration,
-    FeatureFlag::McpJsonTreeView,
     FeatureFlag::BoxDrawingGlyphs,
     FeatureFlag::PricingTransparency,
     FeatureFlag::PeriodicHandoffCheckpoints,

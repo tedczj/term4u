@@ -67,7 +67,6 @@ use std::time::Duration;
 
 use action::RememberForWarpification;
 pub use action::{AgentOnboardingVersion, OnboardingIntention, OnboardingVersion, TerminalAction};
-use ai::api_keys::{ApiKeyManager, AwsCredentialsState};
 use ai::index::full_source_code_embedding::manager::{BuildSource, CodebaseIndexManager};
 use async_channel::{Receiver, Sender};
 use base64::Engine as _;
@@ -86,11 +85,8 @@ pub use init::{
 };
 use init::{INPUT_BOX_VISIBLE_KEY, TOGGLE_BLOCK_FILTER_KEYBINDING};
 use inline_banner::{
-    AliasExpansionBanner, AliasExpansionBannerAction, AwsBedrockLoginBannerAction,
-    AwsBedrockLoginBannerState, AwsCliNotInstalledBannerAction, AwsCliNotInstalledBannerState,
-    ByoLlmAuthBannerSessionState, OpenInWarpBannerState, VimModeBannerAction,
-    render_alias_expansion_banner, render_aws_bedrock_login_banner,
-    render_aws_cli_not_installed_banner, render_inline_notifications_discovery_banner,
+    AliasExpansionBanner, AliasExpansionBannerAction, OpenInWarpBannerState, VimModeBannerAction,
+    render_alias_expansion_banner, render_inline_notifications_discovery_banner,
     render_inline_notifications_error_banner, render_inline_shared_session_ended_banner,
     render_inline_shared_session_started_banner, render_open_in_warp_banner,
     render_shell_process_terminated_banner, render_vim_mode_banner,
@@ -268,7 +264,6 @@ use crate::ai::document::ai_document_model::{AIDocumentId, AIDocumentModel, AIDo
 use crate::ai::execution_profiles::ExecutionProfileId;
 use crate::ai::execution_profiles::profiles::AIExecutionProfilesModel;
 use crate::ai::get_relevant_files::controller::GetRelevantFilesController;
-use crate::ai::llms::{LLMId, LLMModelHost, LLMPreferences};
 #[cfg(feature = "local_fs")]
 use crate::ai::persisted_workspace::PersistedWorkspace;
 use crate::ai::predict::prompt_suggestions::{
@@ -355,7 +350,6 @@ use crate::settings::{
     PaneSettingsChangedEvent, PrivacySettings, SelectionSettings, VimBannerSettings,
 };
 use crate::settings_view::keybindings::KeybindingChangedNotifier;
-use crate::settings_view::mcp_servers_page::MCPServersSettingsPage;
 use crate::settings_view::{SettingsSection, flags};
 use crate::shell_indicator::ShellIndicatorType;
 use crate::terminal::alias::{AliasedCommand, check_for_alias_async};
@@ -997,8 +991,6 @@ pub enum InlineBannerType {
     VimMode,
     CodebaseIndexSpeedbump,
     AgentModeSetup,
-    AwsBedrockLogin,
-    AwsCliNotInstalled,
 }
 
 impl InlineBannerType {
@@ -1007,11 +999,7 @@ impl InlineBannerType {
     pub fn is_visible_in_agent_view(&self) -> bool {
         match self {
             // Agent-related banners: visible in agent view
-            Self::PromptSuggestions
-            | Self::CodebaseIndexSpeedbump
-            | Self::AgentModeSetup
-            | Self::AwsBedrockLogin
-            | Self::AwsCliNotInstalled => true,
+            Self::PromptSuggestions | Self::CodebaseIndexSpeedbump | Self::AgentModeSetup => true,
             // Terminal-context banners: hidden in agent view
             Self::NotificationsDiscovery
             | Self::NotificationsError
@@ -1068,10 +1056,6 @@ struct InlineBannersState {
     codebase_index_speedbump_banner: Option<CodebaseIndexSpeedbumpBannerState>,
 
     agent_setup_speedbump_banner: Option<AgentModeSetupSpeedbumpBannerState>,
-
-    aws_bedrock_login_banner: Option<AwsBedrockLoginBannerState>,
-
-    aws_cli_not_installed_banner: Option<AwsCliNotInstalledBannerState>,
 }
 
 impl InlineBannersState {
@@ -1870,9 +1854,6 @@ pub enum Event {
 
     OpenThemeChooser,
     OpenConversationHistory,
-    OpenMCPSettingsPage {
-        page: Option<MCPServersSettingsPage>,
-    },
     OpenAddRulePane,
     OpenRulesPane,
     OpenAddPromptPane {
@@ -2846,12 +2827,6 @@ pub struct TerminalView {
     /// Active /init flow model, if any. Cleared when cancelled or completed.
     active_init_project_model: Option<ModelHandle<InitProjectModel>>,
 
-    /// Whether we're waiting for the result of an AWS CLI login command.
-    /// Used to detect "command not found" errors when AWS CLI isn't installed.
-    /// TODO: In the future, when we support GCP/Azure cloud CLIs, this should be
-    /// converted to `pending_cloud_cli_login: Option<CloudProvider>` where CloudProvider
-    /// is an enum with variants like Aws, Gcp, Azure.
-    is_pending_aws_login: bool,
     /// `true` if this view explicitly requested a PTY shutdown.
     ///
     /// Once set, this remains true for the rest of the view's lifecycle and
@@ -4117,16 +4092,6 @@ impl TerminalView {
             });
         }
 
-        ctx.subscribe_to_model(&AISettings::handle(ctx), |me, _, ai_settings_event, ctx| {
-            let user_workspaces = UserWorkspaces::as_ref(ctx);
-            let scope = user_workspaces.team_context_for_view(ctx);
-            if let AISettingsChangedEvent::AwsBedrockCredentialsEnabled { .. } = ai_settings_event
-                && !user_workspaces.is_aws_bedrock_credentials_enabled(&scope, ctx)
-            {
-                me.remove_aws_bedrock_login_banner(ctx);
-            }
-        });
-
         let agent_todos_popup = Self::build_agent_todos_popup(ai_context_model.clone(), ctx);
 
         let terminal_view_id = ctx.view_id();
@@ -4338,7 +4303,6 @@ impl TerminalView {
             conversation_details_panel_toggle_mouse_state: Default::default(),
             ambient_agent_cancel_mouse_state: Default::default(),
             active_init_project_model: None,
-            is_pending_aws_login: false,
             manual_pty_shutdown_requested: false,
             first_time_cloud_agent_setup_view,
             environment_setup_mode_selector,
@@ -4849,9 +4813,6 @@ impl TerminalView {
         event: &BlocklistAIControllerEvent,
         ctx: &mut ViewContext<Self>,
     ) {
-        if let BlocklistAIControllerEvent::SentRequest { model_id, .. } = event {
-            self.maybe_insert_aws_bedrock_login_banner(model_id, ctx);
-        }
         if let BlocklistAIControllerEvent::ExecuteLocalHarnessCommand { command } = event {
             self.execute_command_or_set_pending(command, ctx);
         }
@@ -10056,210 +10017,6 @@ impl TerminalView {
         // No-op when local filesystem is unavailable.
     }
 
-    fn remove_aws_bedrock_login_banner(&mut self, ctx: &mut ViewContext<Self>) {
-        if let Some(banner_state) = self.inline_banners_state.aws_bedrock_login_banner.take() {
-            self.model
-                .lock()
-                .block_list_mut()
-                .remove_inline_banner(banner_state.id);
-        }
-        ctx.notify();
-    }
-
-    fn handle_aws_bedrock_login_banner_action(
-        &mut self,
-        action: AwsBedrockLoginBannerAction,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        match action {
-            AwsBedrockLoginBannerAction::Login => {
-                self.run_aws_login_command(ctx);
-            }
-            AwsBedrockLoginBannerAction::DontShowAgain => {
-                AISettings::handle(ctx).update(ctx, |ai_settings, ctx| {
-                    report_if_error!(
-                        ai_settings
-                            .aws_bedrock_login_banner_dismissed
-                            .set_value(true, ctx)
-                    );
-                });
-            }
-            AwsBedrockLoginBannerAction::Dismiss => {
-                // Mark as dismissed for this session (won't reappear until app restart)
-                ByoLlmAuthBannerSessionState::handle(ctx).update(ctx, |state, ctx| {
-                    state.dismiss(ctx);
-                });
-            }
-        }
-        self.remove_aws_bedrock_login_banner(ctx);
-    }
-
-    /// Runs the AWS login command configured in settings to refresh Bedrock credentials.
-    /// Doing this in PTY vs just a subprocess allows the user to see any output/errors
-    /// from the command directly in the terminal. Also, `aws login` commands may require
-    /// user interaction (e.g. "do you want to override X profile? y/n" is common)
-    fn run_aws_login_command(&mut self, ctx: &mut ViewContext<Self>) {
-        let login_command = AISettings::as_ref(ctx)
-            .aws_bedrock_auth_refresh_command
-            .value()
-            .clone();
-
-        if login_command.is_empty() {
-            log::warn!("AWS login command is not configured");
-            return;
-        }
-
-        // Track that we're running an AWS login command so we can detect
-        // "command not found" if AWS CLI isn't installed
-        self.is_pending_aws_login = true;
-
-        // Write the command to the PTY and execute it
-        let command_bytes = login_command.into_bytes();
-        self.clear_line_editor_and_write_to_pty(command_bytes, ctx);
-        self.write_to_pty(vec![escape_sequences::C0::CR], ctx);
-    }
-
-    /// Checks if the current model request could be served via AWS Bedrock and the user
-    /// isn't already using it. If so, inserts a banner prompting the user to log in.
-    ///
-    /// The banner is shown when the user could be using AWS Bedrock to save on warp AI spend, but isn't.
-    fn maybe_insert_aws_bedrock_login_banner(
-        &mut self,
-        model_id: &LLMId,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        // Don't show if already displayed
-        if self.inline_banners_state.aws_bedrock_login_banner.is_some() {
-            return;
-        }
-
-        // Check if dismissed (either permanently via "Don't show again" or for this session via "X")
-        if ByoLlmAuthBannerSessionState::as_ref(ctx).is_dismissed() {
-            return;
-        }
-
-        // Check if AWS Bedrock is available in the workspace
-        let user_workspaces = UserWorkspaces::as_ref(ctx);
-        let scope = user_workspaces.team_context_for_view(ctx);
-        if !user_workspaces.is_aws_bedrock_credentials_enabled(&scope, ctx) {
-            return;
-        }
-
-        // Check if the model supports AWS Bedrock routing
-        let llm_prefs = LLMPreferences::as_ref(ctx);
-        let Some(llm_info) = llm_prefs.get_llm_info(model_id, ctx) else {
-            return;
-        };
-
-        let supports_aws_bedrock = llm_info
-            .host_configs
-            .get(&LLMModelHost::AwsBedrock)
-            .is_some_and(|config| config.enabled);
-        if !supports_aws_bedrock {
-            return;
-        }
-
-        if matches!(
-            ApiKeyManager::as_ref(ctx).aws_credentials_state(),
-            AwsCredentialsState::Loaded { .. }
-        ) {
-            return;
-        }
-
-        // User doesn't have AWS credentials - show the banner
-        let banner_id = self.inline_banners_state.next_banner_id();
-        self.inline_banners_state.aws_bedrock_login_banner = Some(AwsBedrockLoginBannerState {
-            id: banner_id,
-            login_button_mouse_state: Default::default(),
-            dismiss_button_mouse_state: Default::default(),
-            dont_show_again_button_mouse_state: Default::default(),
-        });
-
-        self.model
-            .lock()
-            .block_list_mut()
-            .append_inline_banner_with_custom_height(
-                InlineBannerItem::new(banner_id, InlineBannerType::AwsBedrockLogin),
-                3.5,
-            );
-
-        ctx.notify();
-    }
-
-    fn remove_aws_cli_not_installed_banner(&mut self, ctx: &mut ViewContext<Self>) {
-        if let Some(banner_state) = self
-            .inline_banners_state
-            .aws_cli_not_installed_banner
-            .take()
-        {
-            self.model
-                .lock()
-                .block_list_mut()
-                .remove_inline_banner(banner_state.id);
-        }
-        ctx.notify();
-    }
-
-    fn handle_aws_cli_not_installed_banner_action(
-        &mut self,
-        action: AwsCliNotInstalledBannerAction,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        match action {
-            AwsCliNotInstalledBannerAction::LearnMore => {
-                ctx.open_url(AwsCliNotInstalledBannerAction::docs_url());
-            }
-            AwsCliNotInstalledBannerAction::Dismiss => {}
-        }
-        self.remove_aws_cli_not_installed_banner(ctx);
-    }
-
-    /// Checks if the user tried to run an AWS login command and the AWS CLI wasn't installed.
-    /// If so, shows a helpful banner explaining the issue.
-    fn maybe_show_aws_cli_not_installed_suggestion(
-        &mut self,
-        exit_code: ExitCode,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        // Check if we were waiting for an AWS login command result
-        let was_pending = self.is_pending_aws_login;
-        // Always reset the flag
-        self.is_pending_aws_login = false;
-
-        if !was_pending {
-            return;
-        }
-
-        // Check if the command failed with "command not found"
-        if !exit_code.was_command_not_found() {
-            return;
-        }
-
-        // Don't show if already displayed
-        if self
-            .inline_banners_state
-            .aws_cli_not_installed_banner
-            .is_some()
-        {
-            return;
-        }
-
-        // Show the banner
-        let banner_id = self.inline_banners_state.next_banner_id();
-        self.inline_banners_state.aws_cli_not_installed_banner =
-            Some(AwsCliNotInstalledBannerState::new(banner_id));
-
-        self.model
-            .lock()
-            .block_list_mut()
-            .append_inline_banner_with_custom_height(
-                InlineBannerItem::new(banner_id, InlineBannerType::AwsCliNotInstalled),
-                3.5,
-            );
-
-        ctx.notify();
-    }
-
     /// Inserts a banner notifying the user that the shell process has terminated.
     fn insert_shell_process_terminated_banner(
         &mut self,
@@ -11813,13 +11570,6 @@ impl TerminalView {
                         self.maybe_suggest_open_in_warp(block_completed, ctx);
                     }
 
-                    // Check if the user tried to run an AWS login command but AWS CLI wasn't installed.
-                    // This runs after other suggestion checks and may add its own banner alongside them.
-                    self.maybe_show_aws_cli_not_installed_suggestion(
-                        serialized_block.exit_code,
-                        ctx,
-                    );
-
                     // Check for environment creation command completion during /init flow
                     if block_completed.was_part_of_agent_interaction
                         && self.has_active_init_project(ctx)
@@ -12752,20 +12502,6 @@ impl TerminalView {
             self.invoke_environment_variables(env_var_collection, false, ctx);
         }
 
-        // If this is a new local session, update the PATH used for MCP command execution.
-        if let Some(path) = Self::local_session_path(&session) {
-            AISettings::handle(ctx).update(ctx, |settings, ctx| {
-                // TODO: This logic is likely incorrect, as it's dynamically determining the path based on the most
-                // recent session, which is not directly relevant to starting the MCP server. This caused an issue
-                // on Windows where the PATH was sometimes Unix-like and other times PowerShell-like, when it should
-                // always be PowerShell-like. Also an odd data flow problem to be updating an AI User Setting
-                // based on a local session bootstrapping.
-                if let Err(e) = settings.mcp_execution_path.set_value(Some(path), ctx) {
-                    log::warn!("Failed to set MCP execution path: {e:?}");
-                }
-            })
-        }
-
         let is_subshell_or_ssh = session.is_subshell_or_ssh();
 
         // Make sure we decorate any text that is already in the input.  We
@@ -12893,45 +12629,6 @@ impl TerminalView {
 
         self.refresh_warp_prompt(ctx);
         ctx.emit(Event::SessionBootstrapped);
-    }
-
-    // Helper function to get the PATH variable for a local session.
-    fn local_session_path(session: &Session) -> Option<String> {
-        if matches!(session.session_type(), SessionType::Local) && session.subshell_info().is_none()
-        {
-            #[cfg(all(windows, feature = "local_tty"))]
-            let path = {
-                let path_result =
-                    get_user_and_system_env_variable("PATH").map(|entry| entry.into_string());
-                let result = match path_result {
-                    Some(Ok(path_result)) => Some(path_result),
-                    None => {
-                        log::warn!("Failed to get PATH for session on Windows.");
-                        None
-                    }
-                    Some(Err(e)) => {
-                        log::warn!("Failed to convert PATH for session on Windows: `{e:?}`");
-                        None
-                    }
-                };
-                if result.is_none() {
-                    if session.shell_family() == ShellFamily::PowerShell {
-                        // This is a fallback for if the OsString cannot be converted to a String.
-                        // We cannot accept a Posix PATH on Windows.
-                        session.path().clone()
-                    } else {
-                        None
-                    }
-                } else {
-                    result
-                }
-            };
-            #[cfg(not(all(windows, feature = "local_tty")))]
-            let path = session.path().clone();
-
-            return path;
-        }
-        None
     }
 
     pub fn insert_drive_sharing_onboarding_block(
@@ -19928,9 +19625,6 @@ impl TerminalView {
             AIBlockEvent::OpenThemeChooser => {
                 ctx.emit(Event::OpenThemeChooser);
             }
-            AIBlockEvent::RunAwsLoginCommand => {
-                self.run_aws_login_command(ctx);
-            }
         }
         ctx.notify();
     }
@@ -21149,12 +20843,6 @@ impl TerminalView {
             }
             InputEvent::OpenProjectRulesPane => {
                 self.handle_action(&TerminalAction::OpenProjectRulesPane, ctx);
-            }
-            InputEvent::OpenViewMCPPane => {
-                self.handle_action(&TerminalAction::OpenViewMCPPane, ctx);
-            }
-            InputEvent::OpenAddMCPPane => {
-                self.handle_action(&TerminalAction::OpenAddMCPPane, ctx);
             }
             InputEvent::OpenEnvironmentManagementPane => {
                 self.open_environment_management_pane(ctx);
@@ -23359,20 +23047,6 @@ impl TerminalView {
             inline_banners.insert(
                 banner_state.id,
                 render_agent_mode_setup_banner(banner_state, appearance),
-            );
-        }
-
-        if let Some(banner_state) = &self.inline_banners_state.aws_bedrock_login_banner {
-            inline_banners.insert(
-                banner_state.id,
-                render_aws_bedrock_login_banner(banner_state, appearance),
-            );
-        }
-
-        if let Some(banner_state) = &self.inline_banners_state.aws_cli_not_installed_banner {
-            inline_banners.insert(
-                banner_state.id,
-                render_aws_cli_not_installed_banner(banner_state, appearance),
             );
         }
 
@@ -25884,8 +25558,6 @@ impl TypedActionView for TerminalView {
             | OpenProjectRulesPane
             | InitProject
             | IndexProjectSpeedbump
-            | OpenViewMCPPane
-            | OpenAddMCPPane
             | OpenBillingAndUsagePane
             | OpenAddRulePane
             | OpenRulesPane
@@ -25911,8 +25583,6 @@ impl TypedActionView for TerminalView {
             | OpenInlineHistoryMenu
             | OpenModelSelector
             | ResolvePromptSuggestion(..)
-            | AwsBedrockLoginBanner(_)
-            | AwsCliNotInstalledBanner(_)
             | ExecuteRewindFromInlineMenu { .. }
             | ToggleUsageFooter
             | RevealChildAgent { .. }
@@ -26821,16 +26491,6 @@ impl TypedActionView for TerminalView {
                     });
                 }
             }
-            OpenViewMCPPane => {
-                ctx.emit(Event::OpenMCPSettingsPage {
-                    page: Some(MCPServersSettingsPage::List),
-                });
-            }
-            OpenAddMCPPane => {
-                ctx.emit(Event::OpenMCPSettingsPage {
-                    page: Some(MCPServersSettingsPage::Edit { item_id: None }),
-                });
-            }
             OpenBillingAndUsagePane => {
                 ctx.emit(Event::OpenSettings(SettingsSection::BillingAndUsage));
             }
@@ -26982,12 +26642,6 @@ impl TypedActionView for TerminalView {
             }
             ResolvePromptSuggestion(resolution) => {
                 self.resolve_passive_suggestion(*resolution, ctx);
-            }
-            AwsBedrockLoginBanner(action) => {
-                self.handle_aws_bedrock_login_banner_action(*action, ctx);
-            }
-            AwsCliNotInstalledBanner(action) => {
-                self.handle_aws_cli_not_installed_banner_action(*action, ctx);
             }
             ToggleConversationDetailsPanel => {
                 let will_open = !self.is_conversation_details_panel_open;

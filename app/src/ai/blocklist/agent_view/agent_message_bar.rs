@@ -1,10 +1,8 @@
 use std::sync::Arc;
 
 use parking_lot::FairMutex;
-use warp_core::features::FeatureFlag;
 use warp_core::ui::appearance::Appearance;
 use warp_core::ui::theme::Fill;
-use warpui::assets::asset_cache::AssetSource;
 use warpui::elements::{Element, Empty, MouseStateHandle};
 use warpui::keymap::Keystroke;
 use warpui::platform::OperatingSystem;
@@ -30,8 +28,6 @@ use crate::ai::blocklist::{
     BlocklistAIInputEvent, BlocklistAIInputModel, ai_brand_color,
 };
 use crate::ai::document::ai_document_model::{AIDocumentModel, AIDocumentModelEvent};
-use crate::ai::mcp::TemplatableMCPServerManager;
-use crate::ai::mcp::templatable_manager::{FigmaMcpStatus, TemplatableMCPServerManagerEvent};
 use crate::ai::pricing_promotion::{
     PricingPromotionState, PricingPromotionStateEvent, PricingPromotionSurface,
 };
@@ -49,7 +45,7 @@ use crate::terminal::input::message_bar::common::{
     disableable_message_item_color_overrides, render_standard_message_bar,
 };
 use crate::terminal::input::message_bar::{
-    ChipHorizontalAlignment, EmptyMessageProducer, Message, MessageItem, MessageProvider,
+    EmptyMessageProducer, Message, MessageItem, MessageProvider,
 };
 use crate::terminal::input::slash_command_model::{SlashCommandEntryState, SlashCommandModel};
 use crate::terminal::input::suggestions_mode_model::{
@@ -64,8 +60,6 @@ use crate::util::bindings::keybinding_name_to_keystroke;
 use crate::workspace::WorkspaceAction;
 use crate::workspace::tab_settings::{TabSettings, TabSettingsChangedEvent};
 
-const FIGMA_ICON_SIZE: f32 = 14.;
-
 #[derive(Clone, Default)]
 pub struct AgentMessageBarMouseStates {
     pub resume_conversation: MouseStateHandle,
@@ -77,10 +71,6 @@ pub struct AgentMessageBarMouseStates {
     pub toggle_code_review: MouseStateHandle,
     pub handoff_to_cloud: MouseStateHandle,
     pub clear_attached_context: MouseStateHandle,
-    /// Mouse state handle for the "Get Figma MCP" contextual button.
-    pub figma_install_button: MouseStateHandle,
-    /// Mouse state handle for the "Enable Figma MCP" contextual button.
-    pub figma_enable_button: MouseStateHandle,
     /// Mouse state handle for dismissing the ambient credits banner.
     pub ambient_credits_banner_close: MouseStateHandle,
     pub pricing_promotion: MouseStateHandle,
@@ -100,9 +90,6 @@ pub struct AgentMessageBar {
     handoff_compose_state: ModelHandle<HandoffComposeState>,
     terminal_model: Arc<FairMutex<TerminalModel>>,
     mouse_states: AgentMessageBarMouseStates,
-    /// Whether the word "figma" has been detected in the current input buffer or attached images.
-    /// Only meaningful when `FeatureFlag::FigmaDetection` is enabled.
-    figma_detected: bool,
 }
 
 impl Entity for AgentMessageBar {
@@ -168,7 +155,6 @@ impl AgentMessageBar {
             if empty_state_changed || in_shell_mode {
                 ctx.notify();
             }
-            me.update_figma_detected(ctx);
         });
         ctx.subscribe_to_model(&shortcut_view_model, |_, _, _, ctx| {
             ctx.notify();
@@ -215,9 +201,8 @@ impl AgentMessageBar {
             }
         });
 
-        ctx.subscribe_to_model(&context_model, |me, _, event, ctx| {
+        ctx.subscribe_to_model(&context_model, |_, _, event, ctx| {
             if let BlocklistAIContextEvent::UpdatedPendingContext { .. } = event {
-                me.update_figma_detected(ctx);
                 ctx.notify();
             }
         });
@@ -227,22 +212,6 @@ impl AgentMessageBar {
                 ctx.notify();
             }
         });
-
-        if FeatureFlag::FigmaDetection.is_enabled() {
-            // When the state of the Figma MCP changes, re-render to update the Figma CTA button.
-            ctx.subscribe_to_model(
-                &TemplatableMCPServerManager::handle(ctx),
-                |_, model, event, ctx| {
-                    if let TemplatableMCPServerManagerEvent::StateChanged { uuid, .. } = event
-                        && let Some(figma_mcp_uuid) =
-                            model.as_ref(ctx).get_figma_installation_uuid()
-                        && uuid == &figma_mcp_uuid
-                    {
-                        ctx.notify();
-                    }
-                },
-            );
-        }
 
         ctx.subscribe_to_model(&AIRequestUsageModel::handle(ctx), |_, _, event, ctx| {
             if matches!(
@@ -267,7 +236,6 @@ impl AgentMessageBar {
             handoff_compose_state,
             terminal_model,
             mouse_states: AgentMessageBarMouseStates::default(),
-            figma_detected: false,
         };
         message_bar.record_visible_promotion(ctx);
         message_bar
@@ -275,42 +243,6 @@ impl AgentMessageBar {
 }
 
 impl AgentMessageBar {
-    /// Sets `figma_detected` by checking both the current input text and attached images.
-    /// `figma_detected` is `true` when either the text contains "figma" (case-insensitive)
-    /// or any attached image was exported from Figma.
-    fn update_figma_detected(&mut self, ctx: &mut ViewContext<Self>) {
-        if !FeatureFlag::FigmaDetection.is_enabled() {
-            return;
-        }
-        let text_has_figma = self
-            .input_buffer_model
-            .as_ref(ctx)
-            .current_value()
-            .to_lowercase()
-            .contains("figma");
-        let image_has_figma = self
-            .context_model
-            .as_ref(ctx)
-            .pending_images()
-            .iter()
-            .any(|image| image.is_figma);
-        let detected = text_has_figma || image_has_figma;
-        if self.figma_detected != detected {
-            self.figma_detected = detected;
-            ctx.notify();
-        }
-    }
-
-    /// Returns the Figma MCP status if the contextual button area should be rendered
-    /// (i.e. when `FeatureFlag::FigmaDetection` is enabled and "figma" is detected in the input).
-    fn figma_button_status(&self, app: &AppContext) -> Option<FigmaMcpStatus> {
-        if FeatureFlag::FigmaDetection.is_enabled() && self.figma_detected {
-            Some(TemplatableMCPServerManager::as_ref(app).get_figma_mcp_status())
-        } else {
-            None
-        }
-    }
-
     fn record_visible_promotion(&self, ctx: &mut ViewContext<Self>) {
         if cfg!(target_family = "wasm")
             || !self.agent_view_controller.as_ref(ctx).is_active()
@@ -385,7 +317,7 @@ impl View for AgentMessageBar {
         };
 
         // Ephemeral messages take highest priority.
-        let Some(mut message) = ephemeral_message_model
+        let Some(message) = ephemeral_message_model
             .produce_message(args)
             .or_else(|| BootstrappingMessageProducer.produce_message(args))
             .or_else(|| ForkSlashCommandMessageProducer.produce_message(args))
@@ -432,35 +364,6 @@ impl View for AgentMessageBar {
                     )
                 })
         };
-
-        // Append a Figma MCP chip to the message if applicable.
-        match self.figma_button_status(app) {
-            Some(FigmaMcpStatus::NotInstalled) => {
-                message.items.push(figma_chip(
-                    self.mouse_states.figma_install_button.clone(),
-                    "Get Figma MCP",
-                    Some(InputAction::FigmaAddButtonClicked),
-                ));
-            }
-            Some(FigmaMcpStatus::Installed) => {
-                message.items.push(figma_chip(
-                    self.mouse_states.figma_enable_button.clone(),
-                    "Enable Figma MCP",
-                    Some(InputAction::FigmaEnableButtonClicked),
-                ));
-            }
-            Some(FigmaMcpStatus::Enabling) => {
-                message.items.push(
-                    figma_chip(
-                        self.mouse_states.figma_enable_button.clone(),
-                        "Enabling...",
-                        None,
-                    )
-                    .with_is_disabled(true),
-                );
-            }
-            Some(FigmaMcpStatus::Running) | None => {}
-        }
 
         render_standard_message_bar(message, right_element, app)
     }
@@ -842,7 +745,6 @@ fn should_fork_from_last_known_good_state(
         | RenderableAIError::ServerOverloaded
         | RenderableAIError::ContextWindowExceeded(_)
         | RenderableAIError::InvalidApiKey { .. }
-        | RenderableAIError::AwsBedrockCredentialsExpiredOrInvalid { .. }
         | RenderableAIError::GeminiEnterpriseCredentialsExpiredOrInvalid => false,
         // A shell-exit failure can't resume in this (now-dead) pane, but the user
         // can fork from the last known good state to continue in a fresh one.
@@ -1056,41 +958,5 @@ impl MessageProvider<AgentMessageArgs<'_>> for ExitBashModeMessageProducer {
             ])
             .with_text_color(text_color),
         )
-    }
-}
-
-/// Creates a `MessageItem::Chip` for a Figma MCP contextual action.
-/// When `action` is `Some`, the chip is interactive and dispatches that action on click.
-/// When `action` is `None`, the chip is returned without an action (caller should disable it).
-fn figma_chip(
-    mouse_state: MouseStateHandle,
-    label: &'static str,
-    action: Option<InputAction>,
-) -> MessageItem {
-    let items = vec![
-        MessageItem::Image {
-            source: AssetSource::Bundled {
-                path: "bundled/svg/figma-colored.svg",
-            },
-            width: FIGMA_ICON_SIZE,
-            height: FIGMA_ICON_SIZE,
-        },
-        MessageItem::text(label),
-    ];
-    if let Some(action) = action {
-        MessageItem::chip(
-            items,
-            move |ctx| ctx.dispatch_typed_action(action.clone()),
-            mouse_state,
-        )
-        .with_horizontal_alignment(ChipHorizontalAlignment::Right)
-    } else {
-        MessageItem::Chip {
-            items,
-            action: Arc::new(|_| {}),
-            mouse_state,
-            disabled: true,
-            horizontal_alignment: ChipHorizontalAlignment::Right,
-        }
     }
 }

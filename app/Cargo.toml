@@ -117,7 +117,6 @@ lsp.workspace = true
 warp_logging.workspace = true
 lz4_flex = "0.11"
 markdown_parser.workspace = true
-mcp.workspace = true
 memchr.workspace = true
 memo-map.workspace = true
 mermaid_to_svg.workspace = true
@@ -230,7 +229,6 @@ mime_guess = "2.0"
 warp_multi_agent_api.workspace = true
 repo_metadata.workspace = true
 vim.workspace = true
-rmcp.workspace = true
 warp_isolation_platform.workspace = true
 warp_ripgrep.workspace = true
 warp_managed_secrets.workspace = true
@@ -291,12 +289,6 @@ tokio.workspace = true
 tokio-util.workspace = true
 tracing-subscriber.workspace = true
 warp_errors = { workspace = true, features = ["tokio-errors", "websocket-errors"] }
-
-# AWS SDK (loading credentials for BYO LLM)
-aws-config = { version = "1.8.16", features = ["credentials-login"] }
-aws-credential-types = "1"
-aws-sdk-sts = { version = "1", default-features = false, features = ["default-https-client", "rt-tokio"] }
-aws-types = "1"
 
 notify-debouncer-full.workspace = true
 rquickjs = { workspace = true, optional = true }
@@ -423,7 +415,6 @@ embed-resource = "3.0"
 tui = ["warp_terminal/tui", "warpui_core/tui"]
 ai_resume_button = []
 autoupdate = []
-figma_detection = []
 bundled_skills = []
 supergrok = []
 gemini_enterprise = []
@@ -452,8 +443,6 @@ completions_v2 = [
 creating_shared_sessions = []
 cross_repo_context = []
 codebase_index_persistence = ["full_source_code_embedding"]
-well_known_mcp_ids = []
-factory_mcp = []
 default = [
     "offline_hard",
     "osc_hyperlinks",
@@ -472,7 +461,6 @@ default = [
     "kitty_images",
     "validate_autosuggestions",
     "clear_autosuggestion_on_escape",
-    "mcp_server",
     "command_palette_file_search",
     "tab_close_button_on_left",
     "code_find_replace",
@@ -497,7 +485,6 @@ default = [
     "inline_code_review",
     "code_review_find",
     "async_find",
-    "mcp_grouped_server_context",
     "v4a_file_diffs",
     "classic_completions",
     "force_classic_completions",
@@ -506,7 +493,6 @@ default = [
     "new_tab_styling",
     "richtext_multiselect",
     "incremental_auto_reload",
-    "file_based_mcp",
     "kitty_keyboard_protocol",
     "inline_menu_headers",
     "markdown_tables",
@@ -587,7 +573,6 @@ local_only = [
     "kitty_images",
     "validate_autosuggestions",
     "clear_autosuggestion_on_escape",
-    "mcp_server",
     "command_palette_file_search",
     "tab_close_button_on_left",
     "code_find_replace",
@@ -612,7 +597,6 @@ local_only = [
     "inline_code_review",
     "code_review_find",
     "async_find",
-    "mcp_grouped_server_context",
     "v4a_file_diffs",
     "classic_completions",
     "force_classic_completions",
@@ -621,7 +605,6 @@ local_only = [
     "new_tab_styling",
     "richtext_multiselect",
     "incremental_auto_reload",
-    "file_based_mcp",
     "kitty_keyboard_protocol",
     "inline_menu_headers",
     "markdown_tables",
@@ -706,9 +689,6 @@ local_fs = [
 jupyter_notebook_rendering = []
 markdown_tables = []
 markdown_mermaid = []
-mcp_server = []
-mcp_oauth = []
-mcp_debugging_ids = []
 notebook_parameter = []
 oz_changelog_updates = []
 personal_cloud_objects = []
@@ -863,7 +843,6 @@ cloud_runners = []
 cloud_agent_runners = []
 create_environment_slash_command = []
 summarize_conversation_command = []
-mcp_grouped_server_context = []
 web_search_ui = []
 web_fetch_ui = []
 fork_from_command = []
@@ -905,7 +884,6 @@ open_warp_launch_modal = []
 orchestration_launch_modal = []
 agent_cli_launch_modal = []
 new_tab_styling = []
-file_based_mcp = []
 skill_arguments = []
 active_conversation_requires_interaction = []
 incremental_auto_reload = []

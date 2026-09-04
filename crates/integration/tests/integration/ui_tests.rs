@@ -261,7 +261,6 @@ integration_tests! {
 
     // Settings sidebar navigation and search.
     test_settings_search_filters_top_level_pages,
-    test_settings_agent_mcp_servers_renders_standalone_page,
 
     test_copy_selection_within_ai_block,
     #[ignore = "Affected by agent_view feature flag UI changes"]

@@ -19,9 +19,8 @@ use std::path::{Path, PathBuf};
 use cfg_if::cfg_if;
 use directories::BaseDirs;
 
-use crate::AppId;
 use crate::channel::{Channel, ChannelState};
-use crate::product_identity;
+use crate::{AppId, product_identity};
 
 /// The name of the directory in which to put non-global Warp-specific files.
 ///
@@ -70,10 +69,6 @@ pub fn warp_home_config_dir() -> Option<PathBuf> {
 
 pub fn warp_home_skills_dir() -> Option<PathBuf> {
     warp_home_config_dir().map(|warp_config_dir| warp_config_dir.join("skills"))
-}
-
-pub fn warp_home_mcp_config_file_path() -> Option<PathBuf> {
-    warp_home_config_dir().map(|warp_config_dir| warp_config_dir.join(".mcp.json"))
 }
 
 /// Returns the macOS config directory name for the current channel and data
@@ -189,19 +184,6 @@ pub fn gui_config_local_dir() -> Option<PathBuf> {
     }
 }
 
-/// Resolves the GUI's global file-based MCP configuration from any frontend.
-///
-/// As with [`gui_config_local_dir`], macOS development data profiles fail
-/// closed because the matching GUI source profile is ambiguous.
-pub fn gui_mcp_config_file_path() -> Option<PathBuf> {
-    #[cfg(target_os = "macos")]
-    if ChannelState::data_profile().is_some() {
-        return None;
-    }
-
-    warp_home_mcp_config_file_path()
-}
-
 #[cfg(target_os = "macos")]
 fn macos_tui_config_dir_name() -> String {
     match ChannelState::data_profile() {
@@ -230,14 +212,6 @@ pub fn tui_config_local_dir() -> PathBuf {
     }
 }
 
-/// Returns the path to the TUI front-end's global MCP configuration file.
-///
-/// This is intentionally distinct from [`warp_home_mcp_config_file_path`] so
-/// the GUI and TUI can run different MCP configurations and versions without
-/// reading or modifying each other's files.
-pub fn tui_mcp_config_file_path() -> PathBuf {
-    tui_config_local_dir().join(".mcp.json")
-}
 /// Returns the base directory for general config files. Useful for accessing the config files for
 /// other programs.
 pub fn base_config_dir() -> PathBuf {

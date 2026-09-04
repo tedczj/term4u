@@ -334,7 +334,6 @@ pub enum Icon {
     Cognition,
     Dataflow04,
     LayersThree01,
-    Aws,
     GeminiEnterpriseAgentPlatform,
     // Language-specific icons for the code block dropdown
     MermaidLang,
@@ -670,7 +669,6 @@ impl From<Icon> for &'static str {
             Icon::Cognition => "bundled/svg/cognition.svg",
             Icon::Dataflow04 => "bundled/svg/dataflow-04.svg",
             Icon::LayersThree01 => "bundled/svg/layers-three-01.svg",
-            Icon::Aws => "bundled/svg/aws.svg",
             Icon::GeminiEnterpriseAgentPlatform => {
                 "bundled/svg/gemini-enterprise-agent-platform.svg"
             }

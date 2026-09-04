@@ -10,7 +10,6 @@ pub(super) enum CliTelemetryEvent {
     /// Executing `warp agent run`
     AgentRun {
         gui: bool,
-        requested_mcp_servers: usize,
         has_environment: bool,
         /// Optional task ID when running against an ambient agent task.
         task_id: Option<String>,
@@ -45,8 +44,6 @@ pub(super) enum CliTelemetryEvent {
     EnvironmentGet,
     /// Executing `warp environment image list`
     EnvironmentImageList,
-    /// Executing `warp mcp list`
-    MCPList,
     /// Executing `warp model list`
     ModelList,
     /// Executing `warp memory-store list`
@@ -168,13 +165,11 @@ impl TelemetryEvent for CliTelemetryEvent {
         match self {
             CliTelemetryEvent::AgentRun {
                 gui,
-                requested_mcp_servers,
                 has_environment,
                 task_id,
                 harness,
             } => Some(json!({
                 "gui": gui,
-                "requested_mcp_servers": requested_mcp_servers,
                 "has_environment": has_environment,
                 "task_id": task_id,
                 "harness": harness,
@@ -193,7 +188,6 @@ impl TelemetryEvent for CliTelemetryEvent {
             CliTelemetryEvent::EnvironmentUpdate => None,
             CliTelemetryEvent::EnvironmentGet => None,
             CliTelemetryEvent::EnvironmentImageList => None,
-            CliTelemetryEvent::MCPList => None,
             CliTelemetryEvent::ModelList => None,
             CliTelemetryEvent::MemoryStoreList => None,
             CliTelemetryEvent::MemoryStoreListMemories => None,
@@ -295,7 +289,6 @@ impl TelemetryEventDesc for CliTelemetryEventDiscriminants {
             CliTelemetryEventDiscriminants::EnvironmentImageList => {
                 "CLI.Execute.Environment.Image.List"
             }
-            CliTelemetryEventDiscriminants::MCPList => "CLI.Execute.MCP.List",
             CliTelemetryEventDiscriminants::ModelList => "CLI.Execute.Model.List",
             CliTelemetryEventDiscriminants::MemoryStoreList => "CLI.Execute.MemoryStore.List",
             CliTelemetryEventDiscriminants::MemoryStoreListMemories => {
@@ -417,7 +410,6 @@ impl TelemetryEventDesc for CliTelemetryEventDiscriminants {
             CliTelemetryEventDiscriminants::EnvironmentImageList => {
                 "Listed available base images from the Warp CLI"
             }
-            CliTelemetryEventDiscriminants::MCPList => "Listed MCP servers from the Warp CLI",
             CliTelemetryEventDiscriminants::ModelList => "Listed models from the Warp CLI",
             CliTelemetryEventDiscriminants::MemoryStoreList => {
                 "Listed memory stores from the Warp CLI"

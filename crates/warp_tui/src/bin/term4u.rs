@@ -11,7 +11,6 @@ fn main() -> Result<()> {
             connectivity: ConnectivityMode::Offline {
                 allow_loopback: true,
             },
-            mcp_static_config: None,
         },
     );
     if cfg!(debug_assertions) {

@@ -2,8 +2,6 @@ use std::path::PathBuf;
 use std::time::Duration;
 
 use itertools::Itertools as _;
-use uuid::Uuid;
-use warp_core::features::FeatureFlag;
 use warp_multi_agent_api as api;
 
 use crate::agent::FileLocations;
@@ -218,48 +216,23 @@ impl From<api::message::tool_call::read_files::File> for FileLocations {
     }
 }
 
-impl From<api::message::tool_call::ReadMcpResource> for AIAgentActionType {
-    fn from(value: api::message::tool_call::ReadMcpResource) -> Self {
-        let server_id = if FeatureFlag::MCPGroupedServerContext.is_enabled() {
-            Uuid::parse_str(&value.server_id).ok()
-        } else {
-            None
-        };
+impl TryFrom<api::message::tool_call::ReadMcpResource> for AIAgentActionType {
+    type Error = ToolToAIAgentActionError;
 
-        AIAgentActionType::ReadMCPResource {
-            server_id,
-            uri: Some(value.uri),
-            name: Default::default(),
-        }
+    fn try_from(_: api::message::tool_call::ReadMcpResource) -> Result<Self, Self::Error> {
+        Err(ToolToAIAgentActionError::UnsupportedProtocolTool(
+            "read_mcp_resource",
+        ))
     }
 }
 
 impl TryFrom<api::message::tool_call::CallMcpTool> for AIAgentActionType {
     type Error = ToolToAIAgentActionError;
 
-    fn try_from(value: api::message::tool_call::CallMcpTool) -> Result<Self, Self::Error> {
-        let Some(args) = value.args else {
-            return Err(ToolToAIAgentActionError::CallMCPToolArgsError(
-                String::from("missing args"),
-            ));
-        };
-
-        let input = prost_to_serde_json(prost_types::Value {
-            kind: Some(prost_types::value::Kind::StructValue(args)),
-        })
-        .map_err(ToolToAIAgentActionError::CallMCPToolArgsError)?;
-
-        let server_id = if FeatureFlag::MCPGroupedServerContext.is_enabled() {
-            Uuid::parse_str(&value.server_id).ok()
-        } else {
-            None
-        };
-
-        Ok(AIAgentActionType::CallMCPTool {
-            server_id,
-            name: value.name,
-            input,
-        })
+    fn try_from(_: api::message::tool_call::CallMcpTool) -> Result<Self, Self::Error> {
+        Err(ToolToAIAgentActionError::UnsupportedProtocolTool(
+            "call_mcp_tool",
+        ))
     }
 }
 
@@ -701,37 +674,6 @@ fn convert_key(
     }
 }
 
-fn prost_to_serde_json(x: prost_types::Value) -> Result<serde_json::Value, String> {
-    use prost_types::value::Kind::*;
-    use serde_json::Value::*;
-
-    let Some(kind) = x.kind else {
-        return Err("google.protobuf.Value kind was None".to_string());
-    };
-
-    Ok(match kind {
-        NullValue(_) => Null,
-        BoolValue(v) => Bool(v),
-        NumberValue(n) => Number(
-            serde_json::Number::from_f64(n)
-                .ok_or_else(|| format!("float {n} is not valid JSON number"))?,
-        ),
-        StringValue(s) => String(s),
-        ListValue(l) => Array(
-            l.values
-                .into_iter()
-                .map(prost_to_serde_json)
-                .collect::<Result<Vec<_>, std::string::String>>()?,
-        ),
-        StructValue(v) => Object(
-            v.fields
-                .into_iter()
-                .map(|(k, v)| prost_to_serde_json(v).map(|v| (k, v)))
-                .collect::<Result<serde_json::Map<_, _>, std::string::String>>()?,
-        ),
-    })
-}
-
 /// Helper trait to easily convert default values to `None`.
 /// With `prost`, scalar types are converted to their default values instead
 /// of `None` if the type is unset. This trait allows a more natural
@@ -808,3 +750,7 @@ impl From<api::message::tool_call::insert_review_comments::Comment> for InsertRe
         }
     }
 }
+
+#[cfg(test)]
+#[path = "convert_tests.rs"]
+mod tests;

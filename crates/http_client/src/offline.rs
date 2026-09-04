@@ -2,8 +2,7 @@ use std::net::IpAddr;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
-use offline_guard::OutboundRefused;
-use offline_guard::loopback_addrs;
+use offline_guard::{OutboundRefused, loopback_addrs};
 use reqwest::dns::{Addrs, Name, Resolve, Resolving};
 
 #[derive(Default)]

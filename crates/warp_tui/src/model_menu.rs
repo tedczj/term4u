@@ -6,7 +6,7 @@ use warp::settings::AISettings;
 use warp::tui_export::UserWorkspaces;
 use warp::tui_export::{
     AISettingsChangedEvent, LLMId, LLMPreferences, LLMPreferencesEvent, ModelPickerChoice,
-    TeamContextResolver, TeamScope, query_model_picker_choices, should_show_bedrock_icon_for_model,
+    TeamContextResolver, TeamScope, query_model_picker_choices,
     should_show_gemini_enterprise_agent_platform_icon_for_model, should_show_key_icon_for_model,
 };
 use warp_editor::model::CoreEditorModel;
@@ -284,7 +284,6 @@ fn model_menu_row(
 ) -> TuiModelMenuRow {
     let is_key_connected = should_show_key_icon_for_model(&choice.llm, scope, app);
     let uses_external_inference = is_key_connected
-        || should_show_bedrock_icon_for_model(&choice.llm, scope, app)
         || should_show_gemini_enterprise_agent_platform_icon_for_model(&choice.llm, scope, app);
     TuiModelMenuRow {
         is_selectable: choice.is_selectable(),

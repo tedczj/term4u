@@ -18,9 +18,9 @@ use warp::tui_export::VoiceInput;
 use warp::tui_export::{
     AcceptSlashCommandOrSavedPrompt, BlocklistAIHistoryModel, BlocklistAIInputModel,
     ConversationSelectionEvent, InputConfig, InputModePolicy, InputType, LLMId, PolicyConfigUpdate,
-    SlashCommandId, SlashCommandMixer, TuiMcpAction, TuiMcpServerId, TuiUpArrowHistoryItemKind,
-    add_tui_history_test_models, blocklist_ai_history_model_with_queries,
-    register_tui_input_mode_test_settings, register_tui_session_view_test_singletons,
+    SlashCommandId, SlashCommandMixer, TuiUpArrowHistoryItemKind, add_tui_history_test_models,
+    blocklist_ai_history_model_with_queries, register_tui_input_mode_test_settings,
+    register_tui_session_view_test_singletons,
 };
 use warp_core::features::FeatureFlag;
 use warp_editor::model::CoreEditorModel;
@@ -40,8 +40,8 @@ use warpui_core::{
 
 use super::{
     INLINE_MENU_CAN_CLEAR_SELECTED_FLAG, INPUT_HANDLES_ESCAPE_FLAG, InputKeymapContextConfig,
-    MCP_MENU_ACTIVE_FLAG, SHELL_COMPLETION_AVAILABLE_FLAG, TuiInputAction, TuiInputView,
-    TuiInputViewEvent, input_keymap_context,
+    SHELL_COMPLETION_AVAILABLE_FLAG, TuiInputAction, TuiInputView, TuiInputViewEvent,
+    input_keymap_context,
 };
 use crate::completion_menu::{TuiCompletionAcceptance, TuiCompletionMenuModel};
 use crate::editor_element::{TuiEditorAction, TuiEditorElement};
@@ -1086,7 +1086,6 @@ fn input_escape_context_is_present_only_while_escape_is_handled() {
 
     let open = input_keymap_context(InputKeymapContextConfig {
         input_handles_escape: true,
-        mcp_menu_active: true,
         plan_toggle_available: true,
         keyboard_enhancement_supported: true,
         shell_completion_available: true,
@@ -1094,7 +1093,6 @@ fn input_escape_context_is_present_only_while_escape_is_handled() {
     });
     assert!(open.set.contains("TuiInputView"));
     assert!(open.set.contains(INPUT_HANDLES_ESCAPE_FLAG));
-    assert!(open.set.contains(MCP_MENU_ACTIVE_FLAG));
     assert!(
         open.set
             .contains(crate::keybindings::PLAN_TOGGLE_AVAILABLE_FLAG)
@@ -1106,101 +1104,6 @@ fn input_escape_context_is_present_only_while_escape_is_handled() {
     assert!(open.set.contains(SHELL_COMPLETION_AVAILABLE_FLAG));
     assert!(open.set.contains(INLINE_MENU_CAN_CLEAR_SELECTED_FLAG));
 }
-#[derive(Clone)]
-struct TestMcpMenu {
-    action: TuiMcpAction,
-}
-
-impl TuiInlineMenuHandle for TestMcpMenu {
-    fn mode(&self) -> TuiInputSuggestionsMode {
-        TuiInputSuggestionsMode::Mcp
-    }
-
-    fn is_open(&self, _ctx: &AppContext) -> bool {
-        true
-    }
-
-    fn input_highlight_range(&self, _ctx: &AppContext) -> Option<Range<CharOffset>> {
-        None
-    }
-
-    fn input_argument_hint_text(&self, _ctx: &AppContext) -> Option<&'static str> {
-        None
-    }
-
-    fn select_previous(&self, _ctx: &mut AppContext) {}
-
-    fn select_next(&self, _ctx: &mut AppContext) {}
-
-    fn accept(&self, _ctx: &mut AppContext) -> Option<TuiInlineMenuAccepted> {
-        None
-    }
-
-    fn accept_secondary(&self, _ctx: &mut AppContext) -> Option<TuiInlineMenuAccepted> {
-        Some(TuiInlineMenuAccepted::Mcp(self.action))
-    }
-
-    fn dismiss(&self, _ctx: &mut AppContext) {}
-
-    fn snapshot(&self, _ctx: &AppContext) -> Option<TuiInlineMenuSnapshot> {
-        None
-    }
-}
-
-#[test]
-fn ctrl_r_dispatches_selected_mcp_credential_removal() {
-    App::test((), |mut app| async move {
-        let (window_id, view, expected, accepted) = app.update(|ctx| {
-            crate::input::init(ctx);
-            ctx.add_singleton_model(|_| Appearance::mock());
-            add_test_semantic_selection(ctx);
-            let input_model = ctx.add_model(|ctx| CodeEditorModel::new_tui(W, ctx));
-            let input_mode = BlocklistAIInputModel::mock(Rc::new(TestInputModePolicy), ctx);
-            let suggestions_mode = add_suggestions_mode(ctx, TuiInputSuggestionsMode::Mcp);
-            let expected = TuiMcpAction::LogOut(TuiMcpServerId::FileBased(7));
-            let menu = TuiInlineMenu::new(TestMcpMenu { action: expected });
-            let (window_id, view) = ctx.add_tui_window(
-                AddWindowOptions {
-                    window_style: WindowStyle::NotStealFocus,
-                    ..Default::default()
-                },
-                move |ctx| {
-                    TuiInputView::new_for_test(
-                        input_model,
-                        input_mode,
-                        suggestions_mode,
-                        vec![menu],
-                        |_| false,
-                        ctx,
-                    )
-                },
-            );
-            view.update(ctx, |_, ctx| ctx.focus_self());
-
-            let accepted = Rc::new(RefCell::new(Vec::new()));
-            let accepted_for_subscription = accepted.clone();
-            ctx.subscribe_to_view(&view, move |_, event, _| {
-                if let TuiInputViewEvent::AcceptedMcp(action) = event {
-                    accepted_for_subscription.borrow_mut().push(*action);
-                }
-            });
-            (window_id, view, expected, accepted)
-        });
-
-        let handled = app
-            .dispatch_keystroke(
-                window_id,
-                &[view.id()],
-                &Keystroke::parse("ctrl-r").expect("valid keystroke"),
-                false,
-            )
-            .expect("keystroke dispatch succeeds");
-
-        assert!(handled);
-        assert_eq!(accepted.borrow().as_slice(), &[expected]);
-    });
-}
-
 fn add_suggestions_mode(
     ctx: &mut AppContext,
     initial_mode: TuiInputSuggestionsMode,
@@ -1350,8 +1253,6 @@ fn enter_and_escape_stop_listening_while_escape_cancels_transcribing() {
                 | TuiInputViewEvent::AcceptedSlashCommand(_)
                 | TuiInputViewEvent::AcceptedConversation(_)
                 | TuiInputViewEvent::AcceptedModel(_)
-                | TuiInputViewEvent::AcceptedMcp(_)
-                | TuiInputViewEvent::AcceptedMcpInstall(_)
                 | TuiInputViewEvent::MoveFocusUp
                 | TuiInputViewEvent::AcceptedPromptAndCommandHistory { .. }
                 | TuiInputViewEvent::RequestShellCompletion
@@ -2232,8 +2133,6 @@ fn multiline_paste_emits_once_and_fallback_inserts_without_submitting() {
                 | TuiInputViewEvent::AcceptedConversation(_)
                 | TuiInputViewEvent::AcceptedModel(_)
                 | TuiInputViewEvent::AcceptedTeam(_)
-                | TuiInputViewEvent::AcceptedMcp(_)
-                | TuiInputViewEvent::AcceptedMcpInstall(_)
                 | TuiInputViewEvent::AcceptedPromptAndCommandHistory { .. }
                 | TuiInputViewEvent::RequestShellCompletion
                 | TuiInputViewEvent::BackspaceAtEmptyInput

@@ -82,7 +82,6 @@ use crate::ai::blocklist::block::{
 };
 use crate::ai::blocklist::history_model::BlocklistAIHistoryModel;
 use crate::ai::blocklist::inline_action::ask_user_question_view::AskUserQuestionView;
-use crate::ai::blocklist::inline_action::aws_bedrock_credentials_error::AwsBedrockCredentialsErrorView;
 use crate::ai::blocklist::inline_action::create_or_edit_document::CreateOrEditDocumentAction;
 use crate::ai::blocklist::inline_action::gemini_enterprise_credentials_error::GeminiEnterpriseCredentialsErrorView;
 use crate::ai::blocklist::inline_action::inline_action_header::{
@@ -156,7 +155,6 @@ pub(crate) struct Props<'a> {
     pub(crate) detected_links_state: &'a DetectedLinksState,
     pub(crate) secret_redaction_state: &'a SecretRedactionState,
     pub(super) requested_commands: &'a HashMap<AIAgentActionId, RequestedCommand>,
-    pub(super) requested_mcp_tools: &'a HashMap<AIAgentActionId, RequestedCommand>,
     pub(super) requested_edits: &'a IndexMap<AIAgentActionId, RequestedEdit>,
     pub(super) unit_test_suggestions:
         &'a HashMap<AIAgentActionId, ViewHandle<SuggestedUnitTestsView>>,
@@ -189,8 +187,6 @@ pub(crate) struct Props<'a> {
     pub(super) is_conversation_transcript_viewer: bool,
     #[cfg(not(target_family = "wasm"))]
     pub(super) is_cloud_agent_context: bool,
-    pub(super) aws_bedrock_credentials_error_view:
-        Option<&'a ViewHandle<AwsBedrockCredentialsErrorView>>,
     pub(super) gemini_enterprise_credentials_error_view:
         Option<&'a ViewHandle<GeminiEnterpriseCredentialsErrorView>>,
     pub(super) imported_comments: &'a HashMap<AIAgentActionId, ImportedCommentGroup>,
@@ -633,50 +629,6 @@ pub(super) fn render(props: Props, app: &AppContext) -> Box<dyn Element> {
                                 ),
                                 app,
                             ));
-                        }
-                        AIAgentOutputMessageType::Action(AIAgentAction {
-                            action:
-                                AIAgentActionType::ReadMCPResource {
-                                    server_id: _,
-                                    name,
-                                    uri,
-                                },
-                            id,
-                            ..
-                        }) => {
-                            should_render_footer = false;
-                            should_render_suggestions = false;
-                            let name = uri.as_ref().unwrap_or(name);
-                            output_items.add_child(render_read_mcp_resource(props, id, name, app));
-                        }
-                        AIAgentOutputMessageType::Action(AIAgentAction {
-                            action: AIAgentActionType::CallMCPTool { .. },
-                            id,
-                            ..
-                        }) => {
-                            // Since we're rendering an MCP tool call, it will
-                            // render the citations so don't render them again.
-                            should_render_references_section = false;
-
-                            let is_action_done = props
-                                .action_model
-                                .as_ref(app)
-                                .get_action_status(id)
-                                .as_ref()
-                                .is_some_and(|status| status.is_done());
-                            if !is_action_done {
-                                // Ratings & suggestions should not be rendered for MCP tool call actions that are not complete.
-                                should_render_footer = false;
-                                should_render_suggestions = false;
-                            }
-
-                            if let Some(rendered_mcp_tool) = props
-                                .requested_mcp_tools
-                                .get(id)
-                                .map(|requested_mcp_tool| requested_mcp_tool.render())
-                            {
-                                output_items.add_child(rendered_mcp_tool);
-                            }
                         }
                         AIAgentOutputMessageType::Action(AIAgentAction {
                             action: AIAgentActionType::AskUserQuestion { .. },
@@ -1220,8 +1172,6 @@ pub(super) fn render(props: Props, app: &AppContext) -> Box<dyn Element> {
                             .state_handles
                             .invalid_api_key_button_handle,
                         subscribe_button_handle: &props.state_handles.subscribe_button_handle,
-                        aws_bedrock_credentials_error_view: props
-                            .aws_bedrock_credentials_error_view,
                         gemini_enterprise_credentials_error_view: props
                             .gemini_enterprise_credentials_error_view,
                         icon_right_margin: 16.,
@@ -2841,52 +2791,6 @@ fn render_comment_addressed_header(comment: &ReviewComment, app: &AppContext) ->
     let mut renderable_action = RenderableAction::new_with_element(text_element, app);
     renderable_action =
         renderable_action.with_icon(icons::addressed_comment_icon(appearance).finish());
-
-    renderable_action.render(app).finish()
-}
-
-fn render_read_mcp_resource(
-    props: Props,
-    action_id: &AIAgentActionId,
-    name: &str,
-    app: &AppContext,
-) -> Box<dyn Element> {
-    let appearance = Appearance::as_ref(app);
-    let status = props.action_model.as_ref(app).get_action_status(action_id);
-
-    let mut renderable_action = RenderableAction::new(name, app);
-
-    if status.as_ref().is_some_and(|status| status.is_blocked()) {
-        let buttons = props
-            .action_buttons
-            .get(action_id)
-            .expect("Button states must exist for each requested action.");
-
-        renderable_action = renderable_action
-            .with_header(blocked_action_header(
-                action_id.clone(),
-                "OK if I read this MCP resource?",
-                buttons.run_button.clone(),
-                buttons.cancel_button.clone(),
-                props.action_model,
-                props.model,
-                app,
-            ))
-            .with_highlighted_border()
-            .with_background_color(appearance.theme().background().into_solid());
-    } else {
-        if (props.model.status(app).is_streaming()
-            && !props.model.is_first_action_in_output(action_id, app))
-            || status.as_ref().is_some_and(|s| s.is_queued())
-        {
-            renderable_action = renderable_action.with_font_color(blended_colors::text_disabled(
-                appearance.theme(),
-                appearance.theme().surface_2(),
-            ));
-        }
-        renderable_action = renderable_action
-            .with_icon(action_icon(action_id, props.action_model, props.model, app).finish());
-    }
 
     renderable_action.render(app).finish()
 }

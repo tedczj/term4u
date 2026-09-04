@@ -58,7 +58,7 @@ Start by understanding the user's intent. The current conversation might already
 
 Proactively ask questions about edge cases, input/output formats, example files, success criteria, and dependencies. Wait to write test prompts until you've got this part ironed out.
 
-Check available MCPs - if useful for research (searching docs, finding similar skills, looking up best practices), research in parallel via subagents if available, otherwise inline. Come prepared with context to reduce burden on the user.
+Research relevant documentation and examples in parallel when useful. Come prepared with context to reduce burden on the user.
 
 ### Write the SKILL.md
 
@@ -103,7 +103,7 @@ These word counts are approximate and you can feel free to go longer if needed.
 cloud-deploy/
 ├── SKILL.md (workflow + selection)
 └── references/
-    ├── aws.md
+    ├── cloud.md
     ├── gcp.md
     └── azure.md
 ```

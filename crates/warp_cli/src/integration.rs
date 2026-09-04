@@ -2,7 +2,6 @@ use clap::{Args, Subcommand};
 
 use crate::config_file::ConfigFileArgs;
 use crate::environment::{EnvironmentCreateArgs, EnvironmentUpdateArgs};
-use crate::mcp::MCPSpec;
 use crate::model::ModelArgs;
 use crate::provider::ProviderType;
 
@@ -43,16 +42,6 @@ pub struct CreateIntegrationArgs {
     #[command(flatten)]
     pub config_file: ConfigFileArgs,
 
-    /// MCP servers to configure for this integration.
-    ///
-    /// Can be specified as:
-    /// - A path to a JSON file containing MCP configuration
-    /// - Inline JSON with MCP server configuration
-    ///
-    /// Can be specified multiple times to include multiple servers.
-    #[arg(long = "mcp", value_name = "SPEC")]
-    pub mcp_specs: Vec<MCPSpec>,
-
     /// Custom instructions for the integration.
     #[arg(long = "prompt", short = 'p')]
     pub prompt: Option<String>,
@@ -77,22 +66,6 @@ pub struct UpdateIntegrationArgs {
 
     #[command(flatten)]
     pub config_file: ConfigFileArgs,
-
-    /// MCP servers to configure for this integration.
-    ///
-    /// Can be specified as:
-    /// - A path to a JSON file containing MCP configuration
-    /// - Inline JSON with MCP server configuration
-    ///
-    /// Can be specified multiple times to include multiple servers.
-    #[arg(long = "mcp", value_name = "SPEC")]
-    pub mcp_specs: Vec<MCPSpec>,
-
-    /// Remove MCP servers from this integration by server name.
-    ///
-    /// This removes the server entry whose key matches `SERVER_NAME`.
-    #[arg(long = "remove-mcp", value_name = "SERVER_NAME")]
-    pub remove_mcp: Vec<String>,
 
     /// Custom instructions for the integration.
     #[arg(long = "prompt", short = 'p')]

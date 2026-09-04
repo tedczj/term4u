@@ -39,7 +39,6 @@ fn single_tab_snapshot(root: PaneNodeSnapshot) -> AppState {
         }],
         active_window_index: Some(0),
         block_lists: Default::default(),
-        running_mcp_servers: Default::default(),
     }
 }
 
@@ -65,7 +64,6 @@ fn multi_tab_snapshot(active_tab_index: usize, tabs: Vec<TabSnapshot>) -> AppSta
         }],
         active_window_index: Some(0),
         block_lists: Default::default(),
-        running_mcp_servers: Default::default(),
     }
 }
 

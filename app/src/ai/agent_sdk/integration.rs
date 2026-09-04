@@ -89,15 +89,6 @@ impl IntegrationCommandRunner {
             let enabled = true;
             let is_update = false;
 
-            let cli_mcp_servers =
-                match super::mcp_config::build_mcp_servers_from_specs(&args.mcp_specs) {
-                    Ok(mcp_servers) => mcp_servers,
-                    Err(err) => {
-                        ctx.terminate_app(TerminationMode::ForceTerminate, Some(Err(err)));
-                        return;
-                    }
-                };
-
             let mut merged_config = super::config_file::merge_with_precedence(
                 loaded_file.as_ref(),
                 crate::ai::agent_tasks::AgentConfigSnapshot {
@@ -107,7 +98,6 @@ impl IntegrationCommandRunner {
                     runner_id: None,
                     model_id: args.model.model.clone(),
                     base_prompt: args.prompt.clone(),
-                    mcp_servers: cli_mcp_servers,
                     profile_id: None,
                     worker_host: args.worker_host.clone(),
                     skill_spec: None,
@@ -136,17 +126,6 @@ impl IntegrationCommandRunner {
 
             let base_prompt = merged_config.base_prompt.take();
             let worker_host = merged_config.worker_host.take();
-
-            let mcp_servers_json = match merged_config.mcp_servers.take() {
-                Some(map) => match serde_json::to_string(&map) {
-                    Ok(json) => Some(json),
-                    Err(err) => {
-                        ctx.terminate_app(TerminationMode::ForceTerminate, Some(Err(err.into())));
-                        return;
-                    }
-                },
-                None => None,
-            };
 
             //If the user didn't explicitly request no environment, load environment from the config
             let mut environment_args = args.environment;
@@ -181,8 +160,6 @@ impl IntegrationCommandRunner {
                 environment_uid,
                 base_prompt,
                 model_id,
-                mcp_servers_json,
-                None,
                 worker_host,
                 enabled,
                 is_update,
@@ -199,8 +176,6 @@ impl IntegrationCommandRunner {
         environment_uid: Option<String>,
         base_prompt: Option<String>,
         model_id: Option<String>,
-        mcp_servers_json: Option<String>,
-        remove_mcp_server_names: Option<Vec<String>>,
         worker_host: Option<String>,
         enabled: bool,
         is_update: bool,
@@ -226,8 +201,6 @@ impl IntegrationCommandRunner {
         let future_environment_uid = environment_uid.clone();
         let future_base_prompt = base_prompt.clone();
         let future_model_id = model_id.clone();
-        let future_mcp_servers_json = mcp_servers_json.clone();
-        let future_remove_mcp_server_names = remove_mcp_server_names.clone();
         let future_worker_host = worker_host.clone();
         let future_is_update = is_update;
 
@@ -239,8 +212,6 @@ impl IntegrationCommandRunner {
                     future_environment_uid,
                     future_base_prompt,
                     future_model_id,
-                    future_mcp_servers_json,
-                    future_remove_mcp_server_names,
                     future_worker_host,
                     enabled,
                 )
@@ -274,8 +245,6 @@ impl IntegrationCommandRunner {
                                 let next_environment_uid = environment_uid.clone();
                                 let next_base_prompt = base_prompt.clone();
                                 let next_model_id = model_id.clone();
-                                let next_mcp_servers_json = mcp_servers_json.clone();
-                                let next_remove_mcp_server_names = remove_mcp_server_names.clone();
                                 let next_worker_host = worker_host.clone();
                                 let next_enabled = enabled;
                                 let next_is_update = is_update;
@@ -294,8 +263,6 @@ impl IntegrationCommandRunner {
                                                     next_environment_uid,
                                                     next_base_prompt,
                                                     next_model_id,
-                                                    next_mcp_servers_json,
-                                                    next_remove_mcp_server_names,
                                                     next_worker_host,
                                                     next_enabled,
                                                     next_is_update,
@@ -398,20 +365,9 @@ impl IntegrationCommandRunner {
                 None => None,
             };
 
-            let remove_mcp = args.remove_mcp.clone();
-
             let integration_type = args.provider.slug();
             let enabled = true;
             let is_update = true;
-
-            let cli_mcp_servers =
-                match super::mcp_config::build_mcp_servers_from_specs(&args.mcp_specs) {
-                    Ok(mcp_servers) => mcp_servers,
-                    Err(err) => {
-                        ctx.terminate_app(TerminationMode::ForceTerminate, Some(Err(err)));
-                        return;
-                    }
-                };
 
             let mut merged_config = super::config_file::merge_with_precedence(
                 loaded_file.as_ref(),
@@ -422,7 +378,6 @@ impl IntegrationCommandRunner {
                     runner_id: None,
                     model_id: args.model.model.clone(),
                     base_prompt: args.prompt.clone(),
-                    mcp_servers: cli_mcp_servers,
                     profile_id: None,
                     worker_host: args.worker_host.clone(),
                     skill_spec: None,
@@ -452,40 +407,6 @@ impl IntegrationCommandRunner {
             let base_prompt = merged_config.base_prompt.take();
             let worker_host = merged_config.worker_host.take();
 
-            // MCP update semantics are patch-only:
-            // - `mcp_servers_json` adds/overwrites MCP servers.
-            // - `remove_mcp_server_names` removes MCP servers.
-            // If both are present, removals win by filtering removed names out of the JSON payload.
-            let mcp_servers_json = match merged_config.mcp_servers.take() {
-                Some(mut map) => {
-                    for name in &remove_mcp {
-                        map.remove(name);
-                    }
-
-                    if map.is_empty() {
-                        None
-                    } else {
-                        match serde_json::to_string(&map) {
-                            Ok(json) => Some(json),
-                            Err(err) => {
-                                ctx.terminate_app(
-                                    TerminationMode::ForceTerminate,
-                                    Some(Err(err.into())),
-                                );
-                                return;
-                            }
-                        }
-                    }
-                }
-                None => None,
-            };
-
-            let remove_mcp_server_names = if args.remove_mcp.is_empty() {
-                None
-            } else {
-                Some(args.remove_mcp)
-            };
-
             if args.environment.remove_environment {
                 // Explicitly requested to update without an environment.
                 runner.start_create_or_update_flow(
@@ -494,8 +415,6 @@ impl IntegrationCommandRunner {
                     Some(String::new()),
                     base_prompt,
                     model_id,
-                    mcp_servers_json,
-                    remove_mcp_server_names,
                     worker_host,
                     enabled,
                     is_update,
@@ -512,8 +431,6 @@ impl IntegrationCommandRunner {
                 environment_uid,
                 base_prompt,
                 model_id,
-                mcp_servers_json,
-                remove_mcp_server_names,
                 worker_host,
                 enabled,
                 is_update,

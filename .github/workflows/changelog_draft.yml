@@ -34,10 +34,10 @@ permissions:
 jobs:
   draft:
     name: Generate changelog draft
-    runs-on: namespace-profile-ubuntu-small
+    runs-on: ubuntu-latest
     steps:
       - name: Check out code
-        uses: namespacelabs/nscloud-checkout-action@445c25d7009680597d73eb03c4e1cd5be522ed73 # v9.0.0
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           # Check out the default branch (not the release tag) so the skill
           # files and scripts are always available — older release tags may
@@ -64,7 +64,7 @@ jobs:
           share: team
 
       - name: Upload changelog artifacts
-        uses: namespace-actions/upload-artifact@f6ccaacc655aec41b93af180d1d7eef21af862d2 # v1.0.3
+        uses: actions/upload-artifact@v4
         with:
           name: changelog-draft
           path: |

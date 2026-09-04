@@ -13,7 +13,7 @@ permissions:
 jobs:
   analyze:
     name: Analyze feature flags
-    runs-on: namespace-profile-ubuntu-small
+    runs-on: ubuntu-latest
     if: github.repository_owner == 'warpdotdev'
     permissions:
       contents: read
@@ -26,7 +26,7 @@ jobs:
       artifact_url: ${{ steps.upload_feature_flag_log.outputs.artifact-url }}
     steps:
       - name: Check out code
-        uses: namespacelabs/nscloud-checkout-action@445c25d7009680597d73eb03c4e1cd5be522ed73 # v9.0.0
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           fetch-depth: 0
 
@@ -69,7 +69,7 @@ jobs:
 
       - name: Upload feature flag log
         id: upload_feature_flag_log
-        uses: namespace-actions/upload-artifact@f6ccaacc655aec41b93af180d1d7eef21af862d2 # v1.0.3
+        uses: actions/upload-artifact@v4
         with:
           name: flags-to-cleanup
           path: ${{ runner.temp }}/flags_to_cleanup.jsonl
@@ -151,20 +151,18 @@ jobs:
     name: Run cleanup agent
     needs: analyze
     if: ${{ needs.analyze.outputs.flag_name && needs.analyze.outputs.flag_name != 'null' }}
-    runs-on: namespace-profile-ubuntu-small
+    runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
       - name: Check out code
-        uses: namespacelabs/nscloud-checkout-action@445c25d7009680597d73eb03c4e1cd5be522ed73 # v9.0.0
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           ref: ${{ needs.analyze.outputs.analyzed_sha }}
           fetch-depth: 0
 
       - name: Setup Rust cache
-        uses: namespacelabs/nscloud-cache-action@c5f8dab7560444c4bf8dbc64f1b203431873c547 # v1.6.1
-        with:
-          cache: rust
+        uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
 
       - name: Clean up the unused feature flag
         id: cleanup_agent
@@ -198,7 +196,7 @@ jobs:
           fi
 
       - name: Upload cleanup patch
-        uses: namespace-actions/upload-artifact@f6ccaacc655aec41b93af180d1d7eef21af862d2 # v1.0.3
+        uses: actions/upload-artifact@v4
         with:
           name: cleanup-patch
           path: ${{ runner.temp }}/cleanup.patch
@@ -207,19 +205,19 @@ jobs:
     name: Create cleanup PR
     needs: [analyze, cleanup]
     if: ${{ needs.analyze.outputs.flag_name && needs.analyze.outputs.flag_name != 'null' }}
-    runs-on: namespace-profile-ubuntu-small
+    runs-on: ubuntu-latest
     permissions:
       contents: write
       pull-requests: write
     steps:
       - name: Check out code
-        uses: namespacelabs/nscloud-checkout-action@445c25d7009680597d73eb03c4e1cd5be522ed73 # v9.0.0
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           ref: ${{ needs.analyze.outputs.analyzed_sha }}
           fetch-depth: 0
 
       - name: Download cleanup patch
-        uses: namespace-actions/download-artifact@7cbad919e4b0e09f17e9d6311a444ff002992b5b # v2.0.1
+        uses: actions/download-artifact@v4
         with:
           name: cleanup-patch
           path: ${{ runner.temp }}

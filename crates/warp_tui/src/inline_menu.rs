@@ -5,7 +5,7 @@ use std::rc::Rc;
 
 use string_offset::CharOffset;
 use warp::tui_export::{
-    AcceptSlashCommandOrSavedPrompt, AgentConversationEntryId, LLMId, ServerId, TuiMcpAction,
+    AcceptSlashCommandOrSavedPrompt, AgentConversationEntryId, LLMId, ServerId,
     TuiUpArrowHistoryItemKind,
 };
 use warp_search_core::inline_menu::{InlineMenuResultsUpdate, InlineMenuSelection};
@@ -21,8 +21,6 @@ use crate::api_keys_menu::TuiApiKeysMenuModel;
 use crate::completion_menu::TuiCompletionAcceptance;
 use crate::conversation_menu::TuiConversationMenuModel;
 use crate::input_suggestions_mode::TuiInputSuggestionsMode;
-use crate::mcp_install_flow::{TuiMcpInstallFlowAction, TuiMcpInstallFlowModel};
-use crate::mcp_menu::TuiMcpMenuModel;
 use crate::model_menu::TuiModelMenuModel;
 use crate::prompt_and_command_history_menu::TuiPromptAndCommandHistoryMenuModel;
 use crate::skills_menu::TuiSkillMenuModel;
@@ -61,109 +59,6 @@ pub(crate) fn active_inline_menu(
         .iter()
         .find(|menu| menu.mode() == mode && menu.is_open(ctx))
         .cloned()
-}
-
-impl TuiInlineMenuHandle for ModelHandle<TuiMcpMenuModel> {
-    fn mode(&self) -> TuiInputSuggestionsMode {
-        TuiInputSuggestionsMode::Mcp
-    }
-    fn is_open(&self, ctx: &AppContext) -> bool {
-        self.as_ref(ctx).is_open(ctx)
-    }
-    fn open(&self, ctx: &mut AppContext) {
-        self.update(ctx, |model, ctx| model.open(ctx));
-    }
-
-    fn input_highlight_range(&self, _ctx: &AppContext) -> Option<Range<CharOffset>> {
-        None
-    }
-
-    fn input_argument_hint_text(&self, ctx: &AppContext) -> Option<&'static str> {
-        self.as_ref(ctx).input_hint_text(ctx)
-    }
-
-    fn select_previous(&self, ctx: &mut AppContext) {
-        self.update(ctx, |model, ctx| model.select_previous(ctx));
-    }
-
-    fn select_next(&self, ctx: &mut AppContext) {
-        self.update(ctx, |model, ctx| model.select_next(ctx));
-    }
-
-    fn accept(&self, ctx: &mut AppContext) -> Option<TuiInlineMenuAccepted> {
-        self.as_ref(ctx)
-            .accept_selected(ctx)
-            .map(TuiInlineMenuAccepted::Mcp)
-    }
-    fn accept_secondary(&self, ctx: &mut AppContext) -> Option<TuiInlineMenuAccepted> {
-        self.as_ref(ctx)
-            .logout_selected(ctx)
-            .map(TuiInlineMenuAccepted::Mcp)
-    }
-
-    fn dismiss(&self, ctx: &mut AppContext) {
-        self.update(ctx, |model, ctx| model.dismiss(ctx));
-    }
-
-    fn snapshot(&self, ctx: &AppContext) -> Option<TuiInlineMenuSnapshot> {
-        self.as_ref(ctx).snapshot(ctx)
-    }
-
-    fn select_by_snapshot_index(&self, index: usize, ctx: &mut AppContext) -> bool {
-        self.update(ctx, |model, ctx| model.select_at_snapshot_index(index, ctx))
-    }
-
-    fn scroll_by_delta(&self, delta: isize, ctx: &mut AppContext) {
-        self.update(ctx, |model, ctx| model.scroll_by_delta(delta, ctx));
-    }
-}
-
-impl TuiInlineMenuHandle for ModelHandle<TuiMcpInstallFlowModel> {
-    fn mode(&self) -> TuiInputSuggestionsMode {
-        TuiInputSuggestionsMode::McpInstall
-    }
-
-    fn is_open(&self, ctx: &AppContext) -> bool {
-        self.as_ref(ctx).is_open(ctx)
-    }
-
-    fn input_highlight_range(&self, _ctx: &AppContext) -> Option<Range<CharOffset>> {
-        None
-    }
-
-    fn input_argument_hint_text(&self, ctx: &AppContext) -> Option<&'static str> {
-        self.as_ref(ctx).input_hint_text(ctx)
-    }
-
-    fn select_previous(&self, ctx: &mut AppContext) {
-        self.update(ctx, |model, ctx| model.select_previous(ctx));
-    }
-
-    fn select_next(&self, ctx: &mut AppContext) {
-        self.update(ctx, |model, ctx| model.select_next(ctx));
-    }
-
-    fn accept(&self, ctx: &mut AppContext) -> Option<TuiInlineMenuAccepted> {
-        self.as_ref(ctx)
-            .accept(ctx)
-            .map(TuiInlineMenuAccepted::McpInstall)
-    }
-
-    fn dismiss(&self, ctx: &mut AppContext) {
-        self.update(ctx, |model, ctx| model.dismiss(ctx));
-    }
-
-    fn snapshot(&self, ctx: &AppContext) -> Option<TuiInlineMenuSnapshot> {
-        self.as_ref(ctx).snapshot(ctx)
-    }
-
-    fn select_by_snapshot_index(&self, index: usize, ctx: &mut AppContext) -> bool {
-        self.update(ctx, |model, ctx| model.select_at_snapshot_index(index, ctx))
-    }
-
-    fn scroll_by_delta(&self, delta: isize, ctx: &mut AppContext) {
-        self.update(ctx, |model, ctx| model.scroll_by_delta(delta, ctx));
-    }
 }
 
 /// A presentation-only row in a TUI inline menu.
@@ -405,8 +300,6 @@ pub(crate) enum TuiInlineMenuAccepted {
     Conversation(AgentConversationEntryId),
     Model(LLMId),
     Team(ServerId),
-    Mcp(TuiMcpAction),
-    McpInstall(TuiMcpInstallFlowAction),
     PromptAndCommandHistory {
         text: String,
         kind: TuiUpArrowHistoryItemKind,
@@ -469,10 +362,6 @@ pub(crate) trait TuiInlineMenuHandle {
     fn select_next(&self, ctx: &mut AppContext);
     /// Accepts the selected row.
     fn accept(&self, ctx: &mut AppContext) -> Option<TuiInlineMenuAccepted>;
-    /// Accepts the selected row's optional secondary action.
-    fn accept_secondary(&self, _ctx: &mut AppContext) -> Option<TuiInlineMenuAccepted> {
-        None
-    }
     /// Dismisses the menu.
     fn dismiss(&self, ctx: &mut AppContext);
     /// Returns the menu's presentation snapshot.
@@ -602,14 +491,6 @@ impl TuiInlineMenu {
         }
         result
     }
-    pub(crate) fn accept_secondary(&self, ctx: &mut AppContext) -> Option<TuiInlineMenuAccepted> {
-        let result = self.handle.accept_secondary(ctx);
-        if result.is_some() {
-            reset_hover_states(&self.item_mouse_states);
-        }
-        result
-    }
-
     pub(crate) fn dismiss(&self, ctx: &mut AppContext) {
         self.handle.dismiss(ctx);
         reset_hover_states(&self.item_mouse_states);

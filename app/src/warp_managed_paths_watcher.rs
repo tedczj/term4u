@@ -2,7 +2,6 @@ use std::path::{Path, PathBuf};
 #[cfg(not(target_family = "wasm"))]
 use std::{fs, sync::Arc, time::Duration};
 
-use dirs::home_dir;
 #[cfg(not(target_family = "wasm"))]
 use notify_debouncer_full::notify::{RecursiveMode, WatchFilter};
 use repo_metadata::RepositoryUpdate;
@@ -66,35 +65,8 @@ pub(crate) fn warp_home_skills_dir() -> Option<PathBuf> {
 }
 
 #[cfg_attr(target_family = "wasm", allow(dead_code))]
-pub(crate) fn warp_home_mcp_config_file_path() -> Option<PathBuf> {
-    warp_core::paths::warp_home_mcp_config_file_path()
-}
-#[cfg_attr(target_family = "wasm", allow(dead_code))]
-pub(crate) fn active_mcp_config_file_path() -> Option<PathBuf> {
-    match settings::settings_mode() {
-        settings::SettingsMode::Gui => warp_home_mcp_config_file_path(),
-        settings::SettingsMode::Tui => Some(warp_core::paths::tui_mcp_config_file_path()),
-    }
-}
-
-#[cfg_attr(target_family = "wasm", allow(dead_code))]
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct WarpMcpConfigPath {
-    pub(crate) root_path: PathBuf,
-    pub(crate) config_path: PathBuf,
-}
-
-#[cfg_attr(target_family = "wasm", allow(dead_code))]
 pub(crate) fn warp_managed_skill_dirs() -> Vec<PathBuf> {
     warp_home_skills_dir().into_iter().collect()
-}
-
-#[cfg_attr(target_family = "wasm", allow(dead_code))]
-pub(crate) fn warp_managed_mcp_config_path() -> Option<WarpMcpConfigPath> {
-    Some(WarpMcpConfigPath {
-        root_path: home_dir()?,
-        config_path: active_mcp_config_file_path()?,
-    })
 }
 
 #[cfg_attr(target_family = "wasm", allow(dead_code))]
@@ -321,39 +293,6 @@ impl WarpManagedPathsWatcher {
                     WatchFilter::accept_all(),
                     RecursiveMode::Recursive,
                     "Warp home skills directory",
-                );
-            }
-            let active_mcp_config_path = active_mcp_config_file_path();
-            let active_mcp_config_dir = active_mcp_config_path
-                .as_deref()
-                .and_then(Path::parent)
-                .map(Path::to_path_buf);
-
-            // The TUI settings and MCP files share one directory. Registering that
-            // directory again with an MCP-only filter would prevent settings hot reloads.
-            let is_covered_by_tui_config_watcher = settings::settings_mode()
-                == settings::SettingsMode::Tui
-                && active_mcp_config_dir.as_deref()
-                    == Some(warp_core::paths::tui_config_local_dir().as_path());
-
-            if let Some(active_mcp_config_path) = active_mcp_config_path
-                && let Some(active_mcp_config_dir) = active_mcp_config_dir
-                && active_mcp_config_dir.exists()
-                && !active_mcp_config_dir.starts_with(&data_dir)
-                && (!should_register_config_local_dir
-                    || !active_mcp_config_dir.starts_with(&config_local_dir))
-                && !is_covered_by_tui_config_watcher
-            {
-                // Watch the config directory non-recursively,
-                // and ignore events for files other than the MCP config file.
-                let emit = Arc::new(move |path: &Path| path == active_mcp_config_path);
-                Self::register_path(
-                    ctx,
-                    &watcher,
-                    active_mcp_config_dir,
-                    WatchFilter::with_filter(Arc::new(|_: &Path| true), emit),
-                    RecursiveMode::NonRecursive,
-                    "Warp MCP config directory",
                 );
             }
         }

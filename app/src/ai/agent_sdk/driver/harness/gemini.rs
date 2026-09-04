@@ -18,8 +18,8 @@ use super::super::terminal::{CommandHandle, TerminalDriver};
 use super::super::{AgentDriver, AgentDriverError};
 use super::json_utils::{read_json_file_or_default, write_json_file};
 use super::{
-    HarnessCleanupDisposition, HarnessRunner, JSONMCPServer, ResumePayload, SavePoint,
-    ThirdPartyHarness, write_temp_file,
+    HarnessCleanupDisposition, HarnessRunner, ResumePayload, SavePoint, ThirdPartyHarness,
+    write_temp_file,
 };
 use crate::ai::agent::conversation::AIConversationId;
 use crate::ai::agent_sdk::setup_observability::{
@@ -67,7 +67,6 @@ impl ThirdPartyHarness for GeminiHarness {
         _resume: Option<ResumePayload>,
         _resolved_env_vars: &HashMap<OsString, OsString>,
         _resolved_secrets: &HashMap<String, ManagedSecretValue>,
-        _resolved_mcp_servers: &HashMap<String, JSONMCPServer>,
         _third_party_harness_model_config: Option<&HarnessModelConfig>,
     ) -> Result<Box<dyn HarnessRunner>, AgentDriverError> {
         // Prepare the environment config files.

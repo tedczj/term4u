@@ -16,9 +16,7 @@ pub mod artifacts;
 pub(crate) mod attachment_utils;
 pub mod auth_secret_types;
 #[cfg(not(target_family = "wasm"))]
-pub mod aws_credentials;
 #[cfg(not(target_family = "wasm"))]
-pub(crate) mod bedrock_credentials;
 pub(crate) mod block_context;
 pub(crate) mod blocklist;
 #[cfg(any(feature = "local_fs", not(target_family = "wasm")))]
@@ -66,7 +64,6 @@ pub mod facts;
 pub(crate) mod generate_block_title;
 pub(crate) mod generate_code_review_content;
 pub(crate) mod loading;
-pub mod mcp;
 pub mod outline;
 
 pub(crate) use ai::paths;

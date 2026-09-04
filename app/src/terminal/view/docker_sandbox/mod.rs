@@ -168,7 +168,7 @@ fn create_docker_sandbox_view(
 impl TerminalView {
     pub(crate) fn create_and_push_docker_sandbox(&self, ctx: &mut ViewContext<Self>) {
         // Resolve sbx via the user's interactive shell PATH (same mechanism
-        // MCP servers use) before creating the pane. This is async, so we
+        // other subprocesses use) before creating the pane. This is async, so we
         // spawn and then build the pane in the completion callback.
         //
         // The sbx resolution and sandbox creation are only meaningful on

@@ -191,21 +191,6 @@ impl ManagedSecretManager {
                     GqlManagedSecretValue::ManagedSecretAnthropicApiKeyValue(v) => {
                         ManagedSecretValue::anthropic_api_key(v.api_key)
                     }
-                    GqlManagedSecretValue::ManagedSecretAnthropicBedrockAccessKeyValue(v) => {
-                        ManagedSecretValue::anthropic_bedrock_access_key(
-                            v.aws_access_key_id,
-                            v.aws_secret_access_key,
-                            // aws_session_token is now optional on the server.
-                            v.aws_session_token,
-                            v.aws_region,
-                        )
-                    }
-                    GqlManagedSecretValue::ManagedSecretAnthropicBedrockApiKeyValue(v) => {
-                        ManagedSecretValue::anthropic_bedrock_api_key(
-                            v.aws_bearer_token_bedrock,
-                            v.aws_region,
-                        )
-                    }
                     GqlManagedSecretValue::ManagedSecretOpenAiApiKeyValue(v) => {
                         ManagedSecretValue::openai_api_key(v.api_key, v.base_url)
                     }

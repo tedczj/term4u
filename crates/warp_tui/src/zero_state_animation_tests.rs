@@ -10,7 +10,7 @@ use warp::settings::{
     TuiZeroStateExtrusionDepthSetting, TuiZeroStateFreezeAnimationWhenUnfocusedSetting,
     TuiZeroStateObject, TuiZeroStateObjectSetting, TuiZeroStateRotationPeriodSeconds,
     TuiZeroStateRotationPeriodSecondsSetting, TuiZeroStateSettings,
-    TuiZeroStateShowAnimationSetting, TuiZeroStateShowChangelogSetting, TuiZeroStateShowMcpSetting,
+    TuiZeroStateShowAnimationSetting, TuiZeroStateShowChangelogSetting,
     TuiZeroStateShowProjectInfoSetting, TuiZeroStateShowSignedInUserSetting,
 };
 use warp_core::settings::Setting as _;
@@ -614,7 +614,6 @@ fn settings_model_reloads_only_object_changes() {
                 show_signed_in_user: TuiZeroStateShowSignedInUserSetting::new(None),
                 show_changelog: TuiZeroStateShowChangelogSetting::new(None),
                 show_project_info: TuiZeroStateShowProjectInfoSetting::new(None),
-                show_mcp: TuiZeroStateShowMcpSetting::new(None),
                 show_animation: TuiZeroStateShowAnimationSetting::new(None),
                 freeze_animation_when_unfocused:
                     TuiZeroStateFreezeAnimationWhenUnfocusedSetting::new(None),

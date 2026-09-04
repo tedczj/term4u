@@ -167,9 +167,6 @@ use warp_cli::{CliCommand, GlobalOptions};
 use watcher::HomeDirectoryWatcher;
 
 use crate::ai::active_agent_views_model::ActiveAgentViewsModel;
-#[cfg(not(target_family = "wasm"))]
-#[cfg(not(target_family = "wasm"))]
-use crate::ai::mcp::{FileBasedMCPManager, FileMCPWatcher};
 pub mod workflows;
 pub mod workspace;
 
@@ -224,7 +221,6 @@ use crate::ai::agent::conversation::AIConversationId;
 use crate::ai::facts::manager::AIFactManager;
 use crate::ai::harness_availability::HarnessAvailabilityModel;
 use crate::ai::llms::LLMPreferences;
-use crate::ai::mcp::{MCPGalleryManager, TemplatableMCPServerManager};
 use crate::ai::outline::RepoOutlines;
 use crate::ai::restored_conversations::RestoredAgentConversations;
 use crate::ai::skills::SkillManager;
@@ -271,7 +267,6 @@ use crate::tab::TabShortcutModifierState;
 use crate::terminal::cli_agent_sessions::CLIAgentSessionsModel;
 use crate::terminal::keys::TerminalKeybindings;
 use crate::terminal::resizable_data::ResizableData;
-use crate::terminal::view::inline_banner::ByoLlmAuthBannerSessionState;
 use crate::terminal::{AudibleBell, CustomSecretRegexUpdater, History};
 #[cfg(feature = "tui")]
 pub use crate::tui::{TuiLoginEvent, TuiLoginModel, TuiLoginPhase, log_out_tui};
@@ -1212,8 +1207,6 @@ fn initialize_local_app(
                 &data.current_workspace_uid,
                 &data.time_of_next_force_object_refresh,
                 &data.object_actions,
-                &data.mcp_server_installations,
-                &data.mcp_servers_to_restore,
             );
             (
                 data.app_state,
@@ -1424,12 +1417,7 @@ fn initialize_local_app(
     ctx.add_singleton_model(|_| AudibleBell::new());
 
     ctx.add_singleton_model(|_| simple_logger::manager::LogManager::new());
-    ctx.add_singleton_model(FileMCPWatcher::new);
-    ctx.add_singleton_model(TemplatableMCPServerManager::new_local);
-    ctx.add_singleton_model(|_| MCPGalleryManager::new_local());
-    ctx.add_singleton_model(FileBasedMCPManager::new);
     ctx.add_singleton_model(SkillManager::new);
-    ctx.add_singleton_model(ByoLlmAuthBannerSessionState::new);
     ctx.add_singleton_model(|_| CodeManager::default());
     ctx.add_singleton_model(|_| OpenedFilesModel::new());
     ctx.add_singleton_model(NotebookKeybindings::new);

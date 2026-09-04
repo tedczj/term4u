@@ -6,7 +6,6 @@ pub(crate) mod download;
 pub mod factory;
 pub mod harness_support;
 pub mod integrations;
-pub mod managed_mcp;
 pub mod managed_secrets;
 pub mod object;
 pub(crate) mod presigned_upload;
@@ -29,7 +28,6 @@ use channel_versions::ChannelVersions;
 use chrono::{DateTime, FixedOffset};
 use factory::FactoryClient;
 use instant::Instant;
-use managed_mcp::ManagedMcpClient;
 use object::ObjectClient;
 use parking_lot::Mutex;
 use referral::ReferralsClient;
@@ -1290,11 +1288,6 @@ impl ServerApiProvider {
 
     pub fn get_managed_secrets_client(&self) -> Arc<dyn ManagedSecretsClient> {
         backend_client!(self, ManagedSecretsClient)
-    }
-
-    #[cfg_attr(target_family = "wasm", expect(dead_code))]
-    pub fn get_managed_mcp_client(&self) -> Arc<dyn ManagedMcpClient> {
-        backend_client!(self, ManagedMcpClient)
     }
 
     pub fn get_factory_client(&self) -> Arc<dyn FactoryClient> {

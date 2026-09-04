@@ -8,12 +8,7 @@ use ai::api_keys::{
 };
 use channel_versions::{Changelog, MarkdownSection, Section};
 use chrono::DateTime;
-use uuid::Uuid;
-use warp::tui_export::{
-    TuiMcpConfigDiagnostic, TuiMcpServerId, TuiMcpServerSnapshot, TuiMcpServerSource,
-    TuiMcpServerStatus, TuiMcpSnapshot, TuiMcpTransport, TuiUserInfoSnapshot,
-    register_tui_session_view_test_singletons,
-};
+use warp::tui_export::{TuiUserInfoSnapshot, register_tui_session_view_test_singletons};
 use warpui::{EntityIdMap, SingletonEntity};
 use warpui_core::elements::animation::AnimationClock;
 use warpui_core::elements::tui::{
@@ -25,30 +20,13 @@ use warpui_core::{App, AppContext};
 use super::{
     ANIMATION_PANEL_COLS, LEFT_COLUMN_COLS, ZeroStateSectionVisibility, build_zero_state_layout,
     build_zero_state_overlay, build_zero_state_stack_layout, changelog_bullets_from_changelog,
-    custom_endpoint_status_label, mcp_status_label, render_bottom_section,
-    render_first_run_top_section,
+    custom_endpoint_status_label, render_bottom_section, render_first_run_top_section,
 };
 use crate::tui_builder::TuiUiBuilder;
 use crate::zero_state_animation::{
     WarpLogoStyles, ZeroStateAnimationConfig, ZeroStateAnimationElement,
     ZeroStateInteractionHandle, ZeroStateStarfieldElement,
 };
-
-fn server(id: u64, status: TuiMcpServerStatus) -> TuiMcpServerSnapshot {
-    TuiMcpServerSnapshot {
-        id: TuiMcpServerId::Installation(Uuid::from_u128(id as u128)),
-        installation_uuid: Some(Uuid::from_u128(id as u128)),
-        name: format!("server-{id}"),
-        description: None,
-        source: TuiMcpServerSource::Installation,
-        transport: Some(TuiMcpTransport::Stdio),
-        status,
-        tool_count: 2,
-        resource_count: 0,
-        can_log_out: false,
-        authorization_url: None,
-    }
-}
 
 fn changelog(tui_updates: Vec<&str>) -> Changelog {
     Changelog {
@@ -151,73 +129,6 @@ fn first_zero_state_matches_welcome_design_copy() {
 }
 
 #[test]
-fn mcp_summary_keeps_empty_catalog_action_short() {
-    let snapshot = TuiMcpSnapshot {
-        diagnostics: Vec::new(),
-        servers: Vec::new(),
-    };
-
-    assert_eq!(
-        mcp_status_label(&snapshot),
-        ("No servers available · run /mcp".to_string(), false)
-    );
-}
-
-#[test]
-fn mcp_summary_reports_mixed_runtime_states() {
-    let snapshot = TuiMcpSnapshot {
-        diagnostics: Vec::new(),
-        servers: vec![
-            server(1, TuiMcpServerStatus::Running),
-            server(2, TuiMcpServerStatus::Starting),
-            server(3, TuiMcpServerStatus::Authenticating),
-            server(4, TuiMcpServerStatus::Stopping),
-            server(
-                5,
-                TuiMcpServerStatus::Failed {
-                    message: "failed".to_string(),
-                },
-            ),
-            server(6, TuiMcpServerStatus::Offline),
-            server(7, TuiMcpServerStatus::Available),
-        ],
-    };
-
-    assert_eq!(
-        mcp_status_label(&snapshot),
-        (
-            "1 connected · 1 starting · 1 needs auth · 1 stopping · 1 failed · 1 offline · 1 available · /mcp"
-                .to_string(),
-            false
-        )
-    );
-}
-
-#[test]
-fn mcp_summary_marks_config_errors() {
-    let snapshot = TuiMcpSnapshot {
-        diagnostics: vec![
-            TuiMcpConfigDiagnostic {
-                provider: "Claude".to_owned(),
-                config_path: PathBuf::from("/tmp/.claude.json"),
-                message: "invalid JSON".to_owned(),
-            },
-            TuiMcpConfigDiagnostic {
-                provider: "Codex".to_owned(),
-                config_path: PathBuf::from("/tmp/config.toml"),
-                message: "invalid TOML".to_owned(),
-            },
-        ],
-        servers: Vec::new(),
-    };
-
-    assert_eq!(
-        mcp_status_label(&snapshot),
-        ("2 config errors · /mcp".to_string(), true)
-    );
-}
-
-#[test]
 fn custom_endpoint_summary_tracks_configuration_and_local_keys() {
     App::test((), |mut app| async move {
         register_tui_session_view_test_singletons(&mut app);
@@ -290,14 +201,7 @@ fn custom_endpoint_section_is_hidden_until_an_endpoint_is_configured() {
         app.read(|ctx| {
             let builder = TuiUiBuilder::from_app(ctx);
             let rendered = render_element_lines(
-                render_bottom_section(
-                    None,
-                    None,
-                    ZeroStateSectionVisibility::default(),
-                    &builder,
-                    ctx,
-                )
-                .finish(),
+                render_bottom_section(None, None, &builder, ctx).finish(),
                 ctx,
                 LEFT_COLUMN_COLS,
                 20,
@@ -312,14 +216,7 @@ fn custom_endpoint_section_is_hidden_until_an_endpoint_is_configured() {
         app.read(|ctx| {
             let builder = TuiUiBuilder::from_app(ctx);
             let rendered = render_element_lines(
-                render_bottom_section(
-                    None,
-                    None,
-                    ZeroStateSectionVisibility::default(),
-                    &builder,
-                    ctx,
-                )
-                .finish(),
+                render_bottom_section(None, None, &builder, ctx).finish(),
                 ctx,
                 LEFT_COLUMN_COLS,
                 20,

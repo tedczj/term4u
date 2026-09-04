@@ -115,6 +115,7 @@ macro_rules! integration_tests {
             // and Linux (iff the run_on_linux feature is enabled).
             #[cfg_attr(not(any(target_os = "macos", feature = "run_on_linux")), ignore)]
             #[test]
+            #[serial_test::serial]
             fn $name() -> Result<(), String> {
                 $crate::common::run_integration_test(stringify!($name))
             }

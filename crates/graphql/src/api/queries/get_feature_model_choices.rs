@@ -69,7 +69,6 @@ pub enum DisableReason {
 
 #[derive(cynic::Enum, Clone, Debug)]
 pub enum LlmModelHost {
-    AwsBedrock,
     CustomEndpoint,
     DirectApi,
     GeminiEnterprise,

@@ -193,7 +193,6 @@ use crate::ai::document::ai_document_model::{AIDocumentId, AIDocumentVersion};
 use crate::ai::execution_profiles::profiles::AIExecutionProfilesModel;
 use crate::ai::harness_availability::HarnessAvailabilityModel;
 use crate::ai::llms::{LLMPreferences, LLMPreferencesEvent};
-use crate::ai::mcp::TemplatableMCPServerManager;
 use crate::ai::orchestration::settings::OrchestrationSettings;
 use crate::ai::predict::next_command_model::{
     NextCommandModel, NextCommandModelEvent, NextCommandSuggestionState, ZeroStateSuggestionInfo,
@@ -445,7 +444,7 @@ const AGENT_MODE_HINT_OPTIONS: &[&str] = &[
     "Warp anything e.g. Find and fix the memory leak in my Node.js application",
     "Warp anything e.g. Create a backup script for my PostgreSQL database and schedule it",
     "Warp anything e.g. Help me migrate my data from MySQL to PostgreSQL",
-    "Warp anything e.g. Set up monitoring and alerts for my AWS infrastructure",
+    "Warp anything e.g. Set up monitoring and alerts for my Kubernetes cluster",
     "Warp anything e.g. Build a REST API for my mobile app using FastAPI",
     "Warp anything e.g. Help me optimize my SQL queries that are running slowly",
     "Warp anything e.g. Create a GitHub Actions workflow to automatically deploy on merge",
@@ -1092,8 +1091,6 @@ pub enum Event {
         diff_mode: DiffMode,
     },
     OpenConversationHistory,
-    OpenViewMCPPane,
-    OpenAddMCPPane,
     OpenProjectRulesPane,
     OpenEnvironmentManagementPane,
     OpenFilesPalette {
@@ -1234,12 +1231,6 @@ pub enum InputAction {
 
     /// Clears attached blocks and text selection context.
     ClearAttachedContext,
-
-    /// Fired when the "Get Figma MCP" contextual button is clicked.
-    FigmaAddButtonClicked,
-
-    /// Fired when the "Enable Figma MCP" contextual button is clicked.
-    FigmaEnableButtonClicked,
 
     /// Activates `&` cloud handoff compose mode from the message bar hint.
     ActivateCloudHandoff,
@@ -16184,16 +16175,6 @@ impl TypedActionView for Input {
                     InlineModelSelectorTab::BaseAgent,
                     ctx,
                 );
-            }
-            InputAction::FigmaAddButtonClicked => {
-                TemplatableMCPServerManager::handle(ctx).update(ctx, |manager, ctx| {
-                    manager.install_figma_from_gallery(ctx);
-                });
-            }
-            InputAction::FigmaEnableButtonClicked => {
-                TemplatableMCPServerManager::handle(ctx).update(ctx, |manager, ctx| {
-                    manager.enable_figma_mcp(ctx);
-                });
             }
             InputAction::ClearAttachedContext => {
                 self.clear_attached_context(ctx);

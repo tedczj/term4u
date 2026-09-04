@@ -1091,7 +1091,6 @@ impl View for AIBlock {
                 detected_links_state: &self.detected_links_state,
                 secret_redaction_state: &self.secret_redaction_state,
                 requested_commands: &self.requested_commands,
-                requested_mcp_tools: &self.requested_mcp_tools,
                 requested_edits: &self.requested_edits,
                 unit_test_suggestions: &self.unit_tests_suggestions,
                 todo_list_states: &self.todo_list_states,
@@ -1132,9 +1131,6 @@ impl View for AIBlock {
                 is_conversation_transcript_viewer,
                 #[cfg(not(target_family = "wasm"))]
                 is_cloud_agent_context,
-                aws_bedrock_credentials_error_view: self
-                    .aws_bedrock_credentials_error_view
-                    .as_ref(),
                 gemini_enterprise_credentials_error_view: self
                     .gemini_enterprise_credentials_error_view
                     .as_ref(),
@@ -1200,9 +1196,9 @@ impl View for AIBlock {
         // We're assuming that the first element of the vector corresponds to the correct input.
         let renders_below_requested_command_view =
             self.model.inputs_to_render(app).iter().any(|input| {
-                input.action_result().is_some_and(|result| {
-                    result.result.is_requested_command() || result.result.is_call_mcp_tool()
-                })
+                input
+                    .action_result()
+                    .is_some_and(|result| result.result.is_requested_command())
             });
 
         // We don't always apply top padding to every block because we don't want a block's top

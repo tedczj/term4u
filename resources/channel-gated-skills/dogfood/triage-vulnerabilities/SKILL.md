@@ -71,8 +71,8 @@ Linear issues with the Security label track vulnerabilities that may not be auto
 Find open security issues:
 
 ```bash
-# Use the Linear MCP to search for issues with Security label
-# Example query structure (use Linear MCP tool call):
+# Search the issue tracker for issues with the Security label.
+# Example query structure:
 #   - Search for issues with label: "Security"
 #   - Filter for state: "Backlog", "Todo", "In Progress" (exclude "Done", "Cancelled")
 #   - Return issue number, title, URL, and current status

@@ -7,7 +7,6 @@ use std::path::Path;
 use std::pin::Pin;
 use std::sync::Arc;
 
-use ai::api_keys::{ApiKeyManager, AwsCredentialsRefreshStrategy};
 use anyhow::Context;
 pub use driver::AgentDriver;
 use driver::AgentDriverError;
@@ -23,7 +22,6 @@ use warp_cli::environment::{EnvironmentCommand, ImageCommand};
 use warp_cli::federate::FederateCommand;
 use warp_cli::harness_support::{HarnessSupportCommand, ReportArtifactCommand, TaskStatus};
 use warp_cli::integration::IntegrationCommand;
-use warp_cli::mcp::MCPCommand;
 use warp_cli::memory_store::{MemoryCommand, MemoryStoreCommand};
 use warp_cli::model::ModelCommand;
 use warp_cli::provider::ProviderCommand;
@@ -51,15 +49,12 @@ use crate::ai::agent::api::convert_conversation::{
 use crate::ai::agent::conversation::AIConversationId;
 use crate::ai::agent_sdk::driver::harness::{HarnessKind, harness_kind};
 use crate::ai::agent_sdk::driver::{AgentDriverOptions, AgentRunPrompt, Task};
-use crate::ai::agent_sdk::mcp_config::build_mcp_servers_from_specs;
 use crate::ai::agent_sdk::setup_observability::{
     OzRunTimelineEvent, SetupClientEventReporter, SetupStep,
 };
 use crate::ai::agent_tasks::AmbientAgentTaskId;
 use crate::ai::agent_tasks::task::HarnessConfig;
 use crate::ai::attachment_utils::attachments_download_dir;
-#[cfg(not(target_family = "wasm"))]
-use crate::ai::aws_credentials::refresh_aws_credentials;
 use crate::ai::llms::LLMId;
 use crate::ai::skills::{
     ResolveSkillError, ResolvedSkill, clone_repo_for_skill, resolve_skill_spec,
@@ -94,8 +89,6 @@ mod harness_support;
 mod integration;
 #[cfg(not(target_family = "wasm"))]
 mod integration_output;
-mod mcp;
-mod mcp_config;
 mod memory_store;
 mod model;
 mod oauth_flow;
@@ -152,7 +145,6 @@ fn dispatch_command(
             }
             environment::run(ctx, global_options, environment_cmd)
         }
-        CliCommand::MCP(mcp_cmd) => mcp::run(ctx, global_options, mcp_cmd),
         CliCommand::Run(task_cmd) => run_task(ctx, global_options, task_cmd),
         CliCommand::Model(model_cmd) => model::run(ctx, global_options, model_cmd),
         CliCommand::MemoryStore(memory_store_cmd) => {
@@ -356,8 +348,7 @@ fn build_merged_config_and_task(
     prompt: &Option<Prompt>,
     ctx: &mut AppContext,
 ) -> anyhow::Result<(AgentConfigSnapshot, Task)> {
-    // Server-side prompt resolution (task_id is set): the task config already lives on the
-    // server and individual CLI flags (--model, --mcp, etc.) are the only local overrides.
+    // Server-side prompt resolution uses the task config with explicit CLI overrides.
     // No config file is involved — the worker never passes --file alongside --task-id.
     if args.task_id.is_some() {
         return build_server_side_task(args, resolved_skill, ctx);
@@ -367,8 +358,6 @@ fn build_merged_config_and_task(
         Some(path) => Some(config_file::load_config_file(path)?),
         None => None,
     };
-
-    let cli_mcp_servers = build_mcp_servers_from_specs(&args.all_mcp_specs())?;
 
     // Merge precedence: file < CLI < skill
     let file_merged = config_file::merge_with_precedence(loaded_file.as_ref(), Default::default());
@@ -413,7 +402,6 @@ fn build_merged_config_and_task(
         model_id: oz_model,
         // Skill base_prompt takes precedence over file base_prompt
         base_prompt: runtime_base_prompt.clone().or(file_merged.base_prompt),
-        mcp_servers: config_file::merge_mcp_servers(file_merged.mcp_servers, cli_mcp_servers),
         profile_id: args.profile.clone(),
         worker_host: file_merged.worker_host,
         skill_spec: file_merged.skill_spec,
@@ -424,11 +412,6 @@ fn build_merged_config_and_task(
         harness: harness_override,
         harness_auth_secrets: None,
         additional_source_repos: None,
-    };
-
-    let runtime_mcp_specs = match merged_config.mcp_servers.as_ref() {
-        Some(mcp_servers) => config_file::mcp_specs_from_mcp_servers(mcp_servers)?,
-        None => Vec::new(),
     };
 
     let model_override: Option<LLMId> = merged_config
@@ -460,7 +443,6 @@ fn build_merged_config_and_task(
         prompt: AgentRunPrompt::Local(resolve_prompt(&local_prompt, ctx)?),
         model: model_override,
         profile: args.profile.clone(),
-        mcp_specs: runtime_mcp_specs,
         harness: harness_kind(args.harness)?,
     };
 
@@ -474,13 +456,6 @@ fn build_server_side_task(
     resolved_skill: &Option<ResolvedSkill>,
     ctx: &mut AppContext,
 ) -> anyhow::Result<(AgentConfigSnapshot, Task)> {
-    let cli_mcp_servers = build_mcp_servers_from_specs(&args.all_mcp_specs())?;
-
-    let runtime_mcp_specs = match cli_mcp_servers.as_ref() {
-        Some(mcp_servers) => config_file::mcp_specs_from_mcp_servers(mcp_servers)?,
-        None => Vec::new(),
-    };
-
     let harness_model_id = if args.harness != Harness::Oz {
         args.model.model.clone()
     } else {
@@ -513,7 +488,6 @@ fn build_server_side_task(
         runner_id: None,
         model_id: model_id_string,
         base_prompt: None,
-        mcp_servers: cli_mcp_servers,
         profile_id: profile.clone(),
         worker_host: None,
         skill_spec: None,
@@ -532,7 +506,6 @@ fn build_server_side_task(
         },
         model: model_override,
         profile,
-        mcp_specs: runtime_mcp_specs,
         harness: harness_kind(args.harness)?,
     };
 
@@ -677,8 +650,6 @@ impl AgentDriverRunner {
         let result: Result<(), AgentDriverError> = async {
             // Pull relevant variables out of args before moving it into the closure.
             let share_requests = args.share.share.clone();
-            let bedrock_inference_role = args.bedrock_inference_role.clone();
-            let bedrock_role_region = args.bedrock_role_region.clone();
             let has_task_id = args.task_id.is_some();
             let args_harness = args.harness;
             // `--conversation` path (user-invoked local resume): validate before any task side
@@ -715,43 +686,6 @@ impl AgentDriverRunner {
             // necessarily uses the same harness, so no extra conversation-metadata roundtrip is
             // needed here. Just merge the task's linked conversation id into the resume target.
             let resume_conversation_id = resume_conversation_id.or(task_conversation_id);
-
-            let bedrock_task_id = driver_options.task_id.map(|id| id.to_string());
-
-            #[cfg(not(target_family = "wasm"))]
-            if let Some(role_arn) = bedrock_inference_role {
-                // clap's `requires` constraint enforces this at parse time, so a missing
-                // region here means a caller is constructing `RunAgentArgs` directly
-                // without the flag. Fail loudly so callers don't silently fall back to a
-                // hard-coded STS region.
-                let role_region = bedrock_role_region.ok_or_else(|| {
-                    AgentDriverError::AwsBedrockCredentialsFailed(
-                        "--bedrock-role-region is required when --bedrock-inference-role is set"
-                            .to_string(),
-                    )
-                })?;
-                // Set the OIDC strategy on the UI thread and kick off the refresh; the
-                // returned future resolves when credentials are committed to the model.
-                let refresh_future = foreground
-                    .spawn(move |_, ctx| {
-                        ApiKeyManager::handle(ctx).update(ctx, |manager, ctx| {
-                            // From here on, refresh credentials via OIDC federation only.
-                            manager.set_aws_credentials_refresh_strategy(
-                                AwsCredentialsRefreshStrategy::OidcManaged {
-                                    task_id: bedrock_task_id,
-                                    role_arn,
-                                    region: role_region,
-                                },
-                            );
-                            refresh_aws_credentials(manager, ctx)
-                        })
-                    })
-                    .await?;
-
-                refresh_future
-                    .await
-                    .map_err(AgentDriverError::AwsBedrockCredentialsFailed)?;
-            }
 
             match &task.harness {
                 HarnessKind::Unsupported(harness) => {
@@ -1075,8 +1009,6 @@ impl AgentDriverRunner {
                         .map(|duration| duration.into()),
                     checkpoint_interval: None,
                     skip_initial_turn: args.skip_initial_turn,
-                    strict_mcp_startup: args.strict_mcp_startup,
-                    mcp_startup_timeout: args.mcp_startup_timeout.map(|duration| duration.into()),
                 };
 
                 Ok((merged_config, task, driver_options))
@@ -1586,9 +1518,6 @@ fn command_requires_auth(command: &CliCommand) -> bool {
             EnvironmentCommand::Get { .. } => true,
             EnvironmentCommand::Image(ImageCommand::List) => true,
         },
-        CliCommand::MCP(mcp_cmd) => match mcp_cmd {
-            MCPCommand::List => true,
-        },
         CliCommand::Run(task_cmd) => match task_cmd {
             TaskCommand::List { .. } => true,
             TaskCommand::Get { .. } => true,
@@ -1790,7 +1719,6 @@ fn command_to_telemetry_event(command: &CliCommand) -> CliTelemetryEvent {
     match command {
         CliCommand::Agent(AgentCommand::Run(args)) => CliTelemetryEvent::AgentRun {
             gui: args.gui,
-            requested_mcp_servers: args.mcp_specs.len() + args.mcp_servers.len(),
             has_environment: args.environment.is_some(),
             task_id: args.task_id.clone(),
             harness: args.harness.to_string(),
@@ -1821,7 +1749,6 @@ fn command_to_telemetry_event(command: &CliCommand) -> CliTelemetryEvent {
         CliCommand::Environment(EnvironmentCommand::Image(ImageCommand::List)) => {
             CliTelemetryEvent::EnvironmentImageList
         }
-        CliCommand::MCP(MCPCommand::List) => CliTelemetryEvent::MCPList,
         CliCommand::Run(TaskCommand::List(_)) => CliTelemetryEvent::TaskList,
         CliCommand::Run(TaskCommand::Get(args)) => {
             if args.conversation {

@@ -385,8 +385,6 @@ fn extract_action_paths(
         | AIAgentActionType::RequestCommandOutput { .. }
         | AIAgentActionType::WriteToLongRunningShellCommand { .. }
         | AIAgentActionType::ReadShellCommandOutput { .. }
-        | AIAgentActionType::ReadMCPResource { .. }
-        | AIAgentActionType::CallMCPTool { .. }
         | AIAgentActionType::SuggestNewConversation { .. }
         | AIAgentActionType::SuggestPrompt(_)
         | AIAgentActionType::InitProject

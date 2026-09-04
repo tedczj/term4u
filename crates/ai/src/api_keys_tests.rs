@@ -47,7 +47,7 @@ fn persisted_provider_api_key_updates_request_state() {
 
         manager.read(&app, |manager, _| {
             let request_keys = manager
-                .api_keys_for_request(true, false, None)
+                .api_keys_for_request(true, None)
                 .expect("persisted provider key should be available to requests");
             assert_eq!(request_keys.anthropic, "sk-ant-test");
         });
@@ -130,8 +130,6 @@ fn make_manager_with_grok(keys: ApiKeys, grok_tokens: Option<GrokTokens>) -> Api
         geap_refresh_waiters: None,
         #[cfg(not(target_family = "wasm"))]
         geap_last_mint_failure: None,
-        aws_credentials_state: AwsCredentialsState::Missing,
-        aws_credentials_refresh_strategy: AwsCredentialsRefreshStrategy::default(),
         geap_credentials_state: GeapCredentialsState::Missing,
         secure_storage_write_version: 0,
         grok_secure_storage_write_version: 0,
@@ -670,7 +668,7 @@ fn display_label_falls_back_to_name_when_alias_is_whitespace() {
 #[test]
 fn api_keys_for_request_none_when_empty() {
     let mgr = make_manager(ApiKeys::default());
-    assert!(mgr.api_keys_for_request(true, false, None).is_none());
+    assert!(mgr.api_keys_for_request(true, None).is_none());
 }
 
 #[test]
@@ -680,7 +678,7 @@ fn api_keys_for_request_populates_provider_keys() {
         anthropic: Some("sk-a".into()),
         ..Default::default()
     });
-    let result = mgr.api_keys_for_request(true, false, None).unwrap();
+    let result = mgr.api_keys_for_request(true, None).unwrap();
     assert_eq!(result.openai, "sk-o");
     assert_eq!(result.anthropic, "sk-a");
     assert!(result.google.is_empty());
@@ -693,7 +691,7 @@ fn api_keys_for_request_omits_keys_when_byo_disabled() {
         ..Default::default()
     });
     // With BYO disabled and no other credentials, returns None.
-    assert!(mgr.api_keys_for_request(false, false, None).is_none());
+    assert!(mgr.api_keys_for_request(false, None).is_none());
 }
 
 #[test]
@@ -702,7 +700,7 @@ fn api_keys_for_request_none_for_custom_endpoints_only() {
         custom_endpoints: vec![endpoint("ep", "https://a.io", "k", &[("m", None)])],
         ..Default::default()
     });
-    assert!(mgr.api_keys_for_request(true, false, None).is_none());
+    assert!(mgr.api_keys_for_request(true, None).is_none());
 }
 
 // ── grok oauth token ────────────────────────────────────────────
@@ -754,7 +752,7 @@ fn api_keys_for_request_includes_grok_token() {
         ApiKeys::default(),
         Some(grok_tokens("grok-abc", Some(3600))),
     );
-    let result = mgr.api_keys_for_request(true, false, None).unwrap();
+    let result = mgr.api_keys_for_request(true, None).unwrap();
     assert_eq!(result.grok_oauth_access_token, "grok-abc");
     assert!(result.anthropic.is_empty());
 }
@@ -767,7 +765,7 @@ fn api_keys_for_request_omits_grok_token_when_byo_disabled() {
         ApiKeys::default(),
         Some(grok_tokens("grok-abc", Some(3600))),
     );
-    assert!(mgr.api_keys_for_request(false, false, None).is_none());
+    assert!(mgr.api_keys_for_request(false, None).is_none());
 }
 
 #[test]
@@ -775,7 +773,7 @@ fn api_keys_for_request_includes_expired_grok_token() {
     // Expired tokens are still sent in requests; the server rejects truly
     // invalid ones and the background refresh replaces them.
     let mgr = make_manager_with_grok(ApiKeys::default(), Some(grok_tokens("grok-abc", Some(0))));
-    let result = mgr.api_keys_for_request(true, false, None).unwrap();
+    let result = mgr.api_keys_for_request(true, None).unwrap();
     assert_eq!(result.grok_oauth_access_token, "grok-abc");
 }
 
@@ -879,9 +877,7 @@ fn geap_needs_refresh_lead_time_boundaries() {
 #[test]
 fn api_keys_for_request_includes_geap_token_when_gate_and_binding_match() {
     let mgr = make_manager_with_geap(geap_loaded("geap-abc", Some(3600)));
-    let result = mgr
-        .api_keys_for_request(false, false, Some(geap_gate()))
-        .unwrap();
+    let result = mgr.api_keys_for_request(false, Some(geap_gate())).unwrap();
     let credentials = result.google_cloud_credentials.unwrap();
     assert_eq!(credentials.access_token, "geap-abc");
     // The GEAP token is independent of the BYO key gate.
@@ -894,9 +890,7 @@ fn api_keys_for_request_includes_expired_geap_token() {
     // rejects truly invalid ones, which surfaces a recoverable error instead
     // of a silent fallback to another route.
     let mgr = make_manager_with_geap(geap_loaded("geap-abc", Some(0)));
-    let result = mgr
-        .api_keys_for_request(false, false, Some(geap_gate()))
-        .unwrap();
+    let result = mgr.api_keys_for_request(false, Some(geap_gate())).unwrap();
     assert_eq!(
         result.google_cloud_credentials.unwrap().access_token,
         "geap-abc"
@@ -908,7 +902,7 @@ fn api_keys_for_request_omits_geap_token_without_gate() {
     // No gate (policy off at the call site) ⇒ no GEAP credentials, even when
     // a token is loaded.
     let mgr = make_manager_with_geap(geap_loaded("geap-abc", Some(3600)));
-    assert!(mgr.api_keys_for_request(false, false, None).is_none());
+    assert!(mgr.api_keys_for_request(false, None).is_none());
 }
 
 #[test]
@@ -918,19 +912,19 @@ fn api_keys_for_request_omits_geap_token_on_binding_mismatch() {
     // A different user (sign-out/account switch).
     let mut gate = geap_gate();
     gate.user_uid = "someone-else".into();
-    assert!(mgr.api_keys_for_request(false, false, Some(gate)).is_none());
+    assert!(mgr.api_keys_for_request(false, Some(gate)).is_none());
 
     // A different audience (admin changed the pool/provider).
     let mut gate = geap_gate();
     gate.audience = "//iam.googleapis.com/projects/2/locations/global/workloadIdentityPools/other/providers/other".into();
-    assert!(mgr.api_keys_for_request(false, false, Some(gate)).is_none());
+    assert!(mgr.api_keys_for_request(false, Some(gate)).is_none());
 
     // A different service account (admin changed impersonation target).
     let mut gate = geap_gate();
     gate.federation = GeapFederation::ServiceAccount {
         email: "other@proj.iam.gserviceaccount.com".into(),
     };
-    assert!(mgr.api_keys_for_request(false, false, Some(gate)).is_none());
+    assert!(mgr.api_keys_for_request(false, Some(gate)).is_none());
 }
 
 #[test]
@@ -940,9 +934,7 @@ fn api_keys_for_request_serves_previous_geap_token_while_refreshing() {
     let mgr = make_manager_with_geap(GeapCredentialsState::Refreshing {
         previous: Some((geap_credentials("geap-old", Some(10)), geap_binding())),
     });
-    let result = mgr
-        .api_keys_for_request(false, false, Some(geap_gate()))
-        .unwrap();
+    let result = mgr.api_keys_for_request(false, Some(geap_gate())).unwrap();
     assert_eq!(
         result.google_cloud_credentials.unwrap().access_token,
         "geap-old"
@@ -953,10 +945,7 @@ fn api_keys_for_request_serves_previous_geap_token_while_refreshing() {
 fn api_keys_for_request_omits_geap_token_during_first_mint() {
     // The very first mint has nothing to serve yet.
     let mgr = make_manager_with_geap(GeapCredentialsState::Refreshing { previous: None });
-    assert!(
-        mgr.api_keys_for_request(false, false, Some(geap_gate()))
-            .is_none()
-    );
+    assert!(mgr.api_keys_for_request(false, Some(geap_gate())).is_none());
 }
 
 #[test]
@@ -973,10 +962,7 @@ fn api_keys_for_request_omits_geap_token_for_non_loaded_states() {
         },
     ] {
         let mgr = make_manager_with_geap(state);
-        assert!(
-            mgr.api_keys_for_request(false, false, Some(geap_gate()))
-                .is_none()
-        );
+        assert!(mgr.api_keys_for_request(false, Some(geap_gate())).is_none());
     }
 }
 
@@ -987,7 +973,7 @@ fn api_keys_for_request_omits_geap_token_when_previous_binding_mismatches() {
     });
     let mut gate = geap_gate();
     gate.user_uid = "someone-else".into();
-    assert!(mgr.api_keys_for_request(false, false, Some(gate)).is_none());
+    assert!(mgr.api_keys_for_request(false, Some(gate)).is_none());
 }
 
 #[cfg(not(target_family = "wasm"))]

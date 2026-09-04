@@ -88,18 +88,6 @@ enum SecretInput {
         secret_type: SecretType,
         value_args: ValueArgs,
     },
-    /// Multi-field Bedrock API key secret with dedicated CLI flags.
-    Bedrock {
-        bedrock_api_key: Option<String>,
-        region: Option<String>,
-    },
-    /// Multi-field Bedrock access key secret with dedicated CLI flags.
-    BedrockAccessKey {
-        access_key_id: Option<String>,
-        secret_access_key: Option<String>,
-        session_token: Option<String>,
-        region: Option<String>,
-    },
     /// OpenAI API key secret with optional base URL.
     OpenaiApiKey {
         value_args: ValueArgs,
@@ -122,21 +110,6 @@ impl SecretInput {
                 };
                 Ok(Some(make_simple_secret_value(secret_type, &raw)))
             }
-            SecretInput::Bedrock {
-                bedrock_api_key,
-                region,
-            } => read_bedrock_secret_value(bedrock_api_key, region),
-            SecretInput::BedrockAccessKey {
-                access_key_id,
-                secret_access_key,
-                session_token,
-                region,
-            } => read_bedrock_access_key_secret_value(
-                access_key_id,
-                secret_access_key,
-                session_token,
-                region,
-            ),
             SecretInput::OpenaiApiKey {
                 value_args,
                 base_url,
@@ -155,26 +128,6 @@ fn create_secret(ctx: &mut AppContext, args: CreateSecretArgs) -> Result<()> {
                 SecretInput::Simple {
                     secret_type: SecretType::AnthropicApiKey,
                     value_args: a.value,
-                },
-                a.common.description,
-                a.common.scope,
-            ),
-            AnthropicMethod::BedrockApiKey(a) => (
-                a.common.name,
-                SecretInput::Bedrock {
-                    bedrock_api_key: a.bedrock_api_key,
-                    region: a.region,
-                },
-                a.common.description,
-                a.common.scope,
-            ),
-            AnthropicMethod::BedrockAccessKey(a) => (
-                a.common.name,
-                SecretInput::BedrockAccessKey {
-                    access_key_id: a.access_key_id,
-                    secret_access_key: a.secret_access_key,
-                    session_token: a.session_token,
-                    region: a.region,
                 },
                 a.common.description,
                 a.common.scope,
@@ -565,10 +518,6 @@ fn make_simple_secret_value(secret_type: SecretType, raw: &str) -> ManagedSecret
     match secret_type {
         SecretType::RawValue => ManagedSecretValue::raw_value(raw),
         SecretType::AnthropicApiKey => ManagedSecretValue::anthropic_api_key(raw),
-        SecretType::AnthropicBedrockApiKey => {
-            // Bedrock secrets are multi-field and handled via SecretInput::Bedrock.
-            unreachable!("Bedrock secrets should not go through make_simple_secret_value")
-        }
         SecretType::OpenaiApiKey => {
             // OpenAI API key secrets are handled via SecretInput::OpenaiApiKey so the optional
             // base URL can be plumbed through alongside the API key.
@@ -588,19 +537,6 @@ fn make_secret_value_from_gql_type(
             Ok(ManagedSecretValue::raw_value(raw))
         }
         ManagedSecretType::AnthropicApiKey => Ok(ManagedSecretValue::anthropic_api_key(raw)),
-        ManagedSecretType::AnthropicBedrockAccessKey => {
-            // Bedrock access key secrets cannot be updated through the generic raw-string path.
-            Err(anyhow::anyhow!(
-                "Bedrock access key secrets cannot be updated via `--value`; re-create the secret instead"
-            ))
-        }
-        ManagedSecretType::AnthropicBedrockApiKey => {
-            // Bedrock secrets cannot be updated through the generic raw-string path.
-            // The caller should use the dedicated Bedrock creation flow instead.
-            Err(anyhow::anyhow!(
-                "Bedrock API key secrets cannot be updated via `--value`; re-create the secret instead"
-            ))
-        }
         ManagedSecretType::OpenaiApiKey => Ok(ManagedSecretValue::openai_api_key(raw, None)),
         ManagedSecretType::DockerRegistry => {
             // Registry credentials are multi-field and have no CLI creation/update flow yet.
@@ -670,165 +606,6 @@ fn read_openai_api_key_secret_value(
     Ok(Some(ManagedSecretValue::openai_api_key(api_key, base_url)))
 }
 
-/// Read a Bedrock API key secret from dedicated CLI flags or interactive prompts.
-fn read_bedrock_secret_value(
-    bedrock_api_key: Option<String>,
-    region: Option<String>,
-) -> Result<Option<ManagedSecretValue>> {
-    let api_key = match bedrock_api_key {
-        Some(k) if !k.is_empty() => k,
-        _ => {
-            if !io::stdin().is_terminal() {
-                return Err(anyhow::anyhow!(
-                    "Bedrock secrets require --bedrock-api-key and --region in non-interactive mode"
-                ));
-            }
-            let result = Password::new("Bedrock API key:")
-                .with_display_toggle_enabled()
-                .without_confirmation()
-                .prompt();
-            match result {
-                Ok(value) if !value.is_empty() => value,
-                Ok(_) => return Ok(None),
-                Err(InquireError::OperationCanceled | InquireError::OperationInterrupted) => {
-                    return Ok(None);
-                }
-                Err(err) => return Err(err.into()),
-            }
-        }
-    };
-
-    let region = match region {
-        Some(r) if !r.is_empty() => r,
-        _ => {
-            if !io::stdin().is_terminal() {
-                return Err(anyhow::anyhow!(
-                    "Bedrock secrets require --bedrock-api-key and --region in non-interactive mode"
-                ));
-            }
-            let result = inquire::Text::new("AWS Region:").prompt();
-            match result {
-                Ok(value) if !value.is_empty() => value,
-                Ok(_) => return Ok(None),
-                Err(InquireError::OperationCanceled | InquireError::OperationInterrupted) => {
-                    return Ok(None);
-                }
-                Err(err) => return Err(err.into()),
-            }
-        }
-    };
-
-    Ok(Some(ManagedSecretValue::anthropic_bedrock_api_key(
-        api_key, region,
-    )))
-}
-
-/// Read a Bedrock access key secret from dedicated CLI flags or interactive prompts.
-///
-/// `session_token` is optional: if the user passes an empty `--session-token`
-/// value or hits Enter at the interactive prompt, no session token is stored.
-/// This supports persistent IAM credentials, which do not require a session token.
-fn read_bedrock_access_key_secret_value(
-    access_key_id: Option<String>,
-    secret_access_key: Option<String>,
-    session_token: Option<String>,
-    region: Option<String>,
-) -> Result<Option<ManagedSecretValue>> {
-    // Error message used for all three required fields when running non-interactively.
-    // --session-token is intentionally omitted because it is optional.
-    const NON_INTERACTIVE_REQUIRED_MSG: &str = "Bedrock access key secrets require --access-key-id, --secret-access-key, and --region in non-interactive mode";
-
-    let access_key_id = match access_key_id {
-        Some(v) if !v.is_empty() => v,
-        _ => {
-            if !io::stdin().is_terminal() {
-                return Err(anyhow::anyhow!(NON_INTERACTIVE_REQUIRED_MSG));
-            }
-            match inquire::Text::new("AWS Access Key ID:").prompt() {
-                Ok(value) if !value.is_empty() => value,
-                Ok(_) => return Ok(None),
-                Err(InquireError::OperationCanceled | InquireError::OperationInterrupted) => {
-                    return Ok(None);
-                }
-                Err(err) => return Err(err.into()),
-            }
-        }
-    };
-
-    let secret_access_key = match secret_access_key {
-        Some(v) if !v.is_empty() => v,
-        _ => {
-            if !io::stdin().is_terminal() {
-                return Err(anyhow::anyhow!(NON_INTERACTIVE_REQUIRED_MSG));
-            }
-            match Password::new("AWS Secret Access Key:")
-                .with_display_toggle_enabled()
-                .without_confirmation()
-                .prompt()
-            {
-                Ok(value) if !value.is_empty() => value,
-                Ok(_) => return Ok(None),
-                Err(InquireError::OperationCanceled | InquireError::OperationInterrupted) => {
-                    return Ok(None);
-                }
-                Err(err) => return Err(err.into()),
-            }
-        }
-    };
-
-    // The session token is optional. An empty --session-token flag or an empty
-    // interactive submission is treated as "no token" rather than as a cancel.
-    let session_token: Option<String> = match session_token {
-        Some(v) if !v.is_empty() => Some(v),
-        Some(_) => None,
-        None => {
-            if !io::stdin().is_terminal() {
-                // In non-interactive mode, omitting --session-token is fine:
-                // persistent IAM credentials do not need a session token.
-                None
-            } else {
-                match Password::new("AWS Session Token (optional, press Enter to skip):")
-                    .with_display_toggle_enabled()
-                    .without_confirmation()
-                    .prompt()
-                {
-                    Ok(value) if !value.is_empty() => Some(value),
-                    // Empty input signals "no session token", not a cancel.
-                    Ok(_) => None,
-                    Err(InquireError::OperationCanceled | InquireError::OperationInterrupted) => {
-                        return Ok(None);
-                    }
-                    Err(err) => return Err(err.into()),
-                }
-            }
-        }
-    };
-
-    let region = match region {
-        Some(r) if !r.is_empty() => r,
-        _ => {
-            if !io::stdin().is_terminal() {
-                return Err(anyhow::anyhow!(NON_INTERACTIVE_REQUIRED_MSG));
-            }
-            match inquire::Text::new("AWS Region:").prompt() {
-                Ok(value) if !value.is_empty() => value,
-                Ok(_) => return Ok(None),
-                Err(InquireError::OperationCanceled | InquireError::OperationInterrupted) => {
-                    return Ok(None);
-                }
-                Err(err) => return Err(err.into()),
-            }
-        }
-    };
-
-    Ok(Some(ManagedSecretValue::anthropic_bedrock_access_key(
-        access_key_id,
-        secret_access_key,
-        session_token,
-        region,
-    )))
-}
-
 /// Finds the type of an existing secret by name and owner scope.
 fn find_secret_type(
     secrets: &[ManagedSecret],
@@ -854,8 +631,6 @@ fn format_secret_type(type_: &ManagedSecretType) -> String {
         ManagedSecretType::RawValue => "Raw Value".to_string(),
         ManagedSecretType::Dotenvx => "dotenvx".to_string(),
         ManagedSecretType::AnthropicApiKey => "Anthropic API Key".to_string(),
-        ManagedSecretType::AnthropicBedrockAccessKey => "Anthropic Bedrock Access Key".to_string(),
-        ManagedSecretType::AnthropicBedrockApiKey => "Anthropic Bedrock API Key".to_string(),
         ManagedSecretType::OpenaiApiKey => "OpenAI API Key".to_string(),
         ManagedSecretType::DockerRegistry => "Container Registry Credential".to_string(),
     }

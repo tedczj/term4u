@@ -27,10 +27,10 @@ use warp::tui_export::{
     LLMPreferences, LinkedWorkflowData, LongRunningCommandControlState, MessageId,
     OutputStatusUpdateCallback, ParsedSlashCommandInput, PtyIntent, PtyIntentEvent,
     ResolvedTeamScope, ServerOutputId, Session, Shared, SizeInfo, SizeUpdate,
-    SlashCommandDataSource as _, SlashCommandKind, TaskId, TranscriptScope, TuiMcpAction,
-    TuiMcpServerId, TuiOnboardingMarker, TuiOnboardingMarkers, TuiUpArrowHistoryItemKind,
-    UserTakeOverReason, UserWorkspaces, WarpConfig, WarpConfigUpdateEvent,
-    export_conversation_markdown, forkable_tui_conversation_for_test, queue_tui_permission_action,
+    SlashCommandDataSource as _, SlashCommandKind, TaskId, TranscriptScope, TuiOnboardingMarker,
+    TuiOnboardingMarkers, TuiUpArrowHistoryItemKind, UserTakeOverReason, UserWorkspaces,
+    WarpConfig, WarpConfigUpdateEvent, export_conversation_markdown,
+    forkable_tui_conversation_for_test, queue_tui_permission_action,
     register_tui_session_view_test_singletons, set_tui_default_team_admin_for_test,
     set_tui_workspace_teams_for_test, slash_commands,
 };
@@ -76,8 +76,7 @@ use super::{
     SESSION_CAN_DETACH_AGENT_FROM_RUNNING_COMMAND_FLAG, SHELL_MODE_HINT, STATUSLINE_RESET_HINT,
     TuiConversationRestoreOrigin, TuiTerminalSessionAction, TuiTerminalSessionEvent,
     TuiTerminalSessionView, attachment_focus_available, cost_command_unavailable_hint,
-    export_file_success_message, log_bundle_success_message, mcp_primary_action_hint,
-    raw_prompt_if_not_blank, render_mcp_install_footer, render_mcp_menu_footer,
+    export_file_success_message, log_bundle_success_message, raw_prompt_if_not_blank,
 };
 #[cfg(feature = "voice_input")]
 use super::{
@@ -134,24 +133,6 @@ fn only_conversation_list_restores_emit_restore_telemetry() {
     assert!(!TuiConversationRestoreOrigin::Fork.records_telemetry());
 }
 
-#[test]
-fn mcp_install_footer_labels_final_value_as_install_and_enable() {
-    App::test((), |mut app| async move {
-        app.update(|ctx| {
-            ctx.add_singleton_model(|_| Appearance::mock());
-            let footer = render_mcp_install_footer(
-                &TuiUiBuilder::from_app(ctx),
-                Some("to install and enable"),
-            )
-            .finish();
-            assert_eq!(
-                render_element(footer, ctx, 120).to_lines(),
-                vec!["Enter to install and enable  Esc to cancel".to_owned()],
-            );
-        });
-    });
-}
-
 fn todo(id: &str, title: &str) -> AIAgentTodo {
     AIAgentTodo::new(id.to_owned().into(), title.to_owned(), String::new())
 }
@@ -184,28 +165,6 @@ fn set_selected_todo_list(
         conversation_id
     })
 }
-#[test]
-fn mcp_menu_footer_replaces_status_with_controls() {
-    App::test((), |mut app| async move {
-        app.update(|ctx| {
-            ctx.add_singleton_model(|_| Appearance::mock());
-            let footer = render_mcp_menu_footer(
-                &TuiUiBuilder::from_app(ctx),
-                Some(TuiMcpAction::Stop(TuiMcpServerId::FileBased(1))),
-                true,
-            )
-            .finish();
-            assert_eq!(
-                render_element(footer, ctx, 120).to_lines(),
-                vec![
-                    "Enter to stop  Ctrl+R to log out & remove credentials  Esc to close"
-                        .to_owned()
-                ],
-            );
-        });
-    });
-}
-
 #[test]
 fn out_of_credits_ctrl_o_binding_opens_upgrade() {
     App::test((), |mut app| async move {
@@ -406,26 +365,6 @@ fn manage_billing_slash_command_rejects_users_without_an_admin_team() {
 }
 
 #[test]
-fn mcp_menu_footer_hides_unavailable_primary_control() {
-    App::test((), |mut app| async move {
-        app.update(|ctx| {
-            ctx.add_singleton_model(|_| Appearance::mock());
-            let builder = TuiUiBuilder::from_app(ctx);
-            let logout_only = render_mcp_menu_footer(&builder, None, true).finish();
-            assert_eq!(
-                render_element(logout_only, ctx, 120).to_lines(),
-                vec!["Ctrl+R to log out & remove credentials  Esc to close".to_owned()],
-            );
-            let close_only = render_mcp_menu_footer(&builder, None, false).finish();
-            assert_eq!(
-                render_element(close_only, ctx, 120).to_lines(),
-                vec!["Esc to close".to_owned()],
-            );
-        });
-    });
-}
-
-#[test]
 fn api_keys_slash_command_opens_inline_and_clears_the_input() {
     App::test((), |mut app| async move {
         let fixture = focus_test_fixture(&mut app);
@@ -471,51 +410,6 @@ fn connect_grok_slash_command_opens_the_api_keys_menu_in_grok_flow() {
                 TuiInputSuggestionsMode::ApiKeys
             );
             assert!(view.input_view.as_ref(ctx).is_empty(ctx));
-        });
-    });
-}
-
-#[test]
-fn mcp_primary_action_hints_match_available_actions() {
-    let id = TuiMcpServerId::FileBased(1);
-    assert_eq!(
-        mcp_primary_action_hint(TuiMcpAction::Enable(id)),
-        Some("to install and enable")
-    );
-    assert_eq!(
-        mcp_primary_action_hint(TuiMcpAction::Start(id)),
-        Some("to start")
-    );
-    assert_eq!(
-        mcp_primary_action_hint(TuiMcpAction::Stop(id)),
-        Some("to stop")
-    );
-    assert_eq!(
-        mcp_primary_action_hint(TuiMcpAction::Retry(id)),
-        Some("to retry")
-    );
-    assert_eq!(
-        mcp_primary_action_hint(TuiMcpAction::ReopenAuthorization(id)),
-        Some("to authenticate")
-    );
-    assert_eq!(mcp_primary_action_hint(TuiMcpAction::LogOut(id)), None);
-    assert_eq!(mcp_primary_action_hint(TuiMcpAction::ReloadConfig), None);
-}
-#[test]
-fn mcp_menu_footer_hides_unavailable_logout_control() {
-    App::test((), |mut app| async move {
-        app.update(|ctx| {
-            ctx.add_singleton_model(|_| Appearance::mock());
-            let footer = render_mcp_menu_footer(
-                &TuiUiBuilder::from_app(ctx),
-                Some(TuiMcpAction::Start(TuiMcpServerId::FileBased(1))),
-                false,
-            )
-            .finish();
-            assert_eq!(
-                render_element(footer, ctx, 120).to_lines(),
-                vec!["Enter to start  Esc to close".to_owned()],
-            );
         });
     });
 }

@@ -597,13 +597,6 @@ pub(crate) fn classify_renderable_error(
                 PlatformErrorCode::AuthenticationRequired,
             )),
         ),
-        RenderableAIError::AwsBedrockCredentialsExpiredOrInvalid { model_name } => (
-            AgentTaskState::Failed,
-            Some(TaskStatusUpdate::with_error_code(
-                format!("AWS Bedrock credentials expired or invalid for {model_name}."),
-                PlatformErrorCode::AuthenticationRequired,
-            )),
-        ),
         RenderableAIError::GeminiEnterpriseCredentialsExpiredOrInvalid => (
             AgentTaskState::Failed,
             Some(TaskStatusUpdate::with_error_code(

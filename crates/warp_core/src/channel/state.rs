@@ -9,7 +9,7 @@ use url::{Origin, Url};
 
 use super::Channel;
 use crate::AppId;
-use crate::channel::config::{ChannelConfig, ConnectivityMode, IapConfig, McpOAuthProviderConfig};
+use crate::channel::config::{ChannelConfig, ConnectivityMode, IapConfig};
 #[cfg(not(feature = "offline_hard"))]
 use crate::channel::config::{OzConfig, WarpServerConfig};
 use crate::features::FeatureFlag;
@@ -67,7 +67,6 @@ impl ChannelState {
                 app_id,
                 logfile_name: GUI_LOG_FILE.into(),
                 connectivity,
-                mcp_static_config: None,
             },
         }
     }
@@ -378,28 +377,6 @@ impl ChannelState {
     #[cfg(not(feature = "test-util"))]
     pub fn app_version() -> Option<&'static str> {
         option_env!("GIT_RELEASE_TAG")
-    }
-
-    /// Returns the MCP OAuth provider config matching the given client ID, if any.
-    pub fn mcp_oauth_provider_by_client_id(client_id: &str) -> Option<McpOAuthProviderConfig> {
-        CHANNEL_STATE
-            .lock()
-            .config
-            .mcp_static_config
-            .as_ref()
-            .and_then(|c| c.providers.iter().find(|p| p.client_id == client_id))
-            .cloned()
-    }
-
-    /// Returns the MCP OAuth provider config matching the given issuer URL, if any.
-    pub fn mcp_oauth_provider_by_issuer(issuer: &str) -> Option<McpOAuthProviderConfig> {
-        CHANNEL_STATE
-            .lock()
-            .config
-            .mcp_static_config
-            .as_ref()
-            .and_then(|c| c.providers.iter().find(|p| p.issuer == issuer))
-            .cloned()
     }
 
     pub fn url_scheme() -> &'static str {

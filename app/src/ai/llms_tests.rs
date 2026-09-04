@@ -5,7 +5,6 @@ use warpui::App;
 
 use super::*;
 use crate::ai::execution_profiles::profiles::AIExecutionProfilesModel;
-use crate::ai::mcp::TemplatableMCPServerManager;
 use crate::auth::AuthStateProvider;
 use crate::auth::auth_manager::AuthManager;
 use crate::cloud_object::model::persistence::CloudModel;
@@ -82,8 +81,7 @@ fn llm_info_deserializes_without_base_model_name() {
 }
 
 #[test]
-fn llm_info_deserializes_host_configs_as_vec() {
-    // Wire format from server: host_configs is a Vec
+fn removed_host_config_deserializes_as_unknown() {
     let raw = r#"{
             "display_name": "gpt-4o",
             "id": "gpt-4o",
@@ -107,7 +105,7 @@ fn llm_info_deserializes_host_configs_as_vec() {
     assert!(
         !info
             .host_configs
-            .get(&LLMModelHost::AwsBedrock)
+            .get(&LLMModelHost::Unknown)
             .unwrap()
             .enabled
     );
@@ -163,12 +161,6 @@ fn host_icon_visibility_requires_enabled_credentials_and_model_host() {
         &LLMModelHost::GeminiEnterprise,
         false,
     ));
-    assert!(!should_show_host_icon_for_model(
-        &info,
-        &LLMModelHost::AwsBedrock,
-        true,
-    ));
-
     info.host_configs
         .get_mut(&LLMModelHost::GeminiEnterprise)
         .expect("Gemini Enterprise host should exist")
@@ -188,26 +180,17 @@ fn auto_models_show_the_agent_glyph_instead_of_a_host_logo() {
     // destination the classifier may never pick, so auto models stay generic.
     let llm = server_llm("auto-open", None);
 
-    for flags in [
-        ModelIconFlags {
-            is_auto: true,
-            is_using_bedrock: true,
-            ..Default::default()
-        },
-        ModelIconFlags {
-            is_auto: true,
-            is_using_gemini_enterprise: true,
-            ..Default::default()
-        },
-        ModelIconFlags {
-            is_auto: true,
-            is_using_bedrock: true,
-            is_using_gemini_enterprise: true,
-            ..Default::default()
-        },
-    ] {
-        assert_eq!(model_leading_icon(&llm, flags), Icon::Agent);
-    }
+    assert_eq!(
+        model_leading_icon(
+            &llm,
+            ModelIconFlags {
+                is_auto: true,
+                is_using_gemini_enterprise: true,
+                ..Default::default()
+            },
+        ),
+        Icon::Agent
+    );
 }
 
 #[test]
@@ -218,34 +201,11 @@ fn non_auto_models_keep_their_host_logo() {
         model_leading_icon(
             &llm,
             ModelIconFlags {
-                is_using_bedrock: true,
-                ..Default::default()
-            }
-        ),
-        Icon::Aws
-    );
-    assert_eq!(
-        model_leading_icon(
-            &llm,
-            ModelIconFlags {
                 is_using_gemini_enterprise: true,
                 ..Default::default()
             }
         ),
         Icon::GeminiEnterpriseAgentPlatform
-    );
-    // Bedrock wins when both hosts are available, matching the server's
-    // AWS_BEDROCK -> GEMINI_ENTERPRISE fallback priority.
-    assert_eq!(
-        model_leading_icon(
-            &llm,
-            ModelIconFlags {
-                is_using_bedrock: true,
-                is_using_gemini_enterprise: true,
-                ..Default::default()
-            }
-        ),
-        Icon::Aws
     );
 }
 
@@ -611,7 +571,6 @@ fn active_models_fall_back_to_usable_choice_or_custom_endpoint_when_default_disa
         app.add_singleton_model(TeamTesterStatus::mock);
         app.add_singleton_model(SyncQueue::mock);
         app.add_singleton_model(UpdateManager::mock);
-        app.add_singleton_model(|_| TemplatableMCPServerManager::default());
 
         app.add_singleton_model(|ctx| {
             AIExecutionProfilesModel::new(&LaunchMode::new_for_unit_test(), ctx)
@@ -741,7 +700,6 @@ fn active_models_use_default_when_usable() {
         app.add_singleton_model(TeamTesterStatus::mock);
         app.add_singleton_model(SyncQueue::mock);
         app.add_singleton_model(UpdateManager::mock);
-        app.add_singleton_model(|_| TemplatableMCPServerManager::default());
 
         app.add_singleton_model(|ctx| {
             AIExecutionProfilesModel::new(&LaunchMode::new_for_unit_test(), ctx)
@@ -796,7 +754,6 @@ fn reconcile_preserves_custom_models_saved_on_execution_profile() {
         app.add_singleton_model(TeamTesterStatus::mock);
         app.add_singleton_model(SyncQueue::mock);
         app.add_singleton_model(UpdateManager::mock);
-        app.add_singleton_model(|_| TemplatableMCPServerManager::default());
 
         let profiles_model = app.add_singleton_model(|ctx| {
             AIExecutionProfilesModel::new(&LaunchMode::new_for_unit_test(), ctx)
@@ -870,7 +827,6 @@ fn reconcile_preserves_custom_endpoint_models_not_configured_locally() {
         app.add_singleton_model(TeamTesterStatus::mock);
         app.add_singleton_model(SyncQueue::mock);
         app.add_singleton_model(UpdateManager::mock);
-        app.add_singleton_model(|_| TemplatableMCPServerManager::default());
 
         let profiles_model = app.add_singleton_model(|ctx| {
             AIExecutionProfilesModel::new(&LaunchMode::new_for_unit_test(), ctx)
@@ -969,7 +925,6 @@ fn reconcile_preserves_custom_router_models_not_configured_locally() {
         app.add_singleton_model(TeamTesterStatus::mock);
         app.add_singleton_model(SyncQueue::mock);
         app.add_singleton_model(UpdateManager::mock);
-        app.add_singleton_model(|_| TemplatableMCPServerManager::default());
 
         let profiles_model = app.add_singleton_model(|ctx| {
             AIExecutionProfilesModel::new(&LaunchMode::new_for_unit_test(), ctx)
@@ -1102,7 +1057,6 @@ fn updating_active_profile_base_model_persists_and_updates_resolution() {
         app.add_singleton_model(TeamTesterStatus::mock);
         app.add_singleton_model(SyncQueue::mock);
         app.add_singleton_model(UpdateManager::mock);
-        app.add_singleton_model(|_| TemplatableMCPServerManager::default());
         let profiles = app.add_singleton_model(|ctx| {
             AIExecutionProfilesModel::new(
                 &LaunchMode::Tui {
@@ -1166,7 +1120,6 @@ fn selecting_a_custom_profile_default_clears_the_session_override() {
         app.add_singleton_model(TeamTesterStatus::mock);
         app.add_singleton_model(SyncQueue::mock);
         app.add_singleton_model(UpdateManager::mock);
-        app.add_singleton_model(|_| TemplatableMCPServerManager::default());
         let profiles = app.add_singleton_model(|ctx| {
             AIExecutionProfilesModel::new(&LaunchMode::new_for_unit_test(), ctx)
         });
@@ -1234,7 +1187,6 @@ fn explicit_child_model_pin_preserves_gui_behavior_and_only_emits_for_effective_
         app.add_singleton_model(TeamTesterStatus::mock);
         app.add_singleton_model(SyncQueue::mock);
         app.add_singleton_model(UpdateManager::mock);
-        app.add_singleton_model(|_| TemplatableMCPServerManager::default());
         let profiles = app.add_singleton_model(|ctx| {
             AIExecutionProfilesModel::new(&LaunchMode::new_for_unit_test(), ctx)
         });

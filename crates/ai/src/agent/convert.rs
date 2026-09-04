@@ -16,8 +16,8 @@ pub enum ConvertToAPITypeError {
 pub enum ToolToAIAgentActionError {
     #[error("Missing tool")]
     MissingTool,
-    #[error("Could not parse args for MCP tool call: {0}")]
-    CallMCPToolArgsError(String),
+    #[error("Unsupported protocol tool: {0}")]
+    UnsupportedProtocolTool(&'static str),
     #[error("Error converting suggest prompt tool call: {0}")]
     SuggestPromptError(String),
     #[error("Required coordinates for computer use action were missing")]

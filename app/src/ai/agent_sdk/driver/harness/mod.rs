@@ -30,7 +30,6 @@ use crate::ai::agent::conversation::AIConversationId;
 use crate::ai::agent_sdk::setup_observability::SetupClientEventReporter;
 use crate::ai::agent_tasks::AmbientAgentTaskId;
 use crate::ai::agent_tasks::task::HarnessModelConfig;
-use crate::ai::mcp::JSONMCPServer;
 use crate::server::server_api::ServerApi;
 use crate::server::server_api::harness_support::{HarnessSupportClient, upload_to_target};
 use crate::terminal::CLIAgent;
@@ -187,9 +186,7 @@ pub(crate) trait ThirdPartyHarness: Send + Sync {
 
     /// Build a runner for executing this harness with the given prompt.
     ///
-    /// Responsible for all harness-specific setup: writing config files (auth,
-    /// trust, system prompt, MCP, etc.) and constructing the runner that will
-    /// execute the CLI command.
+    /// Responsible for harness-specific configuration and command construction.
     ///
     /// `resolved_env_vars` contains already-resolved secret env vars (worker
     /// env > typed secrets > raw values precedence already applied).
@@ -213,7 +210,6 @@ pub(crate) trait ThirdPartyHarness: Send + Sync {
         resume: Option<ResumePayload>,
         resolved_env_vars: &HashMap<OsString, OsString>,
         resolved_secrets: &HashMap<String, ManagedSecretValue>,
-        resolved_mcp_servers: &HashMap<String, JSONMCPServer>,
         third_party_harness_model_config: Option<&HarnessModelConfig>,
     ) -> Result<Box<dyn HarnessRunner>, AgentDriverError>;
 }

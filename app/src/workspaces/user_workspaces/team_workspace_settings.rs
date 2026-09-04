@@ -464,72 +464,11 @@ impl UserWorkspaces {
         self.llm_settings_for_scope(scope)?.host_configs.get(&host)
     }
 
-    pub(crate) fn aws_bedrock_host_settings<S: TeamScope + ?Sized>(
-        &self,
-        scope: &S,
-    ) -> Option<&LlmHostSettings> {
-        self.host_settings_for_scope(scope, LLMModelHost::AwsBedrock)
-    }
-
     pub(crate) fn gemini_enterprise_host_settings<S: TeamScope + ?Sized>(
         &self,
         scope: &S,
     ) -> Option<&LlmHostSettings> {
         self.host_settings_for_scope(scope, LLMModelHost::GeminiEnterprise)
-    }
-
-    /// Did the admin enable AWS Bedrock for `scope`'s team?
-    pub(crate) fn is_aws_bedrock_available<S: TeamScope + ?Sized>(&self, scope: &S) -> bool {
-        self.llm_settings_for_scope(scope)
-            .is_some_and(|llm_settings| llm_settings.enabled)
-            && self
-                .aws_bedrock_host_settings(scope)
-                .is_some_and(|settings| settings.enabled)
-    }
-
-    pub(crate) fn aws_bedrock_host_enablement_setting<S: TeamScope + ?Sized>(
-        &self,
-        scope: &S,
-    ) -> HostEnablementSetting {
-        self.aws_bedrock_host_settings(scope)
-            .map(|settings| settings.enablement_setting.clone())
-            .unwrap_or_default()
-    }
-
-    pub(crate) fn is_aws_bedrock_credentials_enabled<S: TeamScope + ?Sized>(
-        &self,
-        scope: &S,
-        app: &AppContext,
-    ) -> bool {
-        // i.e. did the admin go and toggle on aws bedrock in the admin panel?
-        if !self.is_aws_bedrock_available(scope) {
-            return false;
-        }
-
-        match self.aws_bedrock_host_enablement_setting(scope) {
-            HostEnablementSetting::Enforce => true,
-            HostEnablementSetting::RespectUserSetting => *AISettings::as_ref(app)
-                .aws_bedrock_credentials_enabled
-                .value(),
-        }
-    }
-
-    /// Whether *any* of the user's teams has AWS Bedrock credentials enabled, for work that
-    /// belongs to no window at all: loading the local AWS credential chain, and the "does this
-    /// user have any usable BYO path" check. A caller with a window must use
-    /// [`Self::is_aws_bedrock_credentials_enabled`] instead -- this deliberately answers for
-    /// the union of the user's teams, not for the team a window points at.
-    #[cfg(not(target_family = "wasm"))]
-    pub(crate) fn is_aws_bedrock_credentials_enabled_for_any_team(&self, app: &AppContext) -> bool {
-        self.every_applicable_team_and_llm_settings()
-            .map(|(_, settings)| settings)
-            .any(|llm_settings| {
-                Self::host_credentials_enabled(llm_settings, &LLMModelHost::AwsBedrock, || {
-                    *AISettings::as_ref(app)
-                        .aws_bedrock_credentials_enabled
-                        .value()
-                })
-            })
     }
 
     /// Did the admin enable Gemini Enterprise (GEAP) for `scope`'s team?

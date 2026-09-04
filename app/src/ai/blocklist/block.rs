@@ -115,9 +115,6 @@ use crate::ai::blocklist::diff_types::FileDiff;
 use crate::ai::blocklist::inline_action::ask_user_question_view::{
     self, AskUserQuestionView, AskUserQuestionViewEvent,
 };
-use crate::ai::blocklist::inline_action::aws_bedrock_credentials_error::{
-    AwsBedrockCredentialsErrorEvent, AwsBedrockCredentialsErrorView,
-};
 use crate::ai::blocklist::inline_action::code_diff_view;
 use crate::ai::blocklist::inline_action::code_diff_view::convert_file_edits_to_file_diffs;
 use crate::ai::blocklist::inline_action::gemini_enterprise_credentials_error::{
@@ -953,9 +950,6 @@ pub struct AIBlock {
     /// Map from a requested command action ID to its view handle and status.
     requested_commands: HashMap<AIAgentActionId, RequestedCommand>,
 
-    /// Map from a requested MCP tool call action ID to its view handle and status.
-    requested_mcp_tools: HashMap<AIAgentActionId, RequestedCommand>,
-
     /// Map from a requested edit action ID to its view handle and status.
     /// Uses IndexMap to preserve insertion order for correct revert ordering.
     requested_edits: IndexMap<AIAgentActionId, RequestedEdit>,
@@ -1084,8 +1078,6 @@ pub struct AIBlock {
     agent_view_controller: ModelHandle<AgentViewController>,
     ambient_agent_view_model: Option<ModelHandle<AmbientAgentViewModel>>,
 
-    /// View for AWS Bedrock credentials error, created lazily when the error occurs.
-    aws_bedrock_credentials_error_view: Option<ViewHandle<AwsBedrockCredentialsErrorView>>,
     /// View for Gemini Enterprise credentials errors, created lazily when the error occurs.
     gemini_enterprise_credentials_error_view:
         Option<ViewHandle<GeminiEnterpriseCredentialsErrorView>>,
@@ -1530,7 +1522,6 @@ impl AIBlock {
             detected_links_state,
             code_editor_views: Default::default(),
             requested_commands: Default::default(),
-            requested_mcp_tools: Default::default(),
             requested_edits: Default::default(),
             todo_list_states: Default::default(),
             comment_states,
@@ -1566,7 +1557,6 @@ impl AIBlock {
             is_usage_footer_expanded: false,
             agent_view_controller,
             ambient_agent_view_model,
-            aws_bedrock_credentials_error_view: None,
             gemini_enterprise_credentials_error_view: None,
             imported_comments: Default::default(),
             has_imported_comments: false,
@@ -1597,7 +1587,6 @@ impl AIBlock {
                 me.finish(FinishReason::Complete, ctx);
             }
             AIBlockOutputStatus::Failed { error, .. } => {
-                me.maybe_create_aws_bedrock_credentials_error_view(&error, ctx);
                 me.maybe_create_gemini_enterprise_credentials_error_view(&error, ctx);
                 me.finish(FinishReason::Error, ctx);
             }
@@ -1985,7 +1974,6 @@ impl AIBlock {
                     },
                     ctx
                 );
-                self.maybe_create_aws_bedrock_credentials_error_view(&error, ctx);
                 self.maybe_create_gemini_enterprise_credentials_error_view(&error, ctx);
                 self.notify_run_agents_card_views(ctx);
                 // There are no actions to be taken in this block, it is finished.
@@ -2127,51 +2115,6 @@ impl AIBlock {
                     ..
                 } => {
                     self.handle_requested_command_stream_update(action_id, command, citations, ctx);
-                }
-                AIAgentAction {
-                    id: action_id,
-                    action:
-                        AIAgentActionType::CallMCPTool {
-                            server_id,
-                            name,
-                            input,
-                        },
-                    ..
-                } => {
-                    // Coerce the display value the same way dispatch does, so the
-                    // rendered MCP tool call detail shows `5` instead of `5.0` for
-                    // integer-typed fields. The raw `input` from the stream has
-                    // `f64` values because `structpb.NumberValue` erases the
-                    // integer/float distinction; see `coerce_integer_args` for
-                    // the full rationale.
-                    let display_input = match input {
-                        serde_json::Value::Object(map) => {
-                            let mut map = map.clone();
-                            if let Some(schema) =
-                                crate::ai::mcp::TemplatableMCPServerManager::as_ref(ctx)
-                                    .tool_input_schema(*server_id, name.as_str())
-                            {
-                                crate::ai::blocklist::action_model::coerce_integer_args(
-                                    &mut map, &schema,
-                                );
-                            }
-                            serde_json::Value::Object(map)
-                        }
-                        other => other.clone(),
-                    };
-                    let command_text = if display_input.is_null() {
-                        format!("MCP Tool: {name}")
-                    } else {
-                        format!("MCP Tool: {name} ({display_input})")
-                    };
-                    self.handle_mcp_tool_stream_update(
-                        action_id,
-                        name,
-                        &command_text,
-                        display_input,
-                        *server_id,
-                        ctx,
-                    );
                 }
                 AIAgentAction {
                     id: action_id,
@@ -3403,24 +3346,6 @@ impl AIBlock {
                         });
                     }
                 }
-                #[cfg_attr(not(feature = "local_fs"), allow(unused_variables))]
-                CodeDiffViewEvent::OpenMCPConfig { path, .. } => {
-                    #[cfg(feature = "local_fs")]
-                    {
-                        ctx.emit(AIBlockEvent::OpenCodeInWarp {
-                            source: CodeSource::Link {
-                                path: path.clone(),
-                                range_start: None,
-                                range_end: None,
-                            },
-                            layout: *crate::util::file::external_editor::EditorSettings::as_ref(
-                                ctx,
-                            )
-                            .open_file_layout
-                            .value(),
-                        });
-                    }
-                }
                 _ => (),
             }
         });
@@ -3638,7 +3563,7 @@ impl AIBlock {
         }
     }
 
-    /// Update the autonomy setting speedbump in requested command and MCP tool views that match the given action ID.
+    /// Update the autonomy setting speedbump for a requested command.
     fn update_requested_command_autonomy_speedbump(
         &self,
         action_id: AIAgentActionId,
@@ -3648,113 +3573,6 @@ impl AIBlock {
             requested_command.view.update(ctx, |view, ctx| {
                 view.set_autonomy_setting_speedbump(self.autonomy_setting_speedbump.clone(), ctx);
             });
-        }
-        if let Some(requested_mcp_tool) = self.requested_mcp_tools.get(&action_id) {
-            requested_mcp_tool.view.update(ctx, |view, ctx| {
-                view.set_autonomy_setting_speedbump(self.autonomy_setting_speedbump.clone(), ctx);
-            });
-        }
-    }
-
-    /// Handle a new MCP tool call received from the server. This will update the existing
-    /// MCP tool call block if one exists, or insert a new one otherwise.
-    fn handle_mcp_tool_stream_update(
-        &mut self,
-        action_id: &AIAgentActionId,
-        tool_name: &str,
-        command_text: &str,
-        mcp_args: serde_json::Value,
-        server_id: Option<uuid::Uuid>,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        match self.requested_mcp_tools.get_mut(action_id) {
-            Some(requested_mcp_tool) => {
-                requested_mcp_tool.view.update(ctx, |view, ctx| {
-                    view.apply_streamed_update(command_text, ctx);
-                    view.update_mcp_tool_name(tool_name);
-                    view.update_mcp_request(mcp_args);
-                    view.update_mcp_server_id(server_id);
-                    ctx.notify();
-                });
-            }
-            None => {
-                let view = ctx.add_typed_action_view(|ctx| {
-                    let mut view = RequestedCommandView::new(
-                        action_id.clone(),
-                        self.client_ids.clone(),
-                        RequestedActionViewType::McpTool,
-                        self.model.clone(),
-                        &self.action_model,
-                        self.terminal_model.clone(),
-                        self.autonomy_setting_speedbump.clone(),
-                        self.state_handles
-                            .manage_autonomy_settings_link_handle
-                            .clone(),
-                        self.view_id,
-                        ctx,
-                    );
-                    view.apply_streamed_update(command_text, ctx);
-                    view.update_mcp_tool_name(tool_name);
-                    view.update_mcp_request(mcp_args);
-                    view.update_mcp_server_id(server_id);
-                    view
-                });
-                let action_id_clone = action_id.clone();
-                ctx.subscribe_to_view(&view, move |me, view, event, ctx| {
-                    me.handle_mcp_tool_view_event(&action_id_clone, view, event, ctx);
-                });
-
-                self.requested_mcp_tools
-                    .insert(action_id.clone(), RequestedCommand { view });
-            }
-        }
-    }
-
-    fn handle_mcp_tool_view_event(
-        &mut self,
-        action_id: &AIAgentActionId,
-        view: ViewHandle<RequestedCommandView>,
-        event: &RequestedCommandViewEvent,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        // Short-circuit if this is no longer an MCP tool call we're tracking.
-        if !self.requested_mcp_tools.contains_key(action_id) {
-            return;
-        }
-        match event {
-            RequestedCommandViewEvent::Accepted => {
-                self.action_model.update(ctx, |action_model, ctx| {
-                    action_model.execute_action(action_id, self.client_ids.conversation_id, ctx);
-                });
-                self.yield_requested_action_focus_if_focused(&view, ctx);
-                ctx.notify();
-            }
-            RequestedCommandViewEvent::Rejected => {
-                self.cancel_action(action_id, ctx);
-                self.yield_requested_action_focus_if_focused(&view, ctx);
-            }
-            RequestedCommandViewEvent::TextSelected => {
-                // If there's an ongoing text selection, clear all other selections within the
-                // `AIBlock`'s view sub-hierarchy to ensure only one component has a selection at a time.
-                self.clear_other_selections(Some(view.id()), ctx.window_id(), ctx);
-                ctx.emit(AIBlockEvent::ChildViewTextSelected);
-            }
-            RequestedCommandViewEvent::CopiedEmptyText => {
-                ctx.emit(AIBlockEvent::CopiedEmptyText);
-            }
-            RequestedCommandViewEvent::EditorFocused => {
-                // Actions within the editor should clear all other text selections
-                self.clear_other_selections(Some(view.id()), ctx.window_id(), ctx);
-            }
-            RequestedCommandViewEvent::EnableAutoexecuteMode => {
-                self.enable_autoexecute_override(ctx);
-            }
-            // There's nothing to do here for MCP tool calls; their expanded state
-            // doesn't change the blocklist like it does for requested commands.
-            RequestedCommandViewEvent::UpdatedExpansionState { .. } => {}
-            RequestedCommandViewEvent::OpenActiveAgentProfileEditor => {
-                ctx.emit(AIBlockEvent::OpenActiveAgentProfileEditor);
-            }
         }
     }
 
@@ -4130,58 +3948,6 @@ impl AIBlock {
             }
         }
 
-        ctx.notify();
-    }
-
-    /// Creates the AWS Bedrock credentials error view if the error is `AwsBedrockCredentialsExpiredOrInvalid`
-    /// and we don't already have one. If auto-login is enabled, automatically runs the login command.
-    fn maybe_create_aws_bedrock_credentials_error_view(
-        &mut self,
-        error: &RenderableAIError,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        // Only create the view for AWS Bedrock credentials errors
-        let RenderableAIError::AwsBedrockCredentialsExpiredOrInvalid { model_name } = error else {
-            return;
-        };
-
-        // Don't recreate if we already have a view
-        if self.aws_bedrock_credentials_error_view.is_some() {
-            return;
-        }
-
-        let ai_settings = AISettings::as_ref(ctx);
-        let login_command = ai_settings.aws_bedrock_auth_refresh_command.value().clone();
-        let auto_login_enabled = *ai_settings.aws_bedrock_auto_login.value();
-
-        // If auto-login is enabled, run the login command automatically
-        if auto_login_enabled {
-            ctx.emit(AIBlockEvent::RunAwsLoginCommand);
-        }
-
-        let model_name = model_name.clone();
-        let view = ctx.add_typed_action_view(|ctx| {
-            AwsBedrockCredentialsErrorView::new(model_name, login_command, auto_login_enabled, ctx)
-        });
-
-        // Subscribe to events from the view and emit AIBlockEvents directly
-        // Note: We emit events here rather than dispatch actions because we're in a
-        // subscription callback where the context is already for AIBlock
-        ctx.subscribe_to_view(&view, |_me, _view, event, ctx| match event {
-            AwsBedrockCredentialsErrorEvent::RunLoginCommand => {
-                ctx.emit(AIBlockEvent::RunAwsLoginCommand);
-            }
-            AwsBedrockCredentialsErrorEvent::ConfigureLoginCommand => {
-                // Defer so Workspace is not opened while AIBlock is still mid-subscription.
-                // Synchronous dispatch here can panic with "Circular view update".
-                ctx.dispatch_typed_action_deferred(WorkspaceAction::ShowSettingsPageWithSearch {
-                    search_query: "aws bedrock".to_string(),
-                    section: Some(SettingsSection::WarpAgent),
-                });
-            }
-        });
-
-        self.aws_bedrock_credentials_error_view = Some(view);
         ctx.notify();
     }
 
@@ -5065,12 +4831,6 @@ impl AIBlock {
             // If there's a blocking requested command, focus that.
             ctx.focus(&command.view);
             did_focus_subview = true;
-        } else if let Some(mcp_tool) =
-            pending_action_id.and_then(|id| self.requested_mcp_tools.get(id))
-        {
-            // If there's a blocking MCP tool call, focus that.
-            ctx.focus(&mcp_tool.view);
-            did_focus_subview = true;
         } else if let Some(ask_user_question_view) =
             self.ask_user_question_view.as_ref().filter(|view| {
                 pending_action_id.is_some_and(|id| {
@@ -5108,11 +4868,6 @@ impl AIBlock {
                 self.requested_commands
                     .values()
                     .find_map(|command| command.view.as_ref(ctx).selected_text(ctx))
-            })
-            .or_else(|| {
-                self.requested_mcp_tools
-                    .values()
-                    .find_map(|tool| tool.view.as_ref(ctx).selected_text(ctx))
             })
             .or_else(|| {
                 self.requested_edits
@@ -5229,18 +4984,6 @@ impl AIBlock {
                 continue;
             }
             command
-                .view
-                .update(ctx, |view, ctx| view.clear_selection(ctx));
-        }
-
-        for mcp_tool in self.requested_mcp_tools.values() {
-            // Don't clear selections for the MCP tool view that triggered this change.
-            if source_view_id.is_some_and(|entity_id| mcp_tool.view.id() == entity_id)
-                && mcp_tool.view.window_id(ctx) == source_window_id
-            {
-                continue;
-            }
-            mcp_tool
                 .view
                 .update(ctx, |view, ctx| view.clear_selection(ctx));
         }
@@ -5484,7 +5227,7 @@ impl AIBlock {
         ctx: &mut ViewContext<Self>,
     ) {
         // Auto expansion timers only apply to requested commands, as requested actions that
-        // don't lean on Views (i.e. file retrieval, grep, MCP, etc.) are non-expandable.
+        // don't lean on Views (i.e. file retrieval or grep) are non-expandable.
         let Some(requested_command) = self.requested_commands.get(action_id) else {
             return;
         };
@@ -5564,11 +5307,10 @@ impl AIBlock {
     }
 
     /// Accepts the latest pending (blocked) action, if any.
-    /// Includes code diffs, requested commands, and MCP tool calls.
+    /// Includes code diffs and requested commands.
     pub fn accept_pending_action(&mut self, ctx: &mut ViewContext<Self>) {
         self.accept_pending_requested_edit(ctx);
         self.accept_pending_requested_command(ctx);
-        self.accept_pending_requested_mcp_tool(ctx);
     }
 
     /// Accepts the latest pending (blocked) requested code diff, if any.
@@ -5605,25 +5347,6 @@ impl AIBlock {
             ctx.notify();
         }
     }
-    /// Accepts the latest pending (blocked) requested MCP tool call, if any.
-    fn accept_pending_requested_mcp_tool(&mut self, ctx: &mut ViewContext<Self>) {
-        let pending_action_id = {
-            self.action_model
-                .as_ref(ctx)
-                .get_pending_action(ctx)
-                .map(|a| a.id.clone())
-        };
-
-        if let Some(action_id) = pending_action_id
-            && self.requested_mcp_tools.contains_key(&action_id)
-        {
-            self.action_model.update(ctx, |action_model, ctx| {
-                action_model.execute_action(&action_id, self.client_ids.conversation_id, ctx);
-            });
-            ctx.notify();
-        }
-    }
-
     /// Finds the undismissed passive code diff across all pending actions.
     /// This is needed because passive code diffs are NOT added to the active conversation by default, when they first appear.
     pub(crate) fn find_undismissed_code_diff(&self, app: &AppContext) -> Option<&RequestedEdit> {
@@ -6258,8 +5981,6 @@ pub enum AIBlockEvent {
         is_auto_open: bool,
     },
     OpenActiveAgentProfileEditor,
-    /// Run the configured AWS auth refresh command to fix expired Bedrock credentials
-    RunAwsLoginCommand,
     /// Emitted when a passive code diff has loaded its diffs and is ready to display.
     /// This is used to trigger height recalculation since the diffs are loaded asynchronously
     /// after the initial output completes.
@@ -6348,7 +6069,6 @@ pub enum AIBlockAction {
     ToggleReferencesSection,
     ToggleAutoexecuteReadonlyCommandsSpeedbumpCheckbox,
     ToggleAutoreadFilesSpeedbumpCheckbox,
-    ToggleAwsBedrockAutoLogin,
     ToggleCodebaseSearchSpeedbump(Option<usize>),
     StartNewConversationButtonClicked {
         action_id: AIAgentActionId,
@@ -6405,10 +6125,6 @@ pub enum AIBlockAction {
     CommentExpanded {
         id: CommentId,
     },
-    /// Run the configured AWS auth refresh command to fix expired Bedrock credentials
-    RunAwsLoginCommand,
-    /// Open settings to configure the AWS auth refresh command
-    ConfigureAwsLoginCommand,
     /// Open the screenshot lightbox for a UseComputer action.
     ViewScreenshot {
         action_id: AIAgentActionId,
@@ -6986,22 +6702,6 @@ impl TypedActionView for AIBlock {
             }
             AIBlockAction::StoreRightClickedCommand { command } => {
                 self.last_right_clicked_command = Some(command.clone());
-            }
-            AIBlockAction::RunAwsLoginCommand => {
-                ctx.emit(AIBlockEvent::RunAwsLoginCommand);
-            }
-            AIBlockAction::ToggleAwsBedrockAutoLogin => {
-                AISettings::handle(ctx).update(ctx, |settings, ctx| {
-                    let current = *settings.aws_bedrock_auto_login.value();
-                    let new_value = !current;
-                    report_if_error!(settings.aws_bedrock_auto_login.set_value(new_value, ctx));
-                });
-            }
-            AIBlockAction::ConfigureAwsLoginCommand => {
-                ctx.dispatch_typed_action(&WorkspaceAction::ShowSettingsPageWithSearch {
-                    search_query: "aws bedrock".to_string(),
-                    section: Some(SettingsSection::WarpAgent),
-                });
             }
             AIBlockAction::ToggleImportedCommentCollapsed {
                 action_id,

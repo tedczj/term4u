@@ -18,8 +18,8 @@ use ai::project_context::model::{
 use warp::settings::{TuiZeroStateSettings, TuiZeroStateSettingsChangedEvent};
 use warp::tui_export::{
     ActiveSession, ActiveSessionEvent, ChangelogModel, ChangelogModelEvent, ChangelogState,
-    SkillManager, SkillManagerEvent, TuiMcpManager, TuiMcpServerStatus, TuiUserInfoManager,
-    TuiUserInfoManagerEvent, TuiUserInfoSnapshot,
+    SkillManager, SkillManagerEvent, TuiUserInfoManager, TuiUserInfoManagerEvent,
+    TuiUserInfoSnapshot,
 };
 use warp_core::channel::ChannelState;
 use warp_core::settings::Setting;
@@ -45,7 +45,7 @@ use crate::zero_state_animation::{
 const MAX_CHANGELOG_BULLETS: usize = 3;
 
 /// Fixed width for the two constrained sub-sections of the overlay column (top: title +
-/// version + changelog bullets; bottom: project context body + MCP). Pinning both axes
+/// version + changelog bullets; bottom: project context body). Pinning both axes
 /// to the same value keeps wrapping stable while those sections load asynchronously.
 ///
 /// The project path *header* is rendered outside these constrained boxes so it can expand
@@ -67,7 +67,6 @@ struct ZeroStateSectionVisibility {
     signed_in_user: bool,
     changelog: bool,
     project_info: bool,
-    mcp: bool,
     animation: bool,
 }
 
@@ -77,7 +76,6 @@ impl Default for ZeroStateSectionVisibility {
             signed_in_user: true,
             changelog: true,
             project_info: true,
-            mcp: true,
             animation: true,
         }
     }
@@ -93,7 +91,6 @@ impl ZeroStateSectionVisibility {
             signed_in_user: *settings.show_signed_in_user.value(),
             changelog: *settings.show_changelog.value(),
             project_info: *settings.show_project_info.value(),
-            mcp: *settings.show_mcp.value(),
             animation: *settings.show_animation.value(),
         }
     }
@@ -105,7 +102,7 @@ impl ZeroStateSectionVisibility {
 /// The zero-state view: displayed when the transcript is empty.
 ///
 /// Owns the animation clock so the logo's rotation remains continuous across
-/// view re-renders (e.g. when MCP connects or a changelog loads).
+/// view re-renders (for example, when a changelog loads).
 pub(crate) struct TuiZeroStateView {
     clock: AnimationClock,
     animation_config: Arc<ZeroStateAnimationConfig>,
@@ -142,7 +139,6 @@ impl TuiZeroStateView {
             &SkillManager::handle(ctx),
             |_, _, SkillManagerEvent::SkillsChanged { .. }, ctx| ctx.notify(),
         );
-        ctx.subscribe_to_model(&TuiMcpManager::handle(ctx), |_, _, _, ctx| ctx.notify());
         ctx.subscribe_to_model(
             &ApiKeyManager::handle(ctx),
             |_, _, _: &ApiKeyManagerEvent, ctx| ctx.notify(),
@@ -181,7 +177,6 @@ impl TuiZeroStateView {
                     | TuiZeroStateSettingsChangedEvent::TuiZeroStateShowProjectInfoSetting {
                         ..
                     }
-                    | TuiZeroStateSettingsChangedEvent::TuiZeroStateShowMcpSetting { .. }
                     | TuiZeroStateSettingsChangedEvent::TuiZeroStateShowAnimationSetting {
                         ..
                     } => {
@@ -565,7 +560,7 @@ fn build_zero_state_overlay_with_variant(
     // Compute project context once — find_applicable_project_rules walks the
     // directory tree and clones rule file contents, so resolving it once
     // avoids a redundant allocation on every zero-state re-render (pwd change,
-    // changelog load, MCP update, PathIndexed).
+    // changelog load or PathIndexed).
     let project_cwd = visibility.project_info.then_some(cwd).flatten();
     let (path_header_text, project_rules) = match project_cwd {
         Some(cwd) => {
@@ -601,7 +596,7 @@ fn build_zero_state_overlay_with_variant(
 
     let rules_ref = project_rules.flatten();
     let constrained_bottom = TuiConstrainedBox::new(
-        render_bottom_section(project_cwd, rules_ref.as_ref(), visibility, builder, ctx).finish(),
+        render_bottom_section(project_cwd, rules_ref.as_ref(), builder, ctx).finish(),
     )
     .with_min_cols(LEFT_COLUMN_COLS)
     .with_max_cols(LEFT_COLUMN_COLS)
@@ -692,7 +687,7 @@ fn render_first_run_top_section(
 }
 
 /// Bottom section of the overlay column: project context body (rules / skills / placeholder)
-/// when a `cwd` is present, followed by the MCP section.
+/// when a `cwd` is present.
 ///
 /// The project path *header* is intentionally omitted here — it lives outside the constrained
 /// box so it can expand to the full available terminal width (see [`TuiZeroStateView::render`]).
@@ -702,7 +697,6 @@ fn render_first_run_top_section(
 fn render_bottom_section(
     cwd: Option<&str>,
     rules: Option<&ProjectRulesResult>,
-    visibility: ZeroStateSectionVisibility,
     builder: &TuiUiBuilder,
     app: &AppContext,
 ) -> TuiFlex {
@@ -712,11 +706,7 @@ fn render_bottom_section(
     } else {
         column
     };
-    if visibility.mcp {
-        render_custom_endpoints_section(render_mcp_section(column, builder, app), builder, app)
-    } else {
-        render_custom_endpoints_section(column, builder, app)
-    }
+    render_custom_endpoints_section(column, builder, app)
 }
 
 /// Returns the abbreviated path text displayed as the project section header.
@@ -732,26 +722,6 @@ fn project_section_header_text(cwd: &str, rules: Option<&ProjectRulesResult>) ->
         .map(|rules| rules.root_path.display_path())
         .unwrap_or_else(|| cwd.to_owned());
     abbreviate_home_prefix(&header)
-}
-
-fn render_mcp_section(mut column: TuiFlex, builder: &TuiUiBuilder, app: &AppContext) -> TuiFlex {
-    let snapshot = TuiMcpManager::as_ref(app).snapshot();
-    let header_style = builder.primary_text_style().add_modifier(Modifier::BOLD);
-    let muted = builder.muted_text_style();
-    column = column.child(blank_row()).child(
-        TuiText::new("MCP")
-            .with_style(header_style)
-            .truncate()
-            .finish(),
-    );
-
-    let (label, is_error) = mcp_status_label(snapshot);
-    let style = if is_error {
-        builder.error_text_style()
-    } else {
-        muted
-    };
-    column.child(TuiText::new(label).with_style(style).truncate().finish())
 }
 
 fn render_custom_endpoints_section(
@@ -804,79 +774,6 @@ fn custom_endpoint_status_label(manager: &ApiKeyManager) -> Option<(String, bool
     };
     Some((label, false))
 }
-#[derive(Default)]
-struct McpStatusCounts {
-    running: usize,
-    starting: usize,
-    authenticating: usize,
-    stopping: usize,
-    failed: usize,
-    offline: usize,
-    available: usize,
-}
-
-impl McpStatusCounts {
-    fn record(&mut self, status: &TuiMcpServerStatus) {
-        match status {
-            TuiMcpServerStatus::Available => self.available += 1,
-            TuiMcpServerStatus::Offline => self.offline += 1,
-            TuiMcpServerStatus::Starting => self.starting += 1,
-            TuiMcpServerStatus::Authenticating => self.authenticating += 1,
-            TuiMcpServerStatus::Running => self.running += 1,
-            TuiMcpServerStatus::Stopping => self.stopping += 1,
-            TuiMcpServerStatus::Failed { .. } => self.failed += 1,
-        }
-    }
-}
-
-fn mcp_status_label(snapshot: &warp::tui_export::TuiMcpSnapshot) -> (String, bool) {
-    if snapshot.servers.is_empty() && snapshot.diagnostics.is_empty() {
-        return ("No servers available · run /mcp".to_owned(), false);
-    }
-    let mut counts = McpStatusCounts::default();
-    for server in &snapshot.servers {
-        counts.record(&server.status);
-    }
-    let McpStatusCounts {
-        running,
-        starting,
-        authenticating,
-        stopping,
-        failed,
-        offline,
-        available,
-    } = counts;
-    let mut parts = Vec::new();
-    if running > 0 {
-        parts.push(format!("{running} connected"));
-    }
-    if starting > 0 {
-        parts.push(format!("{starting} starting"));
-    }
-    if authenticating > 0 {
-        parts.push(format!("{authenticating} needs auth"));
-    }
-    if stopping > 0 {
-        parts.push(format!("{stopping} stopping"));
-    }
-    if failed > 0 {
-        parts.push(format!("{failed} failed"));
-    }
-    if offline > 0 {
-        parts.push(format!("{offline} offline"));
-    }
-    if available > 0 {
-        parts.push(format!("{available} available"));
-    }
-    if !snapshot.diagnostics.is_empty() {
-        parts.push(format!("{} config errors", snapshot.diagnostics.len()));
-    }
-    (
-        format!("{} · /mcp", parts.join(" · ")),
-        !snapshot.diagnostics.is_empty(),
-    )
-}
-
 /// The login-info line: the signed-in account (email, falling back to the
 /// display name) when authenticated, or a graceful "Not signed in" state when
 /// not. The zero state is normally only shown after login, but the unauthenticated

@@ -105,8 +105,8 @@ impl<'a> From<&'a FileArtifactUploadTargetInfo> for NormalizedUploadTarget<'a> {
 /// wherever possible.
 ///
 /// It also allows the upload target implementation to skip work that's
-/// not needed for a particular target. For example, AWS S3 requires that
-/// the client provide a checksum ahead of time, while GCS does not.
+/// not needed for a particular target. Some object stores require the client to provide a
+/// checksum ahead of time, while GCS does not.
 pub trait UploadBody {
     /// Total length of the body in bytes. Used for the `Content-Length`
     /// header on PUT uploads and for the multipart `ContentData` part length.

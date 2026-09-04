@@ -21,3 +21,6 @@ http_client.workspace = true
 log.workspace = true
 url.workspace = true
 warpui_core.workspace = true
+
+[dev-dependencies]
+instant.workspace = true
