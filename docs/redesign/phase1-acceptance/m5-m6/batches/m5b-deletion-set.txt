@@ -1,4 +1,3 @@
-# M5b TUI local terminal deletion set
 crates/warp_tui/benches/transcript_bench.rs
 crates/warp_tui/benches/zero_state_bench.rs
 crates/warp_tui/src/agent_block.rs

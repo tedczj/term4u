@@ -16,7 +16,6 @@ use warpui_core::elements::tui::{
     TuiPaintSurface, TuiScreenPoint, TuiScreenPosition, TuiSize, TuiStyle,
 };
 
-use crate::terminal_use::user_controlled_running_command;
 use crate::tui_builder::TuiUiBuilder;
 pub(crate) const SHELL_COMMAND_PREFIX: &str = "!";
 const SHELL_COMMAND_PREFIX_WIDTH: u16 = 2;
@@ -26,6 +25,7 @@ enum TerminalBlockRows {
     /// A viewport-preclipped transcript window with its source width.
     Visible { rows: Range<usize>, width: u16 },
     /// Every currently displayed command/output row, derived live.
+    #[cfg(test)]
     Content,
 }
 
@@ -85,6 +85,7 @@ impl TerminalBlockElement {
         }
     }
     /// Creates an element for all currently displayed command/output rows.
+    #[cfg(test)]
     pub(super) fn content(model: Arc<FairMutex<TerminalModel>>, block_id: BlockId) -> Self {
         Self {
             model,
@@ -156,6 +157,7 @@ impl TuiElement for TerminalBlockElement {
                 });
                 rows.clone()
             }
+            #[cfg(test)]
             TerminalBlockRows::Content => {
                 self.command_style = None;
                 let model = self.model.lock();
@@ -194,12 +196,13 @@ impl TuiElement for TerminalBlockElement {
         let model = self.model.lock();
         let colors = model.colors();
         let block_list = model.block_list();
-        let cursor_owner = user_controlled_running_command(&model).map(Block::id);
+        let cursor_owner = Some(model.block_list().active_block().id());
         let Some(block) = block_list.block_with_id(&self.block_id) else {
             return;
         };
         let (rows, width) = match &self.rows {
             TerminalBlockRows::Visible { rows, width } => (rows.clone(), (*width).min(size.width)),
+            #[cfg(test)]
             TerminalBlockRows::Content => (block_content_rows(block), size.width),
         };
 
@@ -382,16 +385,7 @@ pub(super) fn render_grid_handler(
 
 /// Returns whether the TUI transcript should include this terminal block.
 pub(super) fn should_render_terminal_block(block: &Block, block_list: &BlockList) -> bool {
-    // Agent-requested command blocks are rendered inline inside their agent
-    // block's shell-command view (see `TuiShellCommandView`), so they must not
-    // also appear as a standalone terminal block in the transcript. Their
-    // interaction mode normally hides them, but once a long-running agent
-    // command becomes agent-monitored that hide flag flips off
-    // (`InteractionMode::to_agent_monitored`), which would otherwise surface the
-    // block a second time.
-    !block.is_agent_requested_command()
-        && block.is_visible(block_list.transcript_scope())
-        && (block.started() || block.finished())
+    block.is_visible(block_list.transcript_scope()) && (block.started() || block.finished())
 }
 
 /// Paints consecutive displayed rows of one grid starting at `*y`, advancing

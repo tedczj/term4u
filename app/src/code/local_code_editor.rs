@@ -1489,24 +1489,19 @@ impl LocalCodeEditorView {
         }
     }
 
-    /// Handles PersistedWorkspaceEvent for LSP installation completion.
-    /// Note: Toast notifications are handled directly by PersistedWorkspace.
+    /// Refreshes local LSP availability after manual-installation guidance is shown.
     #[cfg(feature = "local_fs")]
     fn handle_persisted_workspace_event(
         me: &mut Self,
         event: &PersistedWorkspaceEvent,
         ctx: &mut ViewContext<Self>,
     ) {
-        match event {
-            PersistedWorkspaceEvent::InstallationFailed => {
-                // Refresh the footer after presenting manual installation guidance.
-                if let Some(footer) = &me.footer {
-                    footer.update(ctx, |_, ctx| {
-                        ctx.notify();
-                    });
-                }
-            }
-            _ => {}
+        if let PersistedWorkspaceEvent::InstallationFailed = event
+            && let Some(footer) = &me.footer
+        {
+            footer.update(ctx, |_, ctx| {
+                ctx.notify();
+            });
         }
     }
 

@@ -1,11 +1,11 @@
 pub use cloud_object_client::ObjectUpdateMessage;
-#[cfg(any(test, feature = "test-util", feature = "integration_tests"))]
+#[cfg(any(test, feature = "integration_tests"))]
 use warpui::{Entity, SingletonEntity};
 
-#[cfg(any(test, feature = "test-util", feature = "integration_tests"))]
+#[cfg(any(test, feature = "integration_tests"))]
 pub struct Listener;
 
-#[cfg(any(test, feature = "test-util", feature = "integration_tests"))]
+#[cfg(any(test, feature = "integration_tests"))]
 impl Listener {
     #[cfg(feature = "integration_tests")]
     pub fn has_current_subscription_abort_handle(&self) -> bool {
@@ -18,10 +18,10 @@ impl Listener {
     }
 }
 
-#[cfg(any(test, feature = "test-util", feature = "integration_tests"))]
+#[cfg(any(test, feature = "integration_tests"))]
 impl Entity for Listener {
     type Event = ();
 }
 
-#[cfg(any(test, feature = "test-util", feature = "integration_tests"))]
+#[cfg(any(test, feature = "integration_tests"))]
 impl SingletonEntity for Listener {}

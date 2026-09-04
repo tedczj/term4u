@@ -736,22 +736,16 @@ impl CodeReviewView {
             ctx.subscribe_to_view(&footer, Self::handle_footer_event);
             self.code_review_footer = Some(footer);
 
-            // Subscribe to PersistedWorkspace events to refresh the footer
-            // UI after LSP installation succeeds or fails.
+            // Refresh the footer after manual LSP guidance is shown.
             #[cfg(feature = "local_fs")]
             {
                 use crate::ai::persisted_workspace::{PersistedWorkspace, PersistedWorkspaceEvent};
 
-                // PersistedWorkspace handles spawning the server after install;
-                // we only subscribe to refresh the footer UI.
                 ctx.subscribe_to_model(&PersistedWorkspace::handle(ctx), |me, _, event, ctx| {
-                    match event {
-                        PersistedWorkspaceEvent::InstallationFailed => {
-                            if let Some(footer) = &me.code_review_footer {
-                                footer.update(ctx, |_, ctx| ctx.notify());
-                            }
-                        }
-                        _ => {}
+                    if let PersistedWorkspaceEvent::InstallationFailed = event
+                        && let Some(footer) = &me.code_review_footer
+                    {
+                        footer.update(ctx, |_, ctx| ctx.notify());
                     }
                 });
             }

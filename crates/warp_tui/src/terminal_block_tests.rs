@@ -2,10 +2,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use parking_lot::FairMutex;
-use warp::tui_export::{
-    AIAgentActionId, AIConversationId, AgentInteractionMetadata, Appearance, BlockId,
-    TerminalModel, TranscriptScope,
-};
+use warp::tui_export::{Appearance, BlockId, TerminalModel, TranscriptScope};
 use warpui::App;
 use warpui_core::r#async::Timer;
 use warpui_core::elements::tui::{
@@ -16,7 +13,6 @@ use warpui_core::presenter::tui::TuiPresenter;
 use super::{
     TerminalBlockElement, block_content_rows, should_render_terminal_block, terminal_block_cursor,
 };
-use crate::terminal_use::user_controlled_running_command;
 use crate::tui_builder::TuiUiBuilder;
 
 /// Builds a mock model with a single simulated (started + finished) block and
@@ -37,72 +33,6 @@ fn model_with_finished_block(command: &str) -> (TerminalModel, BlockId) {
         .id()
         .clone();
     (model, block_id)
-}
-
-/// Tags the block with the given id as an agent-requested command, matching the
-/// interaction mode set once a long-running agent command becomes
-/// agent-monitored: it keeps its requested-command action id, but
-/// `should_hide_block` has flipped to `false` (see
-/// `InteractionMode::to_agent_monitored`).
-fn mark_agent_monitored_command(model: &mut TerminalModel, block_id: &BlockId) {
-    let action_id: AIAgentActionId = "action".to_owned().into();
-    let conversation_id = AIConversationId::new();
-    model
-        .block_list_mut()
-        .mut_block_from_id(block_id)
-        .expect("block should exist")
-        .set_agent_interaction_mode(AgentInteractionMetadata::new(
-            Some(action_id),
-            conversation_id,
-            None,
-            None,
-            false,
-            false,
-        ));
-}
-
-#[test]
-fn agent_monitored_command_block_is_not_rendered_at_top_level() {
-    let (mut model, block_id) = model_with_finished_block("cargo build");
-    mark_agent_monitored_command(&mut model, &block_id);
-
-    let block_list = model.block_list();
-    let block = block_list
-        .block_with_id(&block_id)
-        .expect("block should exist");
-
-    // Sanity: this is an agent-requested command whose hide flag is off, so it
-    // is otherwise "visible" and would leak into the top-level transcript.
-    assert!(block.is_agent_requested_command());
-    assert!(block.is_visible(block_list.transcript_scope()));
-
-    // Regression: an agent's command is rendered inline inside its agent
-    // block's shell-command view, so it must NOT also appear as a standalone
-    // terminal block in the transcript (the "shows up twice" bug).
-    assert!(!should_render_terminal_block(block, block_list));
-}
-
-#[test]
-fn hidden_agent_requested_command_block_is_not_rendered_at_top_level() {
-    let (mut model, block_id) = model_with_finished_block("echo hi");
-    let action_id: AIAgentActionId = "action".to_owned().into();
-    let conversation_id = AIConversationId::new();
-    model
-        .block_list_mut()
-        .mut_block_from_id(&block_id)
-        .expect("block should exist")
-        .set_agent_interaction_mode(AgentInteractionMetadata::new_hidden(
-            action_id,
-            conversation_id,
-        ));
-
-    let block_list = model.block_list();
-    let block = block_list
-        .block_with_id(&block_id)
-        .expect("block should exist");
-
-    assert!(block.is_agent_requested_command());
-    assert!(!should_render_terminal_block(block, block_list));
 }
 
 #[test]
@@ -287,15 +217,13 @@ fn shell_command_prefix_handles_single_column_width() {
 }
 
 #[test]
-fn user_controlled_running_command_submits_cursor_within_window() {
+fn active_running_command_submits_cursor_within_window() {
     let mut model = TerminalModel::mock(None, None);
     model.simulate_long_running_block("python3", ">>> ");
     let block = model.block_list().active_block();
-    let owns_cursor =
-        user_controlled_running_command(&model).is_some_and(|owner| owner.id() == block.id());
+    let owns_cursor = model.block_list().active_block().id() == block.id();
 
-    // A finished/agent block never owns the inline cursor; an active
-    // user-controlled command does when its cursor lands inside the window.
+    // An active command owns the inline cursor when it lands inside the window.
     let in_window = terminal_block_cursor(block, owns_cursor, &(0..8), TuiSize::new(40, 8));
     let clipped = terminal_block_cursor(block, owns_cursor, &(0..8), TuiSize::new(40, 0));
     assert!(in_window.is_some());
@@ -357,8 +285,7 @@ fn finished_command_does_not_submit_a_cursor() {
         .block_list()
         .block_with_id(&block_id)
         .expect("block should exist");
-    let owns_cursor =
-        user_controlled_running_command(&model).is_some_and(|owner| owner.id() == block.id());
+    let owns_cursor = model.block_list().active_block().id() == block.id();
     assert_eq!(
         terminal_block_cursor(block, owns_cursor, &(0..8), TuiSize::new(40, 8)),
         None
