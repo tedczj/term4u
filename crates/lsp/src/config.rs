@@ -1,6 +1,5 @@
 use std::fmt;
 use std::path::{Path, PathBuf};
-use std::sync::Arc;
 
 use anyhow::Result;
 #[cfg(not(target_arch = "wasm32"))]
@@ -98,8 +97,6 @@ pub struct LspServerConfig {
     /// TODO(kevin): This might not be sufficient for all cases (e.g. user might remove LSP from PATH).
     path_env_var: Option<String>,
     client_name: String,
-    /// Shared HTTP client used for LSP installation checks and downloads.
-    client: Arc<http_client::Client>,
     /// Optional path relative to the LSP log namespace for server stderr output.
     log_relative_path: Option<PathBuf>,
 }
@@ -122,14 +119,12 @@ impl LspServerConfig {
         initial_workspace: PathBuf,
         path_env_var: Option<String>,
         client_name: String,
-        client: Arc<http_client::Client>,
     ) -> Self {
         Self {
             server_type,
             initial_workspace,
             path_env_var,
             client_name,
-            client,
             log_relative_path: None,
         }
     }
@@ -157,51 +152,18 @@ impl LspServerConfig {
         self.server_type.languages()
     }
 
-    /// Creates the command and init params for the LSP server.
-    ///
-    /// PATH takes precedence over custom installations. If the binary is available
-    /// and working on PATH, we use that. Otherwise, we fall back to our custom installation.
+    /// Creates the command and init params for an LSP server found on PATH.
     #[cfg(not(target_arch = "wasm32"))]
     pub(crate) async fn command_and_params(self) -> Result<ResolvedLspCommand> {
-        // PATH takes precedence - only use custom installation if not working on PATH
         let executor = crate::CommandBuilder::new(self.path_env_var.clone());
-        let is_working_on_path = self
-            .server_type
-            .is_working_on_path(&executor, self.client.clone())
-            .await;
-        let custom_binary_config = if is_working_on_path {
-            // Binary works on PATH, don't use custom installation
-            None
-        } else {
-            // Not working on PATH, check for custom installation
-            self.server_type
-                .find_installed_binary_config(executor.path_env_var())
-                .await
-        };
-
-        // Bail early with a clear error instead of attempting to spawn a
-        // binary that doesn't exist (which would fail with a confusing
-        // "No such file or directory" OS error).
-        if !is_working_on_path && custom_binary_config.is_none() {
-            anyhow::bail!(
-                "{} is not installed. Binary was not found on PATH and no custom installation exists",
-                self.server_type.binary_name()
-            );
+        if !self.server_type.is_working_on_path(&executor).await {
+            anyhow::bail!(self.server_type.manual_install_message());
         }
 
-        let mut command = self
-            .server_type
-            .create_command(custom_binary_config.clone(), &executor);
-
-        // Set the working directory to the workspace root. This is required for
-        // LSP servers like rust-analyzer to properly discover the project structure.
+        let mut command = self.server_type.create_command(&executor);
         command.current_dir(&self.initial_workspace);
 
-        log::info!(
-            "LSP {} starting with custom_binary_config: {:?}",
-            self.server_type.binary_name(),
-            custom_binary_config
-        );
+        log::info!("Starting {} from PATH", self.server_type.binary_name());
 
         let params = default_init_params(&self.initial_workspace, self.client_name)?;
 

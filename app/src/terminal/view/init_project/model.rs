@@ -414,14 +414,12 @@ impl InitProjectModel {
         let repo_root = pwd_path.clone();
         let repo_root_for_callback = repo_root.clone();
         let executor = lsp::CommandBuilder::new(self.path_env_var.clone());
-        let http_client =
-            crate::server::server_api::ServerApiProvider::as_ref(ctx).get_http_client();
 
         ctx.spawn(
             async move {
                 let mut relevant_servers = Vec::new();
                 for server_type in LSPServerType::all() {
-                    let candidate = server_type.candidate(http_client.clone());
+                    let candidate = server_type.candidate();
                     let should_suggest = candidate
                         .should_suggest_for_repo(&repo_root, &executor)
                         .await;

@@ -269,8 +269,7 @@ impl CodeIndexingPageView {
                 }
                 ctx.notify();
             }
-            PersistedWorkspaceEvent::InstallationSucceeded
-            | PersistedWorkspaceEvent::InstallationFailed
+            PersistedWorkspaceEvent::InstallationFailed
             | PersistedWorkspaceEvent::WorkspaceAdded { .. } => {
                 ctx.notify();
             }
@@ -560,7 +559,7 @@ impl TypedActionView for CodeIndexingPageView {
                 });
             }
             CodeIndexingPageAction::InstallAndEnableLspServer {
-                workspace_path,
+                workspace_path: _,
                 server_type,
             } => {
                 send_telemetry_from_ctx!(
@@ -572,22 +571,14 @@ impl TypedActionView for CodeIndexingPageView {
                     ctx
                 );
                 #[cfg(feature = "local_fs")]
-                {
-                    let workspace_path = workspace_path.clone();
-                    let server_type = *server_type;
-                    PersistedWorkspace::handle(ctx).update(ctx, |workspace, _ctx| {
-                        workspace.execute_lsp_task(
-                            crate::ai::persisted_workspace::LspTask::Install {
-                                file_path: workspace_path.clone(),
-                                repo_root: workspace_path,
-                                server_type,
-                            },
-                            _ctx,
-                        );
-                    });
-                }
-                #[cfg(not(feature = "local_fs"))]
-                let _ = workspace_path;
+                PersistedWorkspace::handle(ctx).update(ctx, |workspace, ctx| {
+                    workspace.execute_lsp_task(
+                        crate::ai::persisted_workspace::LspTask::Install {
+                            server_type: *server_type,
+                        },
+                        ctx,
+                    );
+                });
                 ctx.notify();
             }
             CodeIndexingPageAction::EnableSuggestedLspServer {

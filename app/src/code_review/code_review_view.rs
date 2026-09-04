@@ -746,8 +746,7 @@ impl CodeReviewView {
                 // we only subscribe to refresh the footer UI.
                 ctx.subscribe_to_model(&PersistedWorkspace::handle(ctx), |me, _, event, ctx| {
                     match event {
-                        PersistedWorkspaceEvent::InstallationSucceeded
-                        | PersistedWorkspaceEvent::InstallationFailed => {
+                        PersistedWorkspaceEvent::InstallationFailed => {
                             if let Some(footer) = &me.code_review_footer {
                                 footer.update(ctx, |_, ctx| ctx.notify());
                             }
@@ -928,31 +927,8 @@ impl CodeReviewView {
             return;
         };
 
-        let repo_root = PersistedWorkspace::as_ref(ctx)
-            .root_for_workspace(path)
-            .map(|p| p.to_path_buf())
-            .or_else(|| {
-                repo_metadata::repositories::DetectedRepositories::as_ref(ctx)
-                    .get_root_for_path(&warp_util::local_or_remote_path::LocalOrRemotePath::Local(
-                        path.to_path_buf(),
-                    ))
-                    .and_then(|r| r.to_local_path().map(std::path::Path::to_path_buf))
-            })
-            .or_else(|| path.parent().map(|p| p.to_path_buf()));
-
-        let Some(repo_root) = repo_root else {
-            return;
-        };
-
         PersistedWorkspace::handle(ctx).update(ctx, |workspace, ctx| {
-            workspace.execute_lsp_task(
-                LspTask::Install {
-                    file_path: path.to_path_buf(),
-                    repo_root,
-                    server_type,
-                },
-                ctx,
-            );
+            workspace.execute_lsp_task(LspTask::Install { server_type }, ctx);
         });
     }
 

@@ -563,7 +563,6 @@ impl CodeFooterView {
                         }
                     }
                     PersistedWorkspaceEvent::AvailableServersDetected { .. }
-                    | PersistedWorkspaceEvent::InstallationSucceeded
                     | PersistedWorkspaceEvent::InstallationFailed
                     | PersistedWorkspaceEvent::WorkspaceAdded { .. } => {}
                 }

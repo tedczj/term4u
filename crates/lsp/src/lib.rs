@@ -4,7 +4,6 @@ pub use command_builder::CommandBuilder;
 mod config;
 mod language_server_candidate;
 pub use language_server_candidate::LanguageServerCandidate;
-pub mod install;
 mod manager;
 mod model;
 

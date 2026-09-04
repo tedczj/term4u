@@ -43,7 +43,6 @@ use crate::persistence::ModelEvent;
 #[cfg(feature = "local_fs")]
 use crate::send_telemetry_from_ctx;
 #[cfg(feature = "local_fs")]
-use crate::server::server_api::ServerApiProvider;
 use crate::settings::CodeSettings;
 use crate::terminal::TerminalView;
 #[cfg(feature = "local_fs")]
@@ -69,12 +68,8 @@ pub enum EnablementState {
 /// Describes an LSP operation to be executed after capturing the interactive shell PATH.
 #[cfg(feature = "local_fs")]
 pub enum LspTask {
-    /// Install and enable an LSP server for a file path.
-    Install {
-        file_path: PathBuf,
-        repo_root: PathBuf,
-        server_type: LSPServerType,
-    },
+    /// Report manual installation guidance for a missing LSP server.
+    Install { server_type: LSPServerType },
     /// Spawn LSP servers for a file path.
     Spawn { file_path: PathBuf },
 }
@@ -173,11 +168,6 @@ pub enum PersistedWorkspaceEvent {
         server_type: LSPServerType,
         status: LSPInstallationStatus,
     },
-    /// Emitted when LSP installation completes successfully.
-    /// Toast notification is shown directly by PersistedWorkspace.
-    /// The server is also spawned automatically by PersistedWorkspace.
-    #[cfg_attr(target_arch = "wasm32", allow(dead_code))]
-    InstallationSucceeded,
     /// Emitted when LSP installation fails.
     /// Toast notification is shown directly by PersistedWorkspace.
     #[cfg_attr(target_arch = "wasm32", allow(dead_code))]
@@ -408,7 +398,6 @@ impl PersistedWorkspace {
         let path_future = LocalShellState::handle(ctx).update(ctx, |shell_state, ctx| {
             shell_state.get_interactive_path_env_var(ctx)
         });
-        let http_client = ServerApiProvider::as_ref(ctx).get_http_client();
 
         ctx.spawn(
             async move {
@@ -419,7 +408,7 @@ impl PersistedWorkspace {
                 for workspace_path in paths_to_scan {
                     let mut suggested = Vec::new();
                     for server_type in LSPServerType::all() {
-                        let candidate = server_type.candidate(http_client.clone());
+                        let candidate = server_type.candidate();
                         if candidate
                             .should_suggest_for_repo(&workspace_path, &executor)
                             .await
@@ -641,116 +630,30 @@ impl PersistedWorkspace {
         }
     }
 
-    /// Installs the LSP server for the given file path and enables it.
-    /// This is used when the server is not yet installed.
     #[cfg(feature = "local_fs")]
-    fn handle_install_lsp(
+    fn report_manual_lsp_installation(
         &mut self,
-        file_path: PathBuf,
-        repo_root: PathBuf,
         server_type: LSPServerType,
-        path_env_var: Option<String>,
         ctx: &mut ModelContext<Self>,
     ) {
-        // Early return if already installing to prevent duplicate installations from repeated clicks
-        if self.lsp_installation_status.get(&server_type)
-            == Some(&LSPInstallationStatus::Installing)
-        {
-            return;
+        self.lsp_installation_status
+            .insert(server_type, LSPInstallationStatus::NotInstalled);
+
+        if let Some(window_id) = WindowManager::as_ref(ctx).active_window() {
+            ToastStack::handle(ctx).update(ctx, |toast_stack, ctx| {
+                toast_stack.add_ephemeral_toast(
+                    DismissibleToast::error(server_type.manual_install_message()),
+                    window_id,
+                    ctx,
+                );
+            });
         }
 
-        // Set Installing state before spawning async installation
-        self.lsp_installation_status
-            .insert(server_type, LSPInstallationStatus::Installing);
+        ctx.emit(PersistedWorkspaceEvent::InstallationFailed);
         ctx.emit(PersistedWorkspaceEvent::InstallStatusUpdate {
             server_type,
-            status: LSPInstallationStatus::Installing,
+            status: LSPInstallationStatus::NotInstalled,
         });
-
-        let repo_root_clone = repo_root.clone();
-        let file_path_clone = file_path.clone();
-        let executor = lsp::CommandBuilder::new(path_env_var);
-        let http_client = ServerApiProvider::as_ref(ctx).get_http_client();
-        ctx.spawn(
-            async move {
-                let candidate = server_type.candidate(http_client);
-                let metadata = candidate.fetch_latest_server_metadata().await?;
-                candidate.install(metadata, &executor).await?;
-                Ok::<_, anyhow::Error>(())
-            },
-            move |me, result, ctx| match result {
-                Ok(()) => {
-                    // Enable the LSP server
-                    me.enable_lsp_server_for_path(&repo_root_clone, server_type);
-
-                    // Update installation status cache
-                    me.lsp_installation_status
-                        .insert(server_type, LSPInstallationStatus::Installed);
-
-                    // Show success toast
-                    if let Some(window_id) = WindowManager::as_ref(ctx).active_window() {
-                        ToastStack::handle(ctx).update(ctx, |toast_stack, ctx| {
-                            toast_stack.add_ephemeral_toast(
-                                DismissibleToast::success(format!(
-                                    "{} installed and enabled successfully.",
-                                    server_type.binary_name()
-                                )),
-                                window_id,
-                                ctx,
-                            );
-                        });
-                    }
-
-                    ctx.emit(PersistedWorkspaceEvent::InstallationSucceeded);
-
-                    // Also emit status update so listeners can update their UI
-                    ctx.emit(PersistedWorkspaceEvent::InstallStatusUpdate {
-                        server_type,
-                        status: LSPInstallationStatus::Installed,
-                    });
-
-                    // Spawn the server now that it's installed and enabled.
-                    // This is done here so it happens exactly once, rather
-                    // than relying on each subscriber to spawn independently.
-                    me.execute_lsp_task(
-                        LspTask::Spawn {
-                            file_path: file_path_clone,
-                        },
-                        ctx,
-                    );
-                }
-                Err(e) => {
-                    log::info!("Failed to install LSP server: {e}");
-
-                    // Update installation status to NotInstalled
-                    me.lsp_installation_status
-                        .insert(server_type, LSPInstallationStatus::NotInstalled);
-
-                    // Show error toast
-                    if let Some(window_id) = WindowManager::as_ref(ctx).active_window() {
-                        ToastStack::handle(ctx).update(ctx, |toast_stack, ctx| {
-                            toast_stack.add_ephemeral_toast(
-                                DismissibleToast::error(format!(
-                                    "Failed to install {}: {}",
-                                    server_type.binary_name(),
-                                    e
-                                )),
-                                window_id,
-                                ctx,
-                            );
-                        });
-                    }
-
-                    ctx.emit(PersistedWorkspaceEvent::InstallationFailed);
-
-                    // Also emit status update so listeners can update their UI
-                    ctx.emit(PersistedWorkspaceEvent::InstallStatusUpdate {
-                        server_type,
-                        status: LSPInstallationStatus::NotInstalled,
-                    });
-                }
-            },
-        );
     }
 
     /// Starts all enabled LSP servers for the given file path.
@@ -795,13 +698,11 @@ impl PersistedWorkspace {
             );
             let log_relative_path =
                 crate::code::lsp_logs::relative_log_path(server, &workspace_root);
-            let http_client = ServerApiProvider::as_ref(ctx).get_http_client();
             let config = LspServerConfig::new(
                 server,
                 workspace_root.clone(),
                 path_env_var.clone(),
                 ChannelState::app_id().application_name().to_string(),
-                http_client,
             )
             .with_log_relative_path(log_relative_path);
 
@@ -892,12 +793,8 @@ impl PersistedWorkspace {
         });
 
         ctx.spawn(path_future, move |me, path_env_var, ctx| match task {
-            LspTask::Install {
-                file_path,
-                repo_root,
-                server_type,
-            } => {
-                me.handle_install_lsp(file_path, repo_root, server_type, path_env_var, ctx);
+            LspTask::Install { server_type } => {
+                me.report_manual_lsp_installation(server_type, ctx);
             }
             LspTask::Spawn { file_path } => {
                 me.handle_spawn_lsp(&file_path, path_env_var, ctx);
@@ -952,13 +849,12 @@ impl PersistedWorkspace {
                     shell_state.get_interactive_path_env_var(ctx)
                 });
 
-                let http_client = ServerApiProvider::as_ref(ctx).get_http_client();
                 ctx.spawn(
                     async move {
                         // Wait for interactive PATH, then check installation
                         let path_env_var = path_future.await;
                         let executor = lsp::CommandBuilder::new(path_env_var);
-                        let candidate = server_type.candidate(http_client);
+                        let candidate = server_type.candidate();
                         candidate.is_installed(&executor).await
                     },
                     move |me, is_installed, ctx| {

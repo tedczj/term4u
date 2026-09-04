@@ -1498,10 +1498,8 @@ impl LocalCodeEditorView {
         ctx: &mut ViewContext<Self>,
     ) {
         match event {
-            PersistedWorkspaceEvent::InstallationSucceeded
-            | PersistedWorkspaceEvent::InstallationFailed => {
-                // PersistedWorkspace handles spawning the server after install;
-                // we only need to refresh the footer UI here.
+            PersistedWorkspaceEvent::InstallationFailed => {
+                // Refresh the footer after presenting manual installation guidance.
                 if let Some(footer) = &me.footer {
                     footer.update(ctx, |_, ctx| {
                         ctx.notify();
@@ -1573,32 +1571,10 @@ impl LocalCodeEditorView {
         };
 
         let lsp_server_type = language_id.server_type();
-        let path = path.to_path_buf();
 
-        let repo_root = if let Some(workspace_root) =
-            PersistedWorkspace::as_ref(ctx).root_for_workspace(&path)
-        {
-            Some(workspace_root.to_path_buf())
-        } else {
-            match DetectedRepositories::as_ref(ctx)
-                .get_root_for_path(&LocalOrRemotePath::Local(path.to_path_buf()))
-                .and_then(|r| PathBuf::try_from(r).ok())
-            {
-                Some(root) => Some(root),
-                None => path.parent().map(|s| s.to_path_buf()),
-            }
-        };
-
-        let Some(repo_root) = repo_root else {
-            return;
-        };
-
-        // Delegate to PersistedWorkspace which uses interactive PATH and emits events
         PersistedWorkspace::handle(ctx).update(ctx, |workspace, ctx| {
             workspace.execute_lsp_task(
                 LspTask::Install {
-                    file_path: path,
-                    repo_root,
                     server_type: lsp_server_type,
                 },
                 ctx,
