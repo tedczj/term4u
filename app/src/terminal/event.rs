@@ -318,9 +318,6 @@ pub struct UserBlockCompleted {
     /// Forced secrets to be obfuscated as well.
     pub output_truncated_with_obfuscated_secrets: Lazy<String, BlockList>,
 
-    /// `true` if the block was run as a requested command or was part of a CLI subagent interaction.
-    pub was_part_of_agent_interaction: bool,
-
     /// Time that we started the command grid (i.e. immediately after the user
     /// hit enter).
     pub started_at: Option<Instant>,
@@ -342,7 +339,6 @@ impl UserBlockCompleted {
         command_with_obfuscated_secrets: Lazy<String, BlockList>,
         output_truncated: Lazy<String, BlockList>,
         output_truncated_with_obfuscated_secrets: Lazy<String, BlockList>,
-        was_part_of_agent_interaction: bool,
         started_at: Option<Instant>,
         num_output_lines: u64,
         num_output_lines_truncated: u64,
@@ -354,7 +350,6 @@ impl UserBlockCompleted {
             command_with_obfuscated_secrets,
             output_truncated,
             output_truncated_with_obfuscated_secrets,
-            was_part_of_agent_interaction,
             started_at,
             num_output_lines,
             num_output_lines_truncated,
@@ -371,7 +366,6 @@ impl UserBlockCompleted {
         command_with_obfuscated_secrets: String,
         output_truncated: String,
         output_truncated_with_obfuscated_secrets: String,
-        was_part_of_agent_interaction: bool,
         started_at: Option<Instant>,
         num_output_lines: u64,
         num_output_lines_truncated: u64,
@@ -383,7 +377,6 @@ impl UserBlockCompleted {
             Lazy::provided(command_with_obfuscated_secrets),
             Lazy::provided(output_truncated),
             Lazy::provided(output_truncated_with_obfuscated_secrets),
-            was_part_of_agent_interaction,
             started_at,
             num_output_lines,
             num_output_lines_truncated,

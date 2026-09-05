@@ -1,128 +1,60 @@
 use std::collections::HashMap;
-use std::collections::hash_map::Entry;
 
-use warpui::{Entity, EntityId, ModelContext, SingletonEntity};
+use warpui::{Entity, EntityId, ModelContext, SingletonEntity, WindowId};
 
-use super::CloudWorkflowModel;
-use super::workflow::Workflow;
-use crate::cloud_object::model::persistence::CloudModel;
-use crate::cloud_object::{GenericCloudObject, Owner};
-use crate::drive::OpenWarpDriveObjectSettings;
-use crate::pane_group::{PaneContent, WorkflowPane};
-use crate::server::ids::{ClientId, SyncId};
-use crate::workflows::WorkflowViewMode;
+use crate::pane_group::{PaneContent as _, WorkflowPane};
 use crate::workflows::workflow_view::WorkflowView;
-use crate::{PaneViewLocator, WindowId, safe_warn};
+use crate::workflows::{Workflow, WorkflowId, WorkflowViewMode};
+use crate::workspace::PaneViewLocator;
 
 pub struct WorkflowManager {
-    panes_by_hashed_id: HashMap<String, WorkflowPaneData>,
+    panes: HashMap<WorkflowId, WorkflowPaneData>,
 }
 
 #[derive(Debug, Clone)]
 pub enum WorkflowOpenSource {
-    Existing(SyncId),
-    New {
-        title: Option<String>,
-
-        /// The "content" of the workflow.
-        /// For `Command` workflows, this is the command.
-        /// For `AgentMode` workflows, this is the AI query.
-        content: Option<String>,
-
-        owner: Owner,
-        initial_folder_id: Option<SyncId>,
-        is_for_agent_mode: bool,
-    },
-    NewFromWorkflow {
-        workflow: Box<Workflow>,
-        owner: Owner,
-        initial_folder_id: Option<SyncId>,
-    },
+    Existing { id: WorkflowId, workflow: Workflow },
+    New { title: Option<String>, command: Option<String> },
+    NewFromWorkflow { workflow: Box<Workflow> },
 }
 
 impl WorkflowManager {
     pub fn new(_ctx: &mut ModelContext<Self>) -> Self {
-        WorkflowManager {
-            panes_by_hashed_id: HashMap::new(),
+        Self {
+            panes: HashMap::new(),
         }
     }
 
     pub fn find_pane(&self, source: &WorkflowOpenSource) -> Option<(WindowId, PaneViewLocator)> {
-        match source {
-            WorkflowOpenSource::Existing(workflow_id) => {
-                let pane_data = self.panes_by_hashed_id.get(&workflow_id.uid())?;
-                Some((pane_data.window_id, pane_data.locator))
+        let id = match source {
+            WorkflowOpenSource::Existing { id, .. } => id,
+            WorkflowOpenSource::New { .. } | WorkflowOpenSource::NewFromWorkflow { .. } => {
+                return None;
             }
-            WorkflowOpenSource::New { .. } | WorkflowOpenSource::NewFromWorkflow { .. } => None,
-        }
+        };
+        self.panes.get(id).map(|pane| (pane.window_id, pane.locator))
     }
 
     pub fn create_pane(
         &mut self,
         source: &WorkflowOpenSource,
-        settings: &OpenWarpDriveObjectSettings,
         mode: WorkflowViewMode,
         window_id: WindowId,
         ctx: &mut ModelContext<Self>,
     ) -> WorkflowPane {
         let view = ctx.add_typed_action_view(window_id, WorkflowView::new_in_pane);
-
         match source {
-            WorkflowOpenSource::Existing(workflow_id) => {
-                let workflow = CloudModel::as_ref(ctx).get_workflow(workflow_id).cloned();
-                if let Some(workflow) = workflow {
-                    view.update(ctx, |view, ctx| view.load(workflow, settings, mode, ctx));
-                } else {
-                    // If the workflow doesn't exist, try waiting for initial load and trying again
-                    view.update(ctx, |view, ctx| {
-                        view.wait_for_initial_load_then_load(
-                            *workflow_id,
-                            settings,
-                            mode,
-                            window_id,
-                            ctx,
-                        )
-                    });
-                }
+            WorkflowOpenSource::Existing { workflow, .. }
+            | WorkflowOpenSource::NewFromWorkflow { workflow } => {
+                let workflow = (**workflow).clone();
+                view.update(ctx, |view, ctx| view.load(workflow, mode, ctx));
             }
-            WorkflowOpenSource::New {
-                title,
-                content,
-                owner,
-                initial_folder_id,
-                is_for_agent_mode,
-            } => view.update(ctx, |view, ctx| {
-                view.open_new_workflow(
-                    title.clone(),
-                    content.clone(),
-                    *owner,
-                    *initial_folder_id,
-                    *is_for_agent_mode,
-                    SyncId::ClientId(ClientId::default()),
-                    ctx,
-                )
-            }),
-            WorkflowOpenSource::NewFromWorkflow {
-                workflow,
-                owner,
-                initial_folder_id,
-            } => {
-                view.update(ctx, |view, ctx| {
-                    view.load(
-                        GenericCloudObject::new_local(
-                            CloudWorkflowModel::new(*workflow.clone()),
-                            *owner,
-                            *initial_folder_id,
-                            ClientId::default(),
-                        ),
-                        &OpenWarpDriveObjectSettings::default(),
-                        mode,
-                        ctx,
-                    );
-                });
+            WorkflowOpenSource::New { title, command } => {
+                let title = title.clone();
+                let command = command.clone();
+                view.update(ctx, |view, ctx| view.open_new_workflow(title, command, ctx));
             }
         }
-
         WorkflowPane::new(view, ctx)
     }
 
@@ -133,42 +65,22 @@ impl WorkflowManager {
         window_id: WindowId,
         ctx: &mut ModelContext<Self>,
     ) {
-        let workflow_id = pane.get_view(ctx).as_ref(ctx).workflow_id();
-        let entry = self.panes_by_hashed_id.entry(workflow_id.uid());
-        if let Entry::Vacant(entry) = entry {
-            entry.insert(WorkflowPaneData {
+        let id = pane.get_view(ctx).as_ref(ctx).workflow_id();
+        self.panes.insert(
+            id,
+            WorkflowPaneData {
                 window_id,
                 locator: PaneViewLocator {
                     pane_group_id,
                     pane_id: pane.id(),
                 },
-            });
-        } else {
-            safe_warn!(
-                safe: ("Ignoring duplicate Workflow pane registration"),
-                full: ("Ignoring duplicate Workflow pane registration for {workflow_id}")
-            );
-        }
+            },
+        );
     }
 
     pub fn deregister_pane(&mut self, pane: &WorkflowPane, ctx: &mut ModelContext<Self>) {
-        let workflow_id = pane.get_view(ctx).as_ref(ctx).workflow_id();
-
-        // If a workflow pane is restored, the workflow may have been reopened in the meantime. In
-        // that case, don't let closing the original pane clear out the new pane.
-        if let Entry::Occupied(entry) = self.panes_by_hashed_id.entry(workflow_id.uid()) {
-            if entry.get().locator.pane_id == pane.id() {
-                entry.remove();
-            } else {
-                log::warn!(
-                    "Ignoring duplicate registration of panes for {}",
-                    workflow_id.uid()
-                );
-            }
-        }
-    }
-    pub fn reset(&mut self) {
-        self.panes_by_hashed_id.clear();
+        let id = pane.get_view(ctx).as_ref(ctx).workflow_id();
+        self.panes.remove(&id);
     }
 }
 

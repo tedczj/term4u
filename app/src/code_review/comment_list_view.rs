@@ -35,7 +35,6 @@ use warpui::{
     ViewHandle, WeakViewHandle,
 };
 
-use crate::ai::request_usage_model::{AIRequestUsageModel, AIRequestUsageModelEvent};
 use crate::appearance::Appearance;
 use crate::code::buffer_location::LocalOrRemotePath;
 use crate::code::editor::comment_editor::DEFAULT_COMMENT_MAX_WIDTH;
@@ -48,16 +47,13 @@ use crate::code_review::comments::{
 };
 use crate::code_review::telemetry_event::CodeReviewTelemetryEvent;
 use crate::menu::{Event, Menu, MenuItem, MenuItemFields};
-use crate::notebooks::editor::view::{EditorViewEvent, RichTextEditorView};
+use crate::editor::{EditorView, Event as EditorEvent};
 use crate::send_telemetry_from_ctx;
-use crate::settings::AISettings;
 use crate::ui_components::icons::Icon;
 use crate::view_components::action_button::{
     ActionButton, ActionButtonTheme, ButtonSize, KeystrokeSource, NakedTheme, PrimaryTheme,
     SecondaryTheme,
 };
-use crate::workspace::view::right_panel::ReviewDestination;
-use crate::workspaces::user_workspaces::UserWorkspaces;
 
 /// Header text for the outdated section when there is exactly one outdated comment.
 const OUTDATED_SECTION_HEADER_SINGULAR: &str = "1 comment will be omitted because it is outdated.";
@@ -78,18 +74,9 @@ fn outdated_section_header_text(count: usize) -> Cow<'static, str> {
 /// Convert markdown text to HTML using the editor's buffer serialization.
 /// This function takes a comment editor view that has already been created with markdown content
 /// and extracts the HTML representation from its buffer.
-fn markdown_to_html(
-    editor_view: &ViewHandle<RichTextEditorView>,
-    ctx: &AppContext,
-) -> Option<String> {
-    editor_view.read(ctx, |view, ctx| {
-        let model = view.model();
-        model.read(ctx, |model, ctx| {
-            let buffer = model.content();
-            let range = CharOffset::from(1)..buffer.as_ref(ctx).max_charoffset();
-            buffer.as_ref(ctx).ranges_as_html(vec1![range], ctx)
-        })
-    })
+fn markdown_to_html(editor_view: &ViewHandle<EditorView>, ctx: &AppContext) -> Option<String> {
+    let text = editor_view.as_ref(ctx).buffer_text(ctx);
+    (!text.is_empty()).then_some(text)
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -100,7 +87,6 @@ pub enum CommentListAction {
     EditComment,
     JumpToCommentLocation(CommentId),
     Cancel,
-    Submit,
     ShowOverflow { comment_id: CommentId },
     DeleteComment,
     DismissOverflowMenu,
@@ -109,7 +95,6 @@ pub enum CommentListAction {
 
 #[derive(Clone, Debug)]
 pub enum CommentListEvent {
-    Submitted,
     Cancelled,
     DeleteComment { comment_id: CommentId },
     EditComment(CommentId),
@@ -118,14 +103,10 @@ pub enum CommentListEvent {
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct CommentListDebugState {
-    pub review_destination: ReviewDestination,
     pub total_comments: usize,
     pub sendable_comments: usize,
     pub is_collapsed: bool,
     pub is_outdated_section_collapsed: Option<bool>,
-    pub ai_available: bool,
-    pub ai_enabled: bool,
-    pub send_button_tooltip_text: String,
 }
 
 struct ViewState {
@@ -173,7 +154,6 @@ impl CommentDisplayState {
 }
 
 pub struct CommentListView {
-    view_handle: WeakViewHandle<Self>,
     parent: WeakViewHandle<CodeReviewView>,
 
     comment_model: Option<ModelHandle<ReviewCommentBatch>>,
@@ -186,14 +166,10 @@ pub struct CommentListView {
     is_outdated_section_collapsed: Option<bool>,
     repo_path: Option<LocalOrRemotePath>,
     view_state: ViewState,
-    /// The best available destination for sending review comments.
-    /// Pushed down from RightPanelView.
-    review_destination: ReviewDestination,
     overflow_menu: ViewHandle<Menu<CommentListAction>>,
     active_overflow_comment_id: Option<CommentId>,
     pending_scroll_to_comment: Option<CommentId>,
     comments_button: ViewHandle<ActionButton>,
-    send_button: ViewHandle<ActionButton>,
 }
 
 impl CommentListView {
@@ -212,21 +188,6 @@ impl CommentListView {
                 })
         });
 
-        let send_button = ctx.add_view(|ctx| {
-            ActionButton::new("Send to Agent", PrimaryTheme)
-                .with_size(ButtonSize::Small)
-                .with_keybinding(
-                    KeystrokeSource::Fixed(
-                        Keystroke::parse(crate::code_review::CODE_REVIEW_SUBMIT_KEYSTROKE)
-                            .unwrap_or_default(),
-                    ),
-                    ctx,
-                )
-                .on_click(|ctx| {
-                    ctx.dispatch_typed_action(CommentListAction::Submit);
-                })
-        });
-
         ctx.subscribe_to_view(&menu, |me, _, event, ctx| match event {
             Event::ItemSelected => {}
             Event::Close { .. } => {
@@ -235,19 +196,7 @@ impl CommentListView {
             Event::ItemHovered => {}
         });
 
-        // Keep the stored button state in sync when AI availability changes.
-        ctx.subscribe_to_model(&AIRequestUsageModel::handle(ctx), |me, _, event, ctx| {
-            if matches!(
-                event,
-                AIRequestUsageModelEvent::RequestUsageUpdated
-                    | AIRequestUsageModelEvent::CreditAvailabilityUpdated
-            ) {
-                me.sync_send_button(ctx);
-            }
-        });
-
         Self {
-            view_handle: ctx.handle(),
             parent,
             comment_model: None,
             comments_by_id: IndexMap::new(),
@@ -256,11 +205,9 @@ impl CommentListView {
             repo_path: initial_repo_path,
             view_state: ViewState::default(),
             overflow_menu: menu,
-            review_destination: ReviewDestination::None,
             active_overflow_comment_id: None,
             pending_scroll_to_comment: None,
             comments_button,
-            send_button,
         }
     }
 
@@ -291,49 +238,22 @@ impl CommentListView {
             .update(ctx, |view, ctx| view.set_label(label_text, ctx));
     }
 
-    pub fn set_review_destination(
-        &mut self,
-        destination: ReviewDestination,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        if self.review_destination != destination {
-            self.review_destination = destination;
-            self.sync_send_button(ctx);
-            ctx.notify();
-        }
-    }
+
 
     fn repo_is_local(&self) -> Option<bool> {
         self.repo_path.as_ref().map(LocalOrRemotePath::is_local)
     }
 
-    pub fn debug_state(&self, ctx: &AppContext) -> CommentListDebugState {
-        let user_workspaces = UserWorkspaces::as_ref(ctx);
-        let scope = user_workspaces.team_context(&self.view_handle, ctx);
-        let ai_available = AIRequestUsageModel::as_ref(ctx).has_any_ai_remaining(&scope, ctx);
-        let ai_enabled = AISettings::as_ref(ctx).is_any_ai_enabled(ctx);
-        let sendable_comments = self
-            .comments_by_id
-            .values()
-            .filter(|state| !state.card.source().outdated)
-            .count();
-        let send_button_tooltip_text = Self::send_button_tooltip_text(
-            &self.review_destination,
-            sendable_comments > 0,
-            ai_available,
-            ai_enabled,
-        )
-        .into_owned();
-
+    pub fn debug_state(&self, _ctx: &AppContext) -> CommentListDebugState {
         CommentListDebugState {
-            review_destination: self.review_destination.clone(),
             total_comments: self.comments_by_id.len(),
-            sendable_comments,
+            sendable_comments: self
+                .comments_by_id
+                .values()
+                .filter(|state| !state.card.source().outdated)
+                .count(),
             is_collapsed: self.is_collapsed,
             is_outdated_section_collapsed: self.is_outdated_section_collapsed,
-            ai_available,
-            ai_enabled,
-            send_button_tooltip_text,
         }
     }
 
@@ -470,7 +390,6 @@ impl CommentListView {
         }
 
         self.recompute_comment_button_label(ctx);
-        self.sync_send_button(ctx);
         ctx.notify();
     }
 
@@ -518,17 +437,17 @@ impl CommentListView {
 
     fn handle_comment_editor_selection_events(
         &mut self,
-        view: ViewHandle<RichTextEditorView>,
-        event: &EditorViewEvent,
+        view: ViewHandle<EditorView>,
+        event: &EditorEvent,
         ctx: &mut ViewContext<Self>,
     ) {
         match event {
-            EditorViewEvent::TextSelectionChanged => {
+            EditorEvent::SelectionChanged => {
                 if view.as_ref(ctx).selected_text(ctx).is_some() {
                     self.clear_other_comment_selections(Some(view.id()), ctx);
                 }
             }
-            EditorViewEvent::Focused => {
+            EditorEvent::Activate => {
                 self.clear_other_comment_selections(Some(view.id()), ctx);
             }
             _ => {}
@@ -888,7 +807,6 @@ impl CommentListView {
             .with_main_axis_alignment(MainAxisAlignment::End)
             .with_cross_axis_alignment(CrossAxisAlignment::Center);
         right_section.add_child(self.render_cancel_button(appearance));
-        right_section.add_child(ChildView::new(&self.send_button).finish());
         right_section.finish()
     }
 
@@ -919,69 +837,14 @@ impl CommentListView {
     }
 
     /// Whether the queued review comments can currently be sent to an agent.
-    pub fn can_send(&self, ctx: &AppContext) -> bool {
-        let has_sendable_comments = self.has_non_outdated_comments();
-        match &self.review_destination {
-            ReviewDestination::None => false,
-            // CLI agents don't consume AI credits, so bypass the ai check.
-            ReviewDestination::Cli(_) => has_sendable_comments,
-            ReviewDestination::Warp => {
-                let user_workspaces = UserWorkspaces::as_ref(ctx);
-                let scope = user_workspaces.team_context(&self.view_handle, ctx);
-                AIRequestUsageModel::as_ref(ctx).has_any_ai_remaining(&scope, ctx)
-                    && has_sendable_comments
-            }
-        }
-    }
+
 
     /// Keep the stored "Send to Agent" button's enabled state and tooltip in sync with the current
     /// destination / comment / AI-availability state.
-    fn sync_send_button(&mut self, ctx: &mut ViewContext<Self>) {
-        let ai_available = {
-            let user_workspaces = UserWorkspaces::as_ref(ctx);
-            let scope = user_workspaces.team_context_for_view(ctx);
-            AIRequestUsageModel::as_ref(ctx).has_any_ai_remaining(&scope, ctx)
-        };
-        let ai_enabled = AISettings::as_ref(ctx).is_any_ai_enabled(ctx);
-        let enabled = self.can_send(ctx);
-        let tooltip = Self::send_button_tooltip_text(
-            &self.review_destination,
-            self.has_non_outdated_comments(),
-            ai_available,
-            ai_enabled,
-        )
-        .into_owned();
-        self.send_button.update(ctx, |button, ctx| {
-            button.set_disabled(!enabled, ctx);
-            button.set_tooltip(Some(tooltip), ctx);
-        });
-    }
+
 
     /// Computes the tooltip text for the send button based on current state.
-    fn send_button_tooltip_text(
-        destination: &ReviewDestination,
-        has_sendable_comments: bool,
-        ai_available: bool,
-        ai_enabled: bool,
-    ) -> Cow<'static, str> {
-        if let ReviewDestination::Cli(agent) = destination {
-            if !has_sendable_comments {
-                Cow::Borrowed("No non-outdated comments to send")
-            } else {
-                Cow::Owned(format!("Send diff comments to {}", agent.display_name()))
-            }
-        } else if !ai_enabled {
-            Cow::Borrowed("AI must be enabled to send comments to Agent")
-        } else if !ai_available {
-            Cow::Borrowed("Agent code review requires AI credits")
-        } else if matches!(destination, ReviewDestination::None) {
-            Cow::Borrowed("All terminals are busy")
-        } else if !has_sendable_comments {
-            Cow::Borrowed("No non-outdated comments to send")
-        } else {
-            Cow::Borrowed("Send diff comments to Agent")
-        }
-    }
+
 
     fn render_comment(
         &self,
@@ -1198,11 +1061,6 @@ impl TypedActionView for CommentListView {
             }
             CommentListAction::Cancel => {
                 ctx.emit(CommentListEvent::Cancelled);
-            }
-            CommentListAction::Submit => {
-                if self.can_send(ctx) {
-                    ctx.emit(CommentListEvent::Submitted);
-                }
             }
             CommentListAction::ShowOverflow { comment_id } => {
                 let current_overflow = self.active_overflow_comment_id.take();

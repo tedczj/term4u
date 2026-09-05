@@ -18,6 +18,8 @@ pub mod block;
 pub mod blocks;
 pub mod bootstrap;
 pub mod header_grid;
+pub mod restored_block;
+pub use restored_block::SerializedBlockListItem;
 pub mod rich_content;
 pub mod secrets;
 

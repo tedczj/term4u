@@ -54,10 +54,7 @@ pub use ai::skills::SkillDescriptor;
 pub use global_skills::{filter_skills_by_spec, resolve_skill_repos};
 
 mod skill_utils;
-pub use skill_utils::{
-    icon_override_for_skill_name, list_skills_if_changed, render_skill_button,
-    skill_path_from_location,
-};
+pub use skill_utils::skill_path_from_location;
 pub trait SkillPathQuery {
     fn to_skill_location(&self) -> LocalOrRemotePath;
 }

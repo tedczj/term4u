@@ -146,7 +146,7 @@ pub fn all_events() -> impl Iterator<Item = Box<dyn TelemetryEventDesc>> {
 #[macro_export]
 macro_rules! send_telemetry_from_ctx {
     ($event:expr, $ctx:expr) => {{
-        let _ = (&$event, &$ctx);
+        let _ = &$ctx;
     }};
 }
 
@@ -158,7 +158,7 @@ macro_rules! send_telemetry_from_ctx {
 #[macro_export]
 macro_rules! send_telemetry_from_app_ctx {
     ($event:expr, $app_ctx:expr) => {{
-        let _ = (&$event, &$app_ctx);
+        let _ = &$app_ctx;
     }};
 }
 

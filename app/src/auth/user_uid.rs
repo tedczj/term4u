@@ -1,0 +1,60 @@
+use std::fmt;
+use std::sync::LazyLock;
+
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
+
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+pub struct UserUid(lasso::Spur);
+
+static USER_UID_INTERNER: LazyLock<lasso::ThreadedRodeo<lasso::Spur>> =
+    LazyLock::new(lasso::ThreadedRodeo::new);
+
+impl Default for UserUid {
+    fn default() -> Self {
+        Self::new("")
+    }
+}
+
+impl UserUid {
+    pub fn new(uid: &str) -> Self {
+        Self(USER_UID_INTERNER.get_or_intern(uid))
+    }
+
+    pub fn as_str(&self) -> &str {
+        USER_UID_INTERNER.resolve(&self.0)
+    }
+
+    pub fn as_string(&self) -> String {
+        self.as_str().to_owned()
+    }
+}
+
+impl fmt::Display for UserUid {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+impl fmt::Debug for UserUid {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_tuple("UserUid").field(&self.as_str()).finish()
+    }
+}
+
+impl Serialize for UserUid {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_str(self.as_str())
+    }
+}
+
+impl<'de> Deserialize<'de> for UserUid {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        String::deserialize(deserializer).map(|uid| Self::new(&uid))
+    }
+}

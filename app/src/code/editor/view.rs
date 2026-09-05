@@ -76,7 +76,6 @@ use crate::code::{
 use crate::code_review::comments::{CommentId, CommentOrigin};
 use crate::editor::InteractionState;
 use crate::features::FeatureFlag;
-use crate::notebooks::editor::rich_text_styles;
 use crate::settings::{AppEditorSettings, CodeEditorLineNumberMode, FontSettings};
 use crate::view_components::find::FindDirection;
 
@@ -2464,7 +2463,7 @@ pub fn code_text_styles(
     font_settings: &FontSettings,
     line_height_override: Option<f32>,
 ) -> RichTextStyles {
-    let mut styling = rich_text_styles(appearance, font_settings);
+    let mut styling = RichTextStyles::default();
     let theme = appearance.theme();
     styling.base_text = ParagraphStyles {
         font_size: appearance.monospace_font_size(),

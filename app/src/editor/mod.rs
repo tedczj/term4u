@@ -10,7 +10,9 @@ use std::ops::Range;
 /// They should _not_ be able to interface with the internal
 /// details of the editor (e.g. the [`Buffer`]).
 pub use view::*;
-use warpui::AppContext;
+use warp_core::semantic_selection::SemanticSelection;
+use warp_editor::selection::TextUnit;
+use warpui::{AppContext, SingletonEntity as _};
 pub use warpui::text::point::Point;
 
 // Re-exported for use by the `warp_tui` TUI front-end, which needs to
@@ -19,6 +21,10 @@ pub use crate::code::editor::model::{CodeEditorModel, CodeEditorModelEvent, Line
 
 pub fn init(app: &mut AppContext) {
     view::init(app);
+}
+
+pub(crate) fn word_unit(ctx: &AppContext) -> TextUnit {
+    TextUnit::Word(SemanticSelection::as_ref(ctx).word_boundary_policy())
 }
 
 trait RangeExt<T> {

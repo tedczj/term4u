@@ -11,24 +11,17 @@ mod auth;
 #[path = "autoupdate_disabled.rs"]
 mod autoupdate;
 mod banner;
-mod billing;
 #[path = "changelog_disabled.rs"]
 mod changelog_model;
-mod chip_configurator;
-mod cloud_object;
 mod code;
 mod code_review;
-mod coding_entrypoints;
 mod coding_panel_enablement_state;
 mod command_palette;
 mod completer;
-#[allow(dead_code)]
-mod context_chips;
 #[cfg(enable_crash_recovery)]
 mod crash_recovery;
 mod debug_dump;
 mod default_terminal;
-mod drive;
 #[cfg(windows)]
 mod dynamic_libraries;
 mod env_vars;
@@ -37,11 +30,11 @@ mod global_resource_handles;
 mod gpu_state;
 mod input_classifier;
 mod interval_timer;
-mod linear;
 #[cfg(feature = "local_fs")]
 mod local_control;
 #[cfg(any(target_os = "macos", target_os = "windows"))]
 mod login_item;
+mod local_objects;
 mod menu;
 mod modal;
 mod network;
@@ -53,14 +46,11 @@ mod platform;
 #[cfg(feature = "plugin_host")]
 mod plugin;
 mod prefix;
-mod pricing;
 mod profiling;
 mod projects;
 mod prompt;
 mod quit_warning;
-mod referral_theme_status;
 mod resource_limits;
-mod reward_view;
 mod safe_triangle;
 mod search_bar;
 mod server;
@@ -75,13 +65,7 @@ mod throttle;
 mod tips;
 mod tracing;
 #[cfg(feature = "tui")]
-mod tui;
-#[cfg(feature = "tui")]
 pub mod tui_export;
-#[cfg(feature = "tui")]
-mod tui_onboarding_markers;
-#[cfg(all(feature = "tui", any(test, feature = "test-util")))]
-mod tui_test_support;
 mod ui_components;
 mod undo_close;
 mod uri;
@@ -95,7 +79,6 @@ mod warp_managed_paths_watcher;
 mod wasm_nux_dialog;
 mod window_settings;
 mod word_block_editor;
-mod workspaces;
 
 // PLEASE DO NOT ADD MORE PUBLIC MODULES!
 //
@@ -109,12 +92,10 @@ mod workspaces;
 // in the warp::integration_testing::assertions module (or a sub-module).  These
 // functions will allow us to keep types internal to this crate and expose a
 // simpler API for integration tests to consume.
-pub mod ai_assistant;
 pub mod appearance;
 pub mod channel;
 pub mod editor;
 pub mod features;
-pub mod input_suggestions;
 #[cfg(feature = "integration_tests")]
 pub mod integration_testing;
 pub mod keyboard;
@@ -128,20 +109,6 @@ pub mod settings_view;
 pub mod tab_configs;
 pub mod terminal;
 pub mod themes;
-use ::ai::index::DEFAULT_SYNC_REQUESTS_PER_MIN;
-use ::ai::index::full_source_code_embedding::SyncTask;
-use ::ai::index::full_source_code_embedding::manager::{
-    CodebaseIndexManager, CodebaseIndexManagerConfig,
-};
-use ::ai::project_context::model::ProjectContextModel;
-pub use ai::agent::todos::AIAgentTodoList;
-pub use ai::agent::{AIAgentActionResultType, FileEdit, TodoOperation};
-use ai::agent_conversations_model::AgentConversationsModel;
-use ai::agent_management::AgentNotificationsModel;
-use ai::blocklist::{BlocklistAIHistoryModel, BlocklistAIPermissions};
-use ai::execution_profiles::editor::ExecutionProfileEditorManager;
-use ai::execution_profiles::profiles::AIExecutionProfilesModel;
-use ai::metadata_project_rules::read_project_rule_contents;
 use auth::auth_state::{AuthState, AuthStateProvider, LocalAuthStateProvider};
 use code::editor_management::CodeManager;
 use code::opened_files::OpenedFilesModel;
@@ -152,7 +119,6 @@ use quit_warning::UnsavedStateSummary;
 use repo_metadata::{
     RepoMetadataModel, repositories::DetectedRepositories, watcher::DirectoryWatcher,
 };
-use server::network_log_pane_manager::NetworkLogPaneManager;
 #[cfg(feature = "local_fs")]
 use settings::import::model::ImportedConfigModel;
 use settings_view::pane_manager::SettingsPaneManager;
@@ -161,17 +127,14 @@ use terminal::keys_settings::KeysSettings;
 #[cfg(all(not(target_family = "wasm"), feature = "local_tty"))]
 use terminal::local_shell::LocalShellState;
 pub use util::bindings::cmd_or_ctrl_shift;
-use warp_cli::agent::AgentCommand;
 use warp_cli::{CliCommand, GlobalOptions};
 #[cfg(feature = "local_fs")]
 use watcher::HomeDirectoryWatcher;
 
-use crate::ai::active_agent_views_model::ActiveAgentViewsModel;
 pub mod workflows;
 pub mod workspace;
 
 use std::borrow::Cow;
-use std::collections::HashSet;
 use std::ops::Deref;
 use std::sync::Arc;
 
@@ -187,8 +150,6 @@ use itertools::Itertools;
 pub use persistence::testing as sqlite_testing;
 #[cfg(feature = "plugin_host")]
 pub use plugin::{PLUGIN_HOST_FLAG, run_plugin_host};
-use referral_theme_status::ReferralThemeStatus;
-use server::server_api::ServerApiProvider;
 use settings::{ExtraMetaKeys, PrivacySettings};
 use terminal::input;
 use terminal::session_settings::SessionSettings;
@@ -205,7 +166,6 @@ use warp_errors::{report_error, report_if_error};
 #[cfg(feature = "local_fs")]
 use warp_files::FileModel;
 use warp_logging::{LogDestination, LogFrontend};
-use warp_server_client::network_logging::NetworkLogModel;
 use warpui::integration::TestDriver;
 use warpui::modals::{AlertDialogWithCallbacks, AppModalCallback};
 use warpui::platform::TerminationMode;
@@ -216,46 +176,29 @@ use window_settings::WindowSettings;
 use workspace::sync_inputs::SyncedInputState;
 
 use self::features::FeatureFlag;
-use crate::ai::AIRequestUsageModel;
-use crate::ai::agent::conversation::AIConversationId;
-use crate::ai::facts::manager::AIFactManager;
-use crate::ai::harness_availability::HarnessAvailabilityModel;
-use crate::ai::llms::LLMPreferences;
-use crate::ai::outline::RepoOutlines;
-use crate::ai::restored_conversations::RestoredAgentConversations;
 use crate::ai::skills::SkillManager;
 #[cfg(not(target_family = "wasm"))]
 use crate::antivirus::AntivirusInfo;
 use crate::app_state::AppState;
 use crate::autoupdate::{AutoupdateState, RelaunchModel};
 use crate::changelog_model::ChangelogModel;
-use crate::cloud_object::model::actions::ObjectActions;
-use crate::cloud_object::model::persistence::CloudModel;
 use crate::code::global_buffer_model::GlobalBufferModel;
 #[cfg(feature = "local_fs")]
 use crate::code::language_server_shutdown_manager::LanguageServerShutdownManager;
-use crate::context_chips::prompt::Prompt;
 use crate::default_terminal::DefaultTerminal;
-use crate::drive::CloudObjectTypeAndId;
 pub use crate::global_resource_handles::{GlobalResourceHandles, GlobalResourceHandlesProvider};
 use crate::gpu_state::GPUState;
 use crate::network::NetworkStatus;
-use crate::notebooks::editor::keys::NotebookKeybindings;
 use crate::notebooks::manager::NotebookManager;
 use crate::notification::NotificationContext;
 use crate::palette::PaletteMode;
 use crate::persistence::PersistenceWriter;
-use crate::persistence::model::AgentConversationData;
 use crate::projects::ProjectManagementModel;
 use crate::root_view::{
     OpenFromRestoredArg, OpenPath, quake_mode_window_id, quake_mode_window_is_open,
 };
-use crate::server::cloud_objects::update_manager::UpdateManager;
-use crate::server::experiments::ServerExperiments;
 use crate::server::telemetry::PaletteSource;
-pub use crate::server::telemetry::{
-    AgentModeEntrypoint, AgentModeEntrypointSelectionType, TelemetryEvent,
-};
+pub use crate::server::telemetry::TelemetryEvent;
 use crate::session_management::{RunningSessionSummary, SessionNavigationData};
 use crate::settings::manager::SettingsManager;
 use crate::settings::{AccessibilitySettings, ScrollSettings, SelectionSettings};
@@ -264,12 +207,8 @@ use crate::settings_view::keybindings::KeybindingChangedNotifier;
 use crate::suggestions::ignored_suggestions_model::IgnoredSuggestionsModel;
 use crate::system::SystemStats;
 use crate::tab::TabShortcutModifierState;
-use crate::terminal::cli_agent_sessions::CLIAgentSessionsModel;
-use crate::terminal::keys::TerminalKeybindings;
 use crate::terminal::resizable_data::ResizableData;
 use crate::terminal::{AudibleBell, CustomSecretRegexUpdater, History};
-#[cfg(feature = "tui")]
-pub use crate::tui::{TuiLoginEvent, TuiLoginModel, TuiLoginPhase, log_out_tui};
 use crate::undo_close::UndoCloseStack;
 use crate::user_config::WarpConfig;
 use crate::util::bindings::is_binding_cross_platform;
@@ -1062,14 +1001,11 @@ fn run_internal(mut launch_mode: LaunchMode) -> Result<()> {
 
         FeatureFlag::UseTantivySearch.set_enabled(true);
 
-        // The TUI front-end reuses the full `initialize_app` bootstrap above (so
-        // auth, `Appearance`, settings, etc. exist), then runs the device-login
-        // flow and mounts the TUI (via `crate::tui::init`) instead of the
-        // GUI/CLI `launch()` path.
+        // The TUI reuses local app initialization and mounts directly without authentication.
         match launch_mode {
             #[cfg(feature = "tui")]
             LaunchMode::Tui { entrypoint } => match entrypoint {
-                TuiEntryPoint::Interactive { mount, .. } => crate::tui::init(mount, ctx),
+                TuiEntryPoint::Interactive { mount, .. } => mount(ctx),
                 TuiEntryPoint::CliCommand { execute } => execute(ctx),
             },
             #[cfg(not(feature = "tui"))]
@@ -1140,19 +1076,8 @@ fn initialize_local_app(
     let auth_state = Arc::new(AuthState::new_local(ctx));
     ctx.add_singleton_model(|_| AuthStateProvider::new(auth_state.clone()));
     ctx.add_singleton_model(|_| LocalAuthStateProvider::new(auth_state));
-    ctx.add_singleton_model(|_| NetworkLogModel::default());
-    let server_api_provider = ctx.add_singleton_model(|_| ServerApiProvider::new_offline());
-    let ai_client = server_api_provider.as_ref(ctx).get_ai_client();
-    let object_client = server_api_provider.as_ref(ctx).get_cloud_objects_client();
-    let sync_queue_object_client = object_client.clone();
-    ctx.add_singleton_model(|ctx| {
-        server::sync_queue::SyncQueue::new(Vec::new(), sync_queue_object_client, ctx)
-    });
-    ctx.add_singleton_model(|ctx| UpdateManager::new_local(object_client, ctx));
     AutoupdateState::register(ctx, ());
     initialize_common_app(ctx);
-    workspace::auto_handoff::init(ctx);
-    billing::shared_objects_creation_denied_modal::init(ctx);
 
     let persistence_scope = match launch_mode {
         LaunchMode::Tui { .. } => persistence::PersistenceScope::Tui,
@@ -1171,7 +1096,6 @@ fn initialize_local_app(
     timer.mark_interval_end("SQLITE_INITIALIZED");
     let persistence_writer = PersistenceWriter::new(writer_handles);
     let model_event_sender = persistence_writer.sender();
-    let referral_theme_status = ctx.add_model(ReferralThemeStatus::new);
     let tips_handle = ctx.add_model(|_| user_defaults.tips_data);
     let unsupported_shell =
         ctx.add_model(|_| user_defaults.user_default_shell_unsupported_banner_state);
@@ -1180,7 +1104,6 @@ fn initialize_local_app(
         GlobalResourceHandlesProvider::new(GlobalResourceHandles {
             model_event_sender,
             tips_completed: tips_handle,
-            referral_theme_status,
             user_default_shell_unsupported_banner_model_handle: unsupported_shell,
             settings_file_error,
         })
@@ -1189,35 +1112,20 @@ fn initialize_local_app(
     let (
         app_state,
         command_history,
-        restored_user_profiles,
-        experiments,
-        ai_queries,
-        nld_prompts,
+        legacy_notebooks,
         persisted_workspaces,
         workspace_language_servers,
-        multi_agent_conversations,
         persisted_projects,
         persisted_project_rules,
         persisted_ignored_suggestions,
     ) = sqlite_data
         .map(|data| {
-            let _ = (
-                &data.cloud_objects,
-                &data.workspaces,
-                &data.current_workspace_uid,
-                &data.time_of_next_force_object_refresh,
-                &data.object_actions,
-            );
             (
                 data.app_state,
                 data.command_history,
-                data.user_profiles,
-                data.experiments,
-                data.ai_queries,
-                data.nld_prompts,
+                data.legacy_notebooks,
                 data.codebase_indices,
                 data.workspace_language_servers,
-                data.multi_agent_conversations,
                 data.projects,
                 data.project_rules,
                 data.ignored_suggestions,
@@ -1225,30 +1133,14 @@ fn initialize_local_app(
         })
         .unwrap_or_default();
 
-    ctx.add_singleton_model(|ctx| ServerExperiments::new_from_cache(experiments, ctx));
-    ctx.add_singleton_model(|ctx| AIRequestUsageModel::new(ai_client, ctx));
-    ctx.add_singleton_model(|ctx| {
-        UserWorkspaces::new(
-            server_api_provider.as_ref(ctx).get_team_client(),
-            server_api_provider.as_ref(ctx).get_workspace_client(),
-            Vec::new(),
-            None,
-            ctx,
-        )
+    ctx.add_singleton_model(|_| {
+        local_objects::notebook_store::NotebookStore::new(legacy_notebooks)
     });
     ctx.add_singleton_model(NotebookManager::new_local);
-    ctx.add_singleton_model(|_| ObjectActions::new(Vec::new()));
-    ctx.add_singleton_model(::ai::api_keys::ApiKeyManager::new);
-    ai::custom_endpoints::init(launch_mode, ctx);
     ctx.add_singleton_model(AntivirusInfo::new);
     ctx.set_default_binding_validator(is_binding_cross_platform);
 
     ctx.add_singleton_model(|_| SettingsPaneManager::new());
-    ctx.add_singleton_model(|_| AIFactManager::new());
-    ctx.add_singleton_model(|_| ExecutionProfileEditorManager::default());
-    ctx.add_singleton_model(|_| NetworkLogPaneManager::default());
-    ctx.add_singleton_model(|_| pricing::PricingInfoModel::new());
-    ctx.add_singleton_model(ai::pricing_promotion::PricingPromotionState::new);
 
     #[cfg(target_os = "macos")]
     if !launch_mode.is_headless() {
@@ -1305,9 +1197,6 @@ fn initialize_local_app(
     ctx.add_singleton_model(CustomSecretRegexUpdater::new);
 
     ai::init(ctx);
-    ai::blocklist::agent_view::editor::init(ctx);
-    ai::blocklist::init(ctx);
-    ai::blocklist::block::status_bar::init(ctx);
     app_services::init(ctx);
     #[cfg(not(target_family = "wasm"))]
     code::editor::find::view::init(ctx);
@@ -1316,7 +1205,6 @@ fn initialize_local_app(
     terminal::init(ctx);
     input::init(ctx);
     editor::init(ctx);
-    onboarding::init(ctx);
     menu::init(ctx);
     tips::tip_view::init(ctx);
     launch_configs::init(ctx);
@@ -1331,8 +1219,6 @@ fn initialize_local_app(
     undo_close::init(ctx);
     tab_configs::new_worktree_modal::init(ctx);
     tab_configs::params_modal::init(ctx);
-    coding_entrypoints::project_buttons::init(ctx);
-    terminal::view::init_environment::mode_selector::init(ctx);
     if FeatureFlag::CodeReviewSaveChanges.is_enabled() {
         code_review::init(ctx);
     }
@@ -1357,71 +1243,12 @@ fn initialize_local_app(
     #[cfg(feature = "local_fs")]
     ctx.add_singleton_model(|_| LanguageServerShutdownManager::new());
 
-    let initial_pinned_conversations: HashSet<AIConversationId> = multi_agent_conversations
-        .iter()
-        .filter_map(|conversation| {
-            let data = serde_json::from_str::<AgentConversationData>(
-                &conversation.conversation.conversation_data,
-            )
-            .ok()?;
-            data.pinned.then(|| {
-                AIConversationId::try_from(conversation.conversation.conversation_id.clone()).ok()
-            })?
-        })
-        .collect();
-    ctx.add_singleton_model(move |_| {
-        BlocklistAIHistoryModel::new(ai_queries, nld_prompts, &multi_agent_conversations)
-    });
-    ctx.add_singleton_model(ai::blocklist::QueuedQueryModel::new);
-    ctx.add_singleton_model(move |ctx| {
-        ai::blocklist::agent_view::orchestration_pill_bar_model::OrchestrationPillBarModel::new(
-            initial_pinned_conversations,
-            ctx,
-        )
-    });
-    ctx.add_singleton_model(|_| RestoredAgentConversations::new());
-    ctx.add_singleton_model(|_| CLIAgentSessionsModel::new());
-    ctx.add_singleton_model(|_| ActiveAgentViewsModel::new());
-    ctx.add_singleton_model(AgentNotificationsModel::new);
-    ctx.add_singleton_model(BlocklistAIPermissions::new);
-    ctx.add_singleton_model(ai::blocklist::orchestration_events::OrchestrationEventService::new);
-    ctx.add_singleton_model(
-        ai::blocklist::local_agent_task_sync_model::LocalAgentTaskSyncModel::new,
-    );
-    ctx.add_singleton_model(
-        ai::blocklist::orchestration_event_streamer::OrchestrationEventStreamer::new,
-    );
-
-    if launch_mode.supports_indexing() {
-        ctx.add_singleton_model(RepoOutlines::new);
-    } else {
-        ctx.add_singleton_model(|ctx| RepoOutlines::new_with_indexing_enabled(false, ctx));
-    }
-    ctx.add_singleton_model(|ctx| {
-        warp_core::sync_queue::SyncQueue::<SyncTask>::new_with_rate_limit(
-            &ctx.background_executor(),
-            Some(DEFAULT_SYNC_REQUESTS_PER_MIN),
-        )
-    });
-    ctx.add_singleton_model(|_| UserProfiles::new(restored_user_profiles));
-    ctx.add_singleton_model(cloud_object::model::persistence::CloudModel::new_local);
-    ctx.add_singleton_model(cloud_object::model::view::CloudViewModel::new);
-    ctx.add_singleton_model(ai::document::ai_document_model::AIDocumentModel::new);
-    ctx.add_singleton_model(workspaces::update_manager::TeamUpdateManager::new_local);
-    ctx.add_singleton_model(workspaces::team_tester::TeamTesterStatus::new_local);
-    ctx.add_singleton_model(auth::auth_manager::AuthManager::new_offline);
-    ctx.add_singleton_model(workspace::OneTimeModalModel::new);
-    ctx.add_singleton_model(
-        workspace::bonus_grant_notification_model::BonusGrantNotificationModel::new,
-    );
     ctx.add_singleton_model(|_| AudibleBell::new());
 
     ctx.add_singleton_model(|_| simple_logger::manager::LogManager::new());
     ctx.add_singleton_model(SkillManager::new);
     ctx.add_singleton_model(|_| CodeManager::default());
     ctx.add_singleton_model(|_| OpenedFilesModel::new());
-    ctx.add_singleton_model(NotebookKeybindings::new);
-    ctx.add_singleton_model(TerminalKeybindings::new);
     ctx.add_singleton_model(|_| ActiveSession::default());
 
     #[cfg(all(not(target_family = "wasm"), feature = "local_tty"))]
@@ -1429,38 +1256,11 @@ fn initialize_local_app(
         ctx.add_singleton_model(LocalShellState::new);
         ctx.add_singleton_model(system::SystemInfo::new);
     }
-    ctx.add_singleton_model(Prompt::new);
     ctx.add_singleton_model(|_| ResizableData::default());
     ctx.add_singleton_model(LocalWorkflows::new);
-    ctx.add_singleton_model(LLMPreferences::new);
-    ctx.add_singleton_model(|_| HarnessAvailabilityModel::new_offline());
     ctx.add_singleton_model(ai::persisted_workspace::PersistedWorkspace::new_local);
-    ctx.add_singleton_model(ai::agent_conversations_model::AgentConversationsModel::new);
-    ctx.add_singleton_model(|ctx| {
-        ai::agent_tips::AITipModel::<ai::AgentTip>::new_for_agent_tips(ctx)
-    });
-    ctx.add_singleton_model(|ctx| AIExecutionProfilesModel::new(launch_mode, ctx));
     ctx.add_singleton_model(DefaultTerminal::new);
-    ctx.add_singleton_model(|ctx| {
-        let limits = AIRequestUsageModel::as_ref(ctx).codebase_context_limits();
-        let config = CodebaseIndexManagerConfig::new(
-            Vec::new(),
-            limits.max_indices_allowed,
-            limits.max_files_per_repo,
-            limits.embedding_generation_batch_size,
-            server_api_provider.as_ref(ctx).get(),
-            false,
-        );
-        CodebaseIndexManager::new_with_config(config, ctx)
-    });
-    ctx.add_singleton_model(|ctx| {
-        ProjectContextModel::new_from_persisted(
-            persisted_project_rules,
-            read_project_rule_contents,
-            ctx,
-        )
-    });
-    ProjectContextModel::handle(ctx).update(ctx, |model, ctx| model.index_global_rules(ctx));
+    let _ = persisted_project_rules;
     let _ = (persisted_workspaces, workspace_language_servers);
     ctx.add_singleton_model(move |_| persistence_writer);
     ctx.add_singleton_model(input_classifier::InputClassifierModel::new);

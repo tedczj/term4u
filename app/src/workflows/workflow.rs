@@ -1,1 +1,1 @@
-pub use cloud_object_models::{Argument, ArgumentType, Workflow};
+pub use super::model::{Argument, ArgumentType, Workflow};

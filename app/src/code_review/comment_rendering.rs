@@ -30,7 +30,7 @@ use crate::code_review::comments::{
     AttachedReviewComment, AttachedReviewCommentTarget, LineDiffContent,
 };
 use crate::editor::InteractionState;
-use crate::notebooks::editor::view::RichTextEditorView;
+use crate::editor::EditorView;
 use crate::util::time_format::human_readable_approx_duration;
 
 /// Configuration for making the comment header clickable.
@@ -156,7 +156,7 @@ fn render_comment_file_path_header(
 }
 
 fn render_comment_text_section(
-    comment_editor: &ViewHandle<RichTextEditorView>,
+    comment_editor: &ViewHandle<EditorView>,
     last_updated_duration: Duration,
     is_imported_from_github: bool,
     metadata_trailing_element: Option<Box<dyn Element>>,
@@ -288,7 +288,7 @@ enum CommentDiffContent {
 /// imported comments. Owns the view handles for the comment body editor and
 /// (optionally) a static diff editor, plus the underlying comment data.
 pub(crate) struct CommentViewCard {
-    comment_editor: ViewHandle<RichTextEditorView>,
+    comment_editor: ViewHandle<EditorView>,
     diff_content: Option<CommentDiffContent>,
     source: AttachedReviewComment,
     title: String,
@@ -364,9 +364,7 @@ impl CommentViewCard {
         ctx: &mut ViewContext<V>,
     ) {
         self.comment_editor.update(ctx, |editor, ctx| {
-            editor.model().update(ctx, |model, ctx| {
-                model.reset_with_markdown(&new_source.content, ctx);
-            });
+            editor.system_reset_buffer_text(&new_source.content, ctx);
         });
         self.source = new_source;
         self.title = Self::compute_title(&self.source, repo_path);
@@ -438,7 +436,7 @@ impl CommentViewCard {
         &self.source
     }
 
-    pub(crate) fn comment_editor(&self) -> &ViewHandle<RichTextEditorView> {
+    pub(crate) fn comment_editor(&self) -> &ViewHandle<EditorView> {
         &self.comment_editor
     }
 

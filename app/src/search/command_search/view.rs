@@ -1,6 +1,5 @@
 use std::collections::HashSet;
 use std::ops::Range;
-use std::sync::Arc;
 use std::time::Duration;
 
 use async_channel::Sender;
@@ -26,37 +25,22 @@ use warpui::{
     ViewContext, ViewHandle, WeakViewHandle,
 };
 
-use super::ai_queries::AIQueriesDataSource;
-use super::env_var_collections::EnvVarCollectionDataSource;
 use super::history::history_data_source_for_session;
-use super::notebooks::notebooks_data_source;
-use super::warp_ai::WarpAIDataSource;
-use super::workflows::{WorkflowsDataSource, cloud_workflows_data_source};
+use super::workflows::WorkflowsDataSource;
 use super::zero_state::{CommandSearchZeroStateEvent, CommandSearchZeroStateView};
-use crate::ai_assistant::GenerateCommandsFromNaturalLanguageError;
-use crate::ai_assistant::execution_context::WarpAiExecutionContext;
 use crate::appearance::Appearance;
-use crate::auth::auth_manager::AuthManager;
-use crate::auth::auth_state::AuthState;
-use crate::auth::auth_view_modal::AuthViewVariant;
-use crate::auth::{AuthStateProvider, UserUid};
 use crate::completer::SessionContext;
-use crate::drive::settings::WarpDriveSettings;
 use crate::search::QueryFilter;
 use crate::search::command_search::searcher::{CommandSearchItemAction, CommandSearchMixer};
 use crate::search::mixer::AddAsyncSourceOptions;
 use crate::search::result_renderer::{QueryResultRenderer, QueryResultRendererStyles};
 use crate::search::search_bar::{SearchBar, SearchBarEvent, SearchBarState, SearchResultOrdering};
 use crate::send_telemetry_from_ctx;
-use crate::server::ids::ServerId;
-use crate::server::server_api::ai::AIClient;
 use crate::server::telemetry::TelemetryEvent;
-use crate::settings::AISettings;
 use crate::terminal::input::MenuPositioning;
 use crate::terminal::model::session::SessionId;
 use crate::terminal::resizable_data::{DEFAULT_UNIVERSAL_SEARCH_WIDTH, ModalType, ResizableData};
 use crate::terminal::{History, HistoryEvent};
-use crate::workspaces::user_workspaces::UserWorkspaces;
 
 const DEFAULT_PLACEHOLDER_TEXT: &str = "Search your history, workflows, and more";
 const PANEL_POSITION_ID: &str = "CommandSearchViewPanel";
@@ -103,8 +87,6 @@ pub enum CommandSearchAction {
     },
     Close,
     Resize,
-    OpenUpgradeLink(String),
-    AttemptLoginGatedUpgrade,
 }
 
 struct CommandSearchViewState {
@@ -119,21 +101,17 @@ struct CommandSearchViewState {
 /// A panel that allows the user to search for a command to execute next.
 pub struct CommandSearchView {
     zero_state_handle: ViewHandle<CommandSearchZeroStateView>,
-    handle: WeakViewHandle<Self>,
     menu_positioning: MenuPositioning,
-    auth_state: Arc<AuthState>,
-    ai_client: Arc<dyn AIClient>,
     state: CommandSearchViewState,
     visible_results_range_sender: Sender<Range<usize>>,
     resizable_state_handle: ResizableStateHandle,
     search_bar: ViewHandle<SearchBar<CommandSearchItemAction>>,
     search_bar_state: ModelHandle<SearchBarState<CommandSearchItemAction>>,
     mixer: ModelHandle<CommandSearchMixer>,
-    upgrade_link: MouseStateHandle,
 }
 
 impl CommandSearchView {
-    pub fn new(ai_client: Arc<dyn AIClient>, ctx: &mut ViewContext<Self>) -> Self {
+    pub fn new(ctx: &mut ViewContext<Self>) -> Self {
         let search_bar_state =
             ctx.add_model(|_| SearchBarState::new(SearchResultOrdering::BottomUp));
 
@@ -196,11 +174,8 @@ impl CommandSearchView {
             });
 
         Self {
-            auth_state: AuthStateProvider::as_ref(ctx).get().clone(),
-            ai_client,
             zero_state_handle,
             menu_positioning: Default::default(),
-            handle: ctx.handle(),
             visible_results_range_sender,
             state: CommandSearchViewState {
                 scroll_state: Default::default(),
@@ -211,7 +186,6 @@ impl CommandSearchView {
             search_bar,
             search_bar_state,
             mixer,
-            upgrade_link: Default::default(),
         }
     }
 
@@ -220,87 +194,17 @@ impl CommandSearchView {
         &mut self,
         session_id: SessionId,
         session_context: Option<SessionContext>,
-        ai_execution_context: Option<WarpAiExecutionContext>,
         ctx: &mut ViewContext<Self>,
     ) {
-        let window_id = ctx.window_id();
         self.mixer.update(ctx, |mixer, ctx| {
             mixer.reset(ctx);
-
-            // Add data sources in lowest->highest priority order.  If results from two
-            // data sources produce the same ranking score, the data source added first
-            // will show up higher in the list (i.e.: further away from the input).
-            if AISettings::as_ref(ctx).is_any_ai_enabled(ctx) {
-                mixer.add_sync_source(
-                    WarpAIDataSource::new(self.ai_client.clone(), None),
-                    HashSet::from([QueryFilter::NaturalLanguage]),
-                );
-                mixer.add_async_source(
-                    WarpAIDataSource::new(self.ai_client.clone(), ai_execution_context),
-                    HashSet::from([QueryFilter::NaturalLanguage]),
-                    AddAsyncSourceOptions {
-                        debounce_interval: Some(Duration::from_millis(50)),
-                        run_in_zero_state: false,
-                        run_when_unfiltered: false,
-                    },
-                    ctx,
-                );
-            }
-
-            if WarpDriveSettings::is_warp_drive_enabled(ctx) {
-                mixer.add_sync_source(
-                    WorkflowsDataSource::new(session_context.as_ref(), ctx),
-                    HashSet::from([QueryFilter::Workflows]),
-                );
-
-                let mut workflows_filters = HashSet::from([QueryFilter::Workflows]);
-                if AISettings::as_ref(ctx).is_any_ai_enabled(ctx) {
-                    workflows_filters.insert(QueryFilter::AgentModeWorkflows);
-                }
-
-                mixer.add_async_source(
-                    cloud_workflows_data_source(window_id),
-                    workflows_filters,
-                    AddAsyncSourceOptions {
-                        debounce_interval: Some(Duration::from_millis(50)),
-                        run_in_zero_state: true,
-                        run_when_unfiltered: true,
-                    },
-                    ctx,
-                );
-
-                mixer.add_async_source(
-                    notebooks_data_source(),
-                    HashSet::from([QueryFilter::Notebooks]),
-                    AddAsyncSourceOptions {
-                        debounce_interval: Some(Duration::from_millis(50)),
-                        run_in_zero_state: true,
-                        run_when_unfiltered: true,
-                    },
-                    ctx,
-                );
-
-                // EnvVarCollectionDataSource stays synchronous because each match target is
-                // structurally short (title, variable name, description). The per-item fuzzy
-                // match cost is negligible, so offloading to an async task would add complexity
-                // without meaningful performance benefit.
-                mixer.add_sync_source(
-                    EnvVarCollectionDataSource::new(),
-                    HashSet::from([QueryFilter::EnvironmentVariables]),
-                );
-            }
-
-            if FeatureFlag::AgentMode.is_enabled() && AISettings::as_ref(ctx).is_any_ai_enabled(ctx)
-            {
-                mixer.add_sync_source(
-                    AIQueriesDataSource::new(),
-                    HashSet::from([QueryFilter::PromptHistory]),
-                );
-            }
-
+            mixer.add_sync_source(
+                WorkflowsDataSource::new(session_context.as_ref(), ctx),
+                HashSet::from([QueryFilter::Workflows]),
+            );
             if History::as_ref(ctx).is_queryable(&session_id) {
-                let source = History::handle(ctx).read(ctx, |history_model, app| {
-                    history_data_source_for_session(session_id, history_model, app)
+                let source = History::handle(ctx).read(ctx, |history, app| {
+                    history_data_source_for_session(session_id, history, app)
                 });
                 mixer.add_async_source(
                     source,
@@ -312,37 +216,8 @@ impl CommandSearchView {
                     },
                     ctx,
                 );
-            } else {
-                ctx.subscribe_to_model(
-                    &History::handle(ctx),
-                    move |mixer, _, history_event, ctx| match history_event {
-                        HistoryEvent::Initialized(id) => {
-                            if id == &session_id {
-                                let source = history_data_source_for_session(
-                                    session_id,
-                                    History::as_ref(ctx),
-                                    ctx,
-                                );
-                                mixer.add_async_source(
-                                    source,
-                                    HashSet::from([QueryFilter::History]),
-                                    AddAsyncSourceOptions {
-                                        debounce_interval: Some(Duration::from_millis(50)),
-                                        run_in_zero_state: true,
-                                        run_when_unfiltered: true,
-                                    },
-                                    ctx,
-                                );
-                                if let Some(query) = mixer.current_query().cloned() {
-                                    mixer.run_query(query, ctx);
-                                }
-                                ctx.notify();
-                            }
-                        }
-                    },
-                );
             }
-        })
+        });
     }
 
     /// Resets view state when the search panel is shown.
@@ -354,10 +229,9 @@ impl CommandSearchView {
         initial_query: String,
         query_filter: Option<QueryFilter>,
         menu_positioning: MenuPositioning,
-        ai_execution_context: Option<WarpAiExecutionContext>,
         ctx: &mut ViewContext<Self>,
     ) {
-        self.reset_command_search_mixer(session_id, session_context, ai_execution_context, ctx);
+        self.reset_command_search_mixer(session_id, session_context, ctx);
         let ordering = match menu_positioning {
             MenuPositioning::AboveInputBox => SearchResultOrdering::BottomUp,
             MenuPositioning::BelowInputBox => SearchResultOrdering::TopDown,
@@ -491,15 +365,8 @@ impl CommandSearchView {
         {
             use CommandSearchItemAction::*;
             let was_immediately_executed = match &result_action {
-                ExecuteHistory(_) | RunAIQuery(_) => true,
-
-                AcceptHistory(_)
-                | AcceptWorkflow(_)
-                | AcceptNotebook(_)
-                | OpenWarpAI
-                | AcceptEnvVarCollection(_)
-                | TranslateUsingWarpAI
-                | AcceptAIQuery(_) => false,
+                ExecuteHistory(_) => true,
+                AcceptHistory(_) | AcceptWorkflow(_) => false,
             };
 
             let (a11y_content, a11y_help_content) = if was_immediately_executed {
@@ -586,37 +453,10 @@ impl CommandSearchView {
 
     fn render_error_header(
         &self,
-        app: &AppContext,
         message: String,
-        is_ratelimit_error: bool,
         appearance: &Appearance,
     ) -> Box<dyn Element> {
-        if is_ratelimit_error {
-            let current_user_id = self.auth_state.user_id().unwrap_or_default();
-            if let Some(team) = UserWorkspaces::as_ref(app).team_for_view_handle(&self.handle, app)
-            {
-                let current_user_email = self.auth_state.user_email().unwrap_or_default();
-                let has_admin_permissions = team.has_admin_permissions(&current_user_email);
-                if team.billing_metadata.can_upgrade_to_higher_tier_plan() {
-                    if has_admin_permissions {
-                        self.render_error_header_with_upgrade_link(
-                            app,
-                            appearance,
-                            Some(team.uid),
-                            current_user_id,
-                        )
-                    } else {
-                        self.render_error_header_text("Looks like you're out of credits. Contact a team admin to upgrade for more credits.".to_string(), appearance)
-                    }
-                } else {
-                    self.render_error_header_text(message, appearance)
-                }
-            } else {
-                self.render_error_header_with_upgrade_link(app, appearance, None, current_user_id)
-            }
-        } else {
-            self.render_error_header_text(message, appearance)
-        }
+        self.render_error_header_text(message, appearance)
     }
 
     fn render_error_header_text(
@@ -649,96 +489,6 @@ impl CommandSearchView {
         .finish()
     }
 
-    fn render_error_header_with_upgrade_link(
-        &self,
-        app: &AppContext,
-        appearance: &Appearance,
-        team_uid: Option<ServerId>,
-        user_id: UserUid,
-    ) -> Box<dyn Element> {
-        let mut row = Flex::row()
-            .with_main_axis_size(warpui::elements::MainAxisSize::Max)
-            .with_cross_axis_alignment(CrossAxisAlignment::Center);
-
-        let upgrade_link = team_uid
-            .map(UserWorkspaces::upgrade_link_for_team)
-            .unwrap_or_else(|| UserWorkspaces::upgrade_link(user_id));
-
-        let link = if AuthStateProvider::as_ref(app)
-            .get()
-            .is_anonymous_or_logged_out()
-        {
-            appearance
-                .ui_builder()
-                .link(
-                    "Upgrade".into(),
-                    None,
-                    Some(Box::new(move |ctx| {
-                        ctx.dispatch_typed_action(CommandSearchAction::AttemptLoginGatedUpgrade);
-                    })),
-                    self.upgrade_link.clone(),
-                )
-                .soft_wrap(false)
-        } else {
-            appearance
-                .ui_builder()
-                .link(
-                    "Upgrade".into(),
-                    None,
-                    Some(Box::new(move |ctx| {
-                        ctx.dispatch_typed_action(CommandSearchAction::OpenUpgradeLink(
-                            upgrade_link.clone(),
-                        ));
-                    })),
-                    self.upgrade_link.clone(),
-                )
-                .soft_wrap(false)
-        };
-
-        row.add_child(
-            appearance
-                .ui_builder()
-                .span("Looks like you're out of credits. ")
-                .with_style(UiComponentStyles {
-                    font_size: Some(appearance.monospace_font_size()),
-                    font_family_id: Some(appearance.ui_font_family()),
-                    font_color: Some(appearance.theme().nonactive_ui_text_color().into()),
-                    ..Default::default()
-                })
-                .build()
-                .finish(),
-        );
-        row.add_child(
-            link.with_style(UiComponentStyles {
-                font_size: Some(appearance.monospace_font_size()),
-                font_family_id: Some(appearance.ui_font_family()),
-                ..Default::default()
-            })
-            .build()
-            .finish(),
-        );
-        row.add_child(
-            appearance
-                .ui_builder()
-                .span(" for more credits.")
-                .with_style(UiComponentStyles {
-                    font_size: Some(appearance.monospace_font_size()),
-                    font_family_id: Some(appearance.ui_font_family()),
-                    font_color: Some(appearance.theme().nonactive_ui_text_color().into()),
-                    ..Default::default()
-                })
-                .build()
-                .finish(),
-        );
-
-        Container::new(row.finish())
-            .with_horizontal_padding(16.)
-            .with_padding_bottom(10.)
-            .with_padding_top(4.)
-            .finish()
-    }
-
-    /// Renders the results pane.
     fn render_results(&self, appearance: &Appearance, app: &AppContext) -> Box<dyn Element> {
         let query_result_renderers = self.search_bar_state.as_ref(app).query_result_renderers();
         let selected_index = self.search_bar_state.as_ref(app).selected_index();
@@ -821,23 +571,10 @@ impl CommandSearchView {
                     .first_data_source_error()
                     .map(|(.., e)| e)
                 {
-                    let is_ratelimit_error = error
-                        .as_any()
-                        .downcast_ref::<GenerateCommandsFromNaturalLanguageError>()
-                        .map(|generate_commands_error| {
-                            matches!(
-                                generate_commands_error,
-                                GenerateCommandsFromNaturalLanguageError::RateLimited
-                            )
-                        })
-                        .unwrap_or(false);
                     column.add_child(self.render_error_header(
-                        app,
                         error.user_facing_error(),
-                        is_ratelimit_error,
                         appearance,
-                    ));
-                }
+                    ));                }
 
                 let scrollable_results = Scrollable::vertical(
                     self.state.scroll_state.clone(),
@@ -961,18 +698,6 @@ impl TypedActionView for CommandSearchView {
                 result_action,
             } => self.handle_result_selected(*result_index, *result_action.clone(), ctx),
             Resize => ctx.emit(CommandSearchEvent::Resize),
-            OpenUpgradeLink(upgrade_link) => {
-                ctx.open_url(upgrade_link);
-            }
-            AttemptLoginGatedUpgrade => {
-                AuthManager::handle(ctx).update(ctx, |auth_manager, ctx| {
-                    auth_manager.attempt_login_gated_feature(
-                        "Upgrade AI Usage",
-                        AuthViewVariant::RequireLoginCloseable,
-                        ctx,
-                    )
-                });
-            }
         }
     }
 }

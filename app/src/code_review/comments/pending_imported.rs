@@ -1,7 +1,7 @@
 use std::cmp::Ordering;
 use std::path::PathBuf;
 
-use ai::agent::action::ReviewCommentThreadItem;
+use super::flatten::ReviewCommentThreadItem;
 use chrono::{DateTime, Local};
 
 use super::comment::{ImportedCommentDetails, LineDiffContent};

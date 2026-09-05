@@ -26,7 +26,7 @@ use super::spawner::{PtySpawnHooks, PtySpawnMode};
 #[cfg(unix)]
 use super::terminal_attributes::TerminalAttributesPoller;
 use super::{mio_channel, recorder};
-use crate::ai::blocklist::SerializedBlockListItem;
+use crate::terminal::model::SerializedBlockListItem;
 use crate::auth::AuthStateProvider;
 use crate::auth::auth_state::AuthState;
 use crate::banner::BannerState;
@@ -51,7 +51,6 @@ use crate::terminal::model::terminal_model::ExitReason;
 use crate::terminal::model_events::ModelEvent as TerminalModelEvent;
 use crate::terminal::model_events::ModelEventDispatcher;
 use crate::terminal::session_settings::{SessionSettings, ToolbarChipSelection};
-use crate::terminal::session_sharing::{IsSharedSessionCreator, SharedSessionStatus};
 use crate::terminal::shell::ShellName;
 use crate::terminal::terminal_manager::BlockSpacing;
 use crate::terminal::warpify::settings::WarpifySettings;
@@ -207,7 +206,6 @@ impl<S> TerminalManager<S> {
     pub(crate) fn create_model<PostWire>(
         startup_directory: Option<PathBuf>,
         env_vars: HashMap<OsString, OsString>,
-        is_shared_session_creator: IsSharedSessionCreator,
         all_restored_blocks: Option<&Vec<SerializedBlockListItem>>,
         user_default_shell_unsupported_banner_model_handle: ModelHandle<BannerState>,
         initial_size: Vector2F,
@@ -228,7 +226,6 @@ impl<S> TerminalManager<S> {
         Self::create_model_with_manager(
             startup_directory,
             env_vars,
-            is_shared_session_creator,
             all_restored_blocks,
             user_default_shell_unsupported_banner_model_handle,
             initial_size,
@@ -247,7 +244,6 @@ impl<S> TerminalManager<S> {
     pub fn create_tui_model<PostWire>(
         startup_directory: Option<PathBuf>,
         env_vars: HashMap<OsString, OsString>,
-        is_shared_session_creator: IsSharedSessionCreator,
         all_restored_blocks: Option<&Vec<SerializedBlockListItem>>,
         user_default_shell_unsupported_banner_model_handle: ModelHandle<BannerState>,
         initial_size: Vector2F,
@@ -268,7 +264,6 @@ impl<S> TerminalManager<S> {
         Self::create_model_with_manager(
             startup_directory,
             env_vars,
-            is_shared_session_creator,
             all_restored_blocks,
             user_default_shell_unsupported_banner_model_handle,
             initial_size,
@@ -286,7 +281,6 @@ impl<S> TerminalManager<S> {
     fn create_model_with_manager<PostWire, BoxManager>(
         startup_directory: Option<PathBuf>,
         env_vars: HashMap<OsString, OsString>,
-        is_shared_session_creator: IsSharedSessionCreator,
         all_restored_blocks: Option<&Vec<SerializedBlockListItem>>,
         user_default_shell_unsupported_banner_model_handle: ModelHandle<BannerState>,
         initial_size: Vector2F,
@@ -379,27 +373,6 @@ impl<S> TerminalManager<S> {
                 },
                 ctx.background_executor().to_owned(),
             );
-        }
-
-        // If this session should be a shared-session creator, configure its initial
-        // shared-session state before the surface is constructed, so that bootstrap
-        // events can observe the correct pending status and source type.
-        match is_shared_session_creator {
-            IsSharedSessionCreator::Yes { source }
-                if FeatureFlag::CreatingSharedSessions.is_enabled() =>
-            {
-                model.lock().set_shared_session_status(
-                    SharedSessionStatus::SharePendingPreBootstrap { source },
-                );
-                log::info!("Configured terminal to start sharing after bootstrap");
-            }
-            IsSharedSessionCreator::Yes { .. } => {
-                log::warn!(
-                    "Session sharing was requested, but CreatingSharedSessions is disabled; \
-                     skipping shared-session startup"
-                );
-            }
-            IsSharedSessionCreator::No => {}
         }
 
         // Initialize the PtyController.
@@ -769,35 +742,11 @@ impl<S> TerminalManager<S> {
         let is_honor_ps1_enabled = *SessionSettings::as_ref(ctx).honor_ps1;
         let is_crash_reporting_enabled = PrivacySettings::as_ref(ctx).is_crash_reporting_enabled;
 
-        // Determine whether the Node.js Version chip is enabled anywhere it could be
-        // shown (the Warp prompt, the agent footer, or the CLI agent footer). When it
-        // is not, the shell bootstrap skips the expensive per-prompt `node --version`
-        // detection. The chip value is fed by the same precmd payload regardless of
-        // where it is displayed, so we must check all three locations.
-        let node_version_chip_enabled = {
-            let in_prompt = !is_honor_ps1_enabled
-                && Prompt::as_ref(ctx)
-                    .chip_kinds()
-                    .contains(&ContextChipKind::NodeVersion);
-            let settings = SessionSettings::as_ref(ctx);
-            in_prompt
-                || settings
-                    .agent_footer_chip_selection
-                    .all_chips()
-                    .contains(&ContextChipKind::NodeVersion)
-                || settings
-                    .cli_agent_footer_chip_selection
-                    .all_chips()
-                    .contains(&ContextChipKind::NodeVersion)
-        };
-
-        // `enable_ssh_warpification` is the single source of truth for whether the SSH
-        // wrapper is active. The bootstrap scripts check `WARP_USE_SSH_WRAPPER` (derived
-        // from this value) before invoking `warp_ssh_helper`, which spawns the ControlMaster
-        // and opens agent-protocol channels.
-        let enable_ssh_wrapper = *WarpifySettings::as_ref(ctx)
-            .enable_ssh_warpification
-            .value();
+        let node_version_chip_enabled = !is_honor_ps1_enabled
+            && Prompt::as_ref(ctx)
+                .chip_kinds()
+                .contains(&ContextChipKind::NodeVersion);
+        let enable_ssh_wrapper = false;
 
         // Only meaningful when the legacy ControlMaster wrapper is active.
         let reuse_ssh_control_master = enable_ssh_wrapper

@@ -10,11 +10,8 @@ use super::model::session::Sessions;
 use super::model_events::ModelEventDispatcher;
 use super::terminal_manager::BlockSpacing;
 use super::{ShellLaunchState, TerminalManager, TerminalModel, TerminalView};
-use crate::ai::active_agent_views_model::ActiveAgentViewsModel;
-use crate::ai::blocklist::SerializedBlockListItem;
-use crate::context_chips::prompt_type::PromptType;
+use crate::terminal::model::SerializedBlockListItem;
 use crate::pane_group::TerminalViewResources;
-use crate::terminal::view::ConversationRestorationInNewPaneType;
 
 pub struct MockTerminalManager {
     model: Arc<FairMutex<TerminalModel>>,
@@ -30,7 +27,6 @@ impl MockTerminalManager {
         shell_state: ShellLaunchState,
         resources: TerminalViewResources,
         restored_blocks: Option<&Vec<SerializedBlockListItem>>,
-        conversation_restoration: Option<ConversationRestorationInNewPaneType>,
         initial_size: Vector2F,
         window_id: WindowId,
         ctx: &mut AppContext,
@@ -61,8 +57,6 @@ impl MockTerminalManager {
             ctx.add_model(|ctx| ModelEventDispatcher::new(events_rx, sessions.clone(), ctx));
 
         let cloned_model = model.clone();
-        let prompt_type =
-            ctx.add_model(|ctx| PromptType::new_dynamic_from_sessions(sessions.clone(), ctx));
         let view = ctx.add_typed_action_view(window_id, |ctx| {
             let size_info = cloned_model.lock().block_list().size().to_owned();
             TerminalView::new(
@@ -74,13 +68,6 @@ impl MockTerminalManager {
                 size_info,
                 colors,
                 None,
-                prompt_type,
-                None,
-                // We use conversation restoration to load a view-only cloud conversation
-                // into the web view.
-                conversation_restoration,
-                None, // inactive_pty_reads_rx
-                false,
                 ctx,
             )
         });
@@ -117,15 +104,8 @@ impl TerminalManager for MockTerminalManager {
     fn on_view_detached(
         &self,
         _detach_type: crate::pane_group::pane::DetachType,
-        app: &mut AppContext,
+        _: &mut AppContext,
     ) {
-        // If this is a conversation transcript viewer, unregister the ambient session.
-        if self.model.lock().is_conversation_transcript_viewer() {
-            let terminal_view_id = self.view.id();
-            ActiveAgentViewsModel::handle(app).update(app, |model, ctx| {
-                model.unregister_ambient_session(terminal_view_id, ctx);
-            });
-        }
     }
 
     fn as_any(&self) -> &dyn std::any::Any {

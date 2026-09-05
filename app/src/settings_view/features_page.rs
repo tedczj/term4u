@@ -4597,15 +4597,7 @@ impl SettingsWidget for NativeRedirectWidget {
                     "Automatically open links in desktop app whenever possible.".into(),
                 ),
             }),
-            LocalOnlyIconState::for_setting(
-                UserNativeRedirectPreference::storage_key(),
-                UserNativeRedirectPreference::sync_to_cloud(),
-                &mut view
-                    .button_mouse_states
-                    .local_only_icon_tooltip_states
-                    .borrow_mut(),
-                app,
-            ),
+            LocalOnlyIconState::Hidden,
             ToggleState::Enabled,
             appearance,
             ui_builder
@@ -4667,15 +4659,7 @@ impl SettingsWidget for SessionRestorationWidget {
                 secondary_text: None,
                 tooltip_override_text: None,
             }),
-            LocalOnlyIconState::for_setting(
-                RestoreSession::storage_key(),
-                RestoreSession::sync_to_cloud(),
-                &mut view
-                    .button_mouse_states
-                    .local_only_icon_tooltip_states
-                    .borrow_mut(),
-                app,
-            ),
+            LocalOnlyIconState::Hidden,
             ToggleState::Enabled,
             appearance,
             switch,
@@ -4752,15 +4736,7 @@ impl SettingsWidget for SnackbarHeaderWidget {
                 secondary_text: None,
                 tooltip_override_text: None,
             }),
-            LocalOnlyIconState::for_setting(
-                SnackbarEnabled::storage_key(),
-                SnackbarEnabled::sync_to_cloud(),
-                &mut view
-                    .button_mouse_states
-                    .local_only_icon_tooltip_states
-                    .borrow_mut(),
-                app,
-            ),
+            LocalOnlyIconState::Hidden,
             ToggleState::Enabled,
             appearance,
             ui_builder
@@ -4798,15 +4774,7 @@ impl SettingsWidget for LinkTooltipWidget {
         render_body_item::<FeaturesPageAction>(
             "Show tooltip on click on links".into(),
             None,
-            LocalOnlyIconState::for_setting(
-                LinkTooltip::storage_key(),
-                LinkTooltip::sync_to_cloud(),
-                &mut view
-                    .button_mouse_states
-                    .local_only_icon_tooltip_states
-                    .borrow_mut(),
-                app,
-            ),
+            LocalOnlyIconState::Hidden,
             ToggleState::Enabled,
             appearance,
             ui_builder
@@ -4845,15 +4813,7 @@ impl SettingsWidget for QuitWarningModalWidget {
         render_body_item::<FeaturesPageAction>(
             "Show warning before quitting/logging out".into(),
             None,
-            LocalOnlyIconState::for_setting(
-                ShowWarningBeforeQuitting::storage_key(),
-                ShowWarningBeforeQuitting::sync_to_cloud(),
-                &mut view
-                    .button_mouse_states
-                    .local_only_icon_tooltip_states
-                    .borrow_mut(),
-                app,
-            ),
+            LocalOnlyIconState::Hidden,
             ToggleState::Enabled,
             appearance,
             ui_builder
@@ -4896,15 +4856,7 @@ impl SettingsWidget for LoginItemWidget {
         render_body_item::<FeaturesPageAction>(
             label.into(),
             None,
-            LocalOnlyIconState::for_setting(
-                LoginItem::storage_key(),
-                LoginItem::sync_to_cloud(),
-                &mut view
-                    .button_mouse_states
-                    .local_only_icon_tooltip_states
-                    .borrow_mut(),
-                app,
-            ),
+            LocalOnlyIconState::Hidden,
             ToggleState::Enabled,
             appearance,
             ui_builder
@@ -4943,15 +4895,7 @@ impl SettingsWidget for QuitWhenAllWindowsClosedWidget {
         render_body_item::<FeaturesPageAction>(
             "Quit when all windows are closed".into(),
             None,
-            LocalOnlyIconState::for_setting(
-                QuitOnLastWindowClosed::storage_key(),
-                QuitOnLastWindowClosed::sync_to_cloud(),
-                &mut view
-                    .button_mouse_states
-                    .local_only_icon_tooltip_states
-                    .borrow_mut(),
-                app,
-            ),
+            LocalOnlyIconState::Hidden,
             ToggleState::Enabled,
             appearance,
             ui_builder
@@ -4990,15 +4934,7 @@ impl SettingsWidget for ShowChangelogWidget {
         render_body_item::<FeaturesPageAction>(
             "Show changelog toast after updates".into(),
             None,
-            LocalOnlyIconState::for_setting(
-                ShowChangelogAfterUpdate::storage_key(),
-                ShowChangelogAfterUpdate::sync_to_cloud(),
-                &mut view
-                    .button_mouse_states
-                    .local_only_icon_tooltip_states
-                    .borrow_mut(),
-                app,
-            ),
+            LocalOnlyIconState::Hidden,
             ToggleState::Enabled,
             appearance,
             ui_builder
@@ -5083,15 +5019,7 @@ impl SettingsWidget for MouseScrollMultiplierWidget {
                     "Supports floating point values between 1 and 20.".to_string(),
                 ),
             }),
-            LocalOnlyIconState::for_setting(
-                MouseScrollMultiplier::storage_key(),
-                MouseScrollMultiplier::sync_to_cloud(),
-                &mut view
-                    .button_mouse_states
-                    .local_only_icon_tooltip_states
-                    .borrow_mut(),
-                app,
-            ),
+            LocalOnlyIconState::Hidden,
             ToggleState::Enabled,
             appearance,
             input_column,
@@ -5188,15 +5116,7 @@ impl SettingsWidget for BlockLimitWidget {
         render_body_item::<FeaturesPageAction>(
             "Maximum rows in a block".into(),
             None,
-            LocalOnlyIconState::for_setting(
-                MaximumGridSize::storage_key(),
-                MaximumGridSize::sync_to_cloud(),
-                &mut view
-                    .button_mouse_states
-                    .local_only_icon_tooltip_states
-                    .borrow_mut(),
-                app,
-            ),
+            LocalOnlyIconState::Hidden,
             ToggleState::Enabled,
             appearance,
             input_field,
@@ -5235,15 +5155,7 @@ impl SettingsWidget for DesktopNotificationsWidget {
                 secondary_text: None,
                 tooltip_override_text: None,
             }),
-            LocalOnlyIconState::for_setting(
-                Notifications::storage_key(),
-                Notifications::sync_to_cloud(),
-                &mut view
-                    .button_mouse_states
-                    .local_only_icon_tooltip_states
-                    .borrow_mut(),
-                app,
-            ),
+            LocalOnlyIconState::Hidden,
             ToggleState::Enabled,
             appearance,
             ui_builder
@@ -5414,15 +5326,7 @@ impl SettingsWidget for StartupShellWidget {
                 render_sub_sub_header(
                     appearance,
                     "Default shell for new sessions".to_string(),
-                    Some(LocalOnlyIconState::for_setting(
-                        StartupShellOverride::storage_key(),
-                        StartupShellOverride::sync_to_cloud(),
-                        &mut view
-                            .button_mouse_states
-                            .local_only_icon_tooltip_states
-                            .borrow_mut(),
-                        app,
-                    )),
+                    Some(LocalOnlyIconState::Hidden),
                 ),
                 ChildView::new(&view.startup_shell_view).finish(),
             ])
@@ -5453,15 +5357,7 @@ impl SettingsWidget for WorkingDirectoryWidget {
                 render_sub_sub_header(
                     appearance,
                     "Working directory for new sessions".to_string(),
-                    Some(LocalOnlyIconState::for_setting(
-                        WorkingDirectoryConfig::storage_key(),
-                        WorkingDirectoryConfig::sync_to_cloud(),
-                        &mut view
-                            .button_mouse_states
-                            .local_only_icon_tooltip_states
-                            .borrow_mut(),
-                        app,
-                    )),
+                    Some(LocalOnlyIconState::Hidden),
                 ),
                 ChildView::new(&view.working_directory_view).finish(),
             ])
@@ -5512,15 +5408,7 @@ impl SettingsWidget for ConfirmCloseSharedSessionWidget {
         render_body_item::<FeaturesPageAction>(
             "Confirm before closing shared session".into(),
             None,
-            LocalOnlyIconState::for_setting(
-                ShouldConfirmCloseSession::storage_key(),
-                ShouldConfirmCloseSession::sync_to_cloud(),
-                &mut view
-                    .button_mouse_states
-                    .local_only_icon_tooltip_states
-                    .borrow_mut(),
-                app,
-            ),
+            LocalOnlyIconState::Hidden,
             ToggleState::Enabled,
             appearance,
             ui_builder
@@ -5565,12 +5453,7 @@ impl SettingsWidget for ExtraMetaKeysWidget {
             .with_child(render_body_item::<FeaturesPageAction>(
                 EXTRA_META_KEYS_LEFT_TEXT.into(),
                 None,
-                LocalOnlyIconState::for_setting(
-                    crate::terminal::keys_settings::ExtraMetaKeys::storage_key(),
-                    crate::terminal::keys_settings::ExtraMetaKeys::sync_to_cloud(),
-                    &mut tooltip_states,
-                    app,
-                ),
+                LocalOnlyIconState::Hidden,
                 ToggleState::Enabled,
                 appearance,
                 ui_builder
@@ -5586,12 +5469,7 @@ impl SettingsWidget for ExtraMetaKeysWidget {
             .with_child(render_body_item::<FeaturesPageAction>(
                 EXTRA_META_KEYS_RIGHT_TEXT.into(),
                 None,
-                LocalOnlyIconState::for_setting(
-                    crate::terminal::keys_settings::ExtraMetaKeys::storage_key(),
-                    crate::terminal::keys_settings::ExtraMetaKeys::sync_to_cloud(),
-                    &mut tooltip_states,
-                    app,
-                ),
+                LocalOnlyIconState::Hidden,
                 ToggleState::Enabled,
                 appearance,
                 ui_builder
@@ -5674,15 +5552,7 @@ impl SettingsWidget for GlobalHotkeyWidget {
                         "Global hotkey:",
                         None,
                         None,
-                        LocalOnlyIconState::for_setting(
-                            ActivationHotkeyEnabled::storage_key(),
-                            ActivationHotkeyEnabled::sync_to_cloud(),
-                            &mut view
-                                .button_mouse_states
-                                .local_only_icon_tooltip_states
-                                .borrow_mut(),
-                            app,
-                        ),
+                        LocalOnlyIconState::Hidden,
                         None,
                         &view.global_hotkey_dropdown,
                     )
@@ -5780,15 +5650,7 @@ impl SettingsWidget for AutocompleteSymbolsWidget {
         render_body_item::<FeaturesPageAction>(
             "Autocomplete quotes, parentheses, and brackets".into(),
             None,
-            LocalOnlyIconState::for_setting(
-                AutocompleteSymbols::storage_key(),
-                AutocompleteSymbols::sync_to_cloud(),
-                &mut view
-                    .button_mouse_states
-                    .local_only_icon_tooltip_states
-                    .borrow_mut(),
-                app,
-            ),
+            LocalOnlyIconState::Hidden,
             ToggleState::Enabled,
             appearance,
             ui_builder
@@ -5826,15 +5688,7 @@ impl SettingsWidget for ErrorUnderliningWidget {
         render_body_item::<FeaturesPageAction>(
             "Error underlining for commands".into(),
             None,
-            LocalOnlyIconState::for_setting(
-                ErrorUnderliningEnabled::storage_key(),
-                ErrorUnderliningEnabled::sync_to_cloud(),
-                &mut view
-                    .button_mouse_states
-                    .local_only_icon_tooltip_states
-                    .borrow_mut(),
-                app,
-            ),
+            LocalOnlyIconState::Hidden,
             ToggleState::Enabled,
             appearance,
             ui_builder
@@ -5872,15 +5726,7 @@ impl SettingsWidget for SyntaxHighlightingWidget {
         render_body_item::<FeaturesPageAction>(
             "Syntax highlighting for commands".into(),
             None,
-            LocalOnlyIconState::for_setting(
-                SyntaxHighlighting::storage_key(),
-                SyntaxHighlighting::sync_to_cloud(),
-                &mut view
-                    .button_mouse_states
-                    .local_only_icon_tooltip_states
-                    .borrow_mut(),
-                app,
-            ),
+            LocalOnlyIconState::Hidden,
             ToggleState::Enabled,
             appearance,
             ui_builder
@@ -5918,15 +5764,7 @@ impl SettingsWidget for CompletionsMenuWhileTypingWidget {
         render_body_item::<FeaturesPageAction>(
             "Open completions menu as you type".into(),
             None,
-            LocalOnlyIconState::for_setting(
-                CompletionsOpenWhileTyping::storage_key(),
-                CompletionsOpenWhileTyping::sync_to_cloud(),
-                &mut view
-                    .button_mouse_states
-                    .local_only_icon_tooltip_states
-                    .borrow_mut(),
-                app,
-            ),
+            LocalOnlyIconState::Hidden,
             ToggleState::Enabled,
             appearance,
             ui_builder
@@ -5972,15 +5810,7 @@ impl SettingsWidget for WarpCompletionsWidget {
         column.add_child(render_body_item::<FeaturesPageAction>(
             "Warp completions".into(),
             None,
-            LocalOnlyIconState::for_setting(
-                WarpCompletionsEnabled::storage_key(),
-                WarpCompletionsEnabled::sync_to_cloud(),
-                &mut view
-                    .button_mouse_states
-                    .local_only_icon_tooltip_states
-                    .borrow_mut(),
-                app,
-            ),
+            LocalOnlyIconState::Hidden,
             ToggleState::Enabled,
             appearance,
             ui_builder
@@ -6009,15 +5839,7 @@ impl SettingsWidget for WarpCompletionsWidget {
                 .finish();
             let as_you_type_item = view.render_setting_subgroup_item(
                 appearance,
-                LocalOnlyIconState::for_setting(
-                    CompletionsOpenWhileTyping::storage_key(),
-                    CompletionsOpenWhileTyping::sync_to_cloud(),
-                    &mut view
-                        .button_mouse_states
-                        .local_only_icon_tooltip_states
-                        .borrow_mut(),
-                    app,
-                ),
+                LocalOnlyIconState::Hidden,
                 as_you_type_switch,
                 "Open completions menu as you type".into(),
             );
@@ -6064,15 +5886,7 @@ impl SettingsWidget for NativeShellCompletionsWidget {
         render_body_item::<FeaturesPageAction>(
             "Native shell completions".into(),
             None,
-            LocalOnlyIconState::for_setting(
-                NativeShellCompletionsEnabled::storage_key(),
-                NativeShellCompletionsEnabled::sync_to_cloud(),
-                &mut view
-                    .button_mouse_states
-                    .local_only_icon_tooltip_states
-                    .borrow_mut(),
-                app,
-            ),
+            LocalOnlyIconState::Hidden,
             ToggleState::Enabled,
             appearance,
             ui_builder
@@ -6110,15 +5924,7 @@ impl SettingsWidget for CommandCorrectionsWidget {
         render_body_item::<FeaturesPageAction>(
             "Suggest corrected commands".into(),
             None,
-            LocalOnlyIconState::for_setting(
-                CommandCorrections::storage_key(),
-                CommandCorrections::sync_to_cloud(),
-                &mut view
-                    .button_mouse_states
-                    .local_only_icon_tooltip_states
-                    .borrow_mut(),
-                app,
-            ),
+            LocalOnlyIconState::Hidden,
             ToggleState::Enabled,
             appearance,
             ui_builder
@@ -6157,15 +5963,7 @@ impl SettingsWidget for AliasExpansionWidget {
         render_body_item::<FeaturesPageAction>(
             "Expand aliases as you type".into(),
             None,
-            LocalOnlyIconState::for_setting(
-                AliasExpansionEnabled::storage_key(),
-                AliasExpansionEnabled::sync_to_cloud(),
-                &mut view
-                    .button_mouse_states
-                    .local_only_icon_tooltip_states
-                    .borrow_mut(),
-                app,
-            ),
+            LocalOnlyIconState::Hidden,
             ToggleState::Enabled,
             appearance,
             ui_builder
@@ -6204,15 +6002,7 @@ impl SettingsWidget for MiddleClickPasteWidget {
         render_body_item::<FeaturesPageAction>(
             "Middle-click to paste".into(),
             None,
-            LocalOnlyIconState::for_setting(
-                MiddleClickPasteEnabled::storage_key(),
-                MiddleClickPasteEnabled::sync_to_cloud(),
-                &mut view
-                    .button_mouse_states
-                    .local_only_icon_tooltip_states
-                    .borrow_mut(),
-                app,
-            ),
+            LocalOnlyIconState::Hidden,
             ToggleState::Enabled,
             appearance,
             ui_builder
@@ -6257,15 +6047,7 @@ impl SettingsWidget for RightClickBehaviorWidget {
                         .right_click_pastes()
                         .then_some("Shift+right-click to open the context menu."),
                     None,
-                    LocalOnlyIconState::for_setting(
-                        RightClickBehaviorSetting::storage_key(),
-                        RightClickBehaviorSetting::sync_to_cloud(),
-                        &mut view
-                            .button_mouse_states
-                            .local_only_icon_tooltip_states
-                            .borrow_mut(),
-                        app,
-                    ),
+                    LocalOnlyIconState::Hidden,
                     None,
                     &view.right_click_behavior_dropdown,
                 )
@@ -6303,15 +6085,7 @@ impl SettingsWidget for VimModeWidget {
         column.add_child(render_body_item::<FeaturesPageAction>(
             "Edit code and commands with Vim keybindings".into(),
             None,
-            LocalOnlyIconState::for_setting(
-                VimModeEnabled::storage_key(),
-                VimModeEnabled::sync_to_cloud(),
-                &mut view
-                    .button_mouse_states
-                    .local_only_icon_tooltip_states
-                    .borrow_mut(),
-                app,
-            ),
+            LocalOnlyIconState::Hidden,
             ToggleState::Enabled,
             appearance,
             ui_builder
@@ -6339,15 +6113,7 @@ impl SettingsWidget for VimModeWidget {
                 .finish();
             let clipboard_setting = view.render_setting_subgroup_item(
                 appearance,
-                LocalOnlyIconState::for_setting(
-                    VimUnnamedSystemClipboard::storage_key(),
-                    VimUnnamedSystemClipboard::sync_to_cloud(),
-                    &mut view
-                        .button_mouse_states
-                        .local_only_icon_tooltip_states
-                        .borrow_mut(),
-                    app,
-                ),
+                LocalOnlyIconState::Hidden,
                 clipboard_switch,
                 "Set unnamed register as system clipboard".into(),
             );
@@ -6363,15 +6129,7 @@ impl SettingsWidget for VimModeWidget {
                 .finish();
             let status_bar_setting = view.render_setting_subgroup_item(
                 appearance,
-                LocalOnlyIconState::for_setting(
-                    VimStatusBar::storage_key(),
-                    VimStatusBar::sync_to_cloud(),
-                    &mut view
-                        .button_mouse_states
-                        .local_only_icon_tooltip_states
-                        .borrow_mut(),
-                    app,
-                ),
+                LocalOnlyIconState::Hidden,
                 status_bar_switch,
                 "Show Vim status bar".into(),
             );
@@ -6408,15 +6166,7 @@ impl SettingsWidget for AtContextMenuInTerminalModeWidget {
         render_body_item::<FeaturesPageAction>(
             "Enable '@' context menu in terminal mode".into(),
             None,
-            LocalOnlyIconState::for_setting(
-                AtContextMenuInTerminalMode::storage_key(),
-                AtContextMenuInTerminalMode::sync_to_cloud(),
-                &mut view
-                    .button_mouse_states
-                    .local_only_icon_tooltip_states
-                    .borrow_mut(),
-                app,
-            ),
+            LocalOnlyIconState::Hidden,
             ToggleState::Enabled,
             appearance,
             ui_builder
@@ -6464,15 +6214,7 @@ impl SettingsWidget for SlashCommandsInTerminalModeWidget {
         render_body_item::<FeaturesPageAction>(
             "Enable slash commands in terminal mode".into(),
             None,
-            LocalOnlyIconState::for_setting(
-                EnableSlashCommandsInTerminal::storage_key(),
-                EnableSlashCommandsInTerminal::sync_to_cloud(),
-                &mut view
-                    .button_mouse_states
-                    .local_only_icon_tooltip_states
-                    .borrow_mut(),
-                app,
-            ),
+            LocalOnlyIconState::Hidden,
             ToggleState::Enabled,
             appearance,
             ui_builder
@@ -6516,15 +6258,7 @@ impl SettingsWidget for OutlineCodebaseSymbolsForAtContextMenuWidget {
         render_body_item::<FeaturesPageAction>(
             "Outline codebase symbols for '@' context menu".into(),
             None,
-            LocalOnlyIconState::for_setting(
-                OutlineCodebaseSymbolsForAtContextMenu::storage_key(),
-                OutlineCodebaseSymbolsForAtContextMenu::sync_to_cloud(),
-                &mut view
-                    .button_mouse_states
-                    .local_only_icon_tooltip_states
-                    .borrow_mut(),
-                app,
-            ),
+            LocalOnlyIconState::Hidden,
             ToggleState::Enabled,
             appearance,
             ui_builder
@@ -6568,15 +6302,7 @@ impl SettingsWidget for ShowTerminalInputMessageLineWidget {
         render_body_item::<FeaturesPageAction>(
             "Show terminal input message line".into(),
             None,
-            LocalOnlyIconState::for_setting(
-                ShowTerminalInputMessageBar::storage_key(),
-                ShowTerminalInputMessageBar::sync_to_cloud(),
-                &mut view
-                    .button_mouse_states
-                    .local_only_icon_tooltip_states
-                    .borrow_mut(),
-                app,
-            ),
+            LocalOnlyIconState::Hidden,
             ToggleState::Enabled,
             appearance,
             ui_builder
@@ -6616,15 +6342,7 @@ impl SettingsWidget for PreserveInputFocusOnBlockSelectionWidget {
         render_body_item::<FeaturesPageAction>(
             "Preserve input focus on block selection".into(),
             None,
-            LocalOnlyIconState::for_setting(
-                PreserveInputFocusOnBlockSelection::storage_key(),
-                PreserveInputFocusOnBlockSelection::sync_to_cloud(),
-                &mut view
-                    .button_mouse_states
-                    .local_only_icon_tooltip_states
-                    .borrow_mut(),
-                app,
-            ),
+            LocalOnlyIconState::Hidden,
             ToggleState::Enabled,
             appearance,
             ui_builder
@@ -6669,15 +6387,7 @@ impl SettingsWidget for AutosuggestionKeybindingHintWidget {
         column.add_child(render_body_item::<FeaturesPageAction>(
             "Show autosuggestion keybinding hint".into(),
             None,
-            LocalOnlyIconState::for_setting(
-                AutosuggestionKeybindingHint::storage_key(),
-                AutosuggestionKeybindingHint::sync_to_cloud(),
-                &mut view
-                    .button_mouse_states
-                    .local_only_icon_tooltip_states
-                    .borrow_mut(),
-                app,
-            ),
+            LocalOnlyIconState::Hidden,
             ToggleState::Enabled,
             appearance,
             ui_builder
@@ -6725,15 +6435,7 @@ impl SettingsWidget for AutosuggestionIgnoreButtonWidget {
         column.add_child(render_body_item::<FeaturesPageAction>(
             "Show autosuggestion ignore button".into(),
             None,
-            LocalOnlyIconState::for_setting(
-                ShowAutosuggestionIgnoreButton::storage_key(),
-                ShowAutosuggestionIgnoreButton::sync_to_cloud(),
-                &mut view
-                    .button_mouse_states
-                    .local_only_icon_tooltip_states
-                    .borrow_mut(),
-                app,
-            ),
+            LocalOnlyIconState::Hidden,
             ToggleState::Enabled,
             appearance,
             ui_builder
@@ -6913,15 +6615,7 @@ impl SettingsWidget for CtrlTabBehaviorWidget {
                     "Ctrl+Tab behavior:",
                     None,
                     None,
-                    LocalOnlyIconState::for_setting(
-                        CtrlTabBehaviorSetting::storage_key(),
-                        CtrlTabBehaviorSetting::sync_to_cloud(),
-                        &mut view
-                            .button_mouse_states
-                            .local_only_icon_tooltip_states
-                            .borrow_mut(),
-                        app,
-                    ),
+                    LocalOnlyIconState::Hidden,
                     None,
                     &view.ctrl_tab_behavior_dropdown,
                 )
@@ -6963,15 +6657,7 @@ impl SettingsWidget for MouseReportingWidget {
                 secondary_text: None,
                 tooltip_override_text: None,
             }),
-            LocalOnlyIconState::for_setting(
-                MouseReportingEnabled::storage_key(),
-                MouseReportingEnabled::sync_to_cloud(),
-                &mut view
-                    .button_mouse_states
-                    .local_only_icon_tooltip_states
-                    .borrow_mut(),
-                app,
-            ),
+            LocalOnlyIconState::Hidden,
             ToggleState::Enabled,
             appearance,
             ui_builder
@@ -7010,15 +6696,7 @@ impl SettingsWidget for ScrollReportingWidget {
         render_body_item::<FeaturesPageAction>(
             "Enable Scroll Reporting".into(),
             None,
-            LocalOnlyIconState::for_setting(
-                ScrollReportingEnabled::storage_key(),
-                ScrollReportingEnabled::sync_to_cloud(),
-                &mut view
-                    .button_mouse_states
-                    .local_only_icon_tooltip_states
-                    .borrow_mut(),
-                app,
-            ),
+            LocalOnlyIconState::Hidden,
             if *reporting_settings.mouse_reporting_enabled.value() {
                 ToggleState::Enabled
             } else {
@@ -7068,15 +6746,7 @@ impl SettingsWidget for FocusReportingWidget {
         render_body_item::<FeaturesPageAction>(
             "Enable Focus Reporting".into(),
             None,
-            LocalOnlyIconState::for_setting(
-                FocusReportingEnabled::storage_key(),
-                FocusReportingEnabled::sync_to_cloud(),
-                &mut view
-                    .button_mouse_states
-                    .local_only_icon_tooltip_states
-                    .borrow_mut(),
-                app,
-            ),
+            LocalOnlyIconState::Hidden,
             ToggleState::Enabled,
             appearance,
             ui_builder
@@ -7115,15 +6785,7 @@ impl SettingsWidget for AudibleBellWidget {
         render_body_item::<FeaturesPageAction>(
             "Use Audible Bell".into(),
             None,
-            LocalOnlyIconState::for_setting(
-                UseAudibleBell::storage_key(),
-                UseAudibleBell::sync_to_cloud(),
-                &mut view
-                    .button_mouse_states
-                    .local_only_icon_tooltip_states
-                    .borrow_mut(),
-                app,
-            ),
+            LocalOnlyIconState::Hidden,
             ToggleState::Enabled,
             appearance,
             ui_builder
@@ -7227,15 +6889,7 @@ impl SettingsWidget for SmartSelectWidget {
                 secondary_text: None,
                 tooltip_override_text: None,
             }),
-            LocalOnlyIconState::for_setting(
-                SmartSelectEnabled::storage_key(),
-                SmartSelectEnabled::sync_to_cloud(),
-                &mut view
-                    .button_mouse_states
-                    .local_only_icon_tooltip_states
-                    .borrow_mut(),
-                app,
-            ),
+            LocalOnlyIconState::Hidden,
             ToggleState::Enabled,
             appearance,
             ui_builder
@@ -7296,15 +6950,7 @@ impl SettingsWidget for ShowTerminalZeroStateBlockWidget {
         render_body_item::<FeaturesPageAction>(
             "Show help block in new sessions".into(),
             None,
-            LocalOnlyIconState::for_setting(
-                ShowTerminalZeroStateBlock::storage_key(),
-                ShowTerminalZeroStateBlock::sync_to_cloud(),
-                &mut view
-                    .button_mouse_states
-                    .local_only_icon_tooltip_states
-                    .borrow_mut(),
-                app,
-            ),
+            LocalOnlyIconState::Hidden,
             ToggleState::Enabled,
             appearance,
             ui_builder
@@ -7338,15 +6984,7 @@ impl SettingsWidget for CopyOnSelectWidget {
         render_body_item::<FeaturesPageAction>(
             "Copy on select".into(),
             None,
-            LocalOnlyIconState::for_setting(
-                CopyOnSelect::storage_key(),
-                CopyOnSelect::sync_to_cloud(),
-                &mut view
-                    .button_mouse_states
-                    .local_only_icon_tooltip_states
-                    .borrow_mut(),
-                app,
-            ),
+            LocalOnlyIconState::Hidden,
             ToggleState::Enabled,
             appearance,
             ui_builder
@@ -7385,15 +7023,7 @@ impl SettingsWidget for Osc52ClipboardAccessWidget {
                 "Controls whether programs running in the terminal can read or write your system clipboard.",
             ),
             None,
-            LocalOnlyIconState::for_setting(
-                Osc52ClipboardAccessSetting::storage_key(),
-                Osc52ClipboardAccessSetting::sync_to_cloud(),
-                &mut view
-                    .button_mouse_states
-                    .local_only_icon_tooltip_states
-                    .borrow_mut(),
-                app,
-            ),
+            LocalOnlyIconState::Hidden,
             None,
             &view.osc52_clipboard_access_dropdown,
         )
@@ -7421,15 +7051,7 @@ impl SettingsWidget for NewTabPlacementWidget {
             "New tab placement",
             None,
             None,
-            LocalOnlyIconState::for_setting(
-                NewTabPlacement::storage_key(),
-                NewTabPlacement::sync_to_cloud(),
-                &mut view
-                    .button_mouse_states
-                    .local_only_icon_tooltip_states
-                    .borrow_mut(),
-                app,
-            ),
+            LocalOnlyIconState::Hidden,
             None,
             &view.new_tab_placement_dropdown,
         )
@@ -7455,15 +7077,7 @@ impl SettingsWidget for DefaultSessionModeWidget {
         let label = render_dropdown_item_label(
             "Default mode for new sessions".to_string(),
             None,
-            LocalOnlyIconState::for_setting(
-                DefaultSessionMode::storage_key(),
-                DefaultSessionMode::sync_to_cloud(),
-                &mut view
-                    .button_mouse_states
-                    .local_only_icon_tooltip_states
-                    .borrow_mut(),
-                app,
-            ),
+            LocalOnlyIconState::Hidden,
             None,
             appearance,
         );
@@ -7516,15 +7130,7 @@ impl SettingsWidget for WorkflowsInCommandSearch {
                 secondary_text: None,
                 tooltip_override_text: None,
             }),
-            LocalOnlyIconState::for_setting(
-                ShowGlobalWorkflowsInUniversalSearch::storage_key(),
-                ShowGlobalWorkflowsInUniversalSearch::sync_to_cloud(),
-                &mut view
-                    .button_mouse_states
-                    .local_only_icon_tooltip_states
-                    .borrow_mut(),
-                app,
-            ),
+            LocalOnlyIconState::Hidden,
             ToggleState::Enabled,
             appearance,
             ui_builder
@@ -7571,15 +7177,7 @@ impl SettingsWidget for LinuxSelectionClipboardWidget {
                     "Whether the Linux primary clipboard should be supported.".into(),
                 ),
             }),
-            LocalOnlyIconState::for_setting(
-                LinuxSelectionClipboard::storage_key(),
-                LinuxSelectionClipboard::sync_to_cloud(),
-                &mut view
-                    .button_mouse_states
-                    .local_only_icon_tooltip_states
-                    .borrow_mut(),
-                app,
-            ),
+            LocalOnlyIconState::Hidden,
             ToggleState::Enabled,
             appearance,
             appearance
@@ -7618,15 +7216,7 @@ impl SettingsWidget for GPUWidget {
         let mut col = Flex::column().with_child(render_body_item::<FeaturesPageAction>(
             "Prefer rendering new windows with integrated GPU (low power)".into(),
             None,
-            LocalOnlyIconState::for_setting(
-                PreferLowPowerGPU::storage_key(),
-                PreferLowPowerGPU::sync_to_cloud(),
-                &mut view
-                    .button_mouse_states
-                    .local_only_icon_tooltip_states
-                    .borrow_mut(),
-                app,
-            ),
+            LocalOnlyIconState::Hidden,
             ToggleState::Enabled,
             appearance,
             appearance
@@ -7693,15 +7283,7 @@ impl SettingsWidget for WindowSystemWidget {
                 secondary_text: None,
                 tooltip_override_text: Some("Enables the use of Wayland".to_string()),
             }),
-            LocalOnlyIconState::for_setting(
-                ForceX11::storage_key(),
-                ForceX11::sync_to_cloud(),
-                &mut view
-                    .button_mouse_states
-                    .local_only_icon_tooltip_states
-                    .borrow_mut(),
-                app,
-            ),
+            LocalOnlyIconState::Hidden,
             ToggleState::Enabled,
             appearance,
             appearance
@@ -7765,15 +7347,7 @@ impl SettingsWidget for GraphicsBackendWidget {
             "Preferred graphics backend",
             None,
             None,
-            LocalOnlyIconState::for_setting(
-                PreferredGraphicsBackend::storage_key(),
-                PreferredGraphicsBackend::sync_to_cloud(),
-                &mut view
-                    .button_mouse_states
-                    .local_only_icon_tooltip_states
-                    .borrow_mut(),
-                app,
-            ),
+            LocalOnlyIconState::Hidden,
             None,
             &view.graphics_backend_dropdown,
         );
@@ -7843,15 +7417,7 @@ impl SettingsWidget for AsyncFindWidget {
             "Asynchronous find".into(),
             None,
             None,
-            LocalOnlyIconState::for_setting(
-                AsyncFindEnabled::storage_key(),
-                AsyncFindEnabled::sync_to_cloud(),
-                &mut view
-                    .button_mouse_states
-                    .local_only_icon_tooltip_states
-                    .borrow_mut(),
-                app,
-            ),
+            LocalOnlyIconState::Hidden,
             ToggleState::Enabled,
             appearance,
         );

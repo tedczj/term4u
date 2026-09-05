@@ -1,26 +1,17 @@
 //! Utility functions for working with skills.
 
 use std::collections::hash_map::Entry;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
 
 use ai::skills::{
-    ParsedSkill, SkillPathOrigin, SkillProvider, provider_parent_directory_for_skills_root,
-    provider_rank,
+    ParsedSkill, provider_parent_directory_for_skills_root, provider_rank,
 };
 use lazy_static::lazy_static;
 use siphasher::sip::SipHasher;
-use warp_core::ui::Icon;
-use warp_core::ui::appearance::Appearance;
-use warp_core::ui::theme::color::internal_colors;
 use warp_util::local_or_remote_path::LocalOrRemotePath;
-use warpui::prelude::MouseStateHandle;
-use warpui::{AppContext, Element, EventContext, SingletonEntity};
 
-use super::{SkillDescriptor, SkillManager};
-use crate::ai::agent::conversation::AIConversationId;
-use crate::ai::blocklist::BlocklistAIHistoryModel;
-use crate::ai::blocklist::view_util::render_provider_icon_button;
+use super::SkillDescriptor;
 
 lazy_static! {
     static ref CONTENT_HASHER: SipHasher = SipHasher::new_with_keys(0, 0);
@@ -110,87 +101,8 @@ pub(crate) fn unique_skills(
     deduplicator.into_descriptors()
 }
 
-/// Returns the list of skills if they have changed since the last time we sent them to the server.
-/// Skills are always included except when the current list matches the last list sent.
-pub fn list_skills_if_changed(
-    working_directory: Option<&LocalOrRemotePath>,
-    path_origin: &SkillPathOrigin,
-    conversation_id: Option<AIConversationId>,
-    app: &AppContext,
-) -> Option<Vec<SkillDescriptor>> {
-    let current_skills = SkillManager::as_ref(app).get_skills_for_working_directory_with_origin(
-        working_directory,
-        path_origin,
-        app,
-    );
 
-    let previous_skills: Option<Vec<SkillDescriptor>> =
-        conversation_id.and_then(|conversation_id| {
-            let history_model = BlocklistAIHistoryModel::as_ref(app);
-            history_model
-                .conversation(&conversation_id)
-                .and_then(|conversation| conversation.latest_skills())
-        });
 
-    // If there are no previous skills, we consider the skills changed and push the current skills to the context
-    let skills_changed = previous_skills
-        .map(|previous_skills| {
-            let previous_skills_set: HashSet<SkillDescriptor> =
-                HashSet::from_iter(previous_skills.iter().cloned());
-            let current_skills_set: HashSet<SkillDescriptor> =
-                HashSet::from_iter(current_skills.iter().cloned());
-
-            previous_skills_set != current_skills_set
-        })
-        .unwrap_or(true);
-
-    if skills_changed {
-        Some(current_skills)
-    } else {
-        None
-    }
-}
-
-/// Renders an 'open skill' button for blocklist AI actions and the code diff view.
-pub fn render_skill_button<F>(
-    button_label: &str,
-    button_handle: MouseStateHandle,
-    appearance: &Appearance,
-    skill_provider: SkillProvider,
-    icon_override: Option<Icon>,
-    on_click: F,
-) -> Box<dyn Element>
-where
-    F: FnMut(&mut EventContext) + 'static,
-{
-    let theme = appearance.theme();
-    let logo_fill = internal_colors::fg_overlay_6(theme);
-
-    let icon = icon_override.unwrap_or_else(|| skill_provider.icon());
-
-    let color = if icon_override.is_some() {
-        logo_fill
-    } else {
-        skill_provider.icon_fill(logo_fill)
-    };
-
-    render_provider_icon_button(
-        button_label,
-        button_handle,
-        appearance,
-        icon,
-        color,
-        on_click,
-    )
-}
-
-/// Returns a branded icon override for well-known skill names.
-pub fn icon_override_for_skill_name(name: &str) -> Option<Icon> {
-    match name {
-        "stripe-projects-cli" => Some(Icon::StripeLogo),
-        _ => None,
-    }
-}
 
 pub fn skill_path_from_location(location: &LocalOrRemotePath) -> Option<LocalOrRemotePath> {
     let mut current = Some(location.clone());

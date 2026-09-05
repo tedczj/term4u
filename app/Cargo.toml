@@ -53,9 +53,6 @@ cfg-if.workspace = true
 channel_versions.workspace = true
 chrono.workspace = true
 clap.workspace = true
-cloud_object_client.workspace = true
-cloud_object_models.workspace = true
-cloud_objects.workspace = true
 command = { workspace = true }
 command-corrections.workspace = true
 command-signatures-v2 = { workspace = true, optional = true }
@@ -74,7 +71,7 @@ difflib = { git = "https://github.com/warpdotdev/difflib.git", rev = "114177e7d8
 directories.workspace = true
 dirs.workspace = true
 dunce.workspace = true
-email_address = { git = "https://github.com/warpdotdev/rust-email_address", branch = "main" }
+email_address = { git = "https://github.com/warpdotdev/rust-email_address", rev = "b3e5205b4efdc83832f230d8eb6894fd00a9ec32" }
 embed_plist = "1.2"
 enclose = "1.1.8"
 enum-iterator.workspace = true
@@ -201,11 +198,8 @@ warp_completer.workspace = true
 warp_core.workspace = true
 warp_errors = { workspace = true, features = ["reqwest-errors"] }
 warp_editor.workspace = true
-warp_graphql.workspace = true
 warp_js = { workspace = true, optional = true }
 warp_search_core.workspace = true
-warp_server_auth.workspace = true
-warp_server_client.workspace = true
 warp_util.workspace = true
 warpui = { workspace = true, features = ["schema_gen", "settings_value"] }
 warpui_core.workspace = true
@@ -216,7 +210,6 @@ warp_terminal.workspace = true
 websocket.workspace = true
 wgpu = { workspace = true, optional = true }
 natural_language_detection.workspace = true
-onboarding.workspace = true
 aho-corasick = "1.1.3"
 strum.workspace = true
 strum_macros.workspace = true
@@ -226,13 +219,10 @@ counter = "0.6.0"
 typed-path.workspace = true
 urlencoding = "2.1.3"
 mime_guess = "2.0"
-warp_multi_agent_api.workspace = true
 repo_metadata.workspace = true
 vim.workspace = true
 warp_isolation_platform.workspace = true
 warp_ripgrep.workspace = true
-warp_managed_secrets.workspace = true
-warp_multi_agent_client.workspace = true
 local_control.workspace = true
 hashbrown.workspace = true
 rustc-hash.workspace = true
@@ -272,7 +262,6 @@ app-installation-detection.workspace = true
 async-io.workspace = true
 axum.workspace = true
 build_cache.workspace = true
-cloud_object_persistence.workspace = true
 comfy-table = "7.1.4"
 inquire = "0.9.1"
 diesel = { workspace = true, features = ["sqlite", "chrono"] }
@@ -370,12 +359,10 @@ winreg.workspace = true
 ai = { workspace = true, features = ["test-util"] }
 async-process.workspace = true
 interaction_types = { workspace = true, features = ["test-util"] }
-firebase.workspace = true
 jsonschema = { workspace = true, default-features = false }
 async-executor = "1.5.1"
 command = { workspace = true, features = ["test-util"] }
 ctor = "0.1.18"
-cloud_object_client = { workspace = true, features = ["test-util"] }
 http_client = { workspace = true, features = ["test-util"] }
 mockall.workspace = true
 mockito.workspace = true
@@ -385,8 +372,6 @@ virtual-fs.workspace = true
 warp_completer = { workspace = true, features = ["test-util"] }
 warp_core = { workspace = true, features = ["test-util"] }
 warp_editor = { workspace = true, features = ["test-util"] }
-warp_server_client = { workspace = true, features = ["test-util"] }
-warp_server_auth = { workspace = true, features = ["test-util"] }
 warp_terminal = { workspace = true, features = ["test-util"] }
 warpui = { workspace = true, features = ["test-util"] }
 warpui_core = { workspace = true, features = ["test-util"] }
@@ -431,7 +416,6 @@ ask_user_question = []
 async_find = []
 changelog = []
 clear_autosuggestion_on_escape = []
-cloud_object_initial_load = ["enforce_revisions_to_cloud_objects"]
 codebase_index_speedbump = []
 command_predictor = []
 context_line_review_comments = []
@@ -524,7 +508,6 @@ agent_management_view = []
 agent_management_details_view = []
 interactive_conversation_management_view = []
 default_waterfall_mode = []
-enforce_revisions_to_cloud_objects = []
 suggested_agent_mode_workflows = []
 ssh_enable_host_denylist_in_settings = []
 extern_plist = []
@@ -636,12 +619,9 @@ agent_mode_evals = [
     "warpui/defer_scene_build",
     "full_source_code_embedding",
     "cross_repo_context",
-    "cloud_object_models/agent_mode_evals",
     "rust-embed/debug-embed",
     "warpui/log_named_telemetry_events",
     "warp_logging/agent_mode_evals",
-    "warp_multi_agent_client/agent_mode_evals",
-    "warp_server_client/agent_mode_evals",
 ]
 ambient_agents_command_line = []
 ambient_agents_image_upload = []
@@ -727,7 +707,7 @@ settings_file = []
 sequential_storage = []
 session_sharing = []
 session_sharing_acls = []
-skip_login = ["warp_server_client/skip_login"]
+skip_login = []
 # This feature should only be enabled when building a self-contained binary with the bundle script.
 standalone = ["warp_assets/standalone", "warp_core/standalone"]
 prompt_suggestions_via_maa = []
@@ -736,13 +716,10 @@ system_theme = []
 tab_close_button_on_left = []
 team_features_override = []
 test-util = [
-    "cloud_object_client/test-util",
-    "warp_server_auth/test-util",
     "http_client/test-util",
     "warp_core/test-util",
     "warp_terminal/test-util",
     "ai/test-util",
-    "warp_server_client/test-util",
 ]
 team_workflows = ["team_features_override"]
 terminal_lifecycle_recovery = []
@@ -754,7 +731,6 @@ integration_tests = [
     "warpui/test-util",
     "warp_core/integration_tests",
     "warp_terminal/integration_tests",
-    "warp_server_client/integration_tests",
 ]
 traces = []
 viewing_shared_sessions = []
@@ -854,7 +830,6 @@ revert_to_checkpoints = []
 rewind_slash_command = []
 agent_view = []
 agent_view_block_context = ["agent_view"]
-warp_managed_secrets = []
 v4a_file_diffs = []
 agent_tips = []
 agent_toolbar_editor = ["agent_view"]

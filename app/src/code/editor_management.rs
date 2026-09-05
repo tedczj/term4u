@@ -9,7 +9,6 @@ use warpui::{AppContext, Entity, EntityId, ModelContext, SingletonEntity, ViewHa
 
 use super::buffer_location::LocalOrRemotePath;
 use super::view::CodeView;
-use crate::ai::agent::AIAgentActionId;
 use crate::ai::skills::SkillOpenOrigin;
 use crate::code_review::code_review_view::CodeReviewView;
 use crate::pane_group::{PaneGroup, PaneId};
@@ -111,8 +110,6 @@ pub enum CodeSource {
         range_start: Option<LineAndColumnArg>,
         range_end: Option<LineAndColumnArg>,
     },
-    /// Opened from an active AI agent conversation.
-    AIAction { id: AIAgentActionId },
     /// Opened from project rules (WARP.md) file.
     ProjectRules { location: LocalOrRemotePath },
     /// Opened from file tree (local or remote).
@@ -136,7 +133,6 @@ impl CodeSource {
                 default_directory, ..
             } => default_directory.as_ref(),
             Self::Link { .. }
-            | Self::AIAction { .. }
             | Self::ProjectRules { .. }
             | Self::FileTree { .. }
             | Self::CommandPalette { .. }
@@ -147,7 +143,7 @@ impl CodeSource {
 
     pub fn path(&self) -> Option<PathBuf> {
         match self {
-            Self::New { .. } | Self::AIAction { .. } => None,
+            Self::New { .. } => None,
             Self::FileTree { location, .. } | Self::CommandPalette { location, .. } => {
                 match location {
                     LocalOrRemotePath::Local(path) => Some(path.clone()),
@@ -176,7 +172,7 @@ impl CodeSource {
     /// a file — local or remote.
     pub fn location(&self) -> Option<LocalOrRemotePath> {
         match self {
-            Self::New { .. } | Self::AIAction { .. } => None,
+            Self::New { .. } => None,
             Self::FileTree { location } | Self::CommandPalette { location } => {
                 Some(location.clone())
             }
@@ -217,7 +213,6 @@ impl CodeSource {
         match self {
             Self::New { .. } => "new",
             Self::Link { .. } => "link",
-            Self::AIAction { .. } => "ai_action",
             Self::ProjectRules { .. } => "project_rules",
             Self::FileTree {
                 location: LocalOrRemotePath::Remote(_),
@@ -239,8 +234,7 @@ impl CodeSource {
     pub fn is_restorable(&self) -> bool {
         !matches!(
             self,
-            Self::AIAction { .. }
-                | Self::FileTree {
+            Self::FileTree {
                     location: LocalOrRemotePath::Remote(_),
                 }
                 | Self::CommandPalette {
@@ -266,9 +260,7 @@ struct CodePaneData {
 
 // Allow dead_code here for wasm compilation
 #[allow(dead_code)]
-pub enum CodeManagerEvent {
-    EditCompleted { action_id: AIAgentActionId },
-}
+pub enum CodeManagerEvent {}
 
 /// Singleton model for managing the state of open code panes. It is responsible for
 /// 1) Allow caller to find an open code pane if exists.
