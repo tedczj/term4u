@@ -1,0 +1,4 @@
+UTC=2026-09-05T16:40:58.105904+00:00
+COMMAND=bash -n script/test_inventory
+
+EXIT_CODE=0

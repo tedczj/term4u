@@ -1,1 +1,6 @@
- 本地化改造-清理云模块+遥测数据上报：~/.claude/plans/mit-github-snoopy-goblet.md
+# 当前施工入口
+
+执行 [本地化收敛施工单](docs/redesign/11-本地化收敛施工单.md) 的 R0–R6，按 C1–C10 验收。
+阶段状态见 [实施顺序与里程碑](docs/redesign/08-实施顺序与里程碑.md)。
+
+本文件不维护独立任务表；M7 品牌发布与完整 MIT 重实现不在当前施工范围。

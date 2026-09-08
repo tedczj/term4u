@@ -1,0 +1,5 @@
+UTC=2026-09-05T16:34:20.858709+00:00
+COMMAND=cargo nextest --version
+/bin/bash: cargo: command not found
+
+EXIT_CODE=127

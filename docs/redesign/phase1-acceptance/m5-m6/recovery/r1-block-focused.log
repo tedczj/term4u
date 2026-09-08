@@ -1,0 +1,5 @@
+UTC=2026-09-05T16:38:32.719470+00:00
+COMMAND=cargo nextest run -p warp --no-default-features --features local_only,test-util -E "test(persistence::block_list::tests)"
+/bin/bash: cargo: command not found
+
+EXIT_CODE=127

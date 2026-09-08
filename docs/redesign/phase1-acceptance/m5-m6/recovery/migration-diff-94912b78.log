@@ -1,0 +1,3 @@
+UTC=2026-09-05T16:37:05.327202+00:00
+COMMAND=git diff --name-status 94912b78 -- crates/persistence/migrations
+EXIT_CODE=0

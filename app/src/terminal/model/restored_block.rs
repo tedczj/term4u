@@ -2,7 +2,7 @@ use chrono::{DateTime, Local};
 
 use super::block::SerializedBlock;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum SerializedBlockListItem {
     Command { block: Box<SerializedBlock> },
 }

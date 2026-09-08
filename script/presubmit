@@ -33,6 +33,10 @@ echo "Checking network boundaries..."
 ./script/check_network_boundaries
 echo "Network boundary check succeeded..."
 
+echo "Checking test inventory failure handling..."
+python3 script/lib/test_inventory_tests.py
+echo "Test inventory failure handling succeeded..."
+
 echo "Running clippy..."
 # Exclude warp_completer because we run clippy on it with default features (rather than all features) below.
 #

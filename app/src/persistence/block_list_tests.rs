@@ -1,276 +1,171 @@
-//! Unit tests for the `ai_queries` persistence layer in [`super`].
-//!
-//! Covers the FIFO eviction cap added to [`super::upsert_ai_query`] and the empty-input filter
-//! that drives the persistence skip in `handle_ai_history_event`.
-
-use std::sync::Arc;
-
-use chrono::{DateTime, Duration, Local};
-use diesel::sqlite::SqliteConnection;
-use diesel::{Connection, ExpressionMethods, QueryDsl, RunQueryDsl};
+use chrono::{Local, TimeZone};
+use diesel::connection::SimpleConnection;
+use diesel::prelude::*;
 use diesel_migrations::MigrationHarness;
 
-use super::{
-    process_ai_queries_for_nld_history_match, process_ai_queries_for_uparrow_prompt,
-    read_recent_ai_queries, upsert_ai_query_with_limit,
-};
-use crate::ai::agent::conversation::AIConversationId;
-use crate::ai::agent::{AIAgentExchangeId, AIAgentInput, UserQueryMode};
-use crate::ai::blocklist::{AIQueryHistoryOutputStatus, PersistedAIInput, PersistedAIInputType};
-use crate::ai::llms::LLMId;
+use super::{delete_blocks, get_all_restored_blocks, save_block};
+use crate::app_state::PaneUuid;
+use crate::persistence::schema;
+use crate::terminal::model::SerializedBlockListItem;
+use crate::terminal::model::block::SerializedBlock;
 
-/// Builds an in-memory SQLite database with all migrations applied.
 fn test_connection() -> SqliteConnection {
-    let mut conn =
-        SqliteConnection::establish(":memory:").expect("in-memory sqlite connection should open");
+    let mut conn = SqliteConnection::establish(":memory:").unwrap();
     conn.run_pending_migrations(::persistence::MIGRATIONS)
-        .expect("migrations should run");
+        .unwrap();
+    conn.batch_execute(
+        "PRAGMA foreign_keys = ON;
+         INSERT INTO windows (id, active_tab_index) VALUES (1, 0);
+         INSERT INTO tabs (id, window_id) VALUES (1, 1);
+         INSERT INTO pane_nodes (id, tab_id, is_leaf) VALUES (1, 1, TRUE), (2, 1, TRUE);
+         INSERT INTO pane_leaves (pane_node_id, kind, is_focused)
+             VALUES (1, 'terminal', TRUE), (2, 'terminal', FALSE);
+         INSERT INTO terminal_panes (id, uuid, is_active)
+             VALUES (1, X'01', TRUE), (2, X'02', FALSE);",
+    )
+    .unwrap();
     conn
 }
 
-/// Builds a query-bearing [`PersistedAIInput`] with a fresh, unique `exchange_id`.
-fn make_query(text: &str) -> Arc<PersistedAIInput> {
-    Arc::new(PersistedAIInput {
-        exchange_id: AIAgentExchangeId::new(),
-        conversation_id: AIConversationId::new(),
-        start_ts: Local::now(),
-        inputs: vec![PersistedAIInputType::Query {
-            text: text.to_string(),
-            context: Default::default(),
-            referenced_attachments: Default::default(),
-        }],
-        output_status: AIQueryHistoryOutputStatus::Completed,
-        working_directory: None,
-        model_id: LLMId::from("test-model"),
-        coding_model_id: LLMId::from("test-coding-model"),
-    })
-}
-
-/// Clones `query` with an explicit `start_ts` so ordering-sensitive tests are deterministic
-/// (the NLD reader orders by `start_ts`, which `make_query`'s `Local::now()` cannot guarantee
-/// across rapid inserts).
-fn with_start_ts(query: Arc<PersistedAIInput>, start_ts: DateTime<Local>) -> Arc<PersistedAIInput> {
-    Arc::new(PersistedAIInput {
-        start_ts,
-        ..(*query).clone()
-    })
-}
-
-fn ai_query_count(conn: &mut SqliteConnection) -> i64 {
-    use crate::persistence::schema::ai_queries::dsl::ai_queries;
-    ai_queries
-        .count()
-        .first(conn)
-        .expect("count query should succeed")
-}
-
-/// Returns the persisted `exchange_id`s ordered by `id` ascending (i.e. insertion / FIFO order).
-fn remaining_exchange_ids(conn: &mut SqliteConnection) -> Vec<String> {
-    use crate::persistence::schema::ai_queries::dsl::{ai_queries, exchange_id, id};
-    ai_queries
-        .select(exchange_id)
-        .order(id.asc())
-        .load::<String>(conn)
-        .expect("load query should succeed")
-}
-
-fn input_json_for_exchange(conn: &mut SqliteConnection, exchange: &str) -> String {
-    use crate::persistence::schema::ai_queries::dsl::{ai_queries, exchange_id, input};
-    ai_queries
-        .filter(exchange_id.eq(exchange))
-        .select(input)
-        .first::<String>(conn)
-        .expect("row for exchange should exist")
-}
-
-/// Returns the text of the first query input on a [`PersistedAIInput`].
-fn first_query_text(query: &PersistedAIInput) -> &str {
-    match query.inputs.first().expect("query should have an input") {
-        PersistedAIInputType::Query { text, .. } => text,
+fn block(id: &str, second: i64) -> SerializedBlock {
+    SerializedBlock {
+        id: id.to_owned().into(),
+        stylized_command: b"printf hello".to_vec(),
+        stylized_output: b"hello".to_vec(),
+        pwd: Some("/tmp/local-project".to_owned()),
+        git_head: Some("abc123".to_owned()),
+        git_branch_name: Some("main".to_owned()),
+        start_ts: Some(Local.timestamp_opt(1_700_000_000 + second, 0).unwrap()),
+        completed_ts: Some(Local.timestamp_opt(1_700_000_001 + second, 0).unwrap()),
+        did_execute: true,
+        is_local: Some(true),
+        ..Default::default()
     }
 }
 
 #[test]
-fn upsert_ai_query_caps_table_and_evicts_oldest_first() {
+fn terminal_blocks_round_trip_in_chronological_order() {
     let mut conn = test_connection();
-    let limit = 3;
+    let older = block("older", 0);
+    let newer = block("newer", 1);
+    save_block(&mut conn, vec![1], &newer, true).unwrap();
+    save_block(&mut conn, vec![1], &older, true).unwrap();
 
-    // Insert five distinct exchanges into a table capped at three.
-    let queries: Vec<Arc<PersistedAIInput>> =
-        (0..5).map(|i| make_query(&format!("q{i}"))).collect();
-    let exchange_ids: Vec<String> = queries.iter().map(|q| q.exchange_id.to_string()).collect();
+    let restored = get_all_restored_blocks(&mut conn).unwrap();
 
-    for query in &queries {
-        upsert_ai_query_with_limit(&mut conn, query.clone(), limit).expect("upsert should succeed");
-    }
-
-    // The table never exceeds the limit.
-    assert_eq!(ai_query_count(&mut conn), limit);
-
-    // The two oldest (q0, q1) are evicted; the three newest remain in insertion order.
     assert_eq!(
-        remaining_exchange_ids(&mut conn),
-        exchange_ids[2..].to_vec()
+        restored[&PaneUuid(vec![1])],
+        vec![older.into(), newer.into()]
     );
+    assert_eq!(restored[&PaneUuid(vec![2])], vec![]);
 }
 
 #[test]
-fn upsert_ai_query_stays_below_limit_without_evicting() {
+fn terminal_block_limit_retains_newest_commands() {
     let mut conn = test_connection();
-    let limit = 3;
-
-    // Filling exactly up to the limit should not evict anything.
-    let queries: Vec<Arc<PersistedAIInput>> =
-        (0..3).map(|i| make_query(&format!("q{i}"))).collect();
-    let exchange_ids: Vec<String> = queries.iter().map(|q| q.exchange_id.to_string()).collect();
-
-    for query in &queries {
-        upsert_ai_query_with_limit(&mut conn, query.clone(), limit).expect("upsert should succeed");
+    for second in 0..102 {
+        save_block(
+            &mut conn,
+            vec![1],
+            &block(&format!("block-{second}"), second),
+            true,
+        )
+        .unwrap();
     }
 
-    assert_eq!(ai_query_count(&mut conn), limit);
-    assert_eq!(remaining_exchange_ids(&mut conn), exchange_ids);
+    let restored = get_all_restored_blocks(&mut conn).unwrap();
+    let blocks = &restored[&PaneUuid(vec![1])];
+
+    assert_eq!(blocks.len(), 100);
+    assert_eq!(blocks.first(), Some(&block("block-2", 2).into()));
+    assert_eq!(blocks.last(), Some(&block("block-101", 101).into()));
 }
 
 #[test]
-fn upsert_ai_query_updates_existing_exchange_without_evicting() {
+fn deleting_terminal_blocks_is_scoped_to_the_pane() {
     let mut conn = test_connection();
-    let limit = 2;
+    save_block(&mut conn, vec![1], &block("first-pane", 0), true).unwrap();
+    let other = block("second-pane", 0);
+    save_block(&mut conn, vec![2], &other, true).unwrap();
 
-    // Fill the table to its limit with two distinct exchanges.
-    let first = make_query("first");
-    let second = make_query("second");
-    upsert_ai_query_with_limit(&mut conn, first.clone(), limit).expect("upsert should succeed");
-    upsert_ai_query_with_limit(&mut conn, second.clone(), limit).expect("upsert should succeed");
-    assert_eq!(ai_query_count(&mut conn), limit);
+    delete_blocks(&mut conn, vec![1]).unwrap();
 
-    // Re-upsert the oldest exchange (same `exchange_id`) repeatedly. Because this is an update of
-    // an existing exchange rather than a new one, it must update in place and never evict.
-    let updated_first = Arc::new(PersistedAIInput {
-        inputs: vec![PersistedAIInputType::Query {
-            text: "first-updated".to_string(),
-            context: Default::default(),
-            referenced_attachments: Default::default(),
-        }],
-        ..(*first).clone()
-    });
-    for _ in 0..5 {
-        upsert_ai_query_with_limit(&mut conn, updated_first.clone(), limit)
-            .expect("upsert should succeed");
-    }
+    let restored = get_all_restored_blocks(&mut conn).unwrap();
+    assert_eq!(restored[&PaneUuid(vec![1])], vec![]);
+    assert_eq!(restored[&PaneUuid(vec![2])], vec![other.into()]);
+}
 
-    // Still exactly two rows, and both original exchanges survive (the oldest was not evicted).
-    assert_eq!(ai_query_count(&mut conn), limit);
+#[test]
+fn terminal_persistence_leaves_legacy_agent_queries_opaque() {
+    let mut conn = test_connection();
+    conn.batch_execute(
+        "INSERT INTO ai_queries (exchange_id, conversation_id, start_ts, input, output_status)
+         VALUES ('legacy-exchange', 'unknown-conversation', '2023-01-01 00:00:00',
+                 'not valid JSON', 'unknown-status');",
+    )
+    .unwrap();
+
+    save_block(&mut conn, vec![1], &block("local-command", 0), true).unwrap();
+    let restored = get_all_restored_blocks(&mut conn).unwrap();
+    delete_blocks(&mut conn, vec![1]).unwrap();
+
+    assert_eq!(restored[&PaneUuid(vec![1])].len(), 1);
+    let legacy: Vec<(String, String)> = schema::ai_queries::table
+        .select((schema::ai_queries::input, schema::ai_queries::output_status))
+        .load(&mut conn)
+        .unwrap();
     assert_eq!(
-        remaining_exchange_ids(&mut conn),
-        vec![
-            first.exchange_id.to_string(),
-            second.exchange_id.to_string()
-        ]
+        legacy,
+        vec![("not valid JSON".to_owned(), "unknown-status".to_owned())]
     );
-
-    // The in-place update took effect.
-    let input_json = input_json_for_exchange(&mut conn, &first.exchange_id.to_string());
-    assert!(
-        input_json.contains("first-updated"),
-        "existing row should have been updated in place, got: {input_json}"
-    );
-}
-
-/// Builds a [`PersistedAIInput`] whose inputs serialize to `[]`, mirroring legacy rows
-/// written before empty inputs were skipped at write time.
-fn make_empty_input_query() -> Arc<PersistedAIInput> {
-    Arc::new(PersistedAIInput {
-        inputs: vec![],
-        ..(*make_query("unused")).clone()
-    })
 }
 
 #[test]
-fn process_ai_queries_for_nld_history_match_filters_empty_and_whitespace_inputs_oldest_first() {
+fn restoring_blocks_does_not_rewrite_unknown_legacy_columns() {
     let mut conn = test_connection();
+    save_block(&mut conn, vec![1], &block("legacy-command", 0), true).unwrap();
+    conn.batch_execute(
+        "UPDATE blocks SET ai_metadata = 'opaque legacy metadata',
+             agent_view_visibility = '{unknown legacy format';",
+    )
+    .unwrap();
 
-    // Explicit, strictly increasing timestamps keep the `start_ts`-ordered read deterministic.
-    let t0 = Local::now();
-    for query in [
-        with_start_ts(make_query("older prompt"), t0),
-        with_start_ts(make_query("   "), t0 + Duration::seconds(1)),
-        with_start_ts(make_empty_input_query(), t0 + Duration::seconds(2)),
-        with_start_ts(make_query("newer prompt"), t0 + Duration::seconds(3)),
-    ] {
-        upsert_ai_query_with_limit(&mut conn, query, 10).expect("upsert should succeed");
-    }
+    let restored = get_all_restored_blocks(&mut conn).unwrap();
+    let SerializedBlockListItem::Command { block } = &restored[&PaneUuid(vec![1])][0];
 
-    let recent_ai_queries = read_recent_ai_queries(&mut conn).expect("read should succeed");
-    let prompts = process_ai_queries_for_nld_history_match(&recent_ai_queries);
-    let texts: Vec<&str> = prompts.iter().map(|(text, _)| text.as_str()).collect();
-    // `[]` and whitespace-only rows are dropped; the rest come back oldest-first.
-    assert_eq!(texts, vec!["older prompt", "newer prompt"]);
+    assert_eq!(block.stylized_output, b"hello");
+    assert_eq!(block.removed_feature_metadata.as_deref(), Some("opaque legacy metadata"));
+    let legacy: (Option<String>, Option<String>) = schema::blocks::table
+        .select((schema::blocks::ai_metadata, schema::blocks::agent_view_visibility))
+        .first(&mut conn)
+        .unwrap();
+    assert_eq!(
+        legacy,
+        (
+            Some("opaque legacy metadata".to_owned()),
+            Some("{unknown legacy format".to_owned())
+        )
+    );
 }
 
 #[test]
-fn process_ai_queries_for_uparrow_prompt_keeps_newest_capped_oldest_first() {
-    // Build 150 oldest-first queries; only the newest 100 should survive, order preserved.
-    let queries: Vec<PersistedAIInput> = (0..150)
-        .map(|i| (*make_query(&format!("q{i}"))).clone())
-        .collect();
+fn old_terminal_fixture_remains_readable_after_migrations() {
+    let directory = tempfile::tempdir().unwrap();
+    let path = directory.path().join("warp.sqlite");
+    std::fs::write(
+        &path,
+        include_bytes!("../../../crates/integration/tests/data/restored_blocks.sqlite"),
+    )
+    .unwrap();
+    let mut conn = SqliteConnection::establish(path.to_str().unwrap()).unwrap();
+    conn.run_pending_migrations(::persistence::MIGRATIONS)
+        .unwrap();
+    let before: i64 = schema::blocks::table.count().get_result(&mut conn).unwrap();
 
-    let kept = process_ai_queries_for_uparrow_prompt(queries);
+    let restored = get_all_restored_blocks(&mut conn).unwrap();
 
-    assert_eq!(kept.len(), 100);
-    // The newest 100 (q50..=q149) survive, still oldest-first.
-    assert_eq!(first_query_text(&kept[0]), "q50");
-    assert_eq!(first_query_text(&kept[99]), "q149");
-}
-
-#[test]
-fn process_ai_queries_for_uparrow_prompt_keeps_all_when_under_cap() {
-    // Fewer than the cap: everything is kept, order preserved.
-    let queries: Vec<PersistedAIInput> = (0..3)
-        .map(|i| (*make_query(&format!("q{i}"))).clone())
-        .collect();
-
-    let kept = process_ai_queries_for_uparrow_prompt(queries);
-
-    let texts: Vec<&str> = kept.iter().map(first_query_text).collect();
-    assert_eq!(texts, vec!["q0", "q1", "q2"]);
-}
-
-#[test]
-fn empty_input_skip_filters_out_non_query_inputs() {
-    // Mirrors the filter in `handle_ai_history_event`: only query-bearing inputs are persisted.
-    // An exchange whose inputs are all non-query types collapses to an empty `inputs` vec, which
-    // is the exact condition that skips persistence.
-    let user_query = AIAgentInput::UserQuery {
-        query: "hello".to_string(),
-        context: Default::default(),
-        static_query_type: None,
-        referenced_attachments: Default::default(),
-        user_query_mode: UserQueryMode::default(),
-        running_command: None,
-        intended_agent: None,
-    };
-    let non_query = AIAgentInput::ResumeConversation {
-        context: Default::default(),
-    };
-
-    // A query input is persistable; a non-query input is not.
-    assert!(PersistedAIInputType::try_from(&user_query).is_ok());
-    assert!(PersistedAIInputType::try_from(&non_query).is_err());
-
-    // An exchange carrying only non-query inputs collapses to empty -> skipped.
-    let only_non_query = [non_query];
-    let persisted: Vec<_> = only_non_query
-        .iter()
-        .filter_map(|input| PersistedAIInputType::try_from(input).ok())
-        .collect();
-    assert!(persisted.is_empty());
-
-    // An exchange carrying a query input is persisted.
-    let with_query = [user_query];
-    let persisted: Vec<_> = with_query
-        .iter()
-        .filter_map(|input| PersistedAIInputType::try_from(input).ok())
-        .collect();
-    assert_eq!(persisted.len(), 1);
+    assert!(before > 0, "the historical fixture must contain terminal output");
+    assert!(restored.values().any(|blocks| !blocks.is_empty()));
+    let after: i64 = schema::blocks::table.count().get_result(&mut conn).unwrap();
+    assert_eq!(after, before);
 }

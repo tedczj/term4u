@@ -7,19 +7,45 @@ BASELINE="$BASE/phase1-before.txt"
 DELETED_TEST_IDS="$BASE/deleted-test-ids.txt"
 LIST_CMD=(cargo nextest list --workspace --exclude command-signatures-v2 --message-format json)
 
-list_tests() {
-  "${LIST_CMD[@]}" 2>/dev/null | python3 -c '
+list_tests() (
+  local inventory
+  inventory=$(mktemp "${TMPDIR:-/tmp}/term4u-nextest-inventory.XXXXXX")
+  trap 'rm -f "$inventory"' EXIT
+  "${LIST_CMD[@]}" > "$inventory"
+  python3 - "$inventory" <<'PY'
 import json
 import sys
 
-data = json.load(sys.stdin)
-tests = []
-for binary_id, suite in data.get("rust-suites", {}).items():
-    for name in suite.get("testcases", {}):
-        tests.append(f"{binary_id}::{name}")
+try:
+    with open(sys.argv[1]) as source:
+        data = json.load(source)
+    suites = data["rust-suites"]
+    if not isinstance(suites, dict) or not suites:
+        raise ValueError("missing or empty rust-suites")
+    tests = []
+    for binary_id, suite in suites.items():
+        cases = suite["testcases"]
+        if not isinstance(cases, dict):
+            raise ValueError(f"invalid testcases for {binary_id}")
+        for name in cases:
+            tests.append(f"{binary_id}::{name}")
+    if not tests:
+        raise ValueError("nextest returned no tests")
+except (OSError, ValueError, KeyError, TypeError) as error:
+    sys.exit(f"ERROR: invalid nextest inventory: {error}")
 print("\n".join(sorted(tests)))
-'
-}
+PY
+)
+
+snapshot_tests() (
+  local name=$1 snapshot
+  mkdir -p "$BASE"
+  snapshot=$(mktemp "$BASE/.test-inventory.XXXXXX")
+  trap 'rm -f "$snapshot"' EXIT
+  list_tests > "$snapshot"
+  mv "$snapshot" "$BASE/$name.txt"
+  wc -l "$BASE/$name.txt"
+)
 
 verify_inventory() {
   test -f "$BASELINE"
@@ -65,9 +91,7 @@ case "${1:-verify}" in
     ;;
   snapshot)
     name=${2:?need a snapshot name}
-    mkdir -p "$BASE"
-    list_tests > "$BASE/$name.txt"
-    wc -l "$BASE/$name.txt"
+    snapshot_tests "$name"
     ;;
   diff)
     before="$BASE/${2:?need the earlier snapshot name}.txt"

@@ -1,0 +1,4 @@
+UTC=2026-09-05T16:34:20.826503+00:00
+COMMAND=git diff --cached --binary
+
+EXIT_CODE=0

@@ -144,35 +144,6 @@ pub fn initialize(
     }
 }
 
-// Remove sqlite database as part of Logout v0.
-// TODO: Implement per user scoping of sqlite.
-#[cfg_attr(not(feature = "local_fs"), allow(unused_variables))]
-pub fn remove(sender: &Option<SyncSender<ModelEvent>>) {
-    cfg_if::cfg_if! {
-        if #[cfg(feature = "local_fs")] {
-            if let Some(sender) = sender.clone() {
-                sqlite::remove(sender);
-            }
-        } else {
-            log::info!("Local filesystem persistence is not enabled.");
-        }
-    }
-}
-
-// Reconstruct sqlite database as part of Logout v0.
-#[cfg_attr(not(feature = "local_fs"), allow(unused_variables))]
-pub fn reconstruct(sender: &Option<SyncSender<ModelEvent>>) {
-    cfg_if::cfg_if! {
-        if #[cfg(feature = "local_fs")] {
-            if let Some(sender) = sender.clone() {
-                sqlite::reconstruct(sender);
-            }
-        } else {
-            log::info!("Local filesystem persistence is not enabled.");
-        }
-    }
-}
-
 /// Holds interfaces to the writer thread.
 pub struct WriterHandles {
     pub handle: JoinHandle<()>,
@@ -236,12 +207,7 @@ impl Entity for PersistenceWriter {
 
 impl SingletonEntity for PersistenceWriter {}
 
-/// TODO: all of this data should eventually be indexed by user_id so that
-/// the logged in user sees the data for their user (and if another user logs in,
-/// they see their respective data). To do this, we can simply return a mapping
-/// of user ID->SqliteData and get the respective AppState after the user logs in.
-///
-/// For now, to address the global scoping here, we clear all persisted data on logout.
+/// Local data loaded for startup and session restoration.
 pub struct PersistedData {
     pub app_state: Option<AppState>,
     pub command_history: Vec<PersistedCommand>,

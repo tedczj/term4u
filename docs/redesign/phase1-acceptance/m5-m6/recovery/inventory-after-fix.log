@@ -1,0 +1,5 @@
+UTC=2026-09-05T16:40:58.000580+00:00
+COMMAND=./script/test_inventory
+./script/test_inventory: line 14: cargo: command not found
+
+EXIT_CODE=127

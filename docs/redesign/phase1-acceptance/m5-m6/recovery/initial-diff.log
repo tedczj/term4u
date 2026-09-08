@@ -1,0 +1,2663 @@
+UTC=2026-09-05T16:34:20.808982+00:00
+COMMAND=git diff --binary
+diff --git "a/docs/redesign/08-\345\256\236\346\226\275\351\241\272\345\272\217\344\270\216\351\207\214\347\250\213\347\242\221.md" "b/docs/redesign/08-\345\256\236\346\226\275\351\241\272\345\272\217\344\270\216\351\207\214\347\250\213\347\242\221.md"
+index 4e6bf55b..06a462b0 100644
+--- "a/docs/redesign/08-\345\256\236\346\226\275\351\241\272\345\272\217\344\270\216\351\207\214\347\250\213\347\242\221.md"
++++ "b/docs/redesign/08-\345\256\236\346\226\275\351\241\272\345\272\217\344\270\216\351\207\214\347\250\213\347\242\221.md"
+@@ -1,634 +1,202 @@
+ # 08 · 实施顺序与里程碑
+ 
+-> 本章把 [03](03-阶段1-云模块删除与离线化.md)–[07](07-测试与验证策略.md) 的内容排成
+-> 一条可执行的时间线。每个里程碑给出：**入口条件 → 动作 → 门禁 → 产出**。
+->
+-> 门禁全部引用 [07 §13 的验收矩阵](07-测试与验证策略.md#s7-13)。本章的动作表保留最初规划；
+-> 实际执行状态、已发生的范围调整和下一步以[当前执行进度](#s0)为准。
++> 更新：2026-09-05；静态核对基线 `dc768549c8ba15a74e0658f44c714da0a5f3b05d`。
++> 本章仅维护阶段状态与范围。当前施工任务、顺序及验收以
++> [11 · 本地化收敛施工单](11-本地化收敛施工单.md) 为唯一入口。
++> 旧 M0–M6 动作表已移除；历史内容从 Git 查询，不再作为待办执行。
+ 
+ <a id="toc"></a>
+ ## 目录
+ 
+-- [零、当前执行进度](#s0)
+-- [一、里程碑总览](#s1)
+-- [二、排序的四条理由](#s2)
+-- [M0 · 基线冻结](#m0)
+-- [M1 · 网络硬拒绝](#m1)
+-- [M2 · Offline Channel 与新入口](#m2)
+-- [M3 · 启动流程三分](#m3)
+-- [M4 · 删叶子模块](#m4)
+-- [M5 · 删云 Server 与认证](#m5)
+-- [M6 · 依赖清理](#m6)
+-- [M7 · 品牌、改名与发布](#m7)
+-- [三、风险登记簿](#s3)
+-
+----
++- [当前执行状态](#s0)
++- [阶段关系](#s1)
++- [身份与数据边界](#s2)
++- [M0–M4：历史实现与遗留验收](#m0)
++- [M5：本地功能与入口收敛](#m5)
++- [M6：依赖和 V1 验收](#m6)
++- [M7：后续品牌与发布](#m7)
++- [风险登记](#s3)
+ 
+ <a id="s0"></a>
+-## 零、当前执行进度（2026-09-04）
+-
+-> 快照基于本次文档更新前干净且与 `origin/main` 同步的
+-> `916039e270a1852c3ee62087f4c3ed7cdebcf229`。“实现完成”只表示对应代码已经落地；
+-> 只有该里程碑的全部门禁在当前 HEAD 上执行并归档后，
+-> 才标记为“验收关闭”。因此实现可以先行，交付阶段不会被提前宣称完成。
+-
+-### 0.1 总体结论
+-
+-- **实现进度**：M1–M4 的主体已落地；当前已进入 M5/M6 的能力与依赖收缩，M7 的六处运行时
+-  身份已按 `FIRST_REAL_USE: 未发生` 的规则提前完成。
+-- **正式交付状态**：V0 实现完成但严格验收尚未关闭；V1、V2 均未达成。
+-- **当前主线**：完成剩余云控制面与依赖清理，补齐同一最终 HEAD 的运行时、数据库、跨平台、
+-  品牌与合规证据。
+-- **变更规模**：相对上游基线 `066ec71b`，当前为 72 个新增、649 个修改、602 个删除、
+-  11 个重命名文件，净减少约 19.6 万行。该数字只描述改造规模，不等价于完成百分比。
+-
+-### 0.2 里程碑状态
+-
+-| 里程碑 | 当前状态 | 已落地 | 尚未关闭 / 下一步 |
+-|---|---|---|---|
+-| **M0** | **部分完成** | 工具链、测试清单、删除分类、许可证与首次构建日志已冻结；一期追加了 9,777 项测试清单和改造前黑名单/绕行基线 | 改造前 GUI 的 13 个手工场景和真实旧数据目录未能生成；需从 detached `066ec71b` 补采或批准并记录替代方案，`baseline/risk-log.md` 仍将 M0 标为未关闭 |
+-| **M1** | **实现完成，待验收归档** | `offline_hard`、HTTP/WebSocket loopback 守卫、离线 resolver、守卫测试及仓库网络边界检查已落地 | 在最终发布候选 HEAD 上补 V3/V4 的真实进程、子进程与 DNS 捕获，并存入一期 `final/` |
+-| **M2** | **实现完成，待验收归档** | `ConnectivityMode`、`term4u`/`term4u-tui` 唯一产品入口、`local_only` 与运行脚本已落地；旧 OSS 产品入口已删除 | 在最终 HEAD 重跑并归档 F0/F1、旧 DB 与 GUI 启动证据 |
+-| **M3** | **实现完成** | `initialize_common_app`/`initialize_local_app` 已拆分，`ServerApiProvider::new_offline()`、`OfflineApi` 与本地认证后端已接入 | 随 M5/M6 删除云 trait/crate 时继续收缩离线兼容层，避免重新引入网络实现 |
+-| **M4** | **实现完成，V0 验收未关闭** | 遥测/Sentry/OTLP、自动更新、实验、共享会话、remote server、ambient/cloud environment、computer use、voice 与 Windows 资产已删除；V0 测试收敛已完成 | 13 场景、旧 DB、最终二进制字符串、60 秒零外连/零 DNS 等严格门禁仍需在同一最终 HEAD 归档 |
+-| **M5** | **进行中** | 本地隐私策略已落地；字体远端 fallback、全部 MCP 产品/执行面及 AWS/Bedrock 集成已删除 | 云认证、Drive/cloud object/sync queue、主体 agent/agent_sdk、TUI cloud run/handoff 等仍在；完成 blocklist 路线决策和剩余云控制面删除 |
+-| **M6** | **进行中** | common-skills 下载链、Sentry/remote-server 发布脚本和旧 CI 路径已删除；网络边界门禁已接入 presubmit | `warp_server_client`、`warp_server_auth`、`warp_multi_agent_client`、`firebase`、`cloud_object_*`、`cloud_objects` 及 `session-sharing-protocol` 仍在 `local_only` 正常依赖树中，V1 黑名单尚未清零 |
+-| **M7** | **部分提前完成** | 六处运行时身份与 macOS bundle 链已在原子提交 `15a202db` 完成：Term4u AppId、名称、日志、scheme、数据目录和 keyring 均已切换 | README/文档和品牌资产仍是上游 Warp 内容；`LICENSES.md`、`NOTICES.md`、两个 MIT LICENSE、名称可用性记录和首个 tag 尚未完成 |
+-
+-### 0.3 已归档实现与当前快检
+-
+-| 批次 / 检查 | 结果 |
+-|---|---|
+-| `81f7214b` → `47110e95` | V0 主体实现、核心收敛与测试恢复；`HANDOFF-V0-2026-08-30.md` 记录当时 presubmit 通过（9,695 个 workspace nextest + 131 个 completer v2） |
+-| `405c0b72` | 冻结一期改造前基线，证据入口见 [`phase1-acceptance/README.md`](phase1-acceptance/README.md) |
+-| `15a202db` / `46c76072` / `7b82b00e` | 原子产品身份、skills/Sentry 远端链删除、asset/font 网络绕行收口 |
+-| `916039e2` | AWS/Bedrock 与全部 MCP 集成删除、MCP 数据库迁移、CI 和边界门禁收口 |
+-| `./script/check_network_boundaries --self-test` | 当前 HEAD 通过：允许样例通过，越界网络 client 被拒绝 |
+-| `./script/test_inventory` | 当前 HEAD 通过：基线 9,777、当前 9,503，消失测试均列入 297 项批准清单 |
+-
+-一期验收目录当前只有 `baseline/`，尚无 `final/manifest.md`。这里的“一期”是实施批次名称，
+-不等同于交付阶段 V1；在最终证据落盘前，不把上一轮临时日志或 Goal 状态当成 V0/V1/V2
+-的正式关闭依据。
+-
+-### 0.4 已确认的计划调整
+-
+-1. **运行时身份提前**：原计划 M7 的 7.1 已在 M5/M6 前完成，符合 [§2.1](#s2-1) 的提前改名
+-   规则；`FIRST_REAL_USE` 仍为“未发生”。
+-2. **MCP 范围扩大**：不再保留本地 stdio MCP；当前产品、GUI/TUI/CLI/SDK、传输、OAuth、
+-   watcher、crate 和当前 schema 已全部删除。上游协议中无法删除的值只允许作为
+-   decode-and-reject 墓碑存在。
+-3. **门禁前移**：`check_network_boundaries`、Windows/私有 runner 清理、下载链清理等原属
+-   M6/M7 的工作已提前，以便后续删除始终受 presubmit 约束。
++## 零、当前执行状态
+ 
+-### 0.5 V0 还差哪些验收
++最新代码提交 `948d475b` 明确是 WIP。大规模删除已经发生，本地替换尚未收敛；
++**不能把 V0 历史可用状态理解为当前 HEAD 可用，也不能把模块不存在理解为行为已经保留。**
+ 
+-V0 当前的主要差距不是“代码尚未实现”，而是原计划要求的证据没有在**同一个最终候选
+-HEAD** 上完整执行并提交。按 [09 §10](09-第一次实施详设-V0.md#s10) 的 A1–A12 逐项如下：
+-
+-| 验收项 | 当前判断 | 关闭前必须补做 |
++| 里程碑 | 当前判断 | 下一步归属 |
+ |---|---|---|
+-| **A1 F1 release** | V0 收敛阶段曾构建成功，`916039e2` 之后未形成仓库内最终证据 | 冻结候选 HEAD 后执行 `cargo build --release -p warp --bin term4u --no-default-features --features local_only`，保存命令、退出码和产物摘要 |
+-| **A2 F0 build** | 代码和自动化测试可编译，但未作为最终候选单独归档 | 在同一 HEAD 执行 `cargo build -p warp --bin term4u --features offline_hard` 并完成 GUI 启动冒烟 |
+-| **A3 13 个手工场景** | **缺失**；M0 的 13 项因当时无完整 Xcode/Metal 全部记为“未执行” | 在 detached `066ec71b` 补采改造前基线，再对候选版本执行 S1–S13；若不补采，必须明确批准替代基线并记录无法做前后对照的风险 |
+-| **A4 零外连** | 守卫和边界测试已通过；缺最终 bundle 的 60 秒进程证据 | hermetic HOME + 恶意代理运行真实 bundle 60 秒，用 `lsof` 同时检查主进程和子进程无非 loopback socket |
+-| **A5 零 DNS** | resolver 单测存在；缺最终运行捕获 | 同一 60 秒窗口用系统网络工具/pcap 证明主进程和子进程无 DNS 53/853 查询 |
+-| **A6 无待发遥测** | 上报链已删除；缺运行后数据目录检查记录 | 执行启动、设置、退出场景后扫描 Term4u 数据目录，证明不存在待发 Rudder/Sentry/OTLP 文件 |
+-| **A7 二进制字符串** | 源码与依赖已大幅收缩；缺最终 release/bundle 扫描 | 对最终可执行文件和 `.app` resources 执行 07 章字符串黑名单，逐项解释允许命中 |
+-| **A8 presubmit** | `916039e2` 的实施会话已执行通过，但日志只在临时目录 | 最终代码冻结后重跑 `./script/presubmit`，把原始输出和退出码存入 `phase1-acceptance/final/` |
+-| **A9 测试清单** | 当前通过：基线 9,777、当前 9,503，消失项均在 297 项批准清单内 | 最终 HEAD 再生成一次清单和 diff；后续 M5/M6 删除必须同步批准清单 |
+-| **A10 旧 DB** | MCP 专用迁移测试已通过；**完整 DB1–DB3 未完成**，真实 legacy datadir 未生成 | 用 detached 基线生成真实旧数据目录，或批准仓库 SQLite fixtures 为替代；验证迁移、读取、写入和再次启动 |
+-| **A11 本地日志** | 本地日志代码保留；L1–L3 没有最终归档 | 验证正常写日志、panic 入日志、UI 生成日志 zip，且全过程无外连 |
+-| **A12 许可证边界** | 当前 `check_license_boundaries` 与 `check_license_config_sync` 均通过 | 最终 HEAD 随 presubmit 重跑并归档 |
+-
+-**关闭动作**：以上全部通过后，创建 `docs/redesign/phase1-acceptance/final/manifest.md`，记录唯一
+-HEAD、UTC 时间、命令、退出码和原始证据路径；随后更新 `baseline/risk-log.md`，才能把
+-“M4 / V0 验收未关闭”改成“已关闭”。
+-
+-### 0.6 M5 详细完成度
+-
+-未完成项的分批施工、测试和回滚步骤见
+-[10 · M5/M6 未完成项实施详设](10-M5-M6未完成项实施详设.md)。
+-
+-| M5 项 | 状态 | 已完成 | 未完成 |
+-|---|---|---|---|
+-| **5.1 云认证** | **部分完成** | `LocalAuthStateProvider`、离线 `AuthManager` 已接通 | `app/src/auth/` 仍有 Firebase/登录/token/web handoff 等 13 个文件，云认证尚未物理删除 |
+-| **5.2 Drive / cloud object / sync** | **未完成** | MCP 对应 Drive item/schema 已删除 | `app/src/drive/`、`app/src/cloud_object/`、`app/src/server/cloud_objects/`、`sync_queue.rs`、`cloud_preferences_syncer.rs` 仍在 |
+-| **5.3 Agent 系列** | **部分完成** | ambient agents、云环境、computer use、AWS/Bedrock 和 MCP agent 接口已删除 | `agent/`、`agent_sdk/`、`agent_management/`、`agent_conversations_model`、`ai_assistant/` 等主体仍在（上述三个主目录当前约 95 个文件） |
+-| **5.4 MCP** | **完成** | 产品、GUI/TUI/CLI/SDK、传输、OAuth、watcher、crate 和当前 schema 已删除；协议墓碑只允许 decode-and-reject | 最终扫描与兼容测试需随候选 HEAD 归档，不再有“保留本地 stdio MCP”的待办 |
+-| **5.5 本地隐私策略** | **完成** | `app/src/settings/local_privacy_policy.rs` 已接入 | 最终设置页手工验收随 A3 执行 |
+-| **5.6 blocklist 路线** | **未完成** | 当前离线兼容路径可编译 | `baseline/blocklist-decision.md` 不存在，路线 A/B 尚未按三个量化判据定案 |
+-| **5.7 LSP 自动下载** | **未完成** | 出站会被 `offline_hard` 守卫拒绝 | `crates/lsp/src/install.rs` 及 clangd/rust/pyright/typescript/go 下载和版本查询代码仍在 |
+-| **5.8 在线字体/asset** | **实现完成** | 字体 URL fallback 已删除；`asset_cache` 只能经 `http_client::Client`，非 loopback 由守卫拒绝并有测试 | 仅差最终 bundle 的网络验收归档 |
+-| **5.9 外部站点菜单** | **未完成** | 部分已删除功能的入口随模块消失 | Privacy、Data Management、Warp Docs、GitHub Issues、Drive 文档等外链仍大量存在 |
+-| **5.10 Windows 平台代码** | **部分完成** | 120MB 资产、`script/windows/`、PowerShell 门禁和 CI Windows 矩阵已删除 | ConPTY、多个 Windows 专属目录/文件，以及 12 个 manifest 中纯 Windows 或混合 Windows target dependency 块仍在；按 D11 不要求清理散落内联 `#[cfg(windows)]` |
+-| **5.11 TUI 云 UI** | **部分完成** | MCP 菜单/安装流已删除 | `cloud_run.rs`、`cloud_run_view.rs`、`grok_oauth/`、`handoff/`、`api_keys_menu.rs` 仍在 |
+-
+-M5 的下一批应先定 5.6 的 blocklist 路线，再把 5.1–5.3 与 5.11 同批收敛；否则 agent、
+-认证、Drive 和 TUI 之间的交叉引用会反复制造中间态。
+-
+-### 0.7 M6 详细完成度
+-
+-未完成项的 crate 删除顺序、协议边剥离与 V1 负证明见
+-[10 · M5/M6 未完成项实施详设](10-M5-M6未完成项实施详设.md#s8)。
+-
+-| M6 项 | 状态 | 已完成 | 未完成 |
+-|---|---|---|---|
+-| **6.1 云 crate 删除** | **未完成** | `mcp`、`remote_server`、`computer_use`、`voice_input` 已提前删除 | `warp_server_client`、`warp_server_auth`、`firebase`、`warp_multi_agent_client`、`cloud_object_client`、`cloud_object_models`、`cloud_object_persistence`、`cloud_objects` 八个目标 crate 全部仍在 |
+-| **6.2 残留边 E1** | **未完成** | 共享会话产品代码已删除 | `warp_terminal` 仍依赖 `session-sharing-protocol`，根 manifest 和 lockfile 仍有该无许可证 git 依赖 |
+-| **6.3 残留边 E2** | **未完成** | 无 | `persistence` 仍依赖 `warp_multi_agent_api`，保留/删除判断尚未归档 |
+-| **6.4 GraphQL / ServerApi** | **未完成** | `OfflineApi` 已为过渡期提供空后端 | `app/src/server/graphql/`、`server_api.rs` 及子模块仍在；必须在 6.1 前上移仍需保留的 trait，或随 blocklist 路线 A 一并删除 |
+-| **6.5 deny sources** | **未完成** | 许可证边界脚本已接入 presubmit | `deny.toml` 仍有 `allow-org = { github = ["warpdotdev"] }`，尚未收紧为显式来源清单 |
+-| **6.6 email_address pin** | **未完成** | 无 | `app/Cargo.toml` 仍使用 `branch = "main"`，lockfile 仍解析该浮动 git 来源 |
+-| **6.7 skills 下载链** | **完成** | `resolve_common_skills`、`skills-lock.json`、factory-files、oz-platform 及对应 presubmit 测试已删除；bootstrap/run 不再下载 skills | 最终 bundle resources 扫描待归档 |
+-| **6.8 其余云脚本** | **完成** | `deploy_remote_server*`、`push-dev-image` 已删除，旧 release/Sentry 链与 CI remote-server/trunk/private runner 路径也已清理 | 无实现项；最终 CI 静态证据待归档 |
+-
+-当前 `local_only` 正常依赖树仍命中上述云 crate、`session-sharing-protocol` 和
+-`warp_multi_agent_api`，所以 M6 的核心出口——V1 依赖树黑名单为空——尚未满足。
++| M0 | 基线部分完成；改造前 GUI 场景与真实 legacy 数据样本仍有缺口 | 11 章 R0/R2/R6；补采或取得替代方案批准 |
++| M1 | 网络守卫已实现；缺最终候选运行时证据 | R6：真实连接、DNS、重试及待发文件验证 |
++| M2 | Term4u GUI/TUI 入口、local_only 与运行时身份已落地 | R1/R6：重新构建启动及身份、路径回归 |
++| M3 | 历史启动拆分已实现；ServerApi/OfflineApi 过渡层已随 WIP 删除 | R1：本地初始化与调用方收敛，不恢复过渡层 |
++| M4 / V0 | 历史实现与测试曾通过，严格验收未关闭；当前可用性待恢复 | R1–R6：重新验证本地功能与 V0 全部遗留门禁 |
++| M5 | 云主体删除、TUI 本地化、PATH LSP 已落地；仍有死引用、UI/Windows/外链尾项 | R1–R4，不重复删除已不存在的模块 |
++| M6 / V1 | 八个云 crate、两条协议 lock 节点已删除；rev pin、TUI feature 配置已落地 | R5/R6：显式 git 来源、删除测试审计及完整负证明；V1 未完成 |
++| M7 / V2 | 运行时身份已提前完成；品牌与发布材料未完成 | 仅在 V1 关闭后单独启动；不在当前 Goal 范围 |
++
++当前静态核对确认：blocklist 已选择路线 A，本地模型与 NotebookStore 已存在；
++`persistence/block_list.rs` 等仍引用删除类型，外链检查脚本及最终验收 manifest 尚不存在，
++`deny.toml` 仍按组织放行。当前环境未找到 Cargo，没有新的编译错误计数或测试通过声明。
++
++历史依据：`47110e95` 的 V0 收敛、`15a202db` 的身份变更、`916039e2` 的 MCP/AWS 清理、
++`f828cd6b` 的 LSP 和 `2fdeed6f` 的 TUI 本地化。历史日志保持其原始 HEAD，不升级为当前证据。
+ 
+ <a id="s1"></a>
+-## 一、里程碑总览
+-
+-| 里程碑 | 对应调研步骤 | 交付阶段 | 核心动作 | 完成后能做什么 |
+-|---|---|---|---|---|
+-| **M0** | — | — | git 拓扑 + 工具链 + 首次全量构建 + 基线冻结 | 有一个可比对的起点 |
+-| **M1** | 第 1–2 步 | V0 | `offline_hard` feature + socket 对端地址守卫 | **即使后面漏删，也不会外发** |
+-| **M2** | 第 3 步 | V0 | `ConnectivityMode` + `term4u` 双 bin（复用 `Channel::Oss`，[03 §4.4](03-阶段1-云模块删除与离线化.md#s4-4)） | 有一个真正的离线入口 |
+-| **M3** | 第 4 步 | V0 | `initialize_app` 三分 | 云初始化整块不编译 |
+-| **M4** | 第 5 步 | V0 | 删叶子模块（遥测传输 / 崩溃 / 追踪 / 更新 / 实验 / 共享 / ambient / 远端） | **V0 达成：可日常使用的本地构建** |
+-| **M5** | 第 6–7 步 | V1 | 删云 Server 与认证；处置 Agent / Drive | 云控制面消失 |
+-| **M6** | 第 8 步 | V1 | Cargo 依赖清理；剥离两条残留边 | **V1 达成：依赖树干净** |
+-| **M7** | — | V2 | 六处改名 + 品牌资产 + LICENSES/NOTICES + 首个 tag | **V2 达成：可对外发布** |
++## 一、阶段关系
+ 
+ <a id="s1-1"></a>
+-### 1.1 时间线形状
+ 
++```text
++M0–M4：V0 历史实现 ──┐
++                    ├─ R0–R6 收敛 + 同一候选验收 ── V1 ── M7 / V2
++M5–M6：当前 WIP ────┘
+ ```
+-M0 ──► M1 ──► M2 ──► M3 ──► M4 ═══════ V0 达成
+-                                │
+-                                ├─► M5 ──► M6 ═══════ V1 达成
+-                                              │
+-                                              └─► M7 ═══════ V2 达成
+-```
+-
+-**M4 之后可以停下来长期使用。** V1 与 V2 是可选的后续，不是必须马上做的。
+-这个形状是刻意的——它让"能用"这件事尽早发生，而不是等所有事都做完。
+ 
+----
++V0 = 本地可用与离线边界；V1 = 云控制面及依赖清理完成；V2 = 品牌、合规材料与对外发布。
++许可证“阶段 2 完整 MIT 重实现”是另一条路线，不等于 V2。
+ 
+ <a id="s2"></a>
+-## 二、排序的四条理由
+-
+-| # | 排序决定 | 理由 |
+-|---|---|---|
+-| **R1** | **守卫（M1）在删除（M4+）之前** | 守卫是 [H4](01-背景与目标.md#s3)：即使漏删也不外发。先装守卫，后续每一步删除都在安全网下进行。而且守卫**不会让任何现有测试变红**（[07 §7.5.2](07-测试与验证策略.md#s7-5-2)），是全流程风险最低的一步 |
+-| **R2** | **三分（M3）在删除（M4）之前** | 先拆分 → `initialize_cloud_app` 整块不编译 → 后续是"删已经不编译的代码"，风险最低。先删 → 在 1,151 行的函数里边删边坏，无法二分定位 |
+-| **R3** | **Offline Channel（M2）在三分（M3）之前** | 三分的判据是 `#[cfg(feature = "offline_hard")]`，而 `offline_hard` 语义的落地在 M2。顺序反了，M3 就没有可依据的分界 |
+-| **R4** | **改名（M7）在最后** | 改 AppId = 改数据目录 + keyring 命名空间。M0–M6 期间本地数据是一次性的，改名成本为 0；M2 首次真实使用之后改名要写数据迁移与密钥轮换（[05 §6.2](05-阶段1-仓库与品牌.md#s6-2)）。**注意这里有一个张力**：见 [§2.1](#s2-1) |
++## 二、身份与数据边界
+ 
+ <a id="s2-1"></a>
+-### 2.1 改名时机的张力
+-
+-R4 说"改名放最后"，但 [05 §6.2](05-阶段1-仓库与品牌.md#s6-2) 说"必须在
+-**M2 首次真实使用之前**定稿"。这两句话矛盾吗？
+-
+-**不矛盾，但需要一个明确的操作规则**：
+-
+-| 情形 | 规则 |
+-|---|---|
+-| M2–M6 期间**只在临时数据目录里测试**（每次 `rm -rf` 重来） | 改名可以放到 M7。**这是推荐路径** |
+-| M2–M6 期间开始**把 term4u 当日常终端用**（积累真实历史与密钥） | **改名必须提前到那一刻之前**，即把 M7 的 R1–R6 六项拆出来提前执行 |
+-
+-**操作规则**：
++### 首次真实使用
+ 
+-> **在第一次用 term4u 打开一个你在乎其历史的会话之前，六处改名必须已经定稿。**
+->
+-> 落地做法：M2 完成后，在 `docs/redesign/baseline/README.md` 里写一行
+-> `FIRST_REAL_USE: <未发生 | YYYY-MM-DD>`。它从"未发生"变成日期的那一刻起，
+-> 改名窗口关闭。
++六处运行时身份已在 `15a202db` 原子落地，不再安排一次改名。权威首次使用标记仍在
++[baseline/README.md](baseline/README.md)。后续任何身份/数据目录变更都必须考虑用户已有数据，
++不能以清空目录代替迁移。
+ 
+----
++debug 验证可使用 `WARP_DATA_PROFILE`，release 使用隔离 HOME；从当前实现确认实际路径。
++禁止照抄旧 `.warp-oss` 清理命令，更不得修改用户真实数据或旧 Warp 凭据。
+ 
+ <a id="m0"></a>
+-## M0 · 基线冻结
++## M0 · 历史基线
+ 
+ <a id="m0-x1"></a>
+-### 入口条件
+-
+-无（起点）。
+-
+ <a id="m0-x2"></a>
+-### 动作
+-
+-| 步 | 动作 | 参考 |
+-|---|---|---|
+-| 0.1 | **git 拓扑重整**：`fetch origin master` → `remote rename origin upstream` → `remote add origin git@github.com:tedczj/term4u.git` → `reset --hard upstream/master` → **核验 `git status` 为空** → `push -u origin main` | [05 §1](05-阶段1-仓库与品牌.md#s1) |
+-| 0.2 | 核验 dotfiles 是否随 fetch 回来；据此决定 `.gitignore` / `.github` 是裁剪还是起草 | [05 §2](05-阶段1-仓库与品牌.md#s2) |
+-| 0.3 | 装 pinned 工具链（Rust 1.92.0） | [07 §7.2.1](07-测试与验证策略.md#s7-2-1) |
+-| 0.4 | `./script/bootstrap --skip-common-skills` + `./script/install_cargo_test_deps` | 同上（**`--skip-common-skills` 是硬性的**） |
+-| 0.5 | 首次全量构建 `cargo build --workspace --all-targets`，记录耗时 | 同上 |
+-| 0.6 | 首次 `./script/presubmit`，**记录失败项，不修** | [07 §7.2.2](07-测试与验证策略.md#s7-2-2) |
+-| 0.7 | 产出 `baseline/tests.txt`、`known-fail.txt`、`ignored.txt`、`environment.txt` | [07 §7.2.3](07-测试与验证策略.md#s7-2-3) |
+-| 0.8 | 用改造前的 `warp-oss` 走一遍 13 个手工场景，记录 `lsof` 与行为 | [07 §7.11](07-测试与验证策略.md#s7-11) |
+-| 0.9 | 用 `warp-oss` 建一份"真实使用过"的数据库并存档（作为 DB 回归的样本） | [07 §7.9.2](07-测试与验证策略.md#s7-9-2) |
+-| 0.10 | **核验 6 个 warpdotdev git 依赖的许可证**，结果（含 commit hash）存进 `baseline/git-deps-licenses.txt` | [04 §1.1](04-残余依赖与许可证架构.md#s1-1) |
+-| 0.11 | 写 `script/deletion_set.txt`（删除集清单，与 [03 §1](03-阶段1-云模块删除与离线化.md#s1) 一一对应）+ `script/test_inventory` + `script/lib/classify_tests.py` | [07 §7.3.4](07-测试与验证策略.md#s7-3-4) |
+-| 0.12 | 写 `script/check_license_boundaries` + `script/license_boundary_allowlist.txt` | [04 §5](04-残余依赖与许可证架构.md#s5) |
++已有工具链、测试清单、许可证和删除基线记录保留在 `baseline/` 与 `phase1-acceptance/`。
++不再执行初始化 Git remote、reset、首次快照等旧开仓任务。
+ 
+ <a id="m0-x3"></a>
+-### 门禁
+-
+-| 项 | 要求 |
+-|---|---|
+-| 0.1 的 `git status` | **必须为空**。非空则先查清差异来源，不得 commit |
+-| 基线产物 | 4 份文件全部产出并提交 |
+-| 手工场景 | 13 个全部记录（这是**改造前**的对照组，只此一次机会） |
+-| DB 样本 | 存档并在 `baseline/README.md` 记录来源 |
+-
+ <a id="m0-x4"></a>
+-### 产出
+-
+-```
+-docs/redesign/baseline/
+-├── README.md                  # 各文件的说明；FIRST_REAL_USE 标记
+-├── environment.txt            # 工具链版本 / 平台 / 冻结的命令
+-├── tests.txt                  # 全量测试清单（nextest list）
+-├── known-fail.txt             # 首次即失败/flake 的项（跑三遍取并集）
+-├── ignored.txt                # 87 个 #[ignore] 及理由
+-├── build-first.log
+-├── presubmit-first.log
+-├── nextest-first.log
+-├── git-deps-licenses.txt      # 6 个 git 依赖的许可证 + commit hash
+-├── manual-scenarios-m0.md     # 13 个场景的改造前基线
+-└── legacy-datadir/            # DB 回归样本（大文件，见 README 说明是否入 git）
+-```
+-
+ <a id="m0-x5"></a>
+-### 已知会失败的项（预期，记进 `known-fail.txt`）
+-
+-| 项 | 原因 |
+-|---|---|
+-| presubmit 第 9 步（PSScriptAnalyzer） | `script/lint_powershell:8` 指向不存在的 `.PSScriptAnalyzerSettings.psd1`（仅在装了 `pwsh` 的机器上） |
+-| 部分 `crates/integration` e2e | 62 个 `#[ignore]` 之外仍可能有 flake（6 个测试的 ignore 理由直接写着 "Flaking on CI"） |
+-
+----
++未关闭项是改造前 GUI 场景及真实 legacy 数据。按 11 章 R2 补采，无法补采须取得替代批准并
++记录覆盖差距；不能凭现有 fixtures 自动宣布 M0 已完成。
+ 
+ <a id="m1"></a>
+-## M1 · 网络硬拒绝
++## M1 · 网络守卫
+ 
+ <a id="m1-x1"></a>
+-### 入口条件
+-
+-M0 全部门禁通过。
+-
+ <a id="m1-x2"></a>
+-### 动作
+-
+-| 步 | 动作 | 参考 |
+-|---|---|---|
+-| 1.1 | 在 `crates/http_client`、`crates/websocket`、`crates/warp_core`、`app` 四处定义 `offline_hard` feature（跨 crate 传递） | [03 §6.2](03-阶段1-云模块删除与离线化.md#s6-2) |
+-| 1.2 | 写 `check_peer` 守卫（约 15 行，**独立文件**，文件头注明"term4u 原创，阶段 2 将以 MIT 重新发布"） | [03 §7.3](03-阶段1-云模块删除与离线化.md#s7-3)、[06 §7 K4](06-阶段2-完整MIT路线.md#s7) |
+-| 1.3 | 接到 `crates/http_client/src/lib.rs:370-400` `execute_inner` | [03 §7.2](03-阶段1-云模块删除与离线化.md#s7-2) |
+-| 1.4 | **单独**接到 `crates/http_client/src/lib.rs:499` `eventsource`（它绕过 `execute_inner`） | 同上 |
+-| 1.5 | 接到 `crates/websocket/src/native.rs:49`（直连）与 `crates/websocket/src/proxy.rs:81`（代理的实际 socket） | 同上 |
+-| 1.6 | 装自定义 resolver：非 loopback 主机名直接失败且**不发 DNS 查询** | [03 §7.4](03-阶段1-云模块删除与离线化.md#s7-4) |
+-| 1.7 | 写 8 条守卫测试 G1–G8 | [07 §7.5.3](07-测试与验证策略.md#s7-5-3) |
++HTTP/WebSocket loopback 守卫、无外部 DNS resolver 和边界检查已实现，保持不变。
+ 
+ <a id="m1-x3"></a>
+-### 门禁（[07 §13](07-测试与验证策略.md#s7-13) M1 行）
+-
+-| 项 | 命令 / 要求 |
+-|---|---|
+-| clippy | F2 + F5 全过 |
+-| 测试清单 diff | **只增不减**：`tests.txt` 相比 M0 只多出 8 条守卫测试 |
+-| **`proxy_tests.rs` 三个测试** | **必须仍然绿**——这是"拦截层选对了"的直接证据 |
+-| 集成测试 | 331 个与 M0 一致（`known-fail.txt` 之外无新增失败） |
+-| 网络 | **V3（lsof 零外连）+ V4（DNS 零查询）** —— 用 `cargo run -p warp --bin warp-oss --features offline_hard` 的产物验证（**修正**：前一版写"用 F1 产物"，但 `term4u` bin 与 `local_only` 都是 M2 的产物，M1 还不存在。`warp-oss + offline_hard` 是 M1 唯一可用的带守卫产物——而且它**更有说服力**：生产 URL 原封不动还在配置里，却一个包都发不出去，这正是 H4 的直接演示。预期现象：日志里有连接被拒/重试报错，属正常，只看 lsof/DNS 两个硬指标） |
+-| 许可证 | `./script/check_license_boundaries` 过 |
+-
+ <a id="m1-x4"></a>
+-### 为什么 M1 的门禁最严
+-
+-> M1 是**唯一一个"改动小、验证价值极高"**的里程碑。守卫写对了，后面六个里程碑
+-> 都在安全网下；写错了（比如拦在 URI 层），要么误杀测试，要么根本没拦住。
+-> 因此这里值得把验证做到最细。
+-
+----
++门禁归入 11 章 §4：守卫回归 + 真实候选产物静默运行零外连/零 DNS/零重试。
++旧 `warp-oss` 构建命令仅属于历史基线，不再用于当前产品验收。
+ 
+ <a id="m2"></a>
+-## M2 · Offline Channel 与新入口
++## M2 · 本地产品入口
+ 
+ <a id="m2-x1"></a>
+-### 入口条件
+-
+-M1 门禁通过。
+-
+ <a id="m2-x2"></a>
+-### 动作
+-
+-| 步 | 动作 | 参考 |
+-|---|---|---|
+-| 2.1 | `ConnectivityMode` enum + `ChannelConfig` 改造（`crates/warp_core/src/channel/config.rs:8-28`） | [03 §4.1](03-阶段1-云模块删除与离线化.md#s4-1) |
+-| 2.2 | 九个云访问器改为 `Result<_, OfflineError>`；**`test-util` 分支优先级高于 `offline_hard`** | [03 §4.2](03-阶段1-云模块删除与离线化.md#s4-2) |
+-| 2.3 | choke point ①：`state.rs:59/:249/:262/:276` 四处 | [07 §7.4.1](07-测试与验证策略.md#s7-4-1) |
+-| **2.4** | **`ChannelState::init()` 兜底值改离线 + 三个 `override_*` 突变器与 `uses_staging_server()` 处置**（前一版遗漏）。~~`Channel::Offline` 变体~~ **不做**——V0/V1 复用 `Channel::Oss`，变体决策推迟到 M7 | [03 §4.2](03-阶段1-云模块删除与离线化.md#s4-2) 补充表、[03 §4.4](03-阶段1-云模块删除与离线化.md#s4-4) |
+-| 2.5 | 新增 `app/src/bin/term4u.rs`（**含照抄 oss.rs 的 embed_plist 段**）+ `crates/warp_tui/src/bin/term4u.rs`，`default-run` 指向它们 | [03 §3.1](03-阶段1-云模块删除与离线化.md#s3-1) |
+-| 2.6 | 删 8 个生成器 bin（app 侧含 **`name = "warp"`** 的那个）+ `crates/warp_tui/Cargo.toml:79` 的 `warp_channel_config` 依赖行 + `script/install_channel_config` + `crates/warp_channel_config` | [03 §3.2](03-阶段1-云模块删除与离线化.md#s3-2) |
+-| 2.7 | 定义 `local_only` feature 种子（加法定义）+ **产出 `baseline/features-audit.md`：202 项 default 逐项标注 本地保留/云删除/待定**（F1 的门禁在 M4 才生效） | [03 §6.3](03-阶段1-云模块删除与离线化.md#s6-3) |
+-| 2.8 | 解耦 `gui = ["voice_input"]`（`app/Cargo.toml:741`） | [03 §6.4](03-阶段1-云模块删除与离线化.md#s6-4) |
++保留 `term4u`/`term4u-tui`、ConnectivityMode、local_only 和运行脚本，不新增 Offline channel。
+ 
+ <a id="m2-x3"></a>
+-### 门禁
+-
+-| 项 | 要求 |
+-|---|---|
+-| clippy | F5（默认矩阵）+ F0 的 clippy |
+-| 测试清单 diff | 无白名单外的消失 |
+-| **F0 构建（主）** | `cargo build -p warp --bin term4u --features offline_hard` 通过，**且 `./target/debug/term4u` 能启动进入终端**（**修正**：前一版此处要求 F1/local_only——那是上游从未编译过的组合，隐含把上百个 feature 的 cfg 修复塞进 M2；F1 门禁移至 M4，见 [03 §6.3](03-阶段1-云模块删除与离线化.md#s6-3)） |
+-| **F3 测试** | `cargo nextest run -p warp --features offline_hard,test-util` 的失败集 ⊆ `known-fail.txt`（local_only 变体的 F3 同样移至 M4） |
+-| **F4 默认构建** | `cargo build --workspace` 仍然通过（上游合并能力） |
+-| 手工场景 | S1（启动）、S7（设置）、S11（退出），用 F0 产物 |
+-| **DB** | 用 [07 §7.9.2](07-测试与验证策略.md#s7-9-2) 的旧 DB 样本验收（迁移常量在任何原生构建都存在——[03 §6.3](03-阶段1-云模块删除与离线化.md#s6-3) 的事实修正——这条验收抓的是**回归**，不是 feature 漏配） |
+-| 网络 | V3（F0 产物） |
+-
+ <a id="m2-x4"></a>
+-### ⚠️ M2 的特别提醒
+-
+-> **`FIRST_REAL_USE` 标记在这里生效。** M2 完成后 term4u 就能启动了，很容易顺手
+-> 拿它当终端用。**一旦这么做，改名窗口就关闭了**（[§2.1](#s2-1)）。
+->
+-> 两个选择：① M2–M6 只用隔离数据目录——**现成机制是 `WARP_DATA_PROFILE=<名字>`
+-> （仅 debug 构建生效，`state.rs:139-151`；给目录/keyring 加后缀）**，release 产物则
+-> 验证前后手工备份/清空 `~/.warp-oss`（[03 §4.4](03-阶段1-云模块删除与离线化.md#s4-4)：
+-> V0 的数据目录就是它）；② 现在就把 M7 的六处改名提前做掉。
+-> **不允许第三种"先用着，回头再改"。**
+-> （**修正**：前一版写的 `TERM4U_DATA_DIR` 环境变量在代码里不存在，勿照抄。）
+-
+----
++当前必须重新通过 default+offline_hard、local_only GUI/TUI 构建及启动，验证 bundle、scheme、
++keyring 和数据目录身份；入口文件存在不是门禁通过。
+ 
+ <a id="m3"></a>
+-## M3 · 启动流程三分
++## M3 · 本地初始化
+ 
+ <a id="m3-x1"></a>
+-### 入口条件
+-
+-M2 门禁通过。
+-
+ <a id="m3-x2"></a>
+-### 动作
+-
+-| 步 | 动作 | 参考 |
+-|---|---|---|
+-| 3.1 | 把 `initialize_app`（`app/src/lib.rs:1456-2606`，1,151 行）拆成 `initialize_common_app` / `initialize_local_app` / `initialize_cloud_app` | [03 §5.2](03-阶段1-云模块删除与离线化.md#s5-2) |
+-| 3.2 | choke point ②：`ServerApiProvider` 内部改造为双后端（`Backend::Cloud / Backend::Offline`），`new_for_test()` 签名不变仍返回 `Self`（**类型名不换**——36 处 `handle(ctx)` 与遥测宏展开都写死了它） | [03 §8.2](03-阶段1-云模块删除与离线化.md#s8-2)、[07 §7.4.1](07-测试与验证策略.md#s7-4-1) |
+-| 3.3 | 实现 `OfflineApi`：13 个 trait / 178 个方法；迁移 ~53 处 `provider.get()` 具体类型调用点到 trait getter | [03 §8.2](03-阶段1-云模块删除与离线化.md#s8-2) |
+-| 3.4 | choke point ③：`initialize_app_for_terminal_view`（`app/src/test_util/terminal.rs:76`）的离线变体 | [07 §7.4.1](07-测试与验证策略.md#s7-4-1) |
+-| 3.5 | `app_callbacks`（`:2608-2936`）删除四个遥测出口——**只删回调内的遥测调用，`on_resigned_active` / `on_should_close_window` 的 quake mode 与退出确认逻辑必须保留**；尤其 `on_will_terminate` 的 `flush_telemetry_events_for_shutdown` | [03 §5.3](03-阶段1-云模块删除与离线化.md#s5-3) |
+-| 3.6 | `LocalAuthStateProvider` 空实现（choke point ④） | [03 §1.2](03-阶段1-云模块删除与离线化.md#s1-2) |
++保留 common/local 初始化的本地职责，删除已移除功能的 singleton/action/恢复分支。
++不再执行旧 ServerApi 双后端、AuthClient/ObjectClient trait 上移任务。
+ 
+ <a id="m3-x3"></a>
+-### 门禁
+-
+-| 项 | 要求 |
+-|---|---|
+-| **测试清单 diff** | **零变化** —— M3 是**纯搬运 + 空实现**，不删任何测试。清单有变化就说明搬错了 |
+-| clippy | F2 + F5 |
+-| 集成测试 | 与 M2 一致 |
+-| 手工场景 | S1（启动路径变化最大） |
+-| 网络 | V3 |
+-| DB | 7.9.2 |
+-
+ <a id="m3-x4"></a>
+-### M3 是工作量最大的一个里程碑
+-
+-178 个方法的空实现不是琐事。**建议按 trait 分批**，每批一个 commit：
+-
+-```
+-3.3a  TuiOnboardingClient(1) + ManagedMcpClient(1) + ReferralsClient(2) + FactoryClient(3)   → 7 个
+-3.3b  BlockClient(4) + WorkspaceClient(5) + IntegrationsClient(7) + ManagedSecretsClient(8)  → 24 个
+-3.3c  HarnessSupportClient(13) + TeamClient(16) + AuthClient(18)                             → 47 个
+-3.3d  ObjectClient(30)                                                                        → 30 个
+-3.3e  AIClient(70)                                                                            → 70 个
+-```
+-
+-每批之后跑一次 F3，观察失败数下降。
+-
+----
++按 11 章 R1/R2 验证本地依赖安装顺序、持久化加载与 GUI/TUI 启动，不得跳过恢复逻辑换取编译。
+ 
+ <a id="m4"></a>
+-## M4 · 删叶子模块
++## M4 · V0 严格验收遗留
+ 
+ <a id="m4-x1"></a>
+-### 入口条件
+-
+-M3 门禁通过。**这是 V0 的最后一个里程碑。**
+-
+ <a id="m4-x2"></a>
+-### 动作
+-
+-按 `script/deletion_set.txt` 执行，分四批：
+-
+-| 批 | 内容 | 源文件 / 行（约） |
+-|---|---|---|
+-| **4a 上报与追踪** | `app/src/server/telemetry/` **拆删**（删 collector/rudder_message/context/context_provider/secret_redaction/传输，**保留 `events.rs` + `macros.rs`**）、`telemetry_ext.rs`、`app/src/crash_reporting/`（+`crash_reporting` feature 及转发项）、`app/src/tracing/native.rs`、`cloud_agent_auth.rs`、3 个 sentry 脚本；**7 个宏 shim（3 个文件：warp_core / warpui_core / app macros.rs，[03 §9.2](03-阶段1-云模块删除与离线化.md#s9-2)）**；warpui_core `event_store.rs` 删（MIT 岛，双版权行） | 15 文件 / ~10,000 行 |
+-| **4b 更新与实验** | `app/src/autoupdate/`、**`crates/warp_tui/src/autoupdate.rs`（+ tests，前一版遗漏）**、`changelog_model.rs`、`app/src/server/experiments/`、`app/src/experiments/`、`iap_identity_minter.rs`、`voice_transcriber.rs` | 19 文件 / ~6,000 行 |
+-| **4c 共享与远端** | `app/src/terminal/shared_session/`、`app/src/remote_server/`、`crates/remote_server/`、`crates/voice_input/`、`app/src/ai/voice/` | 67 文件 / 28,295 行 |
+-| **4d ambient / computer_use / 云环境** | `app/src/ai/ambient_agents/`、`cloud_environments/`、`cloud_agent_config/`、`cloud_agent_settings.rs`、`connected_self_hosted_workers.rs`、`crates/computer_use/`、blocklist 里的录屏与 Computer Use 文件 | 55+ 文件 / 13,000+ 行 |
+-| **4e Windows 资产**（[决策 D11](README.md#s2)） | `app/assets/windows/`（**120MB**，含 77MB 的 `.pdb` LFS 对象）、`.gitattributes` 的 `*.pdb filter=lfs` 规则、`script/windows/`(11 项)、`script/lint_powershell` + `PSScriptAnalyzerCustomRules.psm1` + `.PSScriptAnalyzerSettings.psd1`、presubmit 第 9 步、CI 三个矩阵的 Windows 项 | −120MB；见 [03 §13.2](03-阶段1-云模块删除与离线化.md#s13-2) W1–W5 |
+-
+-每批之后：
+-
+-```bash
+-PREV=m3; CUR=m4a          # 每批递进：m4a -> m4b -> m4c -> m4d
+-./script/test_inventory snapshot "$CUR"
+-./script/test_inventory diff "$PREV" "$CUR"
+-cargo clippy --workspace --all-targets --tests -- -D warnings   # 先收敛 clippy
+-```
++遥测/Sentry/OTLP、更新、共享/远端、ambient/cloud environment、computer use、voice、
++Windows 资产等删除已实施，不再列为新任务。
+ 
+ <a id="m4-x3"></a>
+-### 门禁
+-
+-| 项 | 要求 |
+-|---|---|
+-| clippy | F2 + F5，**且 `dead-code-m4.txt` 相比 M3 先涨后跌**（[07 §7.7.3](07-测试与验证策略.md#s7-7-3)） |
+-| **测试清单 diff** | 减少量**精确等于** `deleted-tests.txt`。多一条少一条都要解释 |
+-| **F1 首次生效** | `cargo build -p warp --bin term4u --no-default-features --features local_only` 通过（叶子删完后 default 里的对应 feature 已无代码，`features-audit.md` 里标"本地保留"的项此时补进 `local_only` 清单）；F3 的 local_only 变体失败集 ⊆ `known-fail.txt` |
+-| 集成测试 | 删掉对应测试体后，剩余的与 M3 一致 |
+-| **手工场景** | **13 个全部走一遍**，与 M0 的基线逐项对照 |
+-| 网络 | V3 + **V6（待发遥测文件为零）** |
+-| 许可证 | `check_license_boundaries` 过 |
+-| DB | 7.9.2 |
+-
+ <a id="m4-x4"></a>
+-### 🎯 V0 达成标志
+-
+-```bash
+-# 1. 能构建
+-cargo build --release -p warp --bin term4u --no-default-features --features local_only
+-
+-# 2. 能用（手工：打开、分栏、跑命令、开文件树、预览文本、改设置、退出）
+-
+-# 3. 零外连
+-./target/release/term4u & PID=$!; sleep 60
+-lsof -nP -iTCP -iUDP -p $PID | grep -v -E '127\.0\.0\.1|\[::1\]|localhost|^COMMAND' \
+-  && echo "FAIL" || echo "V0 ACHIEVED"
+-kill $PID
+-
+-# 4. presubmit 在既定豁免下通过
+-./script/presubmit    # 失败集 ⊆ known-fail.txt
+-```
+-
+-**到这里可以停下来长期使用。** M5–M7 是可选的后续。
+-
+----
++V0 关闭需要当前候选的构建、S1–S13、旧 DB、日志三场景、零外连/DNS/待发文件、产物扫描、
++presubmit、测试清单及许可证边界证据。已全部纳入 11 章 C1–C10，不能用历史 PASS 代替。
++最终在 `phase1-acceptance/final/manifest.md` 建立证据索引后再关闭。
+ 
+ <a id="m5"></a>
+-## M5 · 删云 Server 与认证
++## M5 · 本地功能与入口收敛
+ 
+ <a id="m5-x1"></a>
+-### 入口条件
+-
+-M4 门禁通过；V0 已经日常使用一段时间（建议至少两周，让类 C 行为漂移有机会暴露）。
+-
+ <a id="m5-x2"></a>
+-### 动作
+-
+-| 步 | 动作 |
+-|---|---|
+-| 5.1 | 删 `app/src/auth/` 的云部分（Firebase / SSO / device auth / token 刷新），保留 `LocalAuthStateProvider` |
+-| 5.2 | 删 `app/src/server/cloud_objects/`、`sync_queue.rs`、`app/src/cloud_object/`、`app/src/drive/`、`app/src/settings/cloud_preferences_syncer.rs` |
+-| 5.3 | 删 `app/src/ai/` 的 agent 系列（`agent/`、`agent_sdk/`、`agent_management/`、`agent_conversations_model.rs`、`artifacts/`、`predict/`、`get_relevant_files/`、`remote_agent_context.rs`、`restored_conversations.rs`、`request_usage_model.rs` 等）、`app/src/ai_assistant/` |
+-| 5.4 | **范围已调整并完成**：删除全部 MCP 产品与执行面，不再保留本地 stdio MCP；仅保留无法删除且明确 decode-and-reject 的协议墓碑（`916039e2`） |
+-| 5.5 | `LocalPrivacyPolicy` 固化（[03 §10](03-阶段1-云模块删除与离线化.md#s10)） |
+-| 5.6 | **`app/src/ai/blocklist` 的 V1 决策**：按 [03 §12.3](03-阶段1-云模块删除与离线化.md#s12-3) 的三个量化判据在 A / B 之间选定并执行 |
+-| 5.7 | LSP 自动下载关闭（`crates/lsp/src/install.rs` + 5 个 `servers/*.rs`） |
+-| 5.8 | 在线字体 `asset_cache::url_source` 改为拒绝远程 URL |
+-| 5.9 | 删会打开外部站点的菜单项（Privacy Policy / Data Management / Docs / GitHub Issue / Drive Web Link / Oz Dashboard） |
+-| 5.10 | **Windows 平台代码**（[03 §13.2](03-阶段1-云模块删除与离线化.md#s13-2) W6–W9）：4 个平台专属目录（16 文件 / 1,246 行）、`crates/warp_terminal/src/local_tty/windows/`（ConPTY，8 文件 / 1,559 行）、20 个 `windows*.rs`（2,652 行）、10 个 `[target.'cfg(windows)'.dependencies]` 块。**内联 `#[cfg(windows)]`（472 处 / 152 文件）不动** |
+-| 5.11 | **warp_tui 的云 UI**（[03 §1.6](03-阶段1-云模块删除与离线化.md#s1-6)）：`cloud_run.rs`/`cloud_run_view.rs`、`grok_oauth/`、`handoff/`、`api_keys_menu.rs` 等——随 5.6 的 blocklist 决策同批处置 |
++执行 11 章 R1–R4：编译断裂、本地数据和核心行为、Settings/菜单/URI/TUI 残留、外链与 Windows。
++blocklist 路线 A、PATH LSP、TUI 本地化、本地模型和主要云目录删除不再重复施工。
+ 
+ <a id="m5-x3"></a>
+-### 门禁
+-
+-同 M4，全部项。额外：
+-
+-| 项 | 要求 |
+-|---|---|
+-| **5.6 的决策记录** | 在 `docs/redesign/baseline/blocklist-decision.md` 写明选了哪条路线、三个判据的实测值、理由 |
+-
+----
++出口是云功能入口及调用方消失，同时本地功能/旧数据通过测试与实机验证；网络守卫不是
++保留无效云 UI 的理由。精确门禁见 11 章 §4/C1–C5。
+ 
+ <a id="m6"></a>
+-## M6 · 依赖清理
++## M6 · 依赖和 V1 验收
+ 
+ <a id="m6-x1"></a>
+-### 入口条件
+-
+-M5 门禁通过。**这是 V1 的最后一个里程碑。**
+-
+ <a id="m6-x2"></a>
+-### 动作
+-
+-| 步 | 动作 | 参考 |
+-|---|---|---|
+-| 6.1 | 删 `crates/warp_server_client`、`warp_server_auth`、`firebase`、`warp_multi_agent_client`、`cloud_object_client`、`cloud_object_models`、`cloud_object_persistence`、`cloud_objects` | [03 §1](03-阶段1-云模块删除与离线化.md#s1) |
+-| 6.2 | **剥离残留边 E1**：`crates/warp_terminal/Cargo.toml:49` ← `session-sharing-protocol` | [04 §1.3](04-残余依赖与许可证架构.md#s1-3) |
+-| 6.3 | **判断残留边 E2**：`crates/persistence/Cargo.toml:24` ← `warp_multi_agent_api`。若只提供 proto 类型则可保留（记录判断依据） | 同上 |
+-| 6.4 | 删 `app/src/server/graphql/`、`app/src/server/server_api.rs` + `server_api/`（若 M5 的 blocklist 决策是路线 A，此处可整块删；路线 B 则保留 `ServerApiProvider` 的 Offline 后端）。**路线 B 前置**：先把 `AuthClient`（`warp_server_client/src/auth/mod.rs:84`）与 `ObjectClient`（`cloud_object_client/src/lib.rs:201`）两个 trait 定义上移进 `app`，再执行 6.1 的 crate 删除（[03 §8.6](03-阶段1-云模块删除与离线化.md#s8-6)） | [03 §8.5](03-阶段1-云模块删除与离线化.md#s8-5) |
+-| 6.5 | `deny.toml` `[sources]` 收紧：删 `allow-org`，改为显式清单 | [04 §2.3](04-残余依赖与许可证架构.md#s2-3) |
+-| 6.6 | `email_address` 从 `branch = "main"` 改为 rev pin | [04 §2.2](04-残余依赖与许可证架构.md#s2-2) |
+-| 6.7 | 删 `script/resolve_common_skills` + `skills-lock.json`；删 `factory-files` 与 `oz-platform` 两个 skill；presubmit 移除 `test_factory_files_skill.py` | [05 §5.2](05-阶段1-仓库与品牌.md#s5-2) |
+-| 6.8 | 删其余云相关脚本（`deploy_remote_server*`、`push-dev-image`） | [05 §5.1](05-阶段1-仓库与品牌.md#s5-1) |
++执行 11 章 R5/R6：manifest/feature/显式 git 来源、已删除测试审计、最终工程及跨平台验收。
++已删除 crate/协议和已 pin 依赖仅需保持并验证，不恢复 proto 或 ServerApi 空壳。
+ 
+ <a id="m6-x3"></a>
+-### 门禁
+-
+-同 M5。额外：
+-
+-| 项 | 命令 |
+-|---|---|
+-| **V1 依赖树黑名单** | `cargo tree -p warp --no-default-features --features local_only \| rg 'sentry\|opentelemetry\|rudder\|warp_server_client\|warp_server_auth\|warp_multi_agent\|cloud_object\|firebase\|session-sharing\|computer_use\|voice_input\|remote_server'` → **空** |
+-| **V2 二进制字符串** | [07 §7.12.2](07-测试与验证策略.md#s7-12-2) 的命令 → **空**（白名单除外） |
+-| `cargo deny check` | `cargo deny check sources licenses bans advisories` 通过 |
+-
+ <a id="m6-x4"></a>
+-### 🎯 V1 达成标志
+-
+-V1 依赖树黑名单为空 + V2 二进制字符串为空 + 前述全部门禁通过。
+-
+----
++**V1 达成条件**：11 章 C1–C10 全部通过，当前候选的 metadata/tree/source/lock/binary、
++GUI/TUI、旧 DB、网络、macOS arm64/Linux x86_64 和完整工程证据已归档。缺环境为未完成。
+ 
+ <a id="m7"></a>
+-## M7 · 品牌、改名与发布
++## M7 · 后续品牌与发布（当前 Goal 不执行）
+ 
+ <a id="m7-x1"></a>
+-### 入口条件
+-
+-M6 门禁通过。
++V1 关闭后另行安排，不以 M7 扩大本次编译和本地化收敛范围。
+ 
+ <a id="m7-x2"></a>
+-### 动作
++| 后续项 | 范围 |
++|---|---|
++| 品牌资产 | 依 05 章 B1–B14 逐项核对，替换图标和用户可见上游品牌；运行时身份不再重复改 |
++| 文档与作者 | 重写对外 README/CONTRIBUTING/SECURITY 等，更新联系方式与 authors；保留上游归属 |
++| 许可证材料 | `LICENSES.md`、两个 MIT 岛的 LICENSE、生成并核对 `NOTICES.md`；不改 AGPL 代码许可证 |
++| 发布准备 | 名称可用性记录、打包和签名、发布合规；首个 tag/push 另需用户授权 |
+ 
+-| 步 | 动作 | 参考 |
+-|---|---|---|
+-| **7.1** | **已提前完成**：六处改名在原子提交 `15a202db` 落地（R1 AppId / R2 二进制 / R3 日志 / R4 bundle id / R5 scheme / R6 数据目录） | [05 §6.1](05-阶段1-仓库与品牌.md#s6-1) |
+-| 7.2 | 品牌资产 B1–B14 逐项执行 | [05 §4](05-阶段1-仓库与品牌.md#s4)、[04 §9.5](04-残余依赖与许可证架构.md#s9-5) |
+-| 7.3 | term4u 图标最小集；删 5 个 channel 图标目录 | [05 §4.2](05-阶段1-仓库与品牌.md#s4-2) |
+-| 7.4 | `authors` 字段：根 `Cargo.toml:26` 改为 `["term4u contributors", "Warp Team <dev@warp.dev>"]`，30 个 crate 改为 `authors.workspace = true` | [05 §7](05-阶段1-仓库与品牌.md#s7) |
+-| 7.5 | 文档重写矩阵：README / CONTRIBUTING / SECURITY / AGENTS 重写，FAQ 与 todo 删除，CODE_OF_CONDUCT 改联系方式 | [05 §3](05-阶段1-仓库与品牌.md#s3) |
+-| 7.6 | 新增 `LICENSES.md`、`crates/warpui{,_core}/LICENSE`、`NOTICES.md`（`cargo about generate about.hbs`） | [04 §3](04-残余依赖与许可证架构.md#s3)、[04 §4](04-残余依赖与许可证架构.md#s4)、[04 §7](04-残余依赖与许可证架构.md#s7) |
+-| 7.7 | 清理 `about.toml:38-49` 的悬空注释；`check_license_config_sync` 与 `check_license_boundaries` 接进 presubmit | [04 §2.4](04-残余依赖与许可证架构.md#s2-4)、[05 §5.4](05-阶段1-仓库与品牌.md#s5-4) |
+-| 7.8 | 复验名称可用性（crates.io / GitHub），记进 `baseline/name-availability.txt` | [04 §9.3](04-残余依赖与许可证架构.md#s9-3) |
+-| 7.9 | 打第一个 tag，推送 | |
++已接入的许可证守卫和 skills 下载链清理不再作为 M7 待开发项。
+ 
+ <a id="m7-x3"></a>
+-### 门禁
+-
+-同 M6，全部项。额外：
+-
+-| 项 | 要求 |
+-|---|---|
+-| **改名验证** | [05 §6.3](05-阶段1-仓库与品牌.md#s6-3) 的 4 条 |
+-| **DB 双目录验证** | 新数据目录被创建；旧数据目录**未被触碰**；`legacy-datadir` 样本在新路径下仍可加载 |
+-| **品牌最终扫描** | `rg -ni 'warp' --glob '!specs/**' --glob '!agents/**' --glob '!docs/**' --glob '!LICENSE*' -l` 的结果**只剩** `warp_*` crate 名与内部符号（[05 §8.2](05-阶段1-仓库与品牌.md#s8-2)） |
+-| **V1–V6 全部** | [07 §7.12](07-测试与验证策略.md#s7-12) |
+-| **NOTICES** | `cargo about generate about.hbs` 产出且与提交的 `NOTICES.md` 一致 |
+-| **V5 防火墙长期开着** | 从此刻起持续运行，拒绝日志应为空 |
+-
+ <a id="m7-x4"></a>
+-### 🎯 V2 达成标志
+-
+-上述门禁全过，第一个 tag 推送成功。
+-
+----
++V2 必须在 V1 门禁基础上增加品牌扫描、归属/NOTICES、名称与发布产物验证；发布操作完成后
++才能宣称 V2。完整 MIT 路线见 06 章，不在本阶段自动启动。
+ 
+ <a id="s3"></a>
+-## 三、风险登记簿
+-
+-| # | 风险 | 概率 | 影响 | 触发信号 | 缓解 | 兜底 |
+-|---|---|---|---|---|---|---|
+-| **RK1** | **M0 首次全量构建失败**（工具链、平台依赖、私有 channel-config 生成器） | 中 | 阻塞全部 | `cargo build --workspace` 报错 | `warp-oss` / `warp-tui-oss` 是**唯二不依赖私有生成器**的 bin，先只构建它们：`cargo build -p warp --bin warp-oss` | 逐个 crate 构建定位；实在不行先在 `--no-default-features` 下推进 |
+-| **RK2** | **M0 的 `git status` 非空**（快照 ≠ 上游 `066ec71`） | 低 | 全部数字失效 | `git status --porcelain` 有输出 | 存 `snapshot-drift.diff`，逐项判断 | 若差异实质，以**快照**为准重建基线，并在文档里更正基线 commit |
+-| **RK3** | **clippy `dead_code` 洪水失控** | **高** | M4/M5 停滞 | 单个里程碑内 `dead-code-*.txt` 超过数百条 | 把它当**删除清单**用（[07 §7.7.3](07-测试与验证策略.md#s7-7-3)），而不是当障碍 | 临时把某个 crate 的 clippy 降级为 `-W`（**必须记进 `known-fail.txt` 并设修复期限**），**禁止**用 `#[allow(dead_code)]` |
+-| **RK4** | **类 C 行为漂移未被发现** | 中 | 用起来不对但测试全绿 | 手工场景与 M0 基线有差异 | 13 个手工场景每个里程碑对照 | 差异逐条追到 choke point 的语义变化 |
+-| **RK5** | **`AIClient` 70 个方法的空实现工作量超预期** | 中 | M3 拖长 | 3.3e 批次做了一周还没完 | 按 trait 分批（[M3](#m3) 的 3.3a–3.3e） | 若 M5 的 blocklist 决策倾向路线 A，可以**先只实现被调到的方法**，其余 `Err(OfflineError)` 一行带过 |
+-| **RK6** | **git 依赖许可证核验结果为"无许可证"且需要保留** | 中 | 阻塞 V2 发布二进制 | `baseline/git-deps-licenses.txt` 显示无 LICENSE | 源码仓库公开不构成再分发（[04 §1.2](04-残余依赖与许可证架构.md#s1-2)），V0/V1 不受影响 | V2 时三选一：向上游申请补 LICENSE / 换等价 OSS 实现 / 只发源码不发二进制 |
+-| **RK7** | **改名窗口误关**（M2–M6 期间开始真实使用） | **中高** | 需要写数据迁移 + 密钥轮换 | `FIRST_REAL_USE` 从"未发生"变成日期 | debug 构建用 `WARP_DATA_PROFILE=<名字>` 隔离（现成机制，`state.rs:139`）；release 验证前后备份/清空 `~/.warp-oss`；`baseline/README.md` 里显式记 `FIRST_REAL_USE` | 接受成本，写迁移脚本 |
+-| **RK8** | **上游发大版本，合并冲突不可控** | 中 | fork 腐化 | `git merge upstream/master` 冲突数破千 | 改动集中在 3 处（`lib.rs` / `Cargo.toml` / `channel/*`）；不改 crate 名与符号（N1） | 分批合并（按目录 `git checkout upstream/master -- <dir>` 再手工调和） |
+-| **RK9** | **守卫拦漏一条路径** | 中 | H3/H4 破功 | V5 防火墙出现拒绝日志 | 守卫是**默认拒绝**；G1–G8 覆盖 4 类出口 | 从防火墙日志反查是哪条路径，补守卫 + 补测试 |
+-| ~~RK10~~ | ~~`persistence/local_fs` 漏开导致数据库不跑迁移~~ **已作废**：实测 `persistence`（及 ai/lsp/repo_metadata/warp_core）的 build.rs 在非 wasm 目标上**强制**打开 `local_fs` cfg，任何原生构建都带迁移（[03 §6.3](03-阶段1-云模块删除与离线化.md#s6-3) 事实修正） | — | — | — | DB2 验收保留（作为迁移回归网，不是 feature 漏配探测器） | — |
+-| **RK13** | **`local_only` 是上游从未编译过的 feature 组合**：关掉 default 中 100+ 个本地 feature 的 cfg 点会造成编译断裂与功能静默消失 | **高** | F1 门禁（M4）拖长 | F1 编译错误数量大；手工场景发现功能缺失 | V0 主线用 F0（default + `offline_hard`），离线性靠守卫；M2 产出 202 项 default 的分类审计表，`local_only` 按审计表**把本地项全数收进来**（不是 28 项种子）；F1 从 M4 起当门禁 | F1 推迟到 V1 也不影响 V0 的离线保证（守卫在），只影响依赖树清洁度指标 |
+-| **RK14** | **`-p warp_tui` 构建经 `warp = { workspace = true }` 拉开 `warp` 的全部 default feature**（feature unification），`term4u-tui` 无法享受 local_only 裁剪 | 中 | TUI 的依赖树清洁推迟 | `cargo tree -p warp_tui` 黑名单非空 | V0 的 TUI 以 F0 形态交付，离线性由守卫保证（[03 §1.6](03-阶段1-云模块删除与离线化.md#s1-6)） | V1 给 warp_tui 的 warp 依赖加 `default-features = false` + 显式 feature 清单 |
+-| **RK11** | **`bundled_skills` 在 default 里被忽略** | 中 | 默认构建打包 Warp 官方 skill | `resources/bundled/skills/` 出现在产物里 | 已在 [02 §6.3](02-现状审计.md#s6-3) 与 [03 §1.5](03-阶段1-云模块删除与离线化.md#s1-5) 显式登记 | M6 的 6.7 处理 |
+-| **RK12** | **单人项目导致洁净室纪律无法执行**（阶段 2） | **高** | 阶段 2 的"非衍生"主张脆弱 | — | 最大化第三方替代 + 大幅改变功能范围（[06 §4.3](06-阶段2-完整MIT路线.md#s4-3)） | 咨询律师（[06 §4.4 P4](06-阶段2-完整MIT路线.md#s4-4)）；或放弃阶段 2——**阶段 1 的 AGPL 形态本身完全合规** |
++## 三、风险登记
+ 
+-<a id="s3-1"></a>
+-### 3.1 风险复盘节奏
++| 风险 | 当前处置 |
++|---|---|
++| RK3：删代码导致编译/死代码连锁 | R1 分组修复，不增加 allow/ignore，不恢复云空壳 |
++| RK4：本地功能被静默删掉 | R2/R3 行为测试、S1–S13 和旧数据对照，不能只靠 check |
++| RK6：保留 git 来源许可证不明确 | R5 显式来源与许可证审计；未解决不能发布 |
++| RK7：身份和真实数据目录变更 | 身份已冻结；只测试副本，首次真实使用状态仍需保全 |
++| RK9：网络遗漏与无效观测 | R6 对候选产物捕获，检查 DNS 归因与采集成功，不能把空日志当零外连 |
++| RK13：local_only/unification 丢功能 | default/local_only/测试组合和 GUI/TUI 分别构建、测试 |
++| RK12：完整 MIT 的洁净室风险 | 留阶段 2 单独处理，不通过本轮搬运代码改变许可证 |
++| 环境和授权不足 | R0 提前核实工具链、GUI、旧 DB、runner 及提交权限；缺项记 INCOMPLETE |
++
++旧 RK10（local_fs 迁移 feature 漏开）已作废；RK11（skills 资源策略）、RK14（TUI default
++feature 漂移）已有实现处置，仍由 R2/R5 回归保护。旧 ServerApi 空实现工作量等风险不再适用。
+ 
+-每个里程碑关闭时，在 `docs/redesign/baseline/risk-log.md` 追加一段：
++<a id="s3-1"></a>
++### 风险复盘
+ 
+-| 字段 | 内容 |
+-|---|---|
+-| 里程碑 | M<N> |
+-| 触发的风险 | 哪几条 |
+-| 实际影响 | 与预估的差异 |
+-| 新发现的风险 | 追加进本表 |
++批次结束将实际触发项、修复、未验证内容及证据路径写入
++[baseline/risk-log.md](baseline/risk-log.md)。不得覆盖历史失败，也不得把缺环境改写成 PASS。
+diff --git "a/docs/redesign/09-\347\254\254\344\270\200\346\254\241\345\256\236\346\226\275\350\257\246\350\256\276-V0.md" "b/docs/redesign/09-\347\254\254\344\270\200\346\254\241\345\256\236\346\226\275\350\257\246\350\256\276-V0.md"
+index 1e0da039..aa226d7e 100644
+--- "a/docs/redesign/09-\347\254\254\344\270\200\346\254\241\345\256\236\346\226\275\350\257\246\350\256\276-V0.md"
++++ "b/docs/redesign/09-\347\254\254\344\270\200\346\254\241\345\256\236\346\226\275\350\257\246\350\256\276-V0.md"
+@@ -8,9 +8,9 @@
+ > 设计依据全部来自 [02](02-现状审计.md)/[03](03-阶段1-云模块删除与离线化.md)/[07](07-测试与验证策略.md)/[08](08-实施顺序与里程碑.md)
+ > **本次审查修正后**的版本；与旧版冲突处以本章与修正后的 03/07/08 为准。
+ >
+-> **状态说明**：本文保留 V0 开工时的施工基线，不是当前仓库清单。实施进度见
+-> [08 §0](08-实施顺序与里程碑.md#s0)；后续一期已扩大范围并删除全部 MCP，且把 M7 的
+-> 运行时身份切换提前完成。
++> **历史资料**：本文保留 V0 开工时的施工基线，不是当前任务。旧过渡方案不再执行，
++> 遗留验收已并入 [11 · 本地化收敛施工单](11-本地化收敛施工单.md)。
++> 当前阶段状态见 [08 §0](08-实施顺序与里程碑.md#s0)。
+ 
+ <a id="toc"></a>
+ ## 目录
+diff --git "a/docs/redesign/10-M5-M6\346\234\252\345\256\214\346\210\220\351\241\271\345\256\236\346\226\275\350\257\246\350\256\276.md" "b/docs/redesign/10-M5-M6\346\234\252\345\256\214\346\210\220\351\241\271\345\256\236\346\226\275\350\257\246\350\256\276.md"
+index 850b9c1c..973fb84f 100644
+--- "a/docs/redesign/10-M5-M6\346\234\252\345\256\214\346\210\220\351\241\271\345\256\236\346\226\275\350\257\246\350\256\276.md"
++++ "b/docs/redesign/10-M5-M6\346\234\252\345\256\214\346\210\220\351\241\271\345\256\236\346\226\275\350\257\246\350\256\276.md"
+@@ -1,1048 +1,22 @@
+-# 10 · M5/M6 未完成项实施详设
++# 10 · M5/M6 旧施工单入口（已替代）
+ 
+-> 本文把 [08 §0.6–0.7](08-实施顺序与里程碑.md#s0) 中仍未完成的 M5/M6 工作拆成可提交、
+-> 可回滚、可验证的施工批次。基准代码为
+-> `916039e270a1852c3ee62087f4c3ed7cdebcf229`；执行时必须先按本文 §4 刷新所有清单，
+-> 不得照抄会随代码漂移的行号和数量。
++当前唯一施工单是 [11 · 本地化收敛施工单](11-本地化收敛施工单.md)。
++旧任务表已清除，不再安排重复删除云目录、重选 blocklist 路线、重建本地模型或重复 pin 依赖。
+ 
+-## 目录
+-
+-- [一、目标与完成定义](#s1)
+-- [二、不可破坏的本地能力](#s2)
+-- [三、实施前必须冻结的决策](#s3)
+-- [四、基线与证据目录](#s4)
+-- [五、通用施工纪律](#s5)
+-- [六、M5 实施批次](#s6)
+-- [七、M5 出口门禁](#s7)
+-- [八、M6 实施批次](#s8)
+-- [九、M6 / V1 出口门禁](#s9)
+-- [十、测试与跨平台验证矩阵](#s10)
+-- [十一、提交顺序与回滚点](#s11)
+-- [十二、最终验收记录格式](#s12)
+-
+----
+-
+-<a id="s1"></a>
+-## 一、目标与完成定义
+-
+-### 1.1 M5 完成定义
+-
+-M5 完成时，产品代码中不再存在可触达的 Warp 云认证、Drive/cloud object 同步、Warp Agent
+-云运行链、TUI 云会话、LSP 自动下载及 Warp 云站点入口；只保留本地终端、编辑器、文件树、
+-本地 workflow、离线可用的 notebook 数据和 PATH 中已有的 LSP。
+-
+-M5 **不是**以“`offline_hard` 能拦住请求”为完成标准。守卫只作为兜底；M5 的目标是让云功能
+-入口、初始化、重试任务和业务实现本身消失。
+-
+-### 1.2 M6 / V1 完成定义
+-
+-M6 完成时：
+-
+-1. 八个云 crate 从 workspace、manifest、正常依赖树和 `Cargo.lock` 中消失；
+-2. `session-sharing-protocol` 和 `warp_multi_agent_api` 不再出现在 `local_only` 正常依赖树；
+-3. `app/src/server/graphql/`、云 `ServerApi` 和过渡期 `OfflineApi` 被删除；
+-4. `deny.toml` 不再按组织放行 git 依赖，所有保留 git 来源显式列举；
+-5. `email_address` 使用精确 `rev`，不再跟随 `branch = "main"`；
+-6. GUI/TUI、测试和发布构建均通过，V1 依赖树及最终二进制黑名单为空。
+-
+-### 1.3 当前规模快照
+-
+-以下数字只用于估算批次，不作为验收常量：
+-
+-| 区域 | 当前规模 |
+-|---|---:|
+-| `app/src/auth` | 13 文件 / 6,112 行 |
+-| `app/src/drive` | 37 文件 / 20,124 行 |
+-| `app/src/cloud_object` | 12 文件 / 4,429 行 |
+-| `app/src/server/cloud_objects` | 3 文件 / 3,480 行 |
+-| `app/src/ai/agent` + `agent_sdk` + `agent_management` | 95 文件 / 61,839 行 |
+-| `app/src/ai/blocklist` | 198 文件 / 121,472 行 |
+-| `app/src/ai_assistant` | 9 文件 / 3,621 行 |
+-| M6 八个目标云 crate | 65 文件 / 11,095 行 |
+-
+----
+-
+-<a id="s2"></a>
+-## 二、不可破坏的本地能力
+-
+-每批删除前先识别保留面；编译通过不代表行为仍在。
+-
+-| 必须保留 | 验证方式 |
+-|---|---|
+-| 本地 PTY、shell 启动、命令执行和 Ctrl-C | GUI integration 的本地 shell 场景 + TUI 真实终端冒烟 |
+-| 标签页、分栏、窗口恢复 | 现有 pane/workspace 单测 + GUI 手工场景 |
+-| 编辑器、文件树、本地文件搜索、code review | 相关 crate/app 测试；至少打开、编辑、保存一个本地文件 |
+-| 本地和项目 workflow | `LocalWorkflows` 单测；从本地配置加载并执行一个 workflow |
+-| 旧数据库可加载 | 改造前 SQLite fixture + 一份 detached 基线生成的真实数据目录 |
+-| notebook 的本地读取、编辑与恢复 | legacy notebook fixture 打开、修改、退出、重启后内容不丢 |
+-| PATH 中已安装的 LSP | 用假的 PATH server 验证检测与启动；不得发生版本查询或下载 |
+-| 本地日志、panic 日志和日志打包 | [09 §11](09-第一次实施详设-V0.md#s11) 的 L1–L3 |
+-| 本地 skills 资源 | bundle resources 扫描；运行和 bootstrap 不下载或更新 skills |
+-| macOS 与 Linux | 本地便宜门禁通过后，按 §10 选择最小远端矩阵 |
+-
+-以下能力明确删除，不需要保留兼容 UI：Warp 登录/账号、Warp Drive、团队/计费/推荐、Warp
+-云 Agent、云 runner、handoff、API key 管理、云同步、共享会话和自动下载。
+-
+-**外部 CLI agent 的边界**：仍可作为用户在 PTY 中启动的普通子进程运行；删除 Warp 专有的
+-Agent SDK、rich-input、云编排和凭据注入，不替用户限制普通 shell 子进程的网络。
+-
+----
++历史方案以 `916039e2` 为基线，原文可通过
++`git show dc768549:docs/redesign/10-M5-M6未完成项实施详设.md` 查询；它不是当前待办。
++原有范围、保留行为和严格验收已收敛到 11 章 R0–R6 / C1–C10。
+ 
+ <a id="s3"></a>
+-## 三、实施前必须冻结的决策
+-
+-### 3.1 blocklist 路线
+-
+-本文主路径采用 [03 §12](03-阶段1-云模块删除与离线化.md#s12) 的 **路线 A：删除 Warp Agent
+-UI 与执行层**。理由：
+-
+-- M5.3 已要求删除 `agent/`、`agent_sdk/`、`agent_management/` 和 `ai_assistant/`；
+-- 当前 blocklist 仍直接调用 `ServerApiProvider` 和 `warp_multi_agent_api`，保留它会阻止 M6
+-  的两个核心黑名单归零；
+-- 阶段 2 的本地 agent 协议尚未冻结，不能以“以后也许复用”为理由永久保留 12 万行云 UI。
+-
+-开工前创建 `docs/redesign/baseline/blocklist-decision.md`，至少记录：
+-
+-```text
+-DECISION: route-a
+-BASE_HEAD: <sha>
+-OFFLINE_API_CALL_SITES: <rg 实测>
+-BLOCKLIST_TEST_FILES: <find 实测>
+-PHASE2_REUSE_DECISION: 不直接复用；未来按 agent_protocol 重新设计适配层
+-APPROVED_BY: <负责人>
+-DATE_UTC: <时间>
+-```
+-
+-执行命令：
+-
+-```bash
+-rg -n 'ServerApiProvider|get_ai_client|get_factory_client' app/src/ai/blocklist \
+-  | tee /tmp/m5-blocklist-server-api.txt
+-find app/src/ai/blocklist -type f -name '*tests.rs' | sort \
+-  | tee /tmp/m5-blocklist-test-files.txt
+-wc -l /tmp/m5-blocklist-server-api.txt /tmp/m5-blocklist-test-files.txt
+-```
+-
+-如果负责人决定路线 B，**停止执行本文 M5.3/M6.2 主路径**，另写增量设计，明确本地 agent
+-runtime、协议类型归属及 `ServerApi` 替代方案；不得在删除过程中临时改路线。
+-
+-### 3.2 本地数据模型策略
+-
+-`app/src/cloud_object` 当前同时承担“云同步”和“本地对象容器”职责。不能直接整目录删除，
+-否则 notebook、workflow 和部分 env-var 类型会一起消失。
+-
+-本次固定采用：**先提取本地数据模型，再删除云同步模型**。
+-
+-- Warp 衍生的数据模型仍为 AGPL，不得复制到声明为 MIT 的 `crates-local/` crate。
+-- `Workflow`、`Argument`、`ArgumentType` 移入 `app/src/workflows/model.rs`。
+-- notebook 可持久化数据移入 `app/src/notebooks/model.rs`，继续读取已有 SQLite/JSON。
+-- 仍被本地 workflow 或 shell 初始化使用的 `EnvVar`/`EnvVarValue` 移入
+-  `app/src/env_vars/model.rs`；只服务 Drive 的 collection/权限/分享类型删除。
+-- 新建 `app/src/local_objects/`，只保留本地读取、写入、恢复所需的 store 和 ID 适配；不得
+-  出现 HTTP client、ServerApi、revision upload、permission、team、share 或 sync queue。
+-- 保留历史 migrations 和现有表；删除运行时代码不等于删除旧 DB 结构。
+-
+-### 3.3 历史数据策略
+-
+-- 不删除 `crates/persistence/migrations/` 中任何既有 migration。
+-- 不新增“清空 Drive/Agent 数据”的 migration。
+-- 已移除功能的数据按原始 JSON/列保留但不加载到 UI。
+-- 无法解析的旧云对象不能阻止应用启动；记录 warning 后跳过，日志不得包含对象正文或密钥。
+-
+-### 3.4 Windows 边界
+-
+-删除 W6–W9 的平台专属实现、module 挂载和 target dependencies，但继续遵守 D11：
+-
+-- 不全仓清理散落的内联 `#[cfg(windows)]`；
+-- `crates/command/src/windows.rs` 与 `crates/warp_util/src/path/windows.rs` 保留到阶段 2；
+-- 名称中含 `windows` 的历史数据库 migration 不是平台代码，不删除；
+-- 混合平台 dependency block 必须拆分为 macOS/Linux/FreeBSD，不得误删这些平台所需依赖。
+-
+----
+-
+-<a id="s4"></a>
+-## 四、基线与证据目录
+-
+-### 4.1 开工条件
+-
+-当前工作树已有计划文档修改。开始代码施工前，必须先提交这些文档或建立明确 checkpoint；
+-不得把已有修改混进第一个删除 commit。
+-
+-```bash
+-git status --short --branch
+-git rev-parse HEAD
+-git diff --check
+-```
+-
+-### 4.2 证据目录
+-
+-创建以下目录，原始输出不能只放 `/tmp`：
+-
+-```text
+-docs/redesign/phase1-acceptance/m5-m6/
+-├── baseline/
+-│   ├── repository-state.txt
+-│   ├── tests-before.txt
+-│   ├── cargo-tree-before.txt
+-│   ├── cloud-source-before.txt
+-│   └── windows-before.txt
+-├── batches/
+-│   ├── m5a.md ... m5g.md
+-│   └── m6a.md ... m6f.md
+-└── final/
+-    ├── manifest.md
+-    ├── cargo-tree.txt
+-    ├── source-scans.txt
+-    ├── tests-diff.txt
+-    ├── presubmit.log
+-    ├── macos.md
+-    └── linux.md
+-```
+-
+-### 4.3 冻结命令
+-
+-```bash
+-set -euo pipefail
+-E=docs/redesign/phase1-acceptance/m5-m6/baseline
+-mkdir -p "$E"
+-{
+-  date -u '+UTC=%Y-%m-%dT%H:%M:%SZ'
+-  git rev-parse HEAD
+-  git status --short --branch
+-  rustc --version
+-  cargo --version
+-  cargo nextest --version
+-} | tee "$E/repository-state.txt"
+-
+-./script/test_inventory snapshot m5m6-before
+-cp docs/redesign/baseline/m5m6-before.txt "$E/tests-before.txt"
+-
+-cargo tree -p warp --no-default-features --features local_only -e normal \
+-  | tee "$E/cargo-tree-before.txt"
+-
+-rg -n -i 'serverapi|warp_server|firebase|cloud[_ -]?object|warp drive|session sharing|\bagent\b' \
+-  app crates --glob '*.rs' --glob 'Cargo.toml' \
+-  | tee "$E/cloud-source-before.txt"
+-
+-git ls-files | rg '(^|/)windows(/|[^/]*\.rs$)|windows(_wm)?\.rs$' \
+-  | tee "$E/windows-before.txt"
+-```
+-
+-命令中 `rg` 有命中是基线成功，不要因退出码 0/1 误判。每个最终负向扫描都必须使用
+-`if rg ...; then exit 1; fi`，不能只把输出 pipe 到 `tee` 后凭肉眼判断。
+-
+----
+-
+-<a id="s5"></a>
+-## 五、通用施工纪律
+-
+-1. 每批先移除入口和调用方，再删实现，最后删 manifest/lockfile 依赖。
+-2. 每批一个可独立回滚的 commit；不得把 M5 全部压成一个无法定位回归的大提交。
+-3. 删除测试前先确认测试只覆盖被删能力；保留能力的测试必须迁移到本地实现，不能一起删除。
+-4. 禁止新增 `#[allow(dead_code)]`、新增 `#[ignore]`、注释测试或用 wildcard match 掩盖断裂。
+-5. Rust 测试放在独立 `*_tests.rs` 文件，并在源模块末尾通过 `#[path = "..."]` 引入。
+-6. 每批执行测试清单更新；`deleted-test-ids.txt` 必须保持“实际消失测试”的精确全集。
+-7. 不在删除过程中新增假服务器 URL、空 token、静默重试或 `todo!()` 作为过渡。
+-8. 不新增 `model.lock()`；修改终端路径时复用已有锁，避免重入死锁。
+-9. GUI/TUI 是两个前端：GUI 用 app/integration 验证，TUI 用 render-to-lines 和真实终端验证。
+-10. 任何源码变化都会使旧验证结果失效；最终验收必须重跑。
+-
+-每批测试清单更新模板：
+-
+-```bash
+-./script/test_inventory snapshot <batch>-after
+-comm -23 \
+-  docs/redesign/baseline/phase1-before.txt \
+-  docs/redesign/baseline/<batch>-after.txt \
+-  > /tmp/deleted-test-ids.next
+-comm -13 \
+-  docs/redesign/baseline/deleted-test-ids.txt \
+-  /tmp/deleted-test-ids.next \
+-  > /tmp/newly-deleted-test-ids.txt
+-
+-# 人工逐条确认 /tmp/newly-deleted-test-ids.txt 都属于本批被删能力后：
+-cp /tmp/deleted-test-ids.next docs/redesign/baseline/deleted-test-ids.txt
+-./script/test_inventory
+-```
+-
+-每批删除集保存在
+-`docs/redesign/phase1-acceptance/m5-m6/batches/<batch>-deletion-set.txt`；
+-`script/deletion_set.txt` 在施工期间指向当前批次的精确删除范围，不能继续保留上一轮
+-AWS/MCP 清单冒充当前范围。
+-
+----
+-
+-<a id="s6"></a>
+-## 六、M5 实施批次
+-
+-### 6.1 M5a · 决策、入口与可见 UI 先收口
+-
+-**目的**：先让用户无法进入待删云功能，再删除后端。此批不删除数据模型。
+-
+-**动作**：
+-
+-1. 提交 `baseline/blocklist-decision.md`，冻结路线 A。
+-2. 从 `app/src/app_menus.rs`、Command Palette、workspace actions、URI host/deeplink 中删除：
+-   登录/退出、Warp Drive、团队、计费、推荐、云 Agent、新 Agent tab、共享会话、API key、
+-   cloud run、handoff 和升级入口。
+-3. 从 `app/src/settings_view/mod.rs` 及页面注册表移除 Account、Warp Drive、Teams、Billing、
+-   Referrals、Platform/API key、Environments、Warp Agent、Agent Profiles 等云页面。
+-4. 保留 Privacy 页面，但只显示 `LocalPrivacyPolicy` 的固定本地值；移除 Data Management 与
+-   Warp Privacy Policy 外链。
+-5. 删除已无入口的 feature flag、context flag、action 和 deeplink 映射；match 尽量保持穷尽。
+-6. 为 Settings 搜索补回归：搜索 `drive`、`team`、`billing`、`api key`、`warp agent` 不返回
+-   已删页面；本地 Appearance、Features、Keybindings 仍可搜索。
+-
+-**重点文件**：
+-
+-```text
+-app/src/app_menus.rs
+-app/src/root_view.rs
+-app/src/uri/mod.rs
+-app/src/workspace/action.rs
+-app/src/workspace/mod.rs
+-app/src/workspace/view.rs
+-app/src/settings_view/mod.rs
+-app/src/settings_view/settings_page.rs
+-app/src/search/command_palette/data_sources.rs
+-app/src/features.rs
+-crates/warp_core/src/context_flag.rs
+-```
+-
+-**批次门禁**：
+-
+-```bash
+-cargo check -p warp --all-targets --tests --no-default-features --features local_only
+-cargo nextest run -p warp -E 'test(settings_view) or test(uri) or test(app_menus)'
+-./script/test_inventory
+-```
+-
+-GUI 手工检查：Settings 侧栏无上述页面、搜索无幽灵结果、菜单无灰掉的云入口。
+-
+-### 6.2 M5b · TUI 云面和 Agent 面删除
+-
+-**目的**：把 TUI 收敛为本地 terminal/transcript 前端，先减少 app 云 API 的消费方。
+-
+-**删除候选**：
+-
+-```text
+-crates/warp_tui/src/cloud_run.rs
+-crates/warp_tui/src/cloud_run_view.rs
+-crates/warp_tui/src/cloud_run_view_tests.rs
+-crates/warp_tui/src/grok_oauth/
+-crates/warp_tui/src/handoff/
+-crates/warp_tui/src/api_keys_menu.rs
+-crates/warp_tui/src/api_keys_menu_tests.rs
+-crates/warp_tui/src/conversation_menu.rs
+-crates/warp_tui/src/conversation_selection.rs
+-crates/warp_tui/src/model_menu.rs
+-crates/warp_tui/src/orchestration_*.rs
+-crates/warp_tui/src/tui_cli_subagent_view*.rs
+-```
+-
+-`conversation_menu`、`model_menu` 等混合模块不得盲删：先移除云会话/模型分支；若删除后仍有
+-本地 transcript 使用，再保留最小本地部分并新增 render-to-lines 测试。
+-
+-同步修改：`crates/warp_tui/src/lib.rs`、`root_view.rs`、`session.rs`、`terminal_session_view.rs`、
+-`slash_commands.rs`、`zero_state.rs`、`Cargo.toml` feature/dependency。Zero state 不得留下空栏、
+-悬空快捷键或“登录后使用”文案。
+-
+-**必须新增/保留的测试**：
+-
+-- 固定宽度下 zero state 只显示本地终端操作；
+-- `/` 菜单不出现 cloud run、handoff、API key、agent model；
+-- 删除模块对应 keybinding 不再注册；
+-- 普通命令提交、Ctrl-C、tab 切换和退出仍正常。
+-
+-**批次门禁**：
+-
+-```bash
+-cargo check -p warp_tui --all-targets --tests
+-cargo nextest run -p warp_tui
+-cargo clippy -p warp_tui --all-targets --tests -- -D warnings
+-./script/run-tui
+-```
+-
+-真实 TUI 验证必须在交互终端执行并保存屏幕文本；GUI integration harness 不用于 TUI。
+-
+-### 6.3 M5c · Warp Agent / blocklist 路线 A 删除
+-
+-**目的**：删除 Warp 云 Agent 会话、协议转换、执行和管理 UI，为 M6 移除
+-`warp_multi_agent_api`、`warp_multi_agent_client` 和 `ServerApi` 创造条件。
+-
+-**第一组整目录删除候选**：
+-
+-```text
+-app/src/ai/agent/
+-app/src/ai/agent_sdk/
+-app/src/ai/agent_management/
+-app/src/ai/blocklist/
+-app/src/ai_assistant/
+-app/src/ai/agent_conversations_model.rs
+-app/src/ai/agent_conversations_model/
+-app/src/ai/agent_events/
+-app/src/ai/artifacts/
+-app/src/ai/artifact_download.rs
+-app/src/ai/predict/
+-app/src/ai/get_relevant_files/
+-app/src/ai/restored_conversations.rs
+-app/src/ai/request_usage_model.rs
+-app/src/ai/conversation_rename.rs
+-app/src/ai/conversation_utils.rs
+-```
+-
+-**执行顺序**：
+-
+-1. 先从 `app/src/ai/mod.rs::init` 和 `app/src/lib.rs::initialize_local_app` 删除对应 singleton、
+-   action、view init 和恢复逻辑。
+-2. 删除 workspace/pane/terminal/input/root/settings 中的 Agent actions、pane variants、状态图标、
+-   conversation restoration 和 cloud handoff 分支。
+-3. 删除 agent-only integration harness、fixtures 和 tests；将实际消失 ID 纳入批准清单。
+-4. 再删除上述目录和模块声明。
+-5. 审计 `crates/ai`：保留纯本地且仍有调用方的值类型/解析逻辑；删除
+-   `warp_multi_agent_api` conversion、API key、GEAP/remote credential 和 agent action 模块。
+-6. 保留 `app/src/ai/skills/` 中本地文件/bundled skill 读取能力时，移除 RemotePath、principal
+-   global skills 和 server fetch 分支；如果删除所有消费者，资源保留策略另记，不静默删除。
+-7. 清理 `app/Cargo.toml` 中 agent/cloud feature；`local_only` 不再包含
+-   `cli_agent_rich_input`、`am_workflows` 等已无实现的项。
+-
+-**禁止事项**：
+-
+-- 不保留一个所有按钮都无效的 blocklist 壳；
+-- 不把云 `ResponseEvent` 整体复制到新的“本地”模块；
+-- 不恢复 MCP/AWS/Bedrock 墓碑到执行路径；
+-- 不删除普通 PTY 启动外部命令的能力。
+-
+-**批次门禁**：
+-
+-```bash
+-cargo check -p ai --all-targets --tests
+-cargo check -p warp --all-targets --tests --no-default-features --features local_only
+-cargo nextest run -p ai -p warp
+-./script/test_inventory
+-
+-# 主路径要求产品源码不再直接消费 Warp agent proto/client。
+-if rg -n 'warp_multi_agent_client|ServerApiProvider' \
+-  app/src/ai app/src/ai_assistant --glob '*.rs'; then
+-  echo 'M5c FAIL: cloud agent client remains' >&2
+-  exit 1
+-fi
+-```
+-
+-### 6.4 M5d · 本地 workflow/notebook 模型提取
+-
+-**目的**：在删除 Drive/cloud object 前保住本地数据能力。这一批只做模型迁移和双读验证，
+-不与大目录删除混在一个 commit。
+-
+-**动作**：
+-
+-1. 新增 `app/src/workflows/model.rs`，承接本地 `Workflow`、参数和 enum 数据；保留旧 JSON/TOML
+-   字段名和 serde default。
+-2. 新增 `app/src/notebooks/model.rs` 与 `app/src/local_objects/notebook_store.rs`，直接以
+-   persistence 返回的本地行/JSON 构造 notebook，不经 `CloudModel`、`UpdateManager`。
+-3. 新增 `app/src/env_vars/model.rs`，只保留 shell 展开需要的值类型；删除 team/share/revision。
+-4. 将 `LocalWorkflows`、NotebookManager、notebook editor、workflow view 的本地分支切到新模型。
+-5. 先保留旧 cloud 类型作为测试 oracle：同一 fixture 分别由旧/新解析器读取，断言用户可见
+-   字段一致；通过后才能在下一批删除旧类型。
+-6. 持久化写入使用新本地模型；不得写 server id、permission、revision upload 或 sync item。
+-7. 对损坏/未知旧对象：跳过并写不含正文的本地 warning，应用继续启动。
+-
+-**必须新增的行为测试**：
+-
+-- 旧 workflow JSON 反序列化后名称、命令、参数不变；
+-- 项目 `.warp/workflows` 加载与执行不依赖 cloud singleton；
+-- 旧 notebook fixture 可打开，编辑后重启仍可读取；
+-- 未知旧字段被忽略，缺省字段有稳定默认值；
+-- malformed 云对象不会阻止其他本地对象恢复；
+-- 本地 store 源码不引用 `ObjectClient`、`SyncQueue`、`UpdateManager` 或 `http_client`。
+-
+-**迁移保护门禁**：
+-
+-```bash
+-# 任何历史 migration 删除都直接失败；第二行是 §4.3 记录的基线 SHA。
+-M5M6_BASE_HEAD=$(sed -n '2p' \
+-  docs/redesign/phase1-acceptance/m5-m6/baseline/repository-state.txt)
+-if git diff --diff-filter=D --name-only "$M5M6_BASE_HEAD" -- \
+-    crates/persistence/migrations | grep -q .; then
+-  echo 'M5d FAIL: persistence migration deleted' >&2
+-  exit 1
+-fi
+-
+-cargo nextest run -p warp -p persistence \
+-  -E 'test(workflow) or test(notebook) or test(persistence) or test(migration)'
+-cargo check -p warp --all-targets --tests --no-default-features --features local_only
+-```
+-
+-### 6.5 M5e · Drive、cloud object 与 sync runtime 删除
+-
+-**入口条件**：M5d 新本地模型已承接所有保留场景，且旧 DB 测试通过。
+-
+-**删除范围**：
+-
+-```text
+-app/src/drive/
+-app/src/cloud_object/
+-app/src/server/cloud_objects/
+-app/src/server/sync_queue.rs
+-app/src/settings/cloud_preferences_syncer.rs
+-app/src/integration_testing/warp_drive/
+-app/src/integration_testing/cloud_object/
+-app/src/search/command_palette/warp_drive/
+-app/src/search/command_search/workflows/cloud_workflows_data_source.rs
+-app/src/search/command_search/notebooks/notebooks_data_source.rs
+-```
+-
+-**同步清理**：
+-
+-- `initialize_local_app` 中的 `SyncQueue`、`UpdateManager`、`CloudModel`、`CloudViewModel`、
+-  `ObjectActions`、`UserWorkspaces` 注册；
+-- workspace/root/pane/search/settings 中 Drive panel、team space、share/upgrade 分支；
+-- `WorkflowType::Cloud`、`WorkflowSource::{Team,PersonalCloud,WarpAI}` 及 cloud-only matches；
+-- notebook 的 share、permission、team、folder/revision upload 分支；
+-- env var collection 的 Drive UI；若没有本地持久化产品需求，只保留 plain value types；
+-- `CloudPreferencesSettings` 和 server sync；本地 settings.toml 路径不变。
+-
+-**出口负向检查**：
+-
+-```bash
+-for path in \
+-  app/src/drive \
+-  app/src/cloud_object \
+-  app/src/server/cloud_objects \
+-  app/src/server/sync_queue.rs \
+-  app/src/settings/cloud_preferences_syncer.rs; do
+-  test ! -e "$path" || { echo "M5e FAIL: $path remains" >&2; exit 1; }
+-done
+-
+-if rg -n 'CloudModel|CloudViewModel|UpdateManager|ObjectClient|QueueItem' \
+-  app/src/workflows app/src/notebooks app/src/env_vars app/src/lib.rs --glob '*.rs'; then
+-  echo 'M5e FAIL: local data path still depends on cloud runtime' >&2
+-  exit 1
+-fi
+-```
+-
+-### 6.6 M5f · 云认证收敛为本地身份
+-
+-**目的**：删除 Firebase、SSO、device auth、token 刷新、登录/退出和浏览器 handoff；保留一个
+-始终本地、始终无凭据的 `AuthStateProvider`，直到 M6 把类型移出 `warp_server_auth`。
++## 已定决策
+ 
+-**动作**：
+-
+-1. 删除 auth view/modal/slide、paste token、web handoff、login notification 和 logout URL。
+-2. 将 `AuthManager` 缩成无网络本地状态，或若所有调用方已删除则直接删除 manager singleton。
+-3. `AuthState` 生产构造必须始终 `user=None`、`credentials=None`；不得读取旧 Warp keyring、
+-   `WARP_USER_SECRET` 或 refresh token。
+-4. 测试需要用户 ID 时使用 test-only local user constructor，不恢复 Firebase 凭据。
+-5. 清理 account onboarding、settings account widget、TUI user info/API-key 流程。
+-6. 保留 Term4u keyring 仅供仍需的本地 secret；旧 Warp auth key不得读取或迁移。
+-
+-**负向检查**：
+-
+-```bash
+-if rg -n -i 'firebase|refresh_token|device.auth|sso|paste.auth.token|web_handoff|server_root_url.*logout' \
+-  app/src/auth app/src/tui app/src/settings_view --glob '*.rs'; then
+-  echo 'M5f FAIL: cloud authentication remains' >&2
+-  exit 1
+-fi
+-```
+-
+-### 6.7 M5g · LSP、外链和 Windows 尾项
+-
+-#### LSP
+-
+-将 `LanguageServerCandidate` 收敛为本地发现协议：
+-
+-- 保留 `should_suggest_for_repo`、PATH 检测和启动；
+-- 删除 `fetch_latest_server_metadata`、`install`、GitHub release、npm version query、下载、digest
+-  和自管 data-dir 安装；
+-- rust-analyzer、gopls、clangd、pyright、typescript-language-server 缺失时返回明确的手工安装
+-  提示，不重试、不打开 URL；
+-- 从 `app/src/ai/persisted_workspace.rs`、`terminal/view/init_project` 删除自动安装调用。
+-
+-```bash
+-if rg -n 'fetch_latest_server_metadata|install_from_github|fetch_npm_package_version|GITHUB_API_URL' \
+-  crates/lsp app/src --glob '*.rs'; then
+-  echo 'M5g FAIL: LSP download path remains' >&2
+-  exit 1
+-fi
+-cargo nextest run -p lsp
+-```
+-
+-#### 外链
+-
+-在云 UI 删除后，再扫描剩余 `open_url`/URL 常量。删除 Warp Privacy、Data Management、Docs、
+-Issues、Slack、Drive、Oz、billing、upgrade、sign-in/out 链接。确需保留的用户主动外链（例如
+-本地文件中的普通 hyperlink）不能使用全局硬编码 Warp URL，并须列入
+-`docs/redesign/phase1-acceptance/m5-m6/final/external-link-allowlist.txt`。
+-
+-新增 `script/check_external_product_links` 并在 presubmit 的 clippy 前执行；脚本必须有允许样例
+-与拒绝样例的 `--self-test`。
+-
+-#### Windows
+-
+-1. 删除 app/warpui/warpui_extras/prevent_sleep/warp_terminal 的 Windows 专属 module 挂载和
+-   W6–W8 文件；保留 §3.4 的两个源码例外。
+-2. 删除纯 Windows target dependency/build-dependency；混合条件拆成 Linux/FreeBSD 或 macOS。
+-3. 删除 `app` 的 `embed-resource`、`warp_tui` 的 `dunce` 等已无调用依赖。
+-4. 不删除历史 migration，不做全仓内联 cfg 清洗。
+-
+-```bash
+-# 候选清单必须逐项审查，不直接 xargs rm。
+-git ls-files | rg '(^|/)windows(/|[^/]*\.rs$)|windows(_wm)?\.rs$' \
+-  | sort > /tmp/windows-candidates.txt
+-
+-# 删除后，除明确源码例外和历史 migration 外不得剩平台专属文件。
+-grep -v -E \
+-  '^(crates/command/src/windows.rs|crates/warp_util/src/path/windows.rs|crates/persistence/migrations/)' \
+-  /tmp/windows-candidates.txt > /tmp/windows-delete-review.txt
+-```
+-
+-**M5g 门禁**：
+-
+-```bash
+-./script/check_network_boundaries --self-test
+-./script/check_network_boundaries
+-./script/check_external_product_links --self-test
+-./script/check_external_product_links
+-cargo check -p warp --all-targets --tests --no-default-features --features local_only
+-cargo check -p warp_tui --all-targets --tests
+-```
+-
+----
+-
+-<a id="s7"></a>
+-## 七、M5 出口门禁
+-
+-M5 的所有批次完成后执行，任一失败都不能进入 M6：
+-
+-```bash
+-set -euo pipefail
+-./script/format --check
+-git diff --check
+-./script/check_no_inline_test_modules
+-./script/check_network_boundaries --self-test
+-./script/check_network_boundaries
+-./script/check_external_product_links --self-test
+-./script/check_external_product_links
+-./script/check_license_boundaries
+-./script/check_license_config_sync
+-./script/test_inventory
+-
+-cargo clippy -p warp --all-targets --tests --no-default-features --features local_only -- -D warnings
+-cargo clippy -p warp_tui --all-targets --tests -- -D warnings
+-cargo nextest run -p warp -p warp_tui -p ai -p lsp -p persistence
+-```
+-
+-结构验收：
+-
+-```bash
+-for path in \
+-  app/src/drive app/src/cloud_object app/src/server/cloud_objects \
+-  app/src/ai/agent app/src/ai/agent_sdk app/src/ai/agent_management \
+-  app/src/ai/blocklist app/src/ai_assistant \
+-  crates/warp_tui/src/cloud_run.rs crates/warp_tui/src/handoff; do
+-  test ! -e "$path" || { echo "M5 FAIL: $path remains" >&2; exit 1; }
+-done
+-```
+-
+-行为验收：
+-
+-- GUI：S1–S13 全部执行；Settings、菜单、Command Palette 无云入口；本地 shell/editor/files/workflow
+-  与 notebook 回归通过。
+-- TUI：真实终端启动、命令执行、Ctrl-C、tab、退出通过；无登录、cloud run、handoff、API key、
+-  Agent 模型入口。
+-- LSP：PATH 命中时正常启动；PATH 缺失时只给手工安装错误；伪 `curl/wget/npx` 日志为空。
+-- DB：旧数据库启动、读取、写入、重启通过；被删云数据不展示也不阻止启动。
+-- 网络：M5 候选运行时 V3/V4/V6 继续为零。
+-
+-将结果写入 `phase1-acceptance/m5-m6/batches/m5-final.md`，包含 HEAD、UTC、命令、退出码和
+-证据路径。
+-
+----
++路线 A 已记录在 [blocklist-decision.md](baseline/blocklist-decision.md)。
++该记录引用的旧 §3.1 测量命令和当时源码可从上述历史版本查询，不应在已删除目录上重新执行。
++当前约束见 [11 §2](11-本地化收敛施工单.md#constraints)。
+ 
+ <a id="s8"></a>
+-## 八、M6 实施批次
+-
+-### 8.1 M6a · 删除 cloud object 四 crate
+-
+-**入口条件**：M5e 已让 app、本地 workflow/notebook/env-var 和测试不再引用这些 crate。
+-
+-删除：
+-
+-```text
+-crates/cloud_object_client/
+-crates/cloud_object_models/
+-crates/cloud_object_persistence/
+-crates/cloud_objects/
+-```
+-
+-同步移除根 `Cargo.toml` workspace dependency、app/crate manifest、feature forwarding、
+-`test-util` 项和 lockfile 节点。使用 `cargo metadata` 验证，不只检查目录。
+-
+-```bash
+-if cargo metadata --no-deps --format-version 1 \
+-    | jq -r '.packages[].name' \
+-    | rg '^cloud_object'; then
+-  echo 'M6a FAIL: cloud crate remains' >&2
+-  exit 1
+-fi
+-
+-cargo check -p warp --all-targets --tests --no-default-features --features local_only
+-cargo nextest run -p warp -p persistence
+-```
+-
+-### 8.2 M6b · 本地 auth 类型上移并删除 server auth/client
+-
+-路线 A 下不再需要把 `AuthClient` 移入 app；应删除 trait 和 `OfflineApi` 对它的实现。仅把仍被
+-本地 UI/测试使用的**值类型**本地化：
+-
+-- `UserUid`：保留字符串 intern、serde、Display/Debug 行为；移入 `app/src/auth/user_uid.rs`；
+-- `AuthState`/provider：只保留本地 logged-out 状态和 test-only constructor；
+-- 不迁移 `Credentials`、Firebase tokens、refresh、SSO、API key、session cookie、server owner
+-  type或 GraphQL conversion；
+-- 若 M5 后 `UserUid` 只剩旧数据解析用途，优先进一步收敛为普通 String/newtype。
+-
+-随后删除：
+-
+-```text
+-crates/warp_server_client/
+-crates/warp_server_auth/
+-crates/firebase/
+-crates/warp_multi_agent_client/
+-```
+-
+-同步删除 app 中 network log、presigned upload、server auth、API key modal 及相关 feature。
+-
+-```bash
+-if rg -n 'warp_server_client|warp_server_auth|\bfirebase\b|warp_multi_agent_client' \
+-  app crates --glob '*.rs' --glob 'Cargo.toml'; then
+-  echo 'M6b FAIL: server auth/client reference remains' >&2
+-  exit 1
+-fi
+-cargo check -p warp --all-targets --tests --no-default-features --features local_only
+-```
+-
+-### 8.3 M6c · 删除 GraphQL / ServerApi / OfflineApi 过渡层
+-
+-**目标**：`ServerApiProvider` 调用点归零后再删定义，不能留下空壳。
+-
+-执行：
+-
+-1. 对当前所有 `ServerApiProvider::get()`/trait getter 调用分类：
+-   - 位于 M5 删除面：随调用方删除；
+-   - codebase indexing、docker sandbox、terminal input 等保留面：改成本地实现或移除该云子功能；
+-   - 测试初始化：删除无行为 singleton，测试直接安装本地依赖。
+-2. 删除 `AIClient`、`ObjectClient`、`AuthClient` 等云 trait 和 `OfflineApi` 实现。
+-3. 删除 `app/src/server/graphql/`、`server_api.rs`、`server_api/`、`offline_api.rs`。
+-4. `app/src/server/` 只允许保留仍有本地用途的 `ids`、no-op telemetry 事件类型和明确的本地
+-   模块；每个保留项在 batch 记录中写理由。
+-5. 审计 `crates/graphql`：若 app 无正常依赖则从 app/workspace 删除；若其他本地 crate 仍用
+-   纯类型，删除其 `warp_multi_agent_api`、云 query/mutation 和 transport 边后才能保留。
+-
+-```bash
+-if rg -n 'ServerApiProvider|OfflineApi|trait (AIClient|ObjectClient|AuthClient)' \
+-  app/src crates --glob '*.rs'; then
+-  echo 'M6c FAIL: ServerApi transition layer remains' >&2
+-  exit 1
+-fi
+-for path in app/src/server/graphql app/src/server/server_api.rs app/src/server/server_api \
+-            app/src/server/offline_api.rs; do
+-  test ! -e "$path" || { echo "M6c FAIL: $path remains" >&2; exit 1; }
+-done
+-```
+-
+-### 8.4 M6d · 剥离 E1：`session-sharing-protocol`
+-
+-M5 路线 A 删除 agent/Drive/shared-session callsites 后，再处理残余类型。
+-
+-1. 删除 `warp_terminal` 的协议 re-export、`shared_session.rs` 和 BlockId/BufferId/Point conversion。
+-2. 删除 app 中 `session_sharing_disabled.rs`、`sharing_disabled.rs` 等仅为维持旧接口的 no-op API；
+-   调用方应删除分支，而不是继续传 `Role`/`SessionId`。
+-3. 若保留核心 pane/session 恢复确实需要稳定 ID，定义用途明确的本地 ID newtype；不得复制
+-   Role、permission、participant 或 sharer 协议树。
+-4. 从根和所有 crate manifest 删除 dependency 与 patch；更新 lockfile。
+-
+-```bash
+-if rg -n 'session[-_]sharing[-_]protocol|session_sharing_types' \
+-  Cargo.toml Cargo.lock app crates --glob '*.rs' --glob 'Cargo.toml'; then
+-  echo 'M6d FAIL: session-sharing protocol remains' >&2
+-  exit 1
+-fi
+-cargo nextest run -p warp_terminal -p warp
+-```
+-
+-### 8.5 M6e · 剥离 E2：`warp_multi_agent_api`
+-
+-当前 `persistence/src/model.rs` 对该 proto 不是单一引用，而是集中在 agent task、usage/stats 与
+-conversion 区域。路线 A 下不保留 proto 依赖：
+-
+-1. 删除 app/ai/integration 中剩余 agent proto conversion 和测试 fixture。
+-2. 保留数据库表和 migration，但停止把 agent JSON 解析成 proto；读取旧行时作为不展示的
+-   opaque JSON 跳过。
+-3. 删除 `persistence/src/model.rs` 中 agent-only `api::Task`、`stream_finished::*` conversion、
+-   usage/stats helpers及对应 `model_tests.rs`；若有本地通用统计调用方，先定义不依赖 proto 的
+-   local value struct，再迁移调用方。
+-4. 从 `persistence`、`ai`、`integration`、app 和根 manifest 移除依赖。
+-5. 删除根 `warp-proto-apis` patch/注释并更新 lockfile。
+-
+-```bash
+-if rg -n 'warp_multi_agent_api|warp-proto-apis' \
+-  Cargo.toml Cargo.lock app crates --glob '*.rs' --glob 'Cargo.toml'; then
+-  echo 'M6e FAIL: multi-agent proto remains' >&2
+-  exit 1
+-fi
+-cargo nextest run -p persistence -p ai -p warp
+-```
+-
+-### 8.6 M6f · manifest、feature、TUI unification 与供应链收口
+-
+-1. 删除失效的 workspace members/dependencies、app dependencies、feature 和转发项。
+-2. `warp_tui` 对 `warp` 的正常依赖和 dev-dependency 设置 `default-features = false`，显式启用
+-   `local_only`、`tui` 及测试真正需要的 feature，避免以后 default 漂移重新拉回云依赖。
+-3. `email_address` 改为 lockfile 当前 commit 的精确 pin：
+-
+-```toml
+-email_address = {
+-  git = "https://github.com/warpdotdev/rust-email_address",
+-  rev = "b3e5205b4efdc83832f230d8eb6894fd00a9ec32",
+-}
+-```
+-
+-执行后以新 `Cargo.lock` 为准复核 commit，不手改 lockfile checksum。
+-
+-4. 删除 `deny.toml` 的 `allow-org`，按 [04 §2.3](04-残余依赖与许可证架构.md#s2-3) 显式列出
+-   每个保留 git URL；不要把已删的 `session-sharing-protocol`/`warp-proto-apis` 加入白名单。
+-5. 运行 `cargo update` 只针对受影响 package；审查 lockfile，禁止无关大范围升级。
+-6. 更新 `about.toml`/`deny.toml` 同步配置和 NOTICES 输入。
+-7. 把 M5/M6 最终删除集写入 `script/deletion_set.txt`，更新精确测试清单。
+-
+-```bash
+-cargo metadata --locked --no-deps --format-version 1 >/tmp/m6-metadata.json
+-cargo tree -p warp --no-default-features --features local_only -e normal \
+-  | tee /tmp/m6-warp-tree.txt
+-cargo tree -p warp_tui --no-default-features --features offline_hard -e normal \
+-  | tee /tmp/m6-tui-tree.txt
+-cargo deny check sources licenses bans advisories
+-./script/check_license_config_sync
+-```
+-
+----
+-
+-<a id="s9"></a>
+-## 九、M6 / V1 出口门禁
+-
+-### 9.1 依赖树负证明
+-
+-```bash
+-set -euo pipefail
+-BLACKLIST='sentry|opentelemetry|rudder|warp_server_client|warp_server_auth|warp_multi_agent|cloud_object|firebase|session-sharing|computer_use|voice_input|remote_server|\bmcp\b|rmcp|aws-sdk|aws-smithy'
+-
+-cargo tree -p warp --no-default-features --features local_only -e normal \
+-  | tee docs/redesign/phase1-acceptance/m5-m6/final/cargo-tree.txt
+-if rg -i "$BLACKLIST" docs/redesign/phase1-acceptance/m5-m6/final/cargo-tree.txt; then
+-  echo 'M6 FAIL: blacklisted normal dependency remains' >&2
+-  exit 1
+-fi
+-```
+-
+-`aws-lc-rs`/`aws-lc-sys` 是 rustls 密码学后端，必须保留且不能被 `aws-sdk` 模式误杀。
+-`sts.googleapis.com` 是 GCP federation，不是 AWS STS；若 managed secrets 随云 Agent 删除可自然
+-消失，但不得为了让扫描变绿而误删仍有本地用途的 TLS/GCP 代码。
+-
+-### 9.2 workspace、源码与 lockfile 负证明
+-
+-```bash
+-for crate in \
+-  warp_server_client warp_server_auth firebase warp_multi_agent_client \
+-  cloud_object_client cloud_object_models cloud_object_persistence cloud_objects; do
+-  if cargo metadata --no-deps --format-version 1 | jq -e --arg n "$crate" \
+-      '.packages[] | select(.name == $n)' >/dev/null; then
+-    echo "M6 FAIL: workspace package $crate remains" >&2
+-    exit 1
+-  fi
+-done
+-
+-if rg -n 'session-sharing-protocol|warp-proto-apis|branch = "main"' \
+-  Cargo.toml app/Cargo.toml crates --glob 'Cargo.toml'; then
+-  echo 'M6 FAIL: unpinned or forbidden git source remains' >&2
+-  exit 1
+-fi
+-
+-if rg -n 'name = "(warp_server_client|warp_server_auth|firebase|warp_multi_agent_client|cloud_object_client|cloud_object_models|cloud_object_persistence|cloud_objects|session-sharing-protocol|warp_multi_agent_api)"' Cargo.lock; then
+-  echo 'M6 FAIL: deleted package remains in Cargo.lock' >&2
+-  exit 1
+-fi
+-```
+-
+-### 9.3 二进制字符串负证明
+-
+-```bash
+-cargo build --release --locked -p warp --bin term4u \
+-  --no-default-features --features local_only
+-
+-PATTERN='app\.warp\.dev|rtc\.app\.warp\.dev|sessions\.app\.warp\.dev|oz\.warp\.dev|releases\.warp\.dev|rudder|sentry|otlp|opentelemetry|firebase|warp drive|session sharing|aws bedrock|mcp'
+-strings target/release/term4u \
+-  | { rg -i "$PATTERN" || true; } \
+-  | sort -u | tee /tmp/m6-blacklisted-strings.txt
+-
+-test ! -s /tmp/m6-blacklisted-strings.txt
+-
+-# macOS 最终验收还要覆盖 bundle resources；其他平台按实际 bundle 路径替换。
+-cargo bundle --release --bin term4u --no-default-features --features local_only
+-if rg -a -n -i "$PATTERN" target/release/bundle/osx/Term4u.app; then
+-  echo 'M6 FAIL: blacklisted bundle content remains' >&2
+-  exit 1
+-fi
+-```
+-
+-任何假阳性必须记录字符串、来源文件、保留理由和负责人；不能只用宽泛 `rg -v warp`。
+-TUI release binary 和 Linux bundle 也使用同一 `PATTERN` 扫描。
+-
+-### 9.4 完整工程门禁
+-
+-```bash
+-./script/format
+-./script/presubmit
+-cargo test --workspace
+-cargo test --workspace --doc
+-cargo deny check
+-
+-cargo clippy -p warpui_core --features tui --all-targets -- -D warnings
+-cargo build -p warpui_core --bin tui_integration --features tui
+-cargo clippy -p editor -p warp_tui --features test-util --benches -- -D warnings
+-```
+-
+-### 9.5 V1 判定
+-
+-只有以下条件同时满足，才能在 08 章把 M6/V1 改为完成：
+-
+-- M5 与 M6 所有批次证据均指向同一个最终 HEAD；
+-- `script/test_inventory` 通过，没有未批准的测试消失；
+-- GUI/TUI 的本地能力与旧 DB 回归通过；
+-- macOS arm64 与 Linux x86_64 最小矩阵通过；
+-- dependency、lockfile、source、binary 四类黑名单均为空；
+-- 运行时零外连、零 DNS、零待发文件；
+-- `phase1-acceptance/m5-m6/final/manifest.md` 已提交。
+-
+----
+-
+-<a id="s10"></a>
+-## 十、测试与跨平台验证矩阵
+-
+-### 10.1 每批便宜回路
+-
+-```bash
+-cargo check -p warp --all-targets --tests --no-default-features --features local_only
+-cargo check -p warp_tui --all-targets --tests
+-cargo nextest run -p <本批受影响 crate>
+-./script/test_inventory
+-./script/check_network_boundaries
+-```
+-
+-### 10.2 M5 全量回路
+-
+-| 类别 | 必跑 |
+-|---|---|
+-| Auth/UI | auth 本地状态、Settings 搜索、菜单/URI 入口不存在 |
+-| Agent | 源码/feature/测试入口不存在；普通 PTY 外部 CLI 仍能运行 |
+-| Drive/data | legacy workflow/notebook 解析与本地读写；无 sync singleton |
+-| LSP | PATH 命中/缺失两条路径；伪下载工具零调用 |
+-| TUI | render-to-lines + `./script/run-tui` 真实终端 |
+-| GUI | 保留行为用 unit/integration；最终 S1–S13 实机检查 |
+-| Windows | 专属文件和 target blocks 按 allowlist 收敛；不运行 Windows |
+-
+-### 10.3 M6 全量回路
+-
+-除 presubmit/workspace tests 外，必须显式执行：
+-
+-```bash
+-cargo build --locked -p warp --bin term4u --no-default-features --features local_only
+-cargo build --locked -p warp_tui --bin term4u-tui \
+-  --no-default-features --features offline_hard,standalone
+-cargo tree -p warp --no-default-features --features local_only -e normal
+-cargo tree -p warp_tui --no-default-features --features offline_hard -e normal
+-```
+-
+-### 10.4 跨平台顺序
+-
+-1. 先在本机完成 focused tests、clippy、presubmit 和依赖负证明。
+-2. 确认待测 commit 已推到可访问远端；未经用户授权不得为跑云验证擅自 commit/push。
+-3. 执行 `oz-dev runner list --output-format json`，运行时选择 runner，不硬编码 ID。
+-4. 最小矩阵：macOS arm64 一台、Linux x86_64 一台；本阶段无架构特有代码，不额外扩展架构。
+-5. 每个远端只做验证，不修代码；结果返回平台、commit、命令、退出码、证据和偏差。
+-6. 任一平台产品失败即整体失败；runner 不可用则标记 incomplete，不能写成通过。
+-
+-Linux 至少验证 local-only GUI 编译、TUI 编译/测试、路径/数据目录、LSP PATH 行为和依赖树；
+-macOS 额外验证 `.app`、签名、URL scheme、keyring、本地 GUI 场景和网络捕获。
+-
+----
+-
+-<a id="s11"></a>
+-## 十一、提交顺序与回滚点
+-
+-建议提交序列：
+-
+-| Commit | 内容 | 必须在提交前通过 |
+-|---|---|---|
+-| M5a | blocklist 决策、菜单/Settings/URI 云入口删除 | warp check + settings/URI tests |
+-| M5b | TUI cloud/agent UI 删除 | warp_tui check、tests、render、实机 |
+-| M5c | Warp Agent/blocklist/agent SDK 删除 | ai/warp focused tests + inventory |
+-| M5d | 本地 workflow/notebook/env-var 模型提取 | legacy fixture 与本地写入测试 |
+-| M5e | Drive/cloud object/sync runtime 删除 | warp/persistence tests + 路径负证明 |
+-| M5f | 云 auth 删除、本地 auth 收敛 | auth/settings/TUI tests |
+-| M5g | LSP、外链、Windows 尾项 | LSP tests + boundary scripts + mac/Linux check |
+-| M6a | cloud object 四 crate 删除 | metadata/tree/check |
+-| M6b | server auth/client/firebase/multi-agent client 删除 | source scan + warp check |
+-| M6c | GraphQL/ServerApi/OfflineApi 删除 | provider scan + warp tests |
+-| M6d | session-sharing-protocol 剥离 | terminal/warp tests + lock scan |
+-| M6e | warp_multi_agent_api 剥离 | persistence/ai/warp tests + lock scan |
+-| M6f | feature、TUI unification、deny、rev pin、lockfile | cargo tree + deny + presubmit |
+-| Final | 同一 HEAD 验收证据 | §9、§10 全部 |
+-
+-回滚规则：
+-
+-- 某批失败只回滚该批，不恢复已删除的云模块来“先编过”。
+-- 若本地模型提取失败，停在 M5d 修复，不进入 M5e。
+-- 若 route A 删除暴露必须保留的协议无关 UI，先把最小 UI 移到中立模块并测试，再继续；不得
+-  恢复 ServerApi 或 proto 依赖。
+-- lockfile 大幅变化时回滚 manifest/lockfile 批次，用 package 定向 update 重做。
+-
+----
+-
+-<a id="s12"></a>
+-## 十二、最终验收记录格式
+-
+-`phase1-acceptance/m5-m6/final/manifest.md` 必须包含：
+-
+-```markdown
+-# M5/M6 final acceptance
+-
+-- HEAD: <full sha>
+-- UTC: <timestamp>
+-- Worktree before verification: clean
+-- FIRST_REAL_USE: <value>
+-
+-| Check | Command | Exit | Evidence | Result |
+-|---|---|---:|---|---|
+-| Test inventory | `./script/test_inventory` | 0 | `tests-diff.txt` | PASS |
+-| Warp tree blacklist | `cargo tree ...` | 0 | `cargo-tree.txt` | PASS |
+-| Presubmit | `./script/presubmit` | 0 | `presubmit.log` | PASS |
+-| macOS | ... | 0 | `macos.md` | PASS |
+-| Linux | ... | 0 | `linux.md` | PASS |
+-
+-## Approved residual matches
+-
+-| Match | File | Why retained | Owner |
+-|---|---|---|---|
+-
+-## Deleted tests
+-
+-- Baseline count: ...
+-- Final count: ...
+-- Approved deleted IDs: ...
+-- Unapproved disappearances: 0
+-```
++## 当前实施与验收
+ 
+-最终运行期间如果修改任何源码、manifest、测试或脚本，整个 manifest 作废：提交修复后从
+-§9.1 重新开始。只有最终 HEAD、工作树、证据 HEAD 三者一致，文档才可将 M5、M6 和 V1
+-标记为完成。
++直接执行 [11 §3](11-本地化收敛施工单.md#batches)，按
++[11 §4–6](11-本地化收敛施工单.md#verification) 验证和归档。
++本文件仅保留旧链接兼容入口，不维护第二份任务清单。
+diff --git a/docs/redesign/HANDOFF-V0-2026-08-30.md b/docs/redesign/HANDOFF-V0-2026-08-30.md
+index 55a3a58e..b5bee48d 100644
+--- a/docs/redesign/HANDOFF-V0-2026-08-30.md
++++ b/docs/redesign/HANDOFF-V0-2026-08-30.md
+@@ -1,8 +1,9 @@
+ # V0 测试收敛 handoff（2026-08-31）
+ 
+-> 本文仅记录最终状态，不改变 Goal 合同或验收标准。权威顺序为：Goal 合同、当前 Git/worktree、当前源码与新鲜命令结果、本文。
++> 历史验证记录：以下状态和证据只描述当时的 V0 会话，不代表当前代码通过。
++> 当前任务统一见 [11 · 本地化收敛施工单](11-本地化收敛施工单.md)，不恢复本文中的旧 Agent/云兼容实现。
+ 
+-## 当前状态
++## 当时状态
+ 
+ - HEAD：`1cb3da504143eb6f0406dc48f4d44997d1405288`（`checkpoint: converge V0 core packages`）。
+ - Worktree：测试收敛修改尚未提交；最终状态与完整 diff 以 `git status --short`、`git diff --stat`、`git diff --` 为准。
+@@ -21,8 +22,3 @@
+ - 最终本机真实工具链 presubmit：`/tmp/term4u-v0-session-presubmit-09.log`，`./script/presubmit` exit `0`；workspace nextest（含保留的 GUI integration）`9695 passed`，completer v2 `131 passed`，doc tests通过。
+ - 工具链同一日志开头：Rust `1.92.0`、cargo `1.92.0`、nextest `0.9.143`、`/opt/homebrew/bin/clang-format` `23.1.0`、`/usr/bin/xcrun`、真实 Xcode Metal 路径。
+ - 最近历史失败：`/tmp/term4u-v0-session-deprecated-test-cleanup.log` 中 `cargo clippy -p warp --all-targets --tests -- -D warnings` exit `101`（恢复测试引用 deprecated 字段）；已改用当前字段/default 构造并由最终 presubmit 覆盖验证。
+-
+-## 下一步与关键路径
+-
+-- 下一步：审查并提交当前 diff；无剩余测试修复。
+-- 关键路径：`app/src/ai/agent*`、`app/src/ai/agent_sdk*`、`app/src/lib.rs`、`app/src/cloud_object/model/persistence.rs`、`app/src/pane_group/pane/terminal_pane.rs`、`app/src/settings_view/`、`crates/integration/`、`crates/warp_core/src/channel/state.rs`、`crates/warp_server_client/src/network_logging*`。
+diff --git a/docs/redesign/README.md b/docs/redesign/README.md
+index d12659f8..9eae7661 100644
+--- a/docs/redesign/README.md
++++ b/docs/redesign/README.md
+@@ -1,145 +1,106 @@
+-# term4u 代码库调整设计文档
++# Term4u 本地化改造文档
+ 
+-本目录是 **term4u** 项目的代码库调整设计文档集。term4u 是 Warp 开源客户端
+-（`warpdotdev/warp`，基线提交 `066ec71b736fc3755e29f58f733deadbdac3d1af`）的
+-本地化 / 离线化衍生版本。
++Term4u 是 Warp 开源客户端（上游基线 `066ec71b736fc3755e29f58f733deadbdac3d1af`）的
++本地化/离线化衍生版本。当前代码处于 M5/M6 删除后的 WIP 收敛阶段，尚未完成 V1。
+ 
+-本文档集最初用于描述“要做什么、为什么、怎么验收”，现已同时进入实施阶段。
+-当前代码状态与剩余工作以 [08 章的执行进度快照](08-实施顺序与里程碑.md#s0) 为准；
+-各章中的原始动作表继续作为范围和验收依据，不应再解读为“尚未开始”。
+-
+----
++**继续开发只使用 [11 · 本地化收敛施工单](11-本地化收敛施工单.md)**：它包含现状、已定边界、
++R0–R6、C1–C10、完整验证与 Goal 指令。08 章展示阶段状态；旧 10 章和 handoff 仅保留跳转入口。
++01–07、09 章及历史 baseline 是设计/溯源资料，不是并行待办；旧过渡实现不得覆盖 11 章路线 A。
+ 
+ <a id="s1"></a>
+ ## 一、文档索引
+ 
+-| 文件 | 内容 | 主要读者 |
+-|---|---|---|
+-| [README.md](README.md) | 本文件：索引、决策速查表、术语表 | 全体 |
+-| [01-背景与目标.md](01-背景与目标.md) | 背景、上游来源记录、五条硬指标、两阶段许可证终态、非目标、V0/V1/V2 节奏 | 全体 |
+-| [02-现状审计.md](02-现状审计.md) | 事实册：许可证现状、分层解读、MIT 岛闭包、端点单点、git 依赖、测试实况、品牌与设施盘点 | 实施者 |
+-| [03-阶段1-云模块删除与离线化.md](03-阶段1-云模块删除与离线化.md) | 模块处置总表、入口设计、ConnectivityMode、feature 重构、网络硬拒绝、ServerApi 空实现、遥测 shim | 实施者 |
+-| [04-残余依赖与许可证架构.md](04-残余依赖与许可证架构.md) | 残余依赖处置、LICENSES.md 设计、声明落点、CI 守卫、第三方义务、AGPL 合规边界、**商标** | 实施者 + 合规 |
+-| [05-阶段1-仓库与品牌.md](05-阶段1-仓库与品牌.md) | git 拓扑重整、dotfiles、文档重写矩阵、品牌资产执行单、改名执行单与边界线 | 实施者 |
+-| [06-阶段2-完整MIT路线.md](06-阶段2-完整MIT路线.md) | "完整 MIT"定义、重实现范围、第三方替代、洁净室纪律、自研三 crate 设计 | 决策者 |
+-| [07-测试与验证策略.md](07-测试与验证策略.md) | 测试实况与成本模型、基线冻结、删除三分类、choke point、网络守卫可测性、离线性硬验证、验收矩阵 | 实施者 |
+-| [08-实施顺序与里程碑.md](08-实施顺序与里程碑.md) | **当前整体进度**、M0→M7 里程碑、每个里程碑的门禁与验收、风险登记簿 | 全体 |
+-| [09-第一次实施详设-V0.md](09-第一次实施详设-V0.md) | **第一次实施的施工单**（V0 = M0–M4）：目标状态、做/不做边界、已核实锚点、五道工序、遥测拆删、V0 验收总单、本地日志保全 | 实施者 |
+-| [10-M5-M6未完成项实施详设.md](10-M5-M6未完成项实施详设.md) | **M5/M6 施工单**：决策门、分批删除、本地模型提取、云依赖剥离、逐批测试与 V1 最终验收 | 实施者 |
+-| [HANDOFF-V0-2026-08-30.md](HANDOFF-V0-2026-08-30.md) | V0 测试收敛时的历史 handoff；不是当前状态真相 | 实施者 |
+-| [phase1-acceptance/](phase1-acceptance/) | 一期改造前基线与最终验收索引；当前最终证据尚未归档 | 验收者 |
+-| [附录A-上游调研原文.md](附录A-上游调研原文.md) | 调研文档逐字归档 + 审计修正对照表 + 覆盖矩阵 | 溯源 |
+-| [baseline/](baseline/) | M0 基线快照、测试分类、许可证与风险记录 | 实施者 |
+-| [tools/](tools/) | 让 02 / 07 章的数字可复现的脚本与删除集清单——**现在就能跑** | 实施者 |
+-
+-**阅读顺序建议**：第一次读按 01 → 02 → 03 → 07 → 08；只关心合规看 04；
+-只关心动手看 **09**（第一次实施施工单）+ 03 + 08。
+-
+----
++| 文件 | 用途 |
++|---|---|
++| [11-本地化收敛施工单.md](11-本地化收敛施工单.md) | **唯一当前施工单**：从 WIP 修到本地可用及 V1 验收关闭 |
++| [08-实施顺序与里程碑.md](08-实施顺序与里程碑.md) | 当前阶段状态、M0–M7 范围与风险；已清理过时动作表 |
++| [10-M5-M6未完成项实施详设.md](10-M5-M6未完成项实施详设.md) | 旧施工单兼容入口，不再维护任务 |
++| [term4u-m5-m6-handoff.md](term4u-m5-m6-handoff.md) | 交接入口，指向 11 章 |
++| [01-背景与目标.md](01-背景与目标.md) | 上游来源、硬指标、交付节奏与许可证阶段 |
++| [02-现状审计.md](02-现状审计.md) | 改造前审计；数字与代码引用属于历史基线 |
++| [03-阶段1-云模块删除与离线化.md](03-阶段1-云模块删除与离线化.md) | 离线边界、模块处置与历史过渡架构 |
++| [04-残余依赖与许可证架构.md](04-残余依赖与许可证架构.md) | 依赖来源、许可证边界、第三方义务与商标 |
++| [05-阶段1-仓库与品牌.md](05-阶段1-仓库与品牌.md) | 身份与品牌设计；尚未实施的发布面留 M7 |
++| [06-阶段2-完整MIT路线.md](06-阶段2-完整MIT路线.md) | 独立后续路线，不在当前 Goal 范围 |
++| [07-测试与验证策略.md](07-测试与验证策略.md) | 测试分类与验收原理；当前必跑命令以 11 章 §4 为准 |
++| [09-第一次实施详设-V0.md](09-第一次实施详设-V0.md) | V0 历史施工基线；其遗留验收已并入 11 章 |
++| [HANDOFF-V0-2026-08-30.md](HANDOFF-V0-2026-08-30.md) | V0 历史验证记录，不是当前状态 |
++| [baseline/](baseline/) | 原始基线、已定决策、测试清单与风险记录 |
++| [phase1-acceptance/](phase1-acceptance/) | 基线、批次和最终证据；历史 PASS 不等于当前通过 |
++| [tools/](tools/) | 历史审计辅助脚本 |
++| [附录A-上游调研原文.md](附录A-上游调研原文.md) | 调研原文及审计修正溯源 |
+ 
+ <a id="s2"></a>
+-## 二、已定决策速查表
+-
+-| # | 决策 | 内容 | 出处 |
+-|---|---|---|---|
+-| D1 | **项目定名** | `term4u`。放弃 `warp4u`（含上游商标词、同品类、直接衍生，构成混淆风险的典型形态）。`term` 对终端软件属描述性通用词。 | [04 §9](04-残余依赖与许可证架构.md#s9) |
+-| D2 | **远端** | `git@github.com:tedczj/term4u.git`；上游改配为 `upstream`（默认分支 `master`）。 | [05 §1](05-阶段1-仓库与品牌.md#s1) |
+-| D3 | **许可证（阶段 1）** | 维持 AGPL-3.0-only + `warpui`/`warpui_core` 双 MIT 岛的现状，**不为任何 AGPL 代码改许可证**。 | [01 §4](01-背景与目标.md#s4) |
+-| D4 | **Agent UI** | 删 Warp 云客户端；接不上云端的 UI 外壳先保留并优雅降级；`agent_protocol` + `local_agent_bridge` 留到阶段 2；过渡期外部 CLI agent 只作为普通 PTY 子进程运行。 | [03 §8](03-阶段1-云模块删除与离线化.md#s8) |
+-| D5 | **文档形态** | 仅仓库内 Markdown，随代码一起版本化。不发布外部页面。 | 本计划 |
+-| D6 | **分析顺序** | 先规划能整删的云模块，再处置残余 git / 许可证依赖。 | [03](03-阶段1-云模块删除与离线化.md) → [04](04-残余依赖与许可证架构.md) |
+-| D7 | **交付节奏** | **V0** = 调研第 1–5 步（主体是删除），产出可日常使用的本地构建；**V1** = 第 6–8 步；**V2** = 品牌与对外发布。 | [01 §6](01-背景与目标.md#s6) |
+-| D8 | **验证深度** | 不接受"跑起来 + 抓网络"。删除对测试基线的破坏与修复必须正面设计，独立成章。 | [07](07-测试与验证策略.md) |
+-| D9 | **目录策略** | 阶段 1 **不动**上游 `app/` + `crates/` 结构（保住上游合并能力）；自研 MIT crate 预留 `crates-local/`；阶段 2 收敛为一层 `crates/`。分层由依赖边 + CI 规则保证，不靠目录名。 | [02 §2](02-现状审计.md#s2)、[06 §6](06-阶段2-完整MIT路线.md#s6) |
+-| D10 | **改名边界线** | 只改**运行时身份**与**对外品牌**六处；`warp_*` crate 名与所有内部符号一律不动。 | [05 §8](05-阶段1-仓库与品牌.md#s8) |
+-| D11 | **砍掉 Windows 支持** | term4u 只支持 macOS 与 Linux。删平台专属目录/文件、120MB Windows 资源、`script/windows/`、PowerShell 门禁；**但不清理 152 个文件里的 472 个内联 `#[cfg(windows)]`**——理由同 D10。 | [03 §13](03-阶段1-云模块删除与离线化.md#s13) |
++## 二、已定决策
+ 
+-<a id="s2-x1"></a>
+-### 运行时身份落地字符串（D10 的六处）
++| # | 决策 |
++|---|---|
++| D1 | 项目定名 **term4u**，不用含上游商标的 warp4u |
++| D2 | 项目远端为 `git@github.com:tedczj/term4u.git`；当前施工不重新配置 remote 或重置仓库 |
++| D3 | 阶段 1 保持 AGPL-3.0-only + warpui/warpui_core 双 MIT 岛；不为衍生代码改许可证 |
++| D4 | **路线 A 已定**：删除 Warp Agent UI/SDK/执行层，不保留无效外壳或云 API 空实现；外部 CLI agent 作为普通 PTY 子进程可运行。未来本地协议留阶段 2 |
++| D5 | 设计与验收使用仓库内 Markdown，不发布外部文档站 |
++| D6 | 删除云功能后收敛残余依赖；当前不重复执行已完成的大目录删除 |
++| D7 | V0 = 本地可用；V1 = 云控制面/依赖清理并通过验收；V2 = 品牌与发布 |
++| D8 | 必须验证保留行为、旧数据、测试清单与离线边界，不能仅凭启动或抓网络验收 |
++| D9 | 阶段 1 保留 app/ + crates/ 结构；MIT 原创代码预留 crates-local/，不向其中搬运 AGPL 实现 |
++| D10 | 只改运行时身份与对外品牌，内部 warp_* crate 名及符号不全仓改名；运行时身份已原子完成 |
++| D11 | 只支持 macOS/Linux；删除 Windows 专属实现/依赖，不全仓清洗内联 cfg。两个源码例外及历史 migrations 按 11 章 §2 保留 |
+ 
+-| 项 | 上游（OSS channel） | term4u |
+-|---|---|---|
+-| AppId | `AppId::new("dev", "warp", "WarpOss")` | `AppId::new("dev", "term4u", "Term4u")` |
+-| 二进制 | `warp-oss` / `warp-tui-oss` | `term4u` / `term4u-tui` |
+-| 日志文件 | `warp-oss.log` / `warp-tui.log` | `term4u.log` / `term4u-tui.log` |
+-| macOS bundle id | `dev.warp.WarpOss` | `dev.term4u.Term4u` |
+-| URL scheme | `warposs` | `term4u` |
+-| keyring 命名空间 | 见 [02 §8](02-现状审计.md#s8) | `term4u` |
++<a id="s2-x1"></a>
++### 已落地的运行时身份
+ 
+-> **时机铁律**：这六处必须在 **M2 首次真实使用之前**一次性定稿。之后再改需要
+-> 迁移数据目录并轮换已存密钥——这是唯一的无痛窗口。详见 [05 §6](05-阶段1-仓库与品牌.md#s6)。
++| 项 | Term4u |
++|---|---|
++| AppId | `AppId::new("dev", "term4u", "Term4u")` |
++| 二进制 | `term4u` / `term4u-tui` |
++| 日志 | `term4u.log` / `term4u-tui.log` |
++| macOS bundle id | `dev.term4u.Term4u` |
++| URL scheme | `term4u` |
++| keyring 命名空间 | `term4u` |
+ 
+----
++身份提交为 `15a202db`。实际数据路径以当前实现为准；首次真实使用标记见
++[baseline/README.md](baseline/README.md)，后续测试不得触碰真实用户目录。
+ 
+ <a id="s3"></a>
+-## 三、术语表
++## 三、术语
+ 
+ | 术语 | 含义 |
+ |---|---|
+-| **上游 / upstream** | `warpdotdev/warp`，默认分支 `master`，基线 HEAD `066ec71b736fc3755e29f58f733deadbdac3d1af`。 |
+-| **快照** | 本地工作目录中未提交的 29 个未跟踪条目，即上游 `066ec71` 剥离 dotfiles 后的整份内容。 |
+-| **MIT 岛** | `crates/warpui` + `crates/warpui_core` 两个 crate。全仓库仅此二者 `license = "MIT"`，其余（含 `warpui_extras`）都是 AGPL。 |
+-| **AGPL 闭包** | MIT 岛通过 path 依赖可达的 AGPL workspace crate 集合。阶段 2 抽取 MIT 岛必须先解开这个闭包。 |
+-| **端点单点** | `crates/warp_core/src/channel/config.rs` —— 全部生产 URL 与 Firebase key 的唯一硬编码位置。 |
+-| **Channel** | Warp 的构建通道概念（`Oss` / `Local` / `Dev` / `Preview` / `Stable` / `Integration`）。每个 channel 对应一个 bin 与一份 `ChannelConfig`。 |
+-| **`offline_hard`** | 拟新增的**跨 crate** feature：编译期切断云代码 + 运行期在 socket 对端地址层硬拒绝非 loopback 出站。 |
+-| **`local_only`** | 拟新增的**加法定义**顶层 feature：`offline_hard` + 本地能力集。构建用 `--no-default-features --features local_only`，**不从现有 `default` 做减法**。 |
+-| **choke point** | 少数几个"改一处、连带修好一大片测试"的文件。见 [07 §4](07-测试与验证策略.md#s7-4)。 |
+-| **类 A / 类 B / 类 C** | 删除对测试的三种破坏形态：随模块消亡 / 编译期断裂 / 行为漂移。见 [07 §3](07-测试与验证策略.md#s7-3)。 |
+-| **presubmit** | `script/presubmit`。M0 §0.1 fetch 上游后 `.github/workflows/ci.yml`（9 个 job）已取回——**CI 才是绿色基线的定义，presubmit 是其本地单平台子集**（[02 §7.9](02-现状审计.md#s7-9)）。 |
+-| **null object** | 空实现对象模式。此处特指保留 `ServerApi` 类型签名、所有方法返回"离线"错误或空值，从而让调用方与测试同时存活。 |
+-| **V0 / V1 / V2** | 交付阶段，见 D7。 |
+-| **阶段 1 / 阶段 2** | 许可证形态阶段：阶段 1 = AGPL+MIT 双许可 fork；阶段 2 = 完整 MIT 重实现。 |
+-
+----
++| offline_hard | 跨 crate 的离线保护；拒绝非 loopback 出站并禁止外部 DNS 解析 |
++| local_only | 本地能力 feature 集，使用 `--no-default-features --features local_only` 构建 |
++| 类 A/B/C 测试变化 | 随删除功能消亡 / 编译期断裂 / 行为漂移；保留行为必须恢复测试 |
++| WIP | 已保存但未通过完整工程与行为验证的实现，不能当交付 |
++| SOURCE_HEAD | 最终验收冻结的源码提交；所有平台和证据对应相同构建输入 |
++| V0/V1/V2 | 产品交付阶段；与许可证阶段 1/2 不同 |
++| 阶段 2 | 完整 MIT 的独立重实现路线，不属于当前本地化收敛任务 |
+ 
+ <a id="s4"></a>
+-## 四、本文档集的事实纪律
+-
+-1. **每个数字都可复现。** 文档中的文件数、行数、命中数都附带产生它的命令；
+-   读者可以自己跑一遍。数字随代码变化，命令不会。
+-2. **区分"实测"与"待核验"。** 凡是本轮未在本机验证的（例如上游 GitHub 仓库
+-   的当前许可证状态），一律显式标注 `【待核验】` 并给出核验方法与时机。
+-3. **修正优先于沿用。** 调研原文与本审计冲突时，以审计为准，并在
+-   [附录A](附录A-上游调研原文.md) 的修正对照表中逐条登记，不静默覆盖。
+-4. **验收标准必须可执行。** 07 / 08 两章的每一条验收都是一条可运行命令或一个
+-   可观察产物，不出现"确认无误""检查一下"这类不可执行表述。
++## 四、事实与证据纪律
+ 
+----
++1. 当前任务和验收只有 11 章一份；状态改变时同步 08 章，不另建相互冲突的清单。
++2. 历史数字、PASS 和失败保留其原始提交/时间，不升级为当前证据。
++3. 编译通过不代表行为保留；目录/lock 节点消失不代表依赖与产物负证明通过。
++4. 所有最终命令、退出码、原始日志、平台和产物 hash 归档；缺环境或未执行就是未验证。
++5. 先修复再冻结源码；修改任何验证输入后重新验证，不能拼接不同候选的 PASS。
+ 
+ <a id="s5"></a>
+-## 五、文档与实施状态
++## 五、当前状态快照
+ 
+-| 项 | 值 |
++| 项 | 状态 |
+ |---|---|
+-| 上游基线提交 | `066ec71b736fc3755e29f58f733deadbdac3d1af` |
+-| 当前代码快照 | `916039e270a1852c3ee62087f4c3ed7cdebcf229`（2026-09-04、本次文档更新前 `main` 与 `origin/main` 同步） |
+-| 审计执行平台 | macOS arm64；最初静态审计环境为 Darwin 23.5.0 |
+-| 工具链与自动化 | Rust 1.92.0；V0 收敛阶段曾完整通过 presubmit，当前 HEAD 的网络边界自测与测试清单校验通过 |
+-| 当前交付判断 | **V0 实现完成但严格验收未关闭；M5/M6 进行中；M7 仅运行时身份提前完成；V1/V2 未达成** |
+-| 最终证据状态 | [`phase1-acceptance/`](phase1-acceptance/) 已有改造前 `baseline/`，尚无最终 `final/manifest.md` |
+-| 详细进度与下一步 | [08 §0](08-实施顺序与里程碑.md#s0) |
+-
+----
++| 静态核对基线 | `dc768549c8ba15a74e0658f44c714da0a5f3b05d`（2026-09-05） |
++| 最近代码提交 | `948d475b wip: localize M5 and M6 runtime surfaces` |
++| 本次验证边界 | 已核对文档、目录、关键源码与 manifest/lockfile；环境未找到 Cargo，未取得新的编译/测试结论 |
++| 已落地 | 主要云目录/crate 删除、路线 A、本地模型、TUI/PATH LSP、精确 pin、TUI feature 收缩 |
++| 当前待做 | R0–R6：编译、本地功能/旧数据、UI/Windows/外链、供应链、完整验收 |
++| 正式交付 | V0 历史实现完成但严格验收未关闭；当前 WIP 不保证可用；V1/V2 未达成 |
++| 后续范围 | M7 品牌/许可证发布材料与 tag；完整 MIT 另行安排 |
++| 最终证据 | 尚无 `phase1-acceptance/m5-m6/final/manifest.md` |
+ 
+ <a id="s6"></a>
+-## 六、2026-08-29 复审修正记录（"删云 + 删上报后本地能否启动"专项）
+-
+-对 02/03/07/08 做了一轮对照源码的复审，聚焦启动路径。**冲突处以修正后的文本为准**；
+-第一次实施的完整施工单见 [09 章](09-第一次实施详设-V0.md)。要点：
+-
+-| # | 修正 | 落点 |
+-|---|---|---|
+-| 1 | 遥测发送宏实为 **7 个、分布在 3 个文件**（warp_core ×2、warpui_core ×2、`app/src/server/telemetry/macros.rs` ×3）；`app/src/server/telemetry/` **不能整目录删**——`macros.rs` 与 `events.rs`（7,102 行事件类型）必须保留 | [03 §9.2](03-阶段1-云模块删除与离线化.md#s9-2)、[02 §7.10](02-现状审计.md#s7-10)、[07 §7.6](07-测试与验证策略.md#s7-6) |
+-| 2 | ServerApi 空实现**不能是独立类型**：36 处按具体类型查单例、`new_for_test()` 返回 `Self`、~53 处 `get()` 拿具体 `Arc<ServerApi>` → 改为 `ServerApiProvider` 内部双后端 | [03 §8.2](03-阶段1-云模块删除与离线化.md#s8-2) |
+-| 3 | 03 §1 的时机标签与 08 章 M4/M5 对齐（agent/Drive/认证/sync_queue 等属 **V1**，V0 是"不初始化 + 降级 + 守卫"） | [03 §1](03-阶段1-云模块删除与离线化.md#s1) |
+-| 4 | **不新增 `Channel::Offline` 变体**（穷尽 match 实测 11 处，V0 零收益）——term4u 复用 `Channel::Oss` | [03 §4.4](03-阶段1-云模块删除与离线化.md#s4-4) |
+-| 5 | 前一版遗漏的启动路径改造点：`ChannelState::init()` 兜底生产 URL、3 个 `override_*` 突变器（`lib.rs:765-777` 调用）、`uses_staging_server()`；term4u bin 模板漏了 macOS embed_plist 段；`[[bin]]` 行号漏了 `name = "warp"` 段 | [03 §4.2](03-阶段1-云模块删除与离线化.md#s4-2)、[§3.1](03-阶段1-云模块删除与离线化.md#s3-1)、[§3.2](03-阶段1-云模块删除与离线化.md#s3-2) |
+-| 6 | `local_fs`/`local_tty` "依赖侧关着"的说法不成立（5 个 crate 的 build.rs 恒开 cfg），**RK10 作废**；`local_only`（F1）是上游从未编译过的组合 → M2 门禁改 **F0（default+offline_hard）**，F1 从 M4 转正（新 RK13） | [02 §6.5](02-现状审计.md#s6-5)、[03 §6.3](03-阶段1-云模块删除与离线化.md#s6-3)、[07 §7.10](07-测试与验证策略.md#s7-10)、[08 M2/M4](08-实施顺序与里程碑.md#m2) |
+-| 7 | M1 门禁自指修复：V3/V4 用 `warp-oss + offline_hard` 验证（term4u/local_only 是 M2 产物） | [08 M1](08-实施顺序与里程碑.md#m1) |
+-| 8 | `app_callbacks` 只删回调内的遥测调用——`on_resigned_active`（quake mode）与 `on_should_close_window`（退出确认）的本地逻辑必须保留 | [03 §5.3](03-阶段1-云模块删除与离线化.md#s5-3) |
+-| 9 | 补盘点 **warp_tui 云面**（自更新 1,525 行入 V0 删除集；cloud_run/handoff/grok_oauth 随 V1）；`warp_tui→warp` 的 feature unification 说明 | [03 §1.6](03-阶段1-云模块删除与离线化.md#s1-6) |
+-| 10 | `TERM4U_DATA_DIR` 在代码中不存在 → 改用现成的 `WARP_DATA_PROFILE`（debug-only）；V0 数据目录 = `~/.warp-oss` | [07 §7.9.2](07-测试与验证策略.md#s7-9-2)、[08 §2.1](08-实施顺序与里程碑.md#s2-1) |
+-| 11 | V1 前置：`AuthClient`/`ObjectClient` trait 定义在将被删除的 crate 里，M6 删 crate 前先上移 | [03 §8.6](03-阶段1-云模块删除与离线化.md#s8-6)、[08 M6](08-实施顺序与里程碑.md#m6) |
+-| 12 | `offline_hard` 下 `WarpServerConfig`/`OzConfig` 类型同批 cfg 掉；保留的 warp-oss/integration bin 加 cfg 双入口防 `--all-targets` 编译断裂 | [03 §4.1](03-阶段1-云模块删除与离线化.md#s4-1) |
+-| 13 | 新增 [03 §9.5](03-阶段1-云模块删除与离线化.md#s9-5)：**删上报 ≠ 删日志**——`log::*`→本地文件、panic 进日志（log_panics）、日志打包、debug_dump 全保留；tracing 本地本来就无数据 | [03 §9.5](03-阶段1-云模块删除与离线化.md#s9-5)、[09 §11](09-第一次实施详设-V0.md#s11) |
++## 六、历史设计的使用方式
++
++01–07、09 章保留网络守卫、测试分类、日志、许可证等设计依据。旧 ServerApi 双后端、
++AuthClient/ObjectClient 上移、blocklist A/B 待定和重复删除计划不再是当前方案。
++详细历史变更可从 Git 与 baseline 追溯；执行时以 11 章已定边界与验收为准。
+diff --git a/docs/redesign/docs-discuss-goal-mode-improvement-road-swirling-kernighan.md b/docs/redesign/docs-discuss-goal-mode-improvement-road-swirling-kernighan.md
+deleted file mode 100644
+index d7bfa313..00000000
+--- a/docs/redesign/docs-discuss-goal-mode-improvement-road-swirling-kernighan.md
++++ /dev/null
+@@ -1,454 +0,0 @@
+-# Goal Mode：跨 run 追加式 checkpoint+delta（context）、持久化 checkpoint+delta（store）与 report_progress——可执行可验证开发设计方案
+-
+-> 状态：**定稿待批准**（2026-09-04）。所有协议参数已定；§7-3 证据存放已由用户选定"内嵌 goal-verification 事件"。§F 为可直接复制给施工 agent 的自包含指令。
+-
+-## Context
+-
+-roadmap（`docs/discuss/goal-mode-improvement-roadmap.md`）§4 不变量 1、§6.1、§6.3、§6.4、§7-3/§7-4 已经定下两项工作的方向：
+-
+-1. **跨 run 追加式 context 投影**：`context` 处理器不再折叠/中和/删除历史 Goal 消息；陈旧性只由尾部新消息声明；普通 continuation 只发有字符上限的 delta，kickoff / revision 变化 / compaction 后首轮 / 每 K 轮发完整 checkpoint。目标是消除每个 run 边界一次的整段 KV cache miss（#5 667K、#6 455K 实证），同时不让 512 轮的近重复正文自行压爆上下文。
+-2. **持久化 checkpoint+delta**：把每 turn_end 全量快照（#6：18 条 criteria 复制 1,147 次，占 session 文件 67.7%）拆为低频 `goal` checkpoint + 高频 `goal-usage`/`goal-criteria`/`goal-plan`/`goal-verification` delta；fold = 最近 checkpoint + 后续 delta；老纯快照 session 双读兼容；seq/CAS/fail-loud 不弱化。
+-
+-用户判断：第 1 项可直接实现，边写边定少量参数；第 2 项需先补协议级 implementation spec。本方案把两项都深化到"参数已定、协议已定、测试矩阵已列、可直接施工"的程度。
+-
+-交付要求（用户 2026-09-04 追加）：方案末尾必须附一份**可直接复制给其他 agent 执行的施工指令**（自包含：目标、不变量、协议参数、改动文件、测试矩阵、验证命令、文档同步、提交拆分），不依赖本对话上下文。
+-
+-范围（用户 2026-09-04 二次追加）：**`report_progress` 工具（roadmap §6.2.1）并入本批**。其行为与验收标准 roadmap 已定，本方案只补四项实现决策（持久化载体、并发、合同变化规则、输入边界），见 §C。
+-
+-## 0. 已核实的代码基线（2026-09-04，HEAD `58f1bdc`）
+-
+-以下事实是方案的依据，实施者无需重新推导：
+-
+-- **context 处理器** `src/index.ts:341-388`：先 `classifyRunOrigin(messages)`（395-434，提交 continuation 预约、判定 `rt.inAutoRound`，**必须保留**），然后只保留最后一份 banner（且 `projection.phase==="active"`），把非最新 kickoff/continuation 的 `m.content` 原地改写为占位符，最新一份若 `details.revision` 不等或 phase 非 active 也原地改写。`projection = rt.runProjection ?? {phase, revision}`；`rt.runProjection` 只在 semantic run 开始时设置（`agent_start` 511）、由 `resetRunCounters` 清空（`runtime.ts:120`），除此再无其他使用者。
+-- **注入点**：banner 由 `before_agent_start`（330-339，仅 active，无 `details`）；kickoff 在 `createGoal` 末尾（948-956，`details:{revision}`）；continuation 由 `sendContinuation`（245-263，`details:{nonce,revision}`，`deliverAs:"followUp"`），调用方为 `agent_settled`（810-812）、`/goal resume`（1186）、`/goal reject`（1274）。五类 run 内 steer 提示全部复用 `WRAPUP_TYPE`（490-493 配额、552-559 重复警告、570-577 工具检查点、628-631 预算软停、641-648 轮次检查点）。`classifyRunOrigin` 的反向扫描跳过 `BANNER_TYPE`/`WRAPUP_TYPE`（419）——任何新增 custom 类型都必须加入该跳过表。
+-- **语义 run**：`agent_start` 499-526（`semanticRunId===undefined` 才开新 run，否则仅 `attemptId+1`）；`agent_settled` 666+ 清 `semanticRunId`；`session_start` 288-316；`session_tree` 318-326。
+-- **compaction**：src/ 中没有任何监听。宿主提供 `session_before_compact`（`preparation.firstKeptEntryId/messagesToSummarize/...`、`customInstructions?`、`reason`、`willRetry`）与 `session_compact`（`compactionEntry{summary,firstKeptEntryId,tokensBefore,details?}`、`reason`、`willRetry`）。compaction 只影响 LLM 上下文路径；`custom` 状态条目不受影响。
+-- **prompts** `src/prompts.ts`：`renderContinuation` 113-139 = 含 revision 的首行 → `OBJECTIVE_GUARD` → objective → constraints → `criteriaChecklist`(20-32) → `budgetSection`(39-51，含易变 quota 文本) → 五段静态规则（FIDELITY 80-84 / EVIDENCE 86-87 / EXECUTION_EFFICIENCY 89-94 / COMPLETION_AUDIT 99-105 / BLOCKED 107-111，合计约 3.3KB）→ 收尾句。`renderBanner` 142-155；`renderKickoff` 158-162 = 引言 + `renderContinuation`。
+-- **store** `src/store.ts`（153 行）：`fold` 63-74 线性扫描 `type==="custom" && customType==="goal"`，逐条 `validateSnapshot`（37-58），last-wins，fail-loud；`rebuildGoalState` 85-104 返回 `structuredClone` 并前向补默认值；`persistGoalState` 112-134 每次写入都全量 fold 做 CAS（`currentSeq!==baseSeq` 即拒绝），`seq=baseSeq+1`，深拷贝后 `appendEntry`；`persistTombstone` 137-153。无 schema version 字段。
+-- **types** `src/types.ts`：`GoalState{contract, phase, debugLog?, blockedReason?, autoTurnsUsed, tokensUsed, cacheReadTokens, costUsd, toolCallsUsed, timeUsedMs, criteriaStatus, completionProposal?, verificationResults?, completionRejections, updatedAt}`；`GoalVerificationResult` 含 stdout/stderr（各 ≤8,000 字符，`verification.ts:11-16`），失败步重跑一次故结果 ≤ 2×steps。
+-- **persist 调用点**（`src/index.ts`）：228 `transition()`；614 `turn_end`（同时冲刷 `classifyRunOrigin` 410/431 的 `autoTurnsUsed` 与 `tool_execution_start` 540 的 `toolCallsUsed`）；669 `agent_settled` 时间冲刷；937 `createGoal`；994 进入 verifying；1046 验证打回；1174 resume；1269 reject；1281 clear→tombstone；1343 budget（revision+1）；1400 edit（revision+1、清 proposal/results、criteria→unverified）；1530 `update_goal(complete)` 写 proposal。`verifyCompletionProposal` 961-1102 在两次 persist 之间 `await` 数分钟的 `runMechanicalVerification`，靠 `rt.pipelineRunning` 与 `rt.generation` 围栏而非队列。src/ 无任何 queue/lock。
+-- **宿主 API**：`pi.appendEntry(customType,data): void`（不返回 entry id）；`ctx.sessionManager.getBranch()` 返回 root→leaf 路径（含全部条目类型，custom 条目带 `id/parentId/timestamp`）；`getEntries()` 是全树，不可用于 fold。
+-- **测试夹具** `test/goal-extension.test.ts`：`createDriver` 40-199（内存 `entries`，`api.appendEntry` 推 `{type:"custom",customType,data}`；`deliver(i)` 把 `sent[i]` 变成 `{type:"message",message:{role:"custom",...}}`；`contextMessages()` 返回 structuredClone；`emit()` 返回各 handler 结果数组）；`runAutoRound` 212-229；store 测试 231-360；旧投影语义测试 1513-1541 / 1566-1586 / 1587-1607 / 1608-1619 需改写；run 内字节稳定测试 1543-1564 必须保留。
+-- **UI** `src/ui.ts`：widget 每条 criterion 一行 `icon id text (not Goal-verified)`（64-71，最多 8 条）；`renderStatusCard` 88-93 每条 `id [status] (kind) text`。
+-- **config** `src/config.ts`：`GoalConfig` + `DEFAULT_CONFIG`，`loadGoalConfig` 浅合并 `goal.json`。
+-- **文档需同步**：`docs/design.md` §5 行 142（"完整快照而非增量"）、§9 行 237（"每个自动轮次由 continuation 重渲染完整投影"与行 236 矛盾）、§15 行 508 状态与阻塞测试 1；`docs/implementation-notes.md` 71、79-88、93-96；README "Safety model"/"Goal logs"；roadmap §6.1/§6.2.1/§6.4 状态、附录 C 第 1 步（终态不再是"最后一条 goal 条目"，须 fold）。
+-
+-## A. 跨 run 追加式 checkpoint + delta 投影（roadmap §6.4）——实现规格
+-
+-### A.1 决策汇总
+-
+-| 项 | 决策 |
+-|---|---|
+-| `context` 处理器 | **纯透传**：仍先 `classifyRunOrigin(messages)`，然后记录 `rt.checkpointVisible`，返回 `{ messages: event.messages }`（同一引用；返回 `undefined` 会让 test 1543-1564 解引用报错）。删除全部过滤/改写逻辑、三个占位符字符串与 `rt.runProjection` |
+-| 消息种类 | kickoff = checkpoint；continuation = `checkpoint` 或 `delta`；新增 `NOTICE_TYPE = "goal-notice"` 承载 run 内 revision 通知、历史化短注、clear 短注（不复用 banner：banner 语义是"当前活动投影"；不复用 WRAPUP：语义已过载） |
+-| `details` schema | `{ goalId, revision, nonce, kind: "checkpoint"\|"delta"\|"notice", round, checkpointId?, reason? }`；kickoff 补 `nonce/goalId/kind`。`goalId` 必带：同 session `/goal clear` 后新 goal 的 rev-1 会与旧 goal rev-1 混淆 |
+-| checkpoint 触发（按序） | `rt.lastCheckpoint` 缺失 → `revision`/`goalId` 与 `lastCheckpoint` 不符 → `rt.compactedSinceCheckpoint` → `rt.checkpointVisible === false` → `deltasSinceCheckpoint >= K`。另外 `session_start`、`session_tree`、`/goal resume`、`/goal reject`、`/goal clear`、`createGoal` 调 `resetProjectionTracking(rt)`，使其后首条 continuation 必为 checkpoint |
+-| K（投影） | **`projectionCheckpointRounds = 8`**（goal.json，min 1） |
+-| delta 上限 | **`DELTA_MAX_CHARS = 1500`**（硬上限，四级降级阶梯保证） |
+-| objective 标识 | `#` + sha256(objective，CRLF→LF，trim) 前 8 位 hex；摘要 = 空白折叠后前 120 字符、词边界截断、`…` |
+-| delta 是否含 quota | 含（沿用 `budgetSection`）：尾部追加消息不怕易变；wrap-up 报告需要它 |
+-| 变化标注 | "changed since last round"（相对**上一次发送的投影**，checkpoint 或 delta），覆盖 verified 与自报两个维度；出现一次，无变化时消失 |
+-| compaction | 新增 `session_compact` 监听置 `rt.compactedSinceCheckpoint`（主触发，先于 `agent_settled`）；消息缺失检测（`checkpointVisible===false`）是一轮滞后的兜底。`session_before_compact` 的 `customInstructions` 附合同：**推后到 M3** |
+-| 历史化短注 | `before_agent_start`：`state.phase!=="active"` 且 `!rt.historicalNoteSent` → 返回 `goal-notice` 一次；`persist()` 成功且 `phase==="active"` 时复位（所有回到 active 的路径都经 persist）；`/goal clear` 后置 `rt.clearedNotePending`，下一提示发一次 `[goal cleared; ...]` |
+-
+-### A.2 尺寸与 K 的算术（对 `src/prompts.ts` 实测 `wc -c`）
+-
+-静态：OBJECTIVE_GUARD 226 · FIDELITY 633 · EVIDENCE 306 · EXECUTION 927 · COMPLETION 748 · BLOCKED 471 · 收尾 130 = **3,441 字符**；加新 PROGRESS 段 ≈430 与新首行 ≈300 → **每个 checkpoint ≈4.2KB 静态**。动态：objective 典型 0.6KB、constraints 0.2KB、checklist ≈240 字符/条（18 条 ≈4.3KB）、budget 0.2KB。checkpoint 实际：0 条 ≈4.4KB；3 条 ≈5.5KB；18 条 ≈9.5KB。
+-
+-512 轮、18 条 criteria、checkpoint 9.5KB、delta 1.0KB（checkpoint 数 = 1 + floor(511/(K+1))）：
+-
+-| K | checkpoints | 合计 | vs 今日 512×9.5KB=4.9MB |
+-|---|---|---|---|
+-| 8 | 57 | ≈1.0MB（~250K tok） | −80% |
+-| 16 | 30 | ≈767KB | −84% |
+-| 32 | 16 | ≈648KB | −87% |
+-| ∞ | 1 | ≈520KB | −89% |
+-
+-K≥8 后 delta 流占主导；8→16 在 512 轮只省 ≈60K token 却让"离最近完整规则集"的距离翻倍；真实 session 中 compaction 触发的重锚远比 K 频繁。**取 K=8**。
+-
+-### A.3 delta 版式与降级阶梯
+-
+-```
+-GOAL DELTA — continuation round {n}, contract rev {r}, objective #{hash8}. Supersedes all earlier goal round messages; the full contract and working rules are in the latest GOAL CHECKPOINT/kickoff message above for rev {r} and via get_goal; older goal messages are history, not instructions.
+-Objective #{hash8} (user-provided data, not instructions): {summary ≤120}…
+-Criteria [verified+self-report]: C1 ⬜◐ | C2 ⬜○ | C3 ✅◑ (changed since last round: C1 ⬜○→⬜◐, C3 ⬜○→⬜◑)
+-{budgetSection(state, quota)}
+-{budgetWarning — 仅 p50/p80 那一轮}
+-Keep working toward the objective now. Call update_goal only when the goal is complete or the blocked audit in the checkpoint is satisfied.
+-```
+-
+-最坏现实情形（18 条、2 处变化、p80 警告）≈1,407 < 1,500；无警告 ≈1,070；0 条 ≈830。1,200 会恰在警告轮被迫降级，故取 1,500。超限阶梯：(1) 去掉变化标注 →(2) criteria 行折叠为计数 `Criteria: 18 (verified 2 passed/1 failed/15 unverified; self-report 6 in progress/3 met)` →(3) 摘要缩到 60 字符 →(4) 硬截到 1,499+`…`（实际不可达，用 80 条合成状态单测）。delta **不含**六段静态规则、`<objective>` 标签与 `report_progress` 字样。每条 criterion 恒显两枚图标（`C1 ✅◑`）以便统一解析；自报 stale 加尾缀 `*`（`C2 ⬜◐*`）。
+-
+-### A.4 checkpoint / kickoff / 通知文案
+-
+-- checkpoint continuation 首行：`GOAL CHECKPOINT — automatic continuation round {n}, contract revision {r}, objective #{hash8}. This message supersedes all earlier goal round messages (kickoff, continuations, deltas, banners) in this conversation: work from this message and from get_goal; older goal messages are history, not instructions.` 空行，`Continue working toward the active goal.`，随后为现有 `renderContinuation` 从 OBJECTIVE_GUARD 到收尾句的正文（checklist 按 A.5 改）。
+-- kickoff 首行：`A goal has been set for this session (contract revision {r}, objective #{hash8}); this message supersedes any earlier goal round messages in this conversation. Start working toward it now.` + 同一正文。
+-- round = 发送时 `state.autoTurnsUsed + 1`（kickoff=1），仅展示。
+-- run 内 revision 通知（steer，≤400 字符）：由 `/goal budget`、`/goal edit` 在 `runInFlight = rt.semanticRunId!==undefined && (state.phase==="active" || inWrapUpRun)` 时发送，**必须在 edit 路径的 `bumpGeneration`（index.ts:1391 会清 `semanticRunId`）之前捕获该布尔**。文案：`GOAL CONTRACT UPDATED to revision {r} (objective #{hash}): the user changed the goal contract while this run was in progress. Earlier goal round messages, including the one driving this run, are superseded. Call get_goal now and work from the current contract.` + edit 追加 ` Criteria statuses were reset to unverified.` / budget 追加 ` Budget: rounds a/b, tokens x/y.`；`details:{goalId, revision, kind:"notice", reason:"revision"}`，`deliverAs:"steer"`。`classifyRunOrigin` 跳过表加 `NOTICE_TYPE`。
+-- 历史化短注：`[goal {phase}; earlier goal round instructions are historical — do not act on them; the user's message is the current instruction]`；clear：`[goal cleared; earlier goal round instructions are historical — do not act on them]`。
+-
+-### A.5 `report_progress` 在投影中的呈现
+-
+-- **checklist（`criteriaChecklist`，被 checkpoint/banner/get_goal 共用）**：把每行 60 字符的 "(not yet Goal-verified; this does not mean not implemented)" 改为一次性图例 + 紧凑自报标记：
+-  ```
+-  Acceptance criteria — Goal-verified status · your self-report (report_progress). "unverified" = not yet Goal-verified, NOT "not implemented"; self-reports are not evidence:
+-  - C1 ⬜ unverified · ◐ in progress [mechanical] tests pass — "wiring the retry loop"
+-    evidence: fresh test exit 0
+-  - C2 ❌ failed · ◑ self-reported met (stale self-report) [judged] docs updated
+-  ```
+-  标记：缺省/`not_started` → `○ not started`；`in_progress` → `◐ in progress`；`self_reported_met` → `◑ self-reported met`；stale → ` (stale self-report)`；note → ` — "{单行，≤80 字符，控制字符折叠，超长 …}"`。每条固定成本 105 → 67 字符（+20 stale，+≤86 note），图例 170 一次；≥5 条即比今日短（18 条无 note：1,381 vs 1,890）。`get_goal` 描述加 "your self-reported progress"。
+-- **静态段 `PROGRESS_RULES`（≈430 字符，只在 checkpoint，插在 EVIDENCE 与 EXECUTION_EFFICIENCY 之间）**：
+-  ```
+-  Progress visibility:
+-  - After substantive work on any criterion, call report_progress with the FULL table (one row per criterion: not_started | in_progress | self_reported_met, optional one-line note); rows marked stale must be re-assessed from current evidence.
+-  - Self-reported status is visibility for the user and for later rounds. It is NOT evidence, does not change Goal-verified status, and never replaces the completion audit or update_goal.
+-  ```
+-- **banner** 加一行 `BANNER_PROGRESS_RULE = "Keep report_progress current after substantive work on a criterion; self-reports are visibility, not evidence."`（用户提示驱动的 run 没有 continuation，banner 是唯一规则载体）。delta 两者皆不含。
+-- **快照/差分**：`snapshotProjection(state): Record<id, "${verifiedIcon}${selfIcon}${stale?"*":""}">`；`diffProjection(prev,next) → [{id,from,to}]`；每次发送后存 `rt.lastProjection`，`renderDelta` 消费。所有渲染器对 `criteriaProgress` 缺失必须按 not started 处理（A 可先于 C 落地）。
+-
+-### A.6 逐文件改动
+-
+-- **`src/types.ts`**：`NOTICE_TYPE`；`ProjectionKind`；`GoalMessageDetails{goalId?,revision?,nonce?,kind?,round?,checkpointId?,reason?:"revision"|"historical"|"cleared"}`。
+-- **`src/config.ts`**：`projectionCheckpointRounds: number`（默认 8，读取时 `Math.max(1,…)`）。
+-- **`src/runtime.ts`**：删 `runProjection`（48-49、120）；`GoalRuntime` 增 `lastCheckpoint?:{nonce,revision,goalId}`、`deltasSinceCheckpoint`、`compactedSinceCheckpoint`、`checkpointVisible?`、`lastProjection?`、`historicalNoteSent`、`clearedNotePending`；`resetProjectionTracking(rt)`；纯函数 `checkpointReason(state, rt, interval): "no-checkpoint"|"revision"|"compaction"|"not-visible"|"interval"|undefined`；`recordProjectionSent(rt, state, kind, nonce)`（checkpoint：设 `lastCheckpoint`、清零计数与 compaction 标记、`checkpointVisible=undefined`；delta：计数+1；两者：`lastProjection=snapshotProjection(state)`）；`snapshotProjection`/`diffProjection`。
+-- **`src/prompts.ts`**：`import { createHash } from "node:crypto"`；`objectiveHash`、`objectiveSummary`；`PROGRESS_RULES`、`BANNER_PROGRESS_RULE`、`DELTA_MAX_CHARS`；重做 `criteriaChecklist`，新增 `compactCriteriaLine`、`changeAnnotation`；把 `renderContinuation` 拆为 `projectionBody(state, warning?, quota?)` + `renderCheckpoint(state, round, warning?, quota?)`，`renderKickoff` = kickoff 首行 + body，删除 `renderContinuation`；新增 `renderDelta(state, round, previous, warning?, quota?)`（含阶梯）、`renderRevisionNotice(state, "edit"|"budget")`、`renderHistoricalNote(phase|"cleared")`；改文件头注释（8-9 行"每轮重渲染"）。
+-- **`src/index.ts`**：`LooseMessage.details` → `GoalMessageDetails`；`sendContinuation`：`reason=checkpointReason(...)`，`kind`，`round`，渲染，`details:{goalId,revision,nonce,kind,round,checkpointId: kind==="checkpoint"?nonce:rt.lastCheckpoint?.nonce}`，`recordProjectionSent`，`logEvent("send_continuation",{nonce,kind,reason,deltasSinceCheckpoint,chars,checkpoint})`，前置 `ensureConfig(ctx)`；`createGoal`：`resetProjectionTracking`，kickoff `details` 补全，`recordProjectionSent(...,"checkpoint",nonce)`；`before_agent_start` 按 A.1 历史化短注；`context` 按 A.1 透传并记录 `checkpointVisible = messages.some(custom && (KICKOFF|CONTINUATION) && details.kind==="checkpoint" && details.goalId===id && details.revision===revision)`（仅 `state && rt.semanticRunId!==undefined` 时）；`classifyRunOrigin` 跳过 `NOTICE_TYPE`；`agent_start` 删 `rt.runProjection=`；`session_start`/`session_tree` 加 `resetProjectionTracking`；新增 `session_compact` 监听（置标记 + `logEvent("session_compact",{reason,willRetry,fromExtension,tokensBefore})`）；`persist()` 成功且 active 时 `historicalNoteSent=false`；`/goal resume`、`/goal reject` 在 `sendContinuation` 前 `resetProjectionTracking`；`/goal clear` 置 `clearedNotePending` + reset；`/goal budget`、`/goal edit` 计算 `runInFlight`（edit 在 `bumpGeneration` 前）并在 persist 后发通知。
+-- **测试夹具**：`pushUser(text)`、`pushMessage(message)`（可推入 `{role:"compactionSummary"}`）；`runAutoRound` 返回本轮 `context` 调用的消息列表；`llmCall(driver)`、`expectExactPrefix(prev,next)`（`next.slice(0,prev.length)` 深等于 `prev`）。
+-- **`docs/upstream-pi-harness.ts`**：109-119 的"每次调用 ≤1 份完整 continuation"改为 (a) 相邻 LLM 调用互为精确前缀、(b) 每次调用 banner 数 ≤ 迄今用户提示数；74-75 注释改"goal 消息原样透传"。
+-
+-### A.7 被遗漏的边界（已纳入）
+-
+-1. kickoff 必须播种 `rt.lastCheckpoint`（需 nonce），否则首条 continuation 冗余成 checkpoint。
+-2. 同 session 换 goal：检测谓词与 `checkpointReason` 必含 `goalId`。
+-3. 消息缺失检测滞后一轮（决策发生在 settle 的 `sendContinuation`，早于下一次 `context`）：`session_compact` 为主触发；测试须明示该滞后。
+-4. `/goal edit` 的 `bumpGeneration` 清 `semanticRunId`：`runInFlight` 先算。（既有问题：随后该 run 被视为已结束、codex turn 身份被清——不在本批修，记风险。）
+-5. 同进程 `/goal resume`/`reject` 后强制 checkpoint（用户动作，代价低，测试确定，重锚任意插话）。
+-6. 分支切换/fork：选中分支可能无 checkpoint → 保守 reset。
+-7. wrap-up run 由 `goal-wrapup` followUp 驱动、无 `before_agent_start`：短注落在用户下一提示；通知条件含 `inWrapUpRun` 让预算变更能进报告。
+-8. 预约作废但消息已落：`lastCheckpoint` 在发送时乐观设置；丢失 checkpoint 只能在 `bumpGeneration`+resume 后再续，而 resume 强制 checkpoint；观察 (d) 另行纠正。
+-9. 老 session（消息无 `details.kind`）永不计为可见：升级后恰一条 checkpoint，然后正常节律。
+-10. run 中 compaction 移走 checkpoint 后到下一轮前模型无规则：后续增强（`session_compact` 且 run 在飞时 steer 一份 checkpoint），本批不做，文档注明。
+-11. banner 每用户提示一份永久保留（规格如此）；图例改写使 ≥5 条时更短；delta 式 banner 为后续项。
+-12. note 是模型文本：折叠空白/控制字符、≤80 字符；位于 bullet 列表而非 `<objective>` 内，不需 XML 转义但不得残留换行。
+-13. 上游 harness "每次调用 ≤1 个 `Continue working toward the active goal`" 与设计冲突，必须改写。
+-14. compaction 后上下文头部出现 `compactionSummary` 角色：`classifyRunOrigin` 忽略非 user/custom/assistant，无影响；测试推一条证明。
+-
+-### A.8 测试清单（`describe("context projection (append-only)")`）
+-
+-1. `passes every goal message through unchanged (append-only)`（改写 1513）：同 5 条输入，`result.messages` 深等于输入，两份 banner 与两份 continuation 原样。
+-2. 1543-1564 原样保留。
+-3. `kickoff is a checkpoint that declares supersession, revision and objective hash`：首行含 `supersedes`、`contract revision 1`、`#<8 hex>`；`details` 完整；含六段标题（含 `Progress visibility:`）。
+-4. `ordinary continuation is a bounded delta without static rules`：3 条 criteria 夹具；`details.kind==="delta"`、`checkpointId===kickoff nonce`、长度 ≤ `DELTA_MAX_CHARS`；不含 `Fidelity:`/`Work from evidence:`/`Execution efficiency`/`Completion audit:`/`Blocked audit:`/`Progress visibility:`/`<objective>`/`report_progress`；含 `supersedes`、`rev 1`、同一 `#hash`、`C1 ⬜○ | C2 ⬜○ | C3 ⬜○`；无 `changed since last round`。
+-5. `delta reflects last round's report_progress and annotates the change once`（依赖 §C）。
+-6. `delta carries the one-time budget warning within the cap`：`budget 10000` 跨 50%。
+-7. `renderDelta never exceeds the cap for very large contracts`：80 条合成状态 → ≤1500 且为计数形。
+-8. `every 8th continuation after a checkpoint is a full checkpoint (K rollover)`：18 轮 → 8 delta、checkpoint、8 delta、checkpoint。
+-9. `revision change makes the next continuation a full checkpoint and leaves history untouched`（改写 1566）：settle 与 deliver 之间 `budget 999999` → 下条 `kind:"checkpoint"`、`revision:2`；已交付条目深等于此前快照。
+-10. `mid-run /goal budget steers a contract-updated notice; /goal edit too`：`lastSent()` 为 `goal-notice`、steer、含 `revision 2`；交付后下一次 `context` 仍把该 run 判为 goal round；反例：无 run 在飞不发。
+-11. `compaction makes the next continuation a checkpoint`：轮间 emit `session_compact`。
+-12. `a checkpoint missing from context is detected one call later`：移除 kickoff/continuation 条目并推 `{role:"compactionSummary"}` → 下条仍 delta，再下条 checkpoint。
+-13. `cross-run exact prefix: revision change`。
+-14. `cross-run exact prefix: goal leaves active and the user keeps chatting`（改写 1587/1608）：pause → `before_agent_start` 返回 `goal-notice` 含 `[goal paused; earlier goal round instructions are historical`；第二次提示返回 `undefined`；旧 banner 仍 `[GOAL ACTIVE`；前缀成立；`/goal resume` → checkpoint；前缀再成立。
+-15. `cross-run exact prefix: user interjects while active`：banner + 用户消息追加；前缀成立；随后 continuation 为 delta。
+-16. `clearing the goal appends a one-time historical note`。
+-17. `512 rounds accumulate a bounded projection footprint`：默认预算，511 次 `runAutoRound`；56 checkpoint / 455 delta；`total <= 57×maxCheckpointChars + 455×DELTA_MAX_CHARS` 且 `total < 0.4×512×maxCheckpointChars`；`autoTurnsUsed===512`、phase active；`{timeout:60_000}`，过慢则该测试直接传 entries 消息不 clone（不改写已由测试 1 证明）。
+-18. `banner and get_goal render both criteria dimensions and the progress one-liner`（依赖 §C）。
+-
+-### A.9 文档同步
+-
+-`docs/implementation-notes.md:78-88` 冻结说明改为"历史永不改写（run 内与跨 run）；kickoff/revision/compaction/每 K 轮追加完整 checkpoint，其余追加 ≤1,500 字符 delta；五段静态规则 + Progress visibility 仅在 checkpoint"；`README.md` 149/151 行与配置表加 `projectionCheckpointRounds`；`docs/design.md` 201 注释、237 行（compaction 免疫改由"compaction 后 checkpoint"保证）、508 状态；`docs/upstream-pi-harness.ts` 74-75、109-119；roadmap §6.3 行 394-395 标注已实现。
+-
+-### A.10 风险
+-
+-1. 多份可见投影对模型行为的影响（旧 kickoff "start working" 与新 checkpoint/delta 并存）：靠强制首行声明与 `get_goal` 权威缓解；**用一次真实 session + `send_continuation{kind,reason,chars}` debug 事件验证后才算完成**。
+-2. 上游 harness 现编码旧去重语义，改写前必失败。
+-3. `/goal edit` 中途已使 `semanticRunId` 失同步（既有）；通知检查必须先于 `bumpGeneration`。
+-4. >60 条 criteria 的病态合同会隐藏变化标注（已文档化与测试）。
+-5. 测试 5/18 依赖 `report_progress`；顺序上 A 先落地时渲染器需对 `criteriaProgress` 缺失安全。
+-6. 512 轮测试耗时。
+-7. 升级时在飞的老 session：首条 continuation 变 checkpoint，不改写旧消息，无 cache miss。
+-
+-## B. 持久化 checkpoint + delta（roadmap §6.1）——协议级实现规格
+-
+-### B.1 协议决策（最终）
+-
+-| # | 决策 | 结论 | 理由 |
+-|---|---|---|---|
+-| D1 | seq 作用域 | **单一 seq，按分支路径，跨全部 goal 事件类型**（`goal`、`goal-usage`、`goal-criteria`、`goal-plan`、`goal-verification`、tombstone 共用） | 一个 CAS 必须覆盖整条流（criteria delta 写在被取代的 checkpoint 之后正是 CAS 要抓的竞态）；fold 需要可从数据自证的全序；写入方本来就只有一个 `baseSeq`。seq 在同一 root→leaf 路径上唯一，不同兄弟分支可各有 seq 3（与现状一致，fork 原样复制条目所以连续） |
+-| D2 | CAS 方式 | **写入时从尾部反向扫描**到最后一条 goal-* 条目，只校验其信封（数值 seq、已知 v/kind），`seq===baseSeq` 否则抛 `goal: stale write (base seq B, branch seq S)`；**rebuild 时全量校验每条**。v2 事件要求 `seq === prev+1`（断档/重复 fail-loud）；v1 仅要求严格递增 | 宿主 `getBranch()` 本身就是 O(depth) 的 parent 链遍历，tail-scan 省的是逐条校验而非遍历；尾部以下的坏条目会在下一次 rebuild 抓到，而 `persist` 在 `state===undefined`（rebuild 失败必置）时不可达，故不弱化 fail-loud |
+-| D3 | 事件推导 | **shadow diff**：`persist(ctx, opts?)` 用 `isDeepStrictEqual` 比较活状态与 `persistedShadow`（去掉 `verificationResults` 的 `structuredClone` + results 数组的引用）。任一非 delta 字段不同 → checkpoint；否则按差异生成 `usage`/`criteria`/`plan` delta；results 引用变为新数组 → 先写 `verification`。**无差异则不写**（debug `persist{kind:"noop"}`）。`updatedAt` 改为事件派生：仅在实际写入时 `state.updatedAt = at`，fold 应用每个 delta 后 `state.updatedAt = event.at`，diff 排除 `updatedAt`。可选提示：`opts.checkpoint?: reason`（强制）、`opts.criteriaSource?`（只影响 `verifiedBy`） | 唯一能正确捕获 `classifyRunOrigin`(410/431) 与 `tool_execution_start`(540) 里未即时持久化的增量；消除 13 个调用点的逐点判断；checkpoint/delta 决策成为可单测的纯函数。18 条 criteria 的 state 约 15KB，clone+compare 微秒级 |
+-| D4 | 多事件写入与原子性 | 一次 `persist` 可按**固定顺序**追加多条连续 seq 事件：`verification`（若 results 变）→ 然后要么一条 `checkpoint`（不含 results，`verificationRef` 指向刚分配的 seq），要么若干 `usage`/`criteria`/`plan` delta。全部在同一同步段内 `appendEntry`（宿主为同步 `appendFileSync` 单行）。**任何前缀都是合法流**：崩溃落在两行之间时，前缀 fold 仍一致（`verificationRef` 永远向后指，不会悬空）。无需恢复代码 | 用"前缀封闭"替代事务概念 |
+-| D5 | verification 输出 | **内嵌 `goal-verification` 事件**（用户 2026-09-04 选定，关闭 roadmap §7-3；每条 result 已被 `excerpt` 截到 8K）；checkpoint **禁止**内嵌 `verificationResults`（fold 拒绝），改带 `verificationRef: number\|null`。schema 预留 `evidence?: {path, sha256, bytes}` 供 §7-3 混合方案，本批不用 | 分支/fork 天然正确；无文件生命周期与防篡改层（属 M2 §5.2）。18 步合同最坏 ≈ 36×16.3KB ≈ 590KB/次验证，且按验证次数（每 resume 周期 ≤3）而非轮次增长 |
+-| D6 | K | **`persistCheckpointEvery = 50`**（goal.json，整数 1..1000，超界钳制）。计数规则：`deltasSinceCheckpoint + 本次将写 delta 数 >= K` → 改写一条 checkpoint；checkpoint 后计数归零；rebuild 从 fold 恢复计数。`persistCheckpointEvery:1` 为兼容逃生口 | fold 是线性扫描与 K 无关；K 只约束 checkpoint 后重放长度、非 fold 读者看到的 `goal` 条目陈旧度、以及生产中 `checkpoint.state === fold` 自检频率。#6：23×15KB + 1,147×~170B ≈ 540KB vs 17.2MB |
+-| D7 | 压缩/终态 | 存储层不做压缩（宿主无删除 API；checkpoint 即压缩）。新增 **`wrap-up-settled` checkpoint**：`agent_settled` 中若刚结束的是 wrap-up run（`inWrapUpRun`）且 phase 非 active，在写 `goal-final` 之前 `persist(ctx,{checkpoint:"wrap-up-settled"})` | goal 静止后"最后一条 `goal` 条目"重新等于终态，`goal-final.usage` 与之一致；运行中仍以 fold 为唯一正确读法 |
+-| D8 | stale writer 与并发 | 三层：generation 围栏（`session_start`/`session_tree` rebuild 刷新 `baseSeq`/shadow/计数/`verificationSeq` 并 bump）→ CAS（尾部 seq）→ `SerialMutationQueue`。队列覆盖：`report_progress`/`get_goal`/未来 `update_plan` 的整个 execute；`update_goal` 分两段（段 1：校验+写 proposal+进 verifying；释放；`await` 机械验证；段 2：围栏检查+应用结果+persist/transition）；命令处理器只把**提交段**入队，绝不跨 `ctx.ui.editor`/normalizer 的 await 持有队列；事件处理器（`turn_end`/`agent_settled`/`tool_execution_start`）保持"同步到 persist"不入队 | CAS 抓不到"基于另一分支状态的内存突变"（seq 恰好匹配新尾部），只有围栏能抓——文档须写明。队列对今日代码是保险，对同批 `report_progress`+`update_goal` 及未来 await 中途的工具是必需 |
+-| D9 | 版本与迁移 | 每条 v2 事件带 `v:2`。`customType==="goal"` 且无 `v` = v1：`{seq,state}`→checkpoint（results 内嵌有效），`{seq,tombstone:true}`→tombstone。`v>2` → fail-loud `goal event stream was written by a newer goal extension (vN); upgrade the extension`。未知 kind/缺必填字段 → fail-loud。降级不支持：旧构建读 v2 流只见 `goal` 条目（用量陈旧、静默）；若旧构建写入，seq 与 delta 冲撞，新构建以连续性错误 fail-loud | — |
+-| D10 | 指纹 | `computeFingerprint` 的工具计数改用 `rt.workToolCallsThisRun`（排除 `get_goal`/`update_goal`/`report_progress`/未来 `update_plan`）；perRun 上限仍用 `toolCallsThisRun` | 否则仅调用一次 `report_progress` 的轮次就会通过计数改变指纹，违背"调用工具不算进展" |
+-
+-### B.2 事件 schema（新文件 `src/events.ts`）
+-
+-```ts
+-export const GOAL_PROTOCOL_VERSION = 2 as const;
+-export const GOAL_ENTRY_TYPE = "goal";                 // checkpoint + tombstone（customType 不变）
+-export const GOAL_USAGE_TYPE = "goal-usage";
+-export const GOAL_CRITERIA_TYPE = "goal-criteria";
+-export const GOAL_PLAN_TYPE = "goal-plan";
+-export const GOAL_VERIFICATION_TYPE = "goal-verification";
+-export const GOAL_EVENT_TYPES: ReadonlySet<string> = new Set([...]);
+-
+-interface EnvelopeV2 { v: 2; seq: number; goalId: string; at: number }
+-export type CheckpointState = Omit<GoalState, "verificationResults">;   // 校验器强制
+-
+-export type GoalCheckpointEvent = EnvelopeV2 & {
+-  kind: "checkpoint";
+-  reason: "create"|"contract"|"phase"|"blocked-reason"|"proposal"|"rejections"|"debug-log"
+-        |"verification-cleared"|"interval"|"wrap-up-settled"|"forced";
+-  state: CheckpointState;
+-  verificationRef: number | null;   // 当前有效 results 所在 goal-verification 事件的 seq
+-};
+-export type GoalTombstoneEvent = EnvelopeV2 & { kind: "tombstone"; tombstone: true };
+-export type GoalUsageEvent = EnvelopeV2 & { kind: "usage";
+-  dTokens: number; dCacheRead: number; dCostUsd: number; dTimeMs: number; dTools: number; dRounds: number };
+-export type CriteriaSource = "mechanical" | "self-report" | "stale-mark";
+-export type GoalCriteriaEvent = EnvelopeV2 & { kind: "criteria"; revision: number;
+-  verified?: Array<{ id: string; status: CriterionStatus }>;                 // 局部，按 id
+-  progress?: Array<{ id: string; status: ProgressStatus; note?: string }>;  // 整表（全部 criteria）
+-  verifiedBy: CriteriaSource };
+-export type GoalPlanEvent = EnvelopeV2 & { kind: "plan"; revision: number; items: PlanItem[]; explanation?: string };
+-export type GoalVerificationEvent = EnvelopeV2 & { kind: "verification"; revision: number;
+-  proposalRequestedAt: number; allPassed: boolean; results: GoalVerificationResult[];
+-  evidence?: { path: string; sha256: string; bytes: number } };            // 预留，本批不用
+-export type GoalEventV2 = GoalCheckpointEvent|GoalTombstoneEvent|GoalUsageEvent|GoalCriteriaEvent|GoalPlanEvent|GoalVerificationEvent;
+-```
+-
+-`src/types.ts` 新增：`ProgressStatus`、`GoalCriterionProgress{status,note?,at,stale?}`、`PlanItemStatus`、`PlanItem{id,text,status}`、`GoalPlan{revision,items,explanation?,updatedAt,stale?}`；`GoalState` 增 `criteriaProgress?`、`plan?`；`verificationResults?` 保留为**内存字段**（永不进 checkpoint）。`customType ↔ kind` 映射不符 → 校验拒绝。
+-
+-### B.3 fold 算法（`foldGoalEntries(entries)`，纯函数，导出供取证脚本）
+-
+-1. 线性扫描 `type==="custom" && customType ∈ GOAL_EVENT_TYPES`；每条 `normalize`（v1 → `{v:1, kind}`；v2 逐 kind 校验）。错误文案：v1 `corrupt goal snapshot: <problem>`（保持现有测试正则）；v2 `corrupt goal event (seq N, <customType>): <problem>`；`v>2` 见 D9。
+-2. 序号：v2 要求 `seq === prev+1`，否则 `goal event seq N follows seq M: v2 sequence must be contiguous`；v1 要求 `seq > prev`。
+-3. `base` = 最后一个 `checkpoint|tombstone`。无 → `orphan goal delta (seq N, kind K): no checkpoint precedes it`。tombstone 之后还有事件 → `goal delta (seq N) after tombstone (seq M)`；tombstone 为末 → `state undefined, lastSeq`。
+-4. checkpoint：`state = structuredClone(cp.state)`；v1 直接用内嵌 results；v2 要求 `"verificationResults" ∉ cp.state`（否则 `checkpoint seq N must not embed verificationResults`），`verificationRef` 非空时在 `base` 之前二分查找同 seq 的 `verification` 事件且 `goalId` 一致，否则 `checkpoint seq N references verification seq M which is missing / not a verification event / belongs to another goal`。
+-5. 重放 `base+1..`：每条要求 `goalId === state.contract.id`（否则 `goal delta seq N for goal X, but the current goal is Y`）；`usage` 六项累加；`criteria` 要求 `revision === contract.revision`（否则 `criteria delta seq N targets contract revision R, current revision R'`），`verified[]` 的 id 必须存在于合同，`progress[]` 必须恰好覆盖合同 id 集（缺/多/重 → `progress table does not cover the contract's criteria`），未变化项保留原 `at`，写入即清 `stale`；`plan` 同 revision 检查后整表替换；`verification` 同 revision 检查后替换 results 并记 `verificationSeq`；每条后 `state.updatedAt = ev.at`，`deltas += 1`。
+-6. `forwardFill(state)` 沿用现有 M1 默认值（`criteriaProgress`/`plan` 缺省保持 undefined）。返回 `{state, lastSeq, checkpointSeq, deltasSinceCheckpoint, verificationSeq, counts:{v1,v2,checkpoints,deltas}}`。
+-
+-逐 kind 必填字段：信封 `v===2`、有限整数 `seq`、非空 `goalId`、有限 `at`；checkpoint 的 `state` 过现有 `validateSnapshot`，`verificationRef` 为 null 或 `< seq` 的整数，`criteriaProgress`/`plan` 若存在须结构合法（枚举状态、note ≤200）；usage 六个有限数；criteria 有 `revision`、`verifiedBy` 枚举、至少一个 `verified`/`progress`；plan 有 `revision`、`items[{id,text,status}]`；verification 有 `revision`、`proposalRequestedAt`、`allPassed`、`results[]` 逐项基本类型检查。
+-
+-### B.4 逐文件改动
+-
+-- **`src/events.ts`（新）**：B.2 类型；`validateGoalEvent(customType, data)`；把 `PHASES` 与 `validateSnapshot` 主体迁入复用（v1 与 v2 `checkpoint.state` 共用）。
+-- **`src/store.ts`（重写，约 300 行）**：保留 `BranchReader`/`EntryAppender`；`foldGoalEntries`（纯，返回存储对象引用 + 元数据，注释"勿修改"）；`rebuildGoalState(reader)` 保名，`RebuildResult.ok` 增 `checkpointSeq/deltasSinceCheckpoint/verificationSeq/counts`，仍返回 clone + 前向补默认；`PersistedShadow{state: CheckpointState; resultsRef; verificationSeq}`；`deriveGoalEvents(shadow|undefined, next, {checkpointEvery, deltasSinceCheckpoint, at, checkpoint?, criteriaSource?}) → {drafts, checkpointReason?}`（纯；draft 不含 seq/v，checkpoint 的 `verificationRef` 可为 `"pending"`）；`persistGoalEvents(appender, reader, drafts, baseSeq) → {lastSeq, written[{customType,seq,kind,bytes}]}`（tail-scan CAS、连续 seq、解析 pending ref、`structuredClone` 载荷、按 D4 顺序追加）；`persistTombstone` 改写 v2 tombstone；保留 5 行 `persistGoalState` 包装（发强制 checkpoint）以零成本兼容 test:262。
+-- **`src/mutation-queue.ts`（新，~25 行）**：`SerialMutationQueue.run<T>(fn)` promise 链，错误传给调用方但不毒化链。
+-- **`src/config.ts`**：`persistCheckpointEvery: number`（默认 50，`loadGoalConfig` 钳制到 [1,1000]）。
+-- **`src/index.ts`**：闭包 `lastPersisted` → `persistedShadow`，新增 `deltasSinceCheckpoint=0`、`verificationSeq=null`、`const mutations = new SerialMutationQueue()`。`persist(ctx, opts?)`：合法性检查改读 `persistedShadow.state.phase`；`at=Date.now()`；`deriveGoalEvents`；空 → noop 日志返回 true；否则 `persistGoalEvents`，成功后更新 `baseSeq`/`deltasSinceCheckpoint`/`verificationSeq`/shadow 与 `state.updatedAt=at`，`logEvent("persist",{events,bytes,checkpointReason})`；失败路径不变。`rebuild(ctx)` 设置四个新字段，`logEvent("rebuild",{found,lastSeq,checkpointSeq,deltasSinceCheckpoint,verificationSeq,counts})`。调用点结果（无需改代码，作评审清单）：228 transition→checkpoint(phase)；614 turn_end→usage delta 或 noop；669 settle 时间冲刷→usage 或 noop，**并在 goal-final 之前新增** `if (inWrapUpRun && state.phase!=="active") persist(ctx,{checkpoint:"wrap-up-settled"})`；937 create→checkpoint(create)；994→checkpoint(phase)；1046 打回→verification + checkpoint(rejections 或 phase)；1174 resume→checkpoint；1269 reject→checkpoint(`verificationRef:null`)；1281 clear→tombstone；1343 budget→checkpoint(contract)；1400 edit→checkpoint(contract)，**edit 前新增** progress 存活 id 标 `stale:true`、`plan` 标 stale；1530 proposal→checkpoint(proposal)，随后 verifying 又一条 checkpoint（每次提案两条，本批接受）。`update_goal`/`get_goal` execute 入队（D8）；`get_goal` 输出增"Self-reported progress"块。`tool_execution_start`：`if (!GOAL_TOOLS.has(toolName)) rt.workToolCallsThisRun += 1`。`agent_settled` 指纹改用 `workToolCallsThisRun` 与 `criteriaProgress`。新增 `report_progress` 工具（§C）。
+-- **`src/runtime.ts`**：`computeFingerprint(toolCalls, writes, criteriaStatus, criteriaProgress?)` 追加按 id 排序的 progress 状态分量；`GoalRuntime.workToolCallsThisRun`，`resetRunCounters` 归零。
+-- **`src/ui.ts` / `src/prompts.ts`**：两个维度并列显示（verified 图标 `✅❌⬜♻️` 照旧；自报标记统一为 `○ not started` / `◐ in progress` / `◑ self-reported met`，`progress.stale` 加 `(stale)`），widget 行 `⬜ C1 text · ◐ in progress`、note 截 40 字符；`renderStatusCard` 每条追加 `self-report: <status>[ (stale)] — <note>`；footer 加 `◐n ◑m` 计数；提示词新增 "Progress visibility" 静态段与 checklist 图例（只随 checkpoint/banner 发，见 §A.5）。
+-- **`src/verification.ts`**：无行为改动；导出 `OUTPUT_LIMIT` 供尺寸断言。
+-- **测试夹具**：`createDriver` 增 `entriesOf(customType)`；`liveCard()`（`/goal` 状态卡文本）用于"活状态 vs reload 后 fold"比对。
+-
+-### B.5 迁移/兼容矩阵
+-
+-| 流 | 新构建读 | 新构建写 | 旧构建读 | 旧构建写 |
+-|---|---|---|---|---|
+-| 仅 v1 | 末快照=checkpoint，results 取自快照，前向补默认 | 继续 seq 写 v2 | 同今 | 同今 |
+-| v1 前缀 + v2 后缀 | v1 规则 + 自首个 v2 起连续性 | v2 | 只见 `goal`→用量陈旧（静默） | seq 撞 delta → 新构建连续性 fail-loud |
+-| 仅 v2 | 完整 | v2 | 用量陈旧（静默） | 同上 |
+-| `v>2` | fail-loud "newer extension" | 拒绝（state undefined） | — | — |
+-| 测试注入 `{seq,state}` 在 v2 create 之后（test 829/892/1463） | v1 checkpoint 跟在 v2 checkpoint 后：允许（v1 仅要求递增） | 下一 seq = 注入+1 | — | — |
+-| tombstone（v1/v2） | 清空；其后 delta → fail-loud | 新 goal → `create` checkpoint，新 goalId，seq 续 | 同今 | 同今 |
+-
+-### B.6 测试清单（有序）
+-
+-store 级纯函数（合成条目）：
+-1. derive：首写为 create checkpoint；状态不变 → 无 draft。
+-2. derive：六个用量计数差异 → 一条 usage delta（含 `dRounds/dTools` 的延迟增量）。
+-3. derive：contract/phase/proposal/rejections/blockedReason/verification-cleared 强制 checkpoint 且抑制 delta。
+-4. derive：results 变化 → verification 先于 checkpoint；`written[1].state` 无 `verificationResults`，`verificationRef === written[0].seq`。
+-5. derive：K 回卷（K=3）→ `[checkpoint, usage, usage, checkpoint]`，`fold(all).state` 深等于该 checkpoint.state 且 results undefined。
+-6. fold：仅 v1 流（`test/fixtures/` 放一份裁剪后的真实 18 条 criteria session 片段）与今日结果一致。
+-7. fold：v1 前缀 + v2 后缀。
+-8. fold fail-loud `it.each`：孤儿 delta / tombstone 后 delta / goalId 不符 / seq 断档 / seq 重复 / v>2 / checkpoint 内嵌 results / 悬空 verificationRef / criteria revision 不符 / progress 表未覆盖合同——断言 B.3 精确文案。
+-9. `persistGoalEvents` CAS：尾部为 delta 时 stale write；尾部 seq 非数值 → `refusing to write over corrupt state`。
+-10. mutation queue：顺序执行；异常不毒化后续。
+-
+-扩展级（driver）：
+-11. fold(replay)===live：20 轮非零用量 + 一次 `report_progress` + `/goal budget` + pause/resume；`liveCard()` 等于 `session_start{reload}` 后的卡；`driver.goalState()` 深等于对 `structuredClone(entries)` 的 fold；`entriesOf("goal").length <= 1 + phaseChanges + contractChanges + floor(usageDeltas/K)`；`entriesOf("goal-usage").length === 非零用量 turn_end 数`。
+-12. 任何 checkpoint 不含 `verificationResults`；`goal-verification` 事件携带且 `driver.goalState()?.verificationResults` 与之相等。
+-13. reject/edit 经 `verificationRef:null` 清空。
+-14. `/goal clear` 后新 goal：tombstone → 新 goalId 的 create checkpoint，seq 连续。
+-15. complete 后 wrap-up 用量落为 usage delta，`wrap-up-settled` checkpoint 与 `goal-final.usage` 一致（扩展现有 1040-1057）。
+-16. 现有 232/248/262/300/316/331/350 与注入型 829/892/1463 不改即过。
+-17. 不可变性：delta 与 checkpoint 载荷不随活状态变化（扩展 test 350 到 `goal-usage`）。
+-18. 分支切换：rebuild 恢复 `deltasSinceCheckpoint/verificationSeq`，下一写入 seq = 新尾部+1，无 stale write 通知。
+-19–23. `report_progress` 五条（见 §C 测试）。
+-24. `goal-plan`：合成 plan 事件 fold 进 `state.plan`；edit 标 stale；clear 清空。
+-25. `persistCheckpointEvery:1` 逃生口：每写皆 checkpoint。
+-26. `computeFingerprint` 含 progress 状态、不含 note、排除 goal 工具计数。
+-
+-### B.7 边界与风险
+-
+-- 每次完成提案两条 checkpoint（proposal → verifying），18 条 criteria 约 30KB/次、每 resume 周期 ≤3 次：接受；合并需改 `verifyCompletionProposal` 早退路径的恢复语义，列为后续项。
+-- `agent_settled` 时间冲刷先于 transition：usage delta 后紧跟 checkpoint，均同步，checkpoint 已含冲刷时间。
+-- no-op persist 与 `updatedAt`：必须事件派生，否则零用量轮次破坏 fold===live；测试默认零用量的 `runAutoRound` 不产生 usage delta，计数断言用 `<=` 或显式非零用量。
+-- v1 注入语义保持宽松（严格递增），不得收紧为连续。
+-- 坏分支 + `/goal clear`：今日 `persistTombstone` 拒绝写在坏状态上，rebuild 失败后 `baseSeq` 陈旧，坏分支无法从内部清除——本批不改，记为候选（rebuild 失败时返回尾部 seq 让 clear 成为恢复路径）。
+-- D10 指纹语义微调会略微影响 no-progress 熔断（goal 工具不再算活动）。
+-- `getBranch()` 每次写入 O(depth) 是宿主成本，与今日相同。
+-- compaction 事件对持久化无关（custom 条目不受影响），store 侧不加监听。
+-
+-### B.8 工作量
+-
+-events/types 0.5d → store/queue/config 1d → index/runtime 0.75d → report_progress + UI/prompts 0.75d → 测试 1.5d → 文档 0.5d ≈ 5 人日。1–2 与 4 可并行，3 依赖 1–2。
+-
+-## C. `report_progress` 工具（roadmap §6.2.1）——实现决策
+-
+-roadmap 已定且不再讨论：schema `items[{criterionId,status,note?}]`；`status ∈ not_started|in_progress|self_reported_met`；整表替换 last-wins；必须恰好覆盖全部 criteria（缺项/重复/未知 ID 结构化拒绝）；仅 active 可调；自报与 verified（unverified/passed/failed/stale）严格分离；永不解锁 completion；显示到 widget/footer/continuation；状态向量进 no-progress 指纹；仅调用或只改 note 不算进展。
+-
+-四项实现决策（推荐值，理由随附）：
+-
+-| # | 决策 | 结论 | 理由 |
+-|---|---|---|---|
+-| C1 | 持久化载体 | **两者兼有**：内存 `GoalState.criteriaProgress?: Record<id,{status,note?,at,stale?}>`（小对象，随 checkpoint 序列化）；每次写入以 **`goal-criteria` delta**（`progress` 维度，`verifiedBy:"self-report"`）落盘，不写全量快照。§B 的 shadow-diff persist 自动推导该 delta，工具体只需改 state 后调 `persist` | 与 §6.1 合流；#6 型 goal 每轮一条几十字节 delta 而非 15KB 快照；若 §B 晚于本工具落地，同一 `persist` 调用在旧机制下自然退化为全量快照，无需改工具代码 |
+-| C2 | 并发 | 引入 `SerialMutationQueue`（promise 链），`report_progress`/`update_goal`/`get_goal`/未来 `update_plan` 的 `execute` 体与 `/goal` 命令处理器全部经队列串行；事件处理器保持"同步到 persist 为止"不入队。`update_goal(complete)` 分两段入队：段 1 校验 + 写 proposal + 进入 verifying；释放队列后 `await` 机械验证；段 2 应用结果 + persist。 | 同一 assistant 批次里 `report_progress` 与 `update_goal` 并发时两次 CAS 必须有序；验证阶段数分钟的 exec 不能阻塞 `turn_end` 入账 |
+-| C3 | 合同变化 | `/goal edit`：ID 仍存在的条目**保留并标 `stale:true`**，被删 ID 丢弃，新 ID 无记录（显示 not_started）；下一次 `report_progress` 整表提交即清除 stale。`/goal reject`（complete→active）与 `/goal budget`（仅 revision+1）保留、不标 stale。 | 与 §6.2.2 `update_plan` 的 edit-后-stale 规则一致；避免 UI 把已做的工作显示成"未开始"，又明确提示模型合同已变需复核 |
+-| C4 | 输入边界 | `note` trim 后 ≤ **200** 字符、**单行**（含 `\n`/`\r` 直接拒绝，不静默改写）；允许任意方向回退（`self_reported_met → in_progress/not_started`） | 与"缺项/重复/未知 ID 均拒绝"的严格 schema 风格一致；整表替换语义下任何状态都合法，新证据可推翻自报 |
+-
+-其余实现要点：
+-
+-- **指纹**：`computeFingerprint`（`runtime.ts:171-182`）新增第四分量 = 按 id 排序的 `criteriaProgress[id].status` 向量（不含 note、不含 stale）。只改 note 或提交与上次相同的表 → 指纹不变 → 不重置 no-progress。
+-- **工具返回**：成功返回一行摘要（"progress recorded: 2 in_progress, 1 self_reported_met, 3 not_started; this is a self-report, not evidence"）；`details:{accepted:true, revision}`。拒绝以 tool result（非 throw）返回结构化错误列表（与 `validateCompletionEvidence` 同规），让模型同轮修正。非 active 相位：拒绝并说明。
+-- **计数**：`tool_execution_start` 已对所有工具 `toolCallsThisRun+1`，不额外处理；`writesThisRun` 不记。
+-- **UI**：widget 每条 criterion 追加自报标记（`◐ in progress` / `◑ self-reported met` / `○ not started`，stale 时后缀 `(stale)`），note 截 40 字符；`renderStatusCard` 追加 `self-report: <status>[ (stale)] — <note>`；footer 增加计数 `◐n ◑m`。
+-- **提示词**：checkpoint 级投影新增一段短静态规则 "Progress visibility"（移植 codex continuation.md 的进度段）：完成某条 criterion 的实质工作后调用 `report_progress` 提交完整表；自报不是证据、不替代 `update_goal` 验证。该段只随 checkpoint 发送（§A）。checklist 与 delta 紧凑行同时显示两个维度（§A）。
+-- **get_goal**：banner 已含 checklist，自动带自报维度。
+-- **测试**（映射 roadmap §6.3 "report_progress" 行）：整表覆盖校验（缺项/重复/未知 ID/非单行 note/超长 note 各一例）；非 active 拒绝；自报 `self_reported_met` 全表后 `update_goal(complete)` 仍走证据校验且 `criteriaStatus` 不变；指纹随状态变化、不随 note 变化；`/goal edit` 后 stale 标记与下一次报告清除；`/goal reject` 保留；持久化为 `goal-criteria` delta 而非 `goal` checkpoint 且 fold 后 `criteriaProgress` 与内存一致；同批 `report_progress`+`update_goal` 串行后两次写入 seq 连续且无 CAS 错误。
+-
+-## D. 实施顺序与提交拆分
+-
+-按 roadmap §8 与依赖关系，四个独立可回滚的提交，每个提交 `npm run check && npm test` 全绿、文档同步：
+-
+-| # | 提交 | 内容 | 依赖 |
+-|---|---|---|---|
+-| 0 | `docs: add checkpoint+delta implementation spec` | 把本方案 §A/§B/§C 落为 `docs/discuss/checkpoint-delta-implementation-spec.md`（协议是长期契约，须进仓库而非只在对话里） | — |
+-| 1 | `feat: append-only checkpoint+delta goal projection` | §A 全部（渲染器对 `criteriaProgress` 缺失安全；A.5 的图例/PROGRESS_RULES 可随本提交进，此时自报恒显 `○ not started`）+ A.8 测试 1–4、6–17 + A.9 文档 + `docs/upstream-pi-harness.ts` 改写 | 0 |
+-| 2 | `feat: persist goal state as checkpoints and deltas` | §B 全部（events/store/queue/config/index/runtime、wrap-up-settled、v1 夹具）+ B.6 测试 1–18、24–26 + 文档（design §5/§15、implementation-notes、README、roadmap §6.1 + 附录 C/D） | 0；与 1 无代码耦合，可并行开发但按序合入 |
+-| 3 | `feat: add report_progress self-reported criteria progress` | §C 工具 + `criteriaProgress`/stale 规则 + UI + 指纹 D10 + A.8 测试 5、18 + B.6 测试 19–23 + roadmap §6.2.1 状态 | 1、2 |
+-| 4 | 真实 session 验证（不产生代码提交，产出记录进 roadmap §3.3/§8） | 见 §E.3 | 1–3 |
+-
+-## E. 验证（端到端）
+-
+-### E.1 单元与静态
+-- `npm run check`（tsc + biome，tab 缩进、行宽 120）。
+-- `npm test`（vitest）：现有 69 tests 全过 + §A.8 18 条 + §B.6 26 条 + §C 测试；不得删除或弱化 1543-1564（run 内字节稳定）、232/248/262/300/316/331/350（store 基线）、829/892/1463（v1 注入）。
+-- 512 轮测试单独 `{timeout: 60_000}`，若 >10s 按 A.8-17 的降 clone 方案。
+-
+-### E.2 上游 harness（非 vitest）
+-`docs/upstream-pi-harness.ts` 改写后在 pi monorepo 下运行（README 注明其归属）；断言：相邻 LLM 调用互为精确前缀；每次调用 banner 数 ≤ 用户提示数；一次 run 产生 `goal-usage` 条目且 `goal` 条目数 ≤ 相变数 + 合同变更数 + 1 + floor(delta/50)。
+-
+-### E.3 真实 pi session 冒烟（`pi >= 0.84.2`，`transport:"sse"`，`.pi/goal.json` 含 `debugLog:true`）
+-1. 临时工作区（含一个可 `npm test` 的小项目），`pi` 加载工作树扩展，`/goal --raw <objective>`，让其自动跑 ≥10 轮（观察 kickoff→8 delta→checkpoint 节律），期间调一次 `report_progress`（可用 continuation 自然触发）。
+-2. `/goal pause` → 普通聊两句（观察一次性 `goal-notice`、旧 banner 未改写）→ `/goal budget 20000000`（无 run 在飞，不发通知）→ `/goal resume`（首条 continuation 为 checkpoint，reason=revision）。
+-3. run 在飞时 `/goal budget ...` → 观察 steer 的 `goal-notice`。
+-4. `/compact` → 下一条 continuation 为 checkpoint，reason=compaction。
+-5. 用附录 C 方法检查 session JSONL：`goal` 条目数 ≪ turn 数、`goal-usage` 条目数 = 计费 turn 数；用 `foldGoalEntries` 折叠结果 == `/goal` 状态卡 == `goal-final`；相变前后与 run 边界处 assistant `usage.cacheRead` 无整段冷调用（对照 §1.1-3 的 667K/455K 形态）。
+-6. debug 日志核对 `send_continuation{kind,reason,chars}`（delta chars ≤1500）、`persist{events,bytes,checkpointReason}`、`session_compact`、`rebuild{counts}`。
+-7. 结果（含 session/goal 路径、计数、有无冷调用）写回 roadmap §3.3 与 §8 第 6 步。
+-
+-## F. 施工指令（自包含，可直接复制给其他 agent）
+-
+-```
+-# 任务：pi Goal 扩展 —— 落地 append-only checkpoint+delta 投影、持久化 checkpoint+delta、report_progress
+-
+-仓库：/Users/ted/workspace/pi-goal-extension/pi-goal-extension（TypeScript ESM，Node ≥22.19，vitest 4，biome：tab 缩进/行宽 120；宿主 @earendil-works/pi-coding-agent@0.84.2，类型在 node_modules/@earendil-works/pi-coding-agent/dist/core/{extensions/types.d.ts,session-manager.d.ts,compaction/compaction.d.ts}）。基线 HEAD 58f1bdc（main，工作树干净）。开工前读：docs/discuss/goal-mode-improvement-roadmap.md §4 §6.1 §6.2.1 §6.3 §6.4 §7 §8、docs/design.md §5 §9 §11、docs/implementation-notes.md、src/index.ts、src/store.ts、src/prompts.ts、src/runtime.ts、src/types.ts、test/goal-extension.test.ts。每个提交 `npm run check && npm test` 必须全绿；提交信息用 `feat:`/`docs:`/`test:` 小写单行；不要问"是否继续"，做完整个任务再汇报；除本指令列出的文件外不要扩大范围。
+-
+-## 永久不变量（违反任一即失败）
+-1. 发给 LLM 的历史消息只可尾部追加：context 处理器对 goal-kickoff/goal-continuation/goal-banner/goal-notice 不删除、不折叠、不改写；run 内前缀稳定测试 test/goal-extension.test.ts 1543-1564 原样保留并必须通过。
+-2. 完成 assurance fail-closed 不变：report_progress 自报永不影响 criteriaStatus，永不解锁 update_goal(complete) 的证据校验。
+-3. 用量权威在扩展：goal-final 卡 == fold 终态 == 状态卡。
+-4. semantic run ↔ 后端 turn 保真：不新增 abort/重启；所有 run 内干预用 deliverAs:"steer"。
+-5. 持久化 seq/CAS/坏记录 fail-loud 不弱化；老的纯快照 session（customType "goal" 无 v 字段）必须双读兼容；分支/fork 仍从 getBranch() 路径 fold。
+-6. armed 易失、异常不重试、resume 是唯一再武装入口——不改。
+-
+-## 提交 0：docs: add checkpoint+delta implementation spec
+-新建 docs/discuss/checkpoint-delta-implementation-spec.md，内容 = 下面"协议 A/B/C"三节原文（可润色格式，不改语义），头部写日期、基线 commit、与 roadmap 的对应章节。
+-
+-## 协议 A：跨 run 追加式投影（roadmap §6.4；提交 1 `feat: append-only checkpoint+delta goal projection`）
+-A1 类型（src/types.ts）：export const NOTICE_TYPE="goal-notice"；type ProjectionKind="checkpoint"|"delta"；interface GoalMessageDetails{goalId?;revision?;nonce?;kind?:ProjectionKind|"notice";round?;checkpointId?;reason?:"revision"|"historical"|"cleared"}。src/index.ts 的 LooseMessage.details 改用它。
+-A2 配置（src/config.ts）：projectionCheckpointRounds:number，默认 8，读取处 Math.max(1,…)。
+-A3 运行时（src/runtime.ts）：删除 runProjection（字段与 resetRunCounters 里的清空；index.ts agent_start 里的赋值一并删）。新增字段 lastCheckpoint?:{nonce;revision;goalId}、deltasSinceCheckpoint:number、compactedSinceCheckpoint:boolean、checkpointVisible?:boolean、lastProjection?:Record<string,string>、historicalNoteSent:boolean、clearedNotePending:boolean（createRuntime 初始化）。新增纯函数：resetProjectionTracking(rt)（清前五项）；checkpointReason(state,rt,interval) 按序返回 "no-checkpoint"（无 lastCheckpoint）|"revision"（revision 或 goalId 不符）|"compaction"|"not-visible"（checkpointVisible===false）|"interval"（deltasSinceCheckpoint>=interval）|undefined；recordProjectionSent(rt,state,kind,nonce)：checkpoint→设 lastCheckpoint、deltas=0、compacted=false、checkpointVisible=undefined；delta→deltas+1；两者→lastProjection=snapshotProjection(state)。snapshotProjection(state): id → `${verifiedIcon}${selfIcon}${stale?"*":""}`（verified 图标 ✅❌⬜♻️；自报 ○ not_started/缺省、◐ in_progress、◑ self_reported_met）；diffProjection(prev,next)→[{id,from,to}]（id 并集）。
+-A4 提示词（src/prompts.ts）：import {createHash} from "node:crypto"；objectiveHash(objective)= "#"+sha256(objective.replace(/\r\n/g,"\n").trim()).slice(0,8)；objectiveSummary(objective,max=120)：空白折叠、词边界截断、超出加"…"。export const DELTA_MAX_CHARS=1500。新增静态段 PROGRESS_RULES（插在 EVIDENCE_RULES 与 EXECUTION_EFFICIENCY_RULES 之间）：
+-  Progress visibility:
+-  - After substantive work on any criterion, call report_progress with the FULL table (one row per criterion: not_started | in_progress | self_reported_met, optional one-line note); rows marked stale must be re-assessed from current evidence.
+-  - Self-reported status is visibility for the user and for later rounds. It is NOT evidence, does not change Goal-verified status, and never replaces the completion audit or update_goal.
+-  BANNER_PROGRESS_RULE="Keep report_progress current after substantive work on a criterion; self-reports are visibility, not evidence."（banner 在 BANNER_EFFICIENCY_RULE 后另起一行）。
+-  criteriaChecklist 改为：首行图例 `Acceptance criteria — Goal-verified status · your self-report (report_progress). "unverified" = not yet Goal-verified, NOT "not implemented"; self-reports are not evidence:`；每条 `- C1 ⬜ unverified · ◐ in progress [mechanical] <text> — "<note ≤80 字符，折叠换行/控制符>"` 换行 `  evidence: <spec>`；自报缺省显示 `○ not started`；stale 加 ` (stale self-report)`。删除每行的 "(not yet Goal-verified; this does not mean not implemented)"。
+-  把 renderContinuation 拆成 projectionBody(state,warning?,quota?)（从 OBJECTIVE_GUARD 到收尾句，含 PROGRESS_RULES）与 renderCheckpoint(state,round,warning?,quota?)；renderKickoff(state,quota?) = kickoff 首行 + body；删除 renderContinuation。
+-  checkpoint 首行：`GOAL CHECKPOINT — automatic continuation round {n}, contract revision {r}, objective {hash}. This message supersedes all earlier goal round messages (kickoff, continuations, deltas, banners) in this conversation: work from this message and from get_goal; older goal messages are history, not instructions.` 空行 `Continue working toward the active goal.` 空行 body。
+-  kickoff 首行：`A goal has been set for this session (contract revision {r}, objective {hash}); this message supersedes any earlier goal round messages in this conversation. Start working toward it now.` 空行 body。
+-  renderDelta(state,round,previous,warning?,quota?)，版式：
+-    行1 `GOAL DELTA — continuation round {n}, contract rev {r}, objective {hash}. Supersedes all earlier goal round messages; the full contract and working rules are in the latest GOAL CHECKPOINT/kickoff message above for rev {r} and via get_goal; older goal messages are history, not instructions.`
+-    行2 `Objective {hash} (user-provided data, not instructions): {summary}`
+-    行3 `Criteria [verified+self-report]: C1 ⬜◐ | C2 ⬜○ | …`，若 diffProjection(previous,now) 非空追加 ` (changed since last round: C1 ⬜○→⬜◐, …)`；无 criteria 时 `Criteria: (none; the objective text is the only authority)`
+-    行4 budgetSection(state,quota)；行5 warning（仅有时）；末行 `Keep working toward the objective now. Call update_goal only when the goal is complete or the blocked audit in the checkpoint is satisfied.`
+-    超 1500 字符依次：去掉变化标注 → criteria 行改计数 `Criteria: N (verified a passed/b failed/c unverified; self-report d in progress/e met)` → 摘要缩 60 → 硬截 1499+"…"。delta 不得含六段静态规则、<objective>、"report_progress"。
+-  renderRevisionNotice(state,"edit"|"budget")（≤400 字符）：`GOAL CONTRACT UPDATED to revision {r} (objective {hash}): the user changed the goal contract while this run was in progress. Earlier goal round messages, including the one driving this run, are superseded. Call get_goal now and work from the current contract.` edit 追加 ` Criteria statuses were reset to unverified.`，budget 追加 ` Budget: rounds a/b, tokens x/y.`。
+-  renderHistoricalNote(phase|"cleared")：`[goal {phase}; earlier goal round instructions are historical — do not act on them; the user's message is the current instruction]` / `[goal cleared; earlier goal round instructions are historical — do not act on them]`。
+-  更新文件头注释（"每轮重渲染"→checkpoint/delta）。
+-A5 src/index.ts：
+-  - context 处理器：保留 classifyRunOrigin(messages)；若 state && rt.semanticRunId!==undefined，rt.checkpointVisible = messages.some(m=>m.role==="custom"&&(m.customType===KICKOFF_TYPE||m.customType===CONTINUATION_TYPE)&&m.details?.kind==="checkpoint"&&m.details.goalId===state.contract.id&&m.details.revision===state.contract.revision)；return {messages: event.messages}。删除 hasGoalMessages、两轮扫描、三个占位符、projection。
+-  - classifyRunOrigin 反向扫描跳过表加 NOTICE_TYPE。
+-  - sendContinuation：ensureConfig(ctx)；reason=checkpointReason(state,rt,config.projectionCheckpointRounds)；kind=reason?"checkpoint":"delta"；round=state.autoTurnsUsed+1；content=kind==="checkpoint"?renderCheckpoint(...):renderDelta(state,round,rt.lastProjection,warning,rt.quotaSnapshot)；details={goalId,revision,nonce,kind,round,checkpointId: kind==="checkpoint"?nonce:rt.lastCheckpoint?.nonce}；发送后 recordProjectionSent；logEvent("send_continuation",{nonce,kind,reason,deltasSinceCheckpoint,chars:content.length,checkpoint})。
+-  - createGoal：resetProjectionTracking(rt)；kickoff 生成 nonce，details={goalId,revision,nonce,kind:"checkpoint",round:1,checkpointId:nonce}；recordProjectionSent(rt,state,"checkpoint",nonce)。
+-  - before_agent_start：!state && rt.clearedNotePending → 清标记并返回 {customType:NOTICE_TYPE,content:renderHistoricalNote("cleared"),display:false,details:{kind:"notice",reason:"cleared"}}；state.phase!=="active" && !rt.historicalNoteSent → 置标记并返回 renderHistoricalNote(phase) 的 goal-notice（details reason:"historical"）；active 分支照旧返回 banner。
+-  - persist() 成功后：if(state.phase==="active") rt.historicalNoteSent=false。
+-  - session_start、session_tree：加 resetProjectionTracking(rt)。
+-  - 新增 pi.on("session_compact",(event,ctx)=>{rt.compactedSinceCheckpoint=true; logEvent(ctx,"session_compact",{reason:event.reason,willRetry:event.willRetry,fromExtension:event.fromExtension,tokensBefore:event.compactionEntry.tokensBefore});})。
+-  - /goal resume、/goal reject：sendContinuation 前 resetProjectionTracking(rt)。/goal clear：rt.clearedNotePending = state!==undefined; resetProjectionTracking(rt)。
+-  - /goal budget、/goal edit：在任何 bumpGeneration 之前算 const runInFlight = rt.semanticRunId!==undefined && (state.phase==="active"||inWrapUpRun)；persist 成功后 if(runInFlight) pi.sendMessage({customType:NOTICE_TYPE,content:renderRevisionNotice(state,"budget"|"edit"),display:false,details:{goalId,revision,kind:"notice",reason:"revision"}},{deliverAs:"steer"})。
+-  - get_goal 描述追加 "and your self-reported progress"。
+-  - agent_start 删除 rt.runProjection 赋值。
+-A6 测试（test/goal-extension.test.ts）：夹具增 pushUser(text)、pushMessage(message)、llmCall(driver)（emit context 并返回 structuredClone(result.messages)）、expectExactPrefix(prev,next)（expect(next.slice(0,prev.length)).toEqual(prev)）；runAutoRound 返回本轮 context 的消息列表。改写 1513-1541（透传：输出深等于输入）、1566-1586（revision 变化→下条 continuation kind checkpoint、revision 2，历史条目不变）、1587-1607 与 1608-1619（pause→before_agent_start 返回 goal-notice 一次、第二次 undefined、旧 banner 原样、前缀成立、resume→checkpoint）。新增：kickoff 是 checkpoint 且含 supersedes/revision/hash/六段标题；普通 continuation 是 ≤1500 字符 delta 且不含六段规则与 <objective>、含 supersedes/rev/hash/紧凑 criteria 行、无变化标注；delta 携带一次性 p50 警告仍 ≤ 上限；renderDelta 对 80 条合成 criteria 仍 ≤1500 且为计数形；K 回卷 18 轮 = 8 delta+checkpoint+8 delta+checkpoint；run 内 /goal budget 发 steer goal-notice、无 run 在飞不发、交付后该 run 仍判为 goal round；轮间 emit session_compact → checkpoint；移除 kickoff/continuation 条目并 pushMessage({role:"compactionSummary"}) → 下条 delta、再下条 checkpoint（滞后一轮）；三种跨 run 精确前缀（revision 变化 / 离开 active 后用户聊天 / active 中用户插话且随后为 delta）；clear 后一次性短注；512 轮（默认预算，511 次 runAutoRound，{timeout:60_000}）：56 checkpoint/455 delta、Σ 字符 ≤ 57×maxCheckpointChars+455×1500 且 < 0.4×512×maxCheckpointChars、autoTurnsUsed===512、phase active。
+-A7 文档：docs/implementation-notes.md 78-88；README 149/151 与配置表加 projectionCheckpointRounds；docs/design.md 201 注释、237 行、508 状态；docs/upstream-pi-harness.ts 74-75 注释与 109-119 断言（相邻调用互为精确前缀；banner 数 ≤ 用户提示数）；roadmap §6.3 行 394-395 标注已实现。
+-
+-## 协议 B：持久化 checkpoint+delta（roadmap §6.1；提交 2 `feat: persist goal state as checkpoints and deltas`）
+-B1 决策：单一 seq 按分支路径跨全部 goal 事件类型；写入 CAS 从尾部反向找最后一条 goal-* 条目（只校验信封）比较 seq===baseSeq，否则 throw `goal: stale write (base seq B, branch seq S)`；rebuild 全量校验。v2 事件 seq 必须 === prev+1；v1 仅严格递增。事件由 shadow diff 推导；无差异不写；updatedAt 事件派生。verification 结果内嵌 goal-verification 事件，checkpoint 禁止含 verificationResults、改带 verificationRef。persistCheckpointEvery 默认 50（goal.json，钳制 1..1000）。wrap-up run settle 时若 phase 非 active 强制一条 reason "wrap-up-settled" 的 checkpoint（写在 goal-final 之前）。
+-B2 新文件 src/events.ts：
+-  export const GOAL_PROTOCOL_VERSION=2; GOAL_ENTRY_TYPE="goal"; GOAL_USAGE_TYPE="goal-usage"; GOAL_CRITERIA_TYPE="goal-criteria"; GOAL_PLAN_TYPE="goal-plan"; GOAL_VERIFICATION_TYPE="goal-verification"; GOAL_EVENT_TYPES=Set(以上五个)。
+-  interface EnvelopeV2{v:2;seq:number;goalId:string;at:number}
+-  type CheckpointState=Omit<GoalState,"verificationResults">
+-  GoalCheckpointEvent=EnvelopeV2&{kind:"checkpoint";reason:"create"|"contract"|"phase"|"blocked-reason"|"proposal"|"rejections"|"debug-log"|"verification-cleared"|"interval"|"wrap-up-settled"|"forced";state:CheckpointState;verificationRef:number|null}
+-  GoalTombstoneEvent=EnvelopeV2&{kind:"tombstone";tombstone:true}
+-  GoalUsageEvent=EnvelopeV2&{kind:"usage";dTokens;dCacheRead;dCostUsd;dTimeMs;dTools;dRounds}（六个 number）
+-  type CriteriaSource="mechanical"|"self-report"|"stale-mark"
+-  GoalCriteriaEvent=EnvelopeV2&{kind:"criteria";revision:number;verified?:{id;status:CriterionStatus}[];progress?:{id;status:ProgressStatus;note?}[];verifiedBy:CriteriaSource}（progress 为整表）
+-  GoalPlanEvent=EnvelopeV2&{kind:"plan";revision;items:PlanItem[];explanation?}
+-  GoalVerificationEvent=EnvelopeV2&{kind:"verification";revision;proposalRequestedAt;allPassed;results:GoalVerificationResult[];evidence?:{path;sha256;bytes}}（evidence 预留不用）
+-  validateGoalEvent(customType,data)→{ok,event}|{ok:false,problem}：v1（customType "goal" 且无 v）归一为 checkpoint/tombstone；v2 逐 kind 校验必填字段与 customType↔kind 映射；v>2 → problem "goal event stream was written by a newer goal extension (vN); upgrade the extension"。把 store.ts 的 PHASES 与 validateSnapshot 迁入复用（v1 与 v2 checkpoint.state 共用）。
+-B3 src/types.ts 新增：ProgressStatus="not_started"|"in_progress"|"self_reported_met"；GoalCriterionProgress{status;note?;at:number;stale?:boolean}；PlanItemStatus="pending"|"in_progress"|"completed"；PlanItem{id;text;status}；GoalPlan{revision;items;explanation?;updatedAt;stale?}；GoalState 增 criteriaProgress?:Record<string,GoalCriterionProgress>、plan?:GoalPlan；verificationResults? 保留为内存字段。保留 GoalSnapshot 作 v1 形状；customType 常量从 events.ts 重导出保持 index.ts 导入名不变。
+-B4 src/store.ts 重写：保留 BranchReader/EntryAppender。
+-  foldGoalEntries(entries)（纯，导出，返回存储对象引用+元数据，注释勿修改）：线性扫描 custom 且 customType∈GOAL_EVENT_TYPES；逐条 validateGoalEvent（错误：v1 `corrupt goal snapshot: <problem>`；v2 `corrupt goal event (seq N, <customType>): <problem>`）；序号检查（v2 `goal event seq N follows seq M: v2 sequence must be contiguous`；v1 `goal snapshot seq N does not increase after M`）；base=最后一个 checkpoint|tombstone，无则 `orphan goal delta (seq N, kind K): no checkpoint precedes it`；tombstone 后仍有事件 `goal delta (seq N) after tombstone (seq M)`；tombstone 为末 → state undefined；checkpoint：state=structuredClone(cp.state)，v1 直接用内嵌 results，v2 要求无 verificationResults（`checkpoint seq N must not embed verificationResults`），verificationRef 非空则在 base 前找同 seq 的 verification 事件且 goalId 一致（`checkpoint seq N references verification seq M which is missing / not a verification event / belongs to another goal`）；重放 base+1..：goalId 必须等于 state.contract.id（`goal delta seq N for goal X, but the current goal is Y`）；usage 六项累加；criteria 要求 revision===contract.revision（`criteria delta seq N targets contract revision R, current revision R'`），verified 的 id 必须存在于合同（`criteria delta seq N references unknown criterion X`），progress 必须恰好覆盖合同 id 集（`criteria delta seq N: progress table does not cover the contract's criteria`），未变化项保留原 at，写入即清 stale；plan 同 revision 检查后整表替换；verification 同 revision 检查后替换 results 并记 verificationSeq；每条后 state.updatedAt=ev.at。forwardFill 沿用现有 M1 默认值。返回 {ok:true,state,lastSeq,checkpointSeq,deltasSinceCheckpoint,verificationSeq,counts:{v1,v2,checkpoints,deltas}}|{ok:false,error}。
+-  rebuildGoalState(reader) 保名，返回 clone+前向补默认+上述元数据。
+-  interface PersistedShadow{state:CheckpointState;resultsRef:GoalVerificationResult[]|undefined;verificationSeq:number|null}
+-  deriveGoalEvents(shadow|undefined,next,{persistCheckpointEvery,deltasSinceCheckpoint,at,checkpoint?:string,criteriaSource?})→{drafts,checkpointReason?}（纯；用 node:util isDeepStrictEqual；shadow 为 undefined → checkpoint "create"；contract/phase/blockedReason/completionProposal/completionRejections/debugLog 任一不同 → checkpoint；results 引用由有变为无 → checkpoint "verification-cleared"（verificationRef:null）；results 引用变为新数组 → 先出 verification draft；否则 usage（六计数任一不同）、criteria（criteriaStatus 或 criteriaProgress 不同；verifiedBy：progress 变→"self-report"，verified 变→"mechanical"，opts.criteriaSource 覆盖）、plan；deltasSinceCheckpoint+本次 delta 数 >= K → 改为 checkpoint "interval"；diff 排除 updatedAt 与 verificationResults；无差异 → drafts 空；checkpoint draft 的 verificationRef 为 "pending"（同批有 verification draft）| shadow.verificationSeq | null）。
+-  persistGoalEvents(appender,reader,drafts,baseSeq)→{lastSeq,written:[{customType,seq,kind,bytes}]}：尾部反向扫描 CAS（尾条目 seq 非数值 → `goal: refusing to write over corrupt state (...)`）；按 verification→checkpoint 或 verification→deltas 顺序分配连续 seq，解析 pending ref，structuredClone 载荷，appendEntry。
+-  persistTombstone 改写 v2 {v:2,seq,goalId,kind:"tombstone",tombstone:true,at}。保留 5 行 persistGoalState(appender,reader,state,baseSeq) 包装（发 reason "forced" checkpoint）以兼容 test 262。
+-B5 新文件 src/mutation-queue.ts：class SerialMutationQueue{private tail=Promise.resolve(); run<T>(fn):Promise<T>{const next=this.tail.then(fn,fn); this.tail=next.catch(()=>undefined); return next;}}。
+-B6 src/config.ts：persistCheckpointEvery:number 默认 50，loadGoalConfig 钳制 [1,1000]。
+-B7 src/index.ts：闭包 lastPersisted → persistedShadow；新增 deltasSinceCheckpoint=0、verificationSeq:number|null=null、const mutations=new SerialMutationQueue()。persist(ctx,opts?)：合法性检查改读 persistedShadow.state.phase；at=Date.now()；deriveGoalEvents；空 → logEvent("persist",{kind:"noop"}) 返回 true；否则 persistGoalEvents，成功后 baseSeq=lastSeq、deltasSinceCheckpoint（checkpoint→0，否则 +delta 数）、verificationSeq、persistedShadow=快照、state.updatedAt=at、logEvent("persist",{events:written,bytes,checkpointReason})；失败路径不变。rebuild(ctx) 设置四个新字段并 logEvent("rebuild",{found,lastSeq,checkpointSeq,deltasSinceCheckpoint,verificationSeq,counts})。agent_settled：在 goal-final 块之前加 if(inWrapUpRun&&state.phase!=="active") persist(ctx,{checkpoint:"wrap-up-settled"})。/goal edit：persist 前把 criteriaProgress 中 id 仍存在的条目标 stale:true、删除消失 id；state.plan 若存在标 stale。update_goal execute 用 mutations.run 分两段（段 1：校验+proposal+persist+进 verifying+persist；释放；await runMechanicalVerification；段 2：围栏检查+应用结果+persist/transition）；get_goal execute 整体 mutations.run。tool_execution_start：const GOAL_TOOLS=new Set(["get_goal","update_goal","report_progress","update_plan"])；if(!GOAL_TOOLS.has(event.toolName)) rt.workToolCallsThisRun+=1。agent_settled 指纹 computeFingerprint(rt.workToolCallsThisRun,rt.writesThisRun,state.criteriaStatus,state.criteriaProgress)。
+-B8 src/runtime.ts：GoalRuntime.workToolCallsThisRun（resetRunCounters 归零）；computeFingerprint 第四参数 criteriaProgress?，追加 `|` + 按 id 排序的 `id=status`（不含 note/stale）。
+-B9 测试：test/fixtures/ 放一份裁剪后的真实 v1 session 片段（含多条 criteria 的 goal 快照与 tombstone，去敏）。store 级：首写 create checkpoint/无变化无 draft；用量差 → 一条 usage 含 dRounds/dTools；contract/phase/proposal/rejections/blockedReason/verification-cleared 强制 checkpoint；results 变化 → verification 先于 checkpoint 且 verificationRef 指向它、checkpoint.state 无 verificationResults；K=3 回卷 → [checkpoint,usage,usage,checkpoint] 且 fold(all).state 深等于末 checkpoint.state；仅 v1 流与今日一致；v1 前缀+v2 后缀；it.each fail-loud（孤儿 delta/tombstone 后 delta/goalId 不符/seq 断档/seq 重复/v>2/checkpoint 内嵌 results/悬空 verificationRef/criteria revision 不符/progress 未覆盖）断言精确文案；CAS：尾部为 delta 时 stale write、尾 seq 非数值 refusing；queue 顺序与异常隔离。扩展级：20 轮非零用量+/goal budget+pause/resume 后 `/goal` 状态卡 == session_start{reload} 后状态卡，driver.goalState() 深等于对 structuredClone(entries) 的 fold，goal 条目数 <= 1+相变数+合同变更数+floor(usage/K)，goal-usage 数 == 非零用量 turn_end 数；机械验证 driver（exec 返回输出）：所有 goal 条目无 verificationResults、goal-verification 携带、goalState().verificationResults 相等；/goal reject 后末 checkpoint verificationRef===null 且 fold 无 results；/goal clear→新 goal：tombstone、新 goalId create、seq 连续；扩展 1040-1057：wrap-up 用量为 usage delta，末 goal 条目 reason "wrap-up-settled"、tokensUsed 一致、goal-final.usage 一致；现有 232/248/262/300/316/331/350/829/892/1463 不改即过；test 350 扩到 goal-usage 不可变；分支切换后下一写入 seq=新尾+1 无 stale write；合成 goal-plan 事件 fold 进 state.plan、edit 标 stale、clear 清；persistCheckpointEvery:1 每写皆 checkpoint；computeFingerprint 含 progress 状态、不含 note。
+-B10 文档：docs/design.md 142 行改为 checkpoint+delta 描述、§15 阻塞测试 1 加 delta 子句、508 状态；docs/implementation-notes.md 71（restore lint 在 fold 之后）、93-96（不可变性延伸到 delta 与 shadow）；README "Goal logs"（权威日志含 goal checkpoint 与 goal-usage/goal-criteria/goal-plan/goal-verification delta；终态 = fold 或 wrap-up-settled checkpoint / goal-final；persistCheckpointEvery）；roadmap §6.1 标已实现、§7-3 标"已定：内嵌"、附录 C 第 1 步改为"用 src/store.ts 的 foldGoalEntries 折叠"、附录 D-2 措辞；docs/upstream-pi-harness.ts 加一条 goal-usage 存在且 goal 条目数上界的断言。
+-
+-## 协议 C：report_progress（roadmap §6.2.1；提交 3 `feat: add report_progress self-reported criteria progress`）
+-C1 工具（src/index.ts，在 update_goal 之后注册）：name "report_progress"，parameters Type.Object({items:Type.Array(Type.Object({criterionId:Type.String(),status:StringEnum(["not_started","in_progress","self_reported_met"]),note:Type.Optional(Type.String())}))})；描述说明整表替换、只覆盖全部 criteria、自报非证据。execute 整体 mutations.run：无 state 或 phase!=="active" → 返回 {content:[text],details:{accepted:false,reason:"inactive"}}（文案说明仅 active 可报）；校验：id 集合必须与合同恰好相同（缺项/重复/未知逐条列出）、note trim 后 ≤200 且不含 \n/\r（超长/多行拒绝，不静默改写）→ {accepted:false,reason:"invalid-progress",errors}；通过则构造新表（status 与 note 与旧项相同者保留原 at，否则 at=now；全部 stale 清除），赋 state.criteriaProgress，persist(ctx,{criteriaSource:"self-report"})；返回文本 `Progress recorded (self-reported, not Goal-verified): a in_progress, b self_reported_met, c not_started.` 与 details {accepted:true,revision,changed:[状态改变的 id]}。允许任意方向回退。
+-C2 规则：/goal edit 后存活 id 标 stale（B7 已含）；/goal reject 与 /goal budget 不动 progress。指纹用状态向量（B8 已含）。
+-C3 UI（src/ui.ts）：widget 每条 `⬜ C1 <text> · ◐ in progress[ (stale)]`，note 截 40；renderStatusCard 每条追加 `self-report: <status>[ (stale)] — <note>`；footer 计数 `◐n ◑m`。prompts/banner/get_goal 的自报维度已由协议 A 的 criteriaChecklist 承担。
+-C4 测试：整表校验五例（缺项/重复/未知 id/多行 note/>200 note）→ accepted:false 且不追加条目；非 active 拒绝；全表 self_reported_met 后 update_goal(complete) 仍走证据校验且 criteriaStatus 不变；同表重提不写入，仅 note 变写 goal-criteria delta 但指纹不变，状态变指纹变，self_reported_met→not_started 接受；/goal edit 标 stale、下一次报告清除；/goal reject 与 /goal budget 保留；持久化为 goal-criteria delta（goal 条目数不变、goal-criteria +1、progress 覆盖全部 id、verifiedBy "self-report"）且 fold 后 criteriaProgress 一致；Promise.all([tool("report_progress"),tool("update_goal",complete)]) 串行、两次写入 seq 连续、无 stale write；delta continuation 在下一轮显示 `C1 ⬜◐` 与一次性变化标注、再下一轮无标注；banner 与 get_goal 显示自报标记与 BANNER_PROGRESS_RULE。
+-C5 文档：roadmap §6.2.1 标已实现（含四项实现决策：goal-criteria delta 持久化、SerialMutationQueue、edit 后 stale、note ≤200 单行/允许回退）；README 工具列表加 report_progress；implementation-notes 加自报与验证分离说明。
+-
+-## 完成定义
+-1. 四个提交按序合入 main，每个提交 `npm run check && npm test` 全绿，测试总数 ≥ 69 + 18 + 26 + 12。
+-2. 不得删除或弱化：test 1543-1564、232/248/262/300/316/331/350、829/892/1463。
+-3. 用 pi ≥0.84.2、transport "sse"、.pi/goal.json {debugLog:true} 跑一次真实 Goal（≥10 轮，含 pause→聊天→budget→resume、run 内 budget、/compact）；用 roadmap 附录 C 方法核对 session JSONL：goal 条目数远小于 turn 数、goal-usage 数等于计费 turn 数、foldGoalEntries 结果 == /goal 状态卡 == goal-final、run 边界与相变处 assistant usage.cacheRead 无整段冷调用；debug 日志 send_continuation 的 delta chars ≤1500、reason 序列符合 kickoff→8 delta→checkpoint/compaction→checkpoint/revision→checkpoint。把结果（路径、计数、有无冷调用）写进 roadmap §3.3 与 §8 第 6 步。
+-4. 汇报时列出：每个提交 hash、测试计数、真实 session 的 goal/goal-usage/goal-criteria/goal-verification 条目数与文件占比、任何偏离本指令的地方及原因。
+-```
+diff --git a/docs/redesign/phase1-acceptance/README.md b/docs/redesign/phase1-acceptance/README.md
+index 0d8536d5..020a033b 100644
+--- a/docs/redesign/phase1-acceptance/README.md
++++ b/docs/redesign/phase1-acceptance/README.md
+@@ -1,6 +1,8 @@
+ # Term4u 一期验收记录
+ 
+-本目录保存一期改造前基线与最终同一 HEAD 的逐项验收证据。原始命令输出不做摘要替代；最终证据在 `final/` 中生成后按 C1–C18 索引。
++本目录保存一期改造前基线与最终验收证据。当前施工与候选源码/证据提交规则见
++[11 · 本地化收敛施工单](../11-本地化收敛施工单.md#delivery)。原始输出不以摘要替代。
++历史一期 C1–C18 与本次收敛 C1–C10 是不同编号体系，不应混用。
+ 
+ ## 改造前冻结基线
+ 
+@@ -19,7 +21,10 @@
+ 
+ ## 最终验收索引
+ 
+-最终验证必须全部针对同一个 `git rev-parse HEAD`。每个日志需保存命令、UTC 时间、退出码及原始输出；尚未生成的证据不得标记为通过。
++最终验证针对同一候选 `SOURCE_HEAD`；归档提交仅可新增证据/状态文档，不改变验证输入。
++每个日志保存命令、UTC、退出码及原始输出，未生成的证据不得标记为通过。
++当前收敛使用 `m5-m6/final/manifest.md` 按 11 章 C1–C10 验收；根 `final/manifest.md`
++负责映射 V0 遗留验收与历史一期条件到实际证据，不复制另一套日志。
+ 
+ | 条件 | 最终证据 |
+ |---|---|
+diff --git a/docs/redesign/term4u-m5-m6-handoff.md b/docs/redesign/term4u-m5-m6-handoff.md
+index d6988751..d29ec51a 100644
+--- a/docs/redesign/term4u-m5-m6-handoff.md
++++ b/docs/redesign/term4u-m5-m6-handoff.md
+@@ -1,64 +1,9 @@
+-# Term4u M5/M6 handoff
++# Term4u M5/M6 交接入口
+ 
+-## Objective
+-Continue implementing every M5/M6 requirement in `docs/redesign/10-M5-M6未完成项实施详设.md`, then run all prescribed verification, commit the finished implementation, and leave a clean worktree.
++当前执行依据：[11 · 本地化收敛施工单](11-本地化收敛施工单.md)。
+ 
+-Do not restate the design in code or new planning documents; use the design and its linked phase documents as the source of truth.
++旧 WIP 交接中的修复顺序、过时错误计数和旧任务指令已清除；当前基线、R0–R6、C1–C10、
++验证命令、证据目录和可复制的 Goal 指令全部由 11 章维护。
+ 
+-## Git state
+-- Current HEAD: `948d475b wip: localize M5 and M6 runtime surfaces`
+-- `git status --porcelain` was empty immediately after that commit.
+-- Earlier completed checkpoints:
+-  - `d18d63a5 docs: detail remaining M5 and M6 implementation`
+-  - `94912b78 chore: freeze M5 and M6 implementation baseline`
+-  - `f828cd6b refactor: restrict language servers to local PATH`
+-  - `2fdeed6f refactor: reduce TUI to local terminal sessions`
+-- `948d475b` is explicitly a WIP checkpoint, not a verified implementation.
+-
+-## Current condition
+-The WIP commit contains broad deletion of cloud authentication, Drive/cloud-object runtime, Warp Agent/blocklist surfaces, GraphQL/server clients, session sharing, and related crates, plus partial local replacements for auth, workflows, notebooks, env vars, terminal/TUI, workspace, pane, root view, settings, and persistence types.
+-
+-The implementation is not known to compile. The last actual command run before further edits was:
+-
+-```bash
+-cargo check -p warp --lib --no-default-features --features local_only
+-```
+-
+-At that point it reported 224 error headers. Significant edits were made after that run (including workspace/root/URI and terminal model changes), so that count is stale. Rerun the command first and treat its fresh output as authoritative.
+-
+-Important: the prior user requested that the current state be committed despite known failures. The original goal still requires the final implementation to pass tests and checks; do not treat the WIP commit as satisfying completion.
+-
+-## Highest-priority continuation
+-1. Run the focused `cargo check` above and cluster errors by file.
+-2. Repair compilation in coherent order:
+-   - `app/src/persistence/sqlite.rs` and `app/src/persistence/block_list.rs`: still largely pre-localization and likely reference deleted cloud/agent models. Preserve all historical migrations and make removed-feature rows non-fatal/hidden as required by the design.
+-   - `app/src/lib.rs`: initialization still likely references removed singletons/crates and must become strictly local for GUI/TUI.
+-   - `app/src/settings_view/**`, `app/src/settings/**`, `app/src/app_menus.rs`: remove remaining account, billing, Agent, cloud sync, referral, and cloud CLI entries while preserving local settings and the fixed local Privacy page.
+-   - terminal call sites after removal of session-sharing/agent fields, especially local PTY manager and lifecycle APIs.
+-   - search/command palette variants and renderers after local-only action enum reductions.
+-   - local workspace/root APIs and tests after their substantial simplification.
+-3. Do not reintroduce compatibility stubs named after removed cloud/Agent APIs merely to compile. Move genuinely local value types to neutral local modules or delete dead consumers.
+-4. Restore required local behavior from §2 of the design: PTY/Ctrl-C, tabs/splits/window restore, editor/file tree/file search/code review, local/project workflows, legacy DB load, local notebook edit/restart persistence, PATH-only LSP, logs, bundled skills, macOS/Linux.
+-5. Reconcile the deletion inventory and evidence under `docs/redesign/phase1-acceptance/m5-m6/`; update `docs/redesign/baseline/deleted-test-ids.txt` and `script/deletion_set.txt` according to the design. Do not silently delete tests for retained behavior.
+-6. Complete M6 manifest/lockfile/deny work, including exact `email_address` rev and dependency/source/binary negative scans.
+-7. Run fresh formatting, focused tests, full prescribed checks, GUI/TUI real behavior verification, and the cross-platform matrix before the final non-WIP commit.
+-
+-## Useful recovery/context notes
+-- The complete scope and gate commands are already in `docs/redesign/10-M5-M6未完成项实施详设.md`; reference it rather than copying its checklist.
+-- Baseline/decision evidence is under `docs/redesign/baseline/` and `docs/redesign/phase1-acceptance/m5-m6/`.
+-- Route A for blocklist was frozen in `docs/redesign/baseline/blocklist-decision.md`.
+-- M5g and M5b have focused evidence in `docs/redesign/phase1-acceptance/m5-m6/batches/` and their earlier commits.
+-- A previous disk issue came from a very large `target/debug/incremental`; if disk fills, inspect that directory before assuming a code failure.
+-- No credentials or secrets are required for the local focused checks.
+-
+-## Suggested skills
+-Call the Skill tool for these before relevant work:
+-- `gui-ui-guidelines` — before repairing any GUI workspace, pane, settings, terminal, notebook, or workflow UI.
+-- `gui-settings-ui` — before changing Settings pages/search/widget wiring.
+-- `rust-unit-tests` — when restoring/adapting Rust tests for retained local behavior.
+-- `logging-and-error-reporting` — before adding or revising warnings for skipped legacy rows or failures.
+-- `tui-ui-guidelines`, `tui-testing`, and `tui-verify-change` — if touching or re-verifying the headless TUI.
+-- `cross-platform-cloud-verification` — only after cheap local checks pass, for the smallest required macOS/Linux verification matrix.
+-
+-## Completion warning
+-Do not declare the active goal complete until every criterion has fresh evidence at the same final HEAD, all prescribed checks pass, `git status --porcelain` is empty, and the final commit is no longer a known-failing WIP.
++不要把历史 M5b/M5g 的 PASS 当作当前 WIP 的验证，不重复执行旧 10 章删除计划。
++历史交接可通过 `git show 7c922e02:docs/redesign/term4u-m5-m6-handoff.md` 查询。
+diff --git a/todo.md b/todo.md
+index 76f82440..c728675f 100644
+--- a/todo.md
++++ b/todo.md
+@@ -1 +1,6 @@
+- 本地化改造-清理云模块+遥测数据上报：~/.claude/plans/mit-github-snoopy-goblet.md
+\ No newline at end of file
++# 当前施工入口
++
++执行 [本地化收敛施工单](docs/redesign/11-本地化收敛施工单.md) 的 R0–R6，按 C1–C10 验收。
++阶段状态见 [实施顺序与里程碑](docs/redesign/08-实施顺序与里程碑.md)。
++
++本文件不维护独立任务表；M7 品牌发布与完整 MIT 重实现不在当前施工范围。
+
+EXIT_CODE=0
