@@ -1,0 +1,20 @@
+{
+  "source_head": "5069460572cec72917307d63a7a37383c58db7ad",
+  "source_diff_from_gui_build_base": "",
+  "tui_build": {
+    "command": "PATH=\"$HOME/.cargo/bin:$PATH\" CARGO_PROFILE_DEV_DEBUG=0 CARGO_INCREMENTAL=0 CARGO_BUILD_JOBS=4 cargo build -p warp_tui --bin term4u-tui --features standalone,offline_hard",
+    "exit_code": 0
+  },
+  "artifacts": [
+    {
+      "path": "target/debug/term4u-tui",
+      "sha256": "564bf65531a4e25d6e83be0571dce94bc6591799f89d1a34b7487f2c1ff7ecf4",
+      "bytes": 241057216
+    },
+    {
+      "path": "target/debug/bundle/osx/Term4u.app/Contents/MacOS/term4u",
+      "sha256": "722b6141f4617141735d3cffe05ff188b30f13be51ea45db8193d14fc14a939e",
+      "bytes": 240225264
+    }
+  ]
+}

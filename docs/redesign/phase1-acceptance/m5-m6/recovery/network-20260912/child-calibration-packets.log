@@ -1,0 +1,4 @@
+17:58:48.595590 (lo0, proc Python:11039, out) IP 127.0.0.1.57765 > 127.0.0.1.49330: Flags [S], seq 2410259609, win 65535, options [mss 16344,nop,wscale 6,nop,nop,TS val 2131248282 ecr 0,sackOK,eol], length 0
+17:58:48.595635 (lo0, proc Python:11039, in) IP 127.0.0.1.49330 > 127.0.0.1.57765: Flags [R.], seq 0, ack 1, win 0, length 0
+17:58:48.595707 (lo0, proc Python:11039, out) IP 127.0.0.1.57766 > 127.0.0.1.853: Flags [S], seq 2496264878, win 65535, options [mss 16344,nop,wscale 6,nop,nop,TS val 913028344 ecr 0,sackOK,eol], length 0
+17:58:48.595743 (lo0, proc Python:11039, in) IP 127.0.0.1.853 > 127.0.0.1.57766: Flags [R.], seq 0, ack 1, win 0, length 0

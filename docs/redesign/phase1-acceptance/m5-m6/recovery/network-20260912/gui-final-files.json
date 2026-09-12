@@ -1,0 +1,26 @@
+[
+  {
+    "path": ".zshrc",
+    "bytes": 0
+  },
+  {
+    "path": ".zprofile",
+    "bytes": 0
+  },
+  {
+    "path": "Library/Application Support/dev.term4u.Term4u-network-20260912-gui-final/warp.sqlite-shm",
+    "bytes": 32768
+  },
+  {
+    "path": "Library/Application Support/dev.term4u.Term4u-network-20260912-gui-final/warp.sqlite-wal",
+    "bytes": 2068272
+  },
+  {
+    "path": "Library/Application Support/dev.term4u.Term4u-network-20260912-gui-final/warp.sqlite",
+    "bytes": 294912
+  },
+  {
+    "path": "Library/Logs/term4u.log",
+    "bytes": 8944
+  }
+]

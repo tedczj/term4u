@@ -1,0 +1,129 @@
+{
+  "capture": {
+    "start": "2026-09-12T09:53:59.674017+00:00",
+    "end": "2026-09-12T10:08:08.021991+00:00",
+    "collectors": {
+      "packets": {
+        "command": [
+          "/usr/sbin/tcpdump",
+          "-i",
+          "pktap,all",
+          "-nn",
+          "-k",
+          "INPD",
+          "-l",
+          "tcp or udp"
+        ],
+        "exit_code": -9
+      },
+      "dns": {
+        "command": [
+          "/usr/bin/log",
+          "stream",
+          "--level",
+          "debug",
+          "--style",
+          "compact",
+          "--predicate",
+          "process == \"mDNSResponder\""
+        ],
+        "exit_code": -15
+      },
+      "exec": {
+        "command": [
+          "/usr/bin/fs_usage",
+          "-w",
+          "-f",
+          "exec",
+          "-t",
+          "850"
+        ],
+        "exit_code": 0
+      }
+    }
+  },
+  "raw_local_files": {
+    "/tmp/term4u-net-final-02/exec.log": {
+      "sha256": "e150f4bcf4338efa3410aff28b43b44b5590a77ab7afa1c5c33af68af41f5a13",
+      "bytes": 11170217
+    },
+    "/tmp/term4u-net-final-02/packets.log": {
+      "sha256": "111a228c008cfe07668849bc2866c0d472c6ca136f9a71be79b9de805b0255bd",
+      "bytes": 73871880
+    },
+    "/tmp/term4u-net-final-02/dns.log": {
+      "sha256": "d65736da22f19f002bc473f4f998656752844e4f3fc371e8db6864d3eaf23d97",
+      "bytes": 809164
+    }
+  },
+  "runs": {
+    "gui-final": {
+      "duration_seconds": 620.374341,
+      "known_pids": [
+        9010,
+        9011,
+        9016,
+        9089,
+        9106,
+        9107,
+        9108
+      ],
+      "packet_lines": 0,
+      "dns_records": 0,
+      "log_keyword_hits": [],
+      "complete_child_coverage": false,
+      "status": "NO_ACTIVITY_OBSERVED_FOR_TRACKED_PIDS_ONLY"
+    },
+    "tui-final": {
+      "duration_seconds": 65.203676,
+      "known_pids": [
+        11736,
+        11737,
+        11739,
+        11741,
+        11863,
+        11888,
+        11891,
+        11892,
+        11911,
+        11913,
+        11915,
+        11956,
+        11957,
+        11958
+      ],
+      "packet_lines": 0,
+      "dns_records": 0,
+      "log_keyword_hits": [],
+      "complete_child_coverage": false,
+      "status": "NO_ACTIVITY_OBSERVED_FOR_TRACKED_PIDS_ONLY"
+    }
+  },
+  "controls": {
+    "final-calibration-probe": {
+      "pids": [
+        9718
+      ],
+      "packet_lines": 1,
+      "dns_records": 4
+    },
+    "child-calibration": {
+      "pids": [
+        11039,
+        11040
+      ],
+      "packet_lines": 4,
+      "dns_records": 4
+    },
+    "end-calibration": {
+      "pids": [
+        13733
+      ],
+      "packet_lines": 1,
+      "dns_records": 0
+    }
+  },
+  "packet_footer": [],
+  "zero_kernel_drops": false,
+  "status": "INCOMPLETE: Endpoint Security unavailable and automatic tcpdump required SIGKILL; no final drop statistics"
+}

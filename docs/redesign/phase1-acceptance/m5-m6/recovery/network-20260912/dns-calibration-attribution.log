@@ -1,0 +1,10 @@
+2026-09-12 17:47:55.124 Df mDNSResponder[185:e1a] [com.apple.mDNSResponder:Default] [R261890] DNSServiceCreateConnection START PID[84358](Python)
+2026-09-12 17:47:55.124 Df mDNSResponder[185:e1a] [com.apple.mDNSResponder:Default] [R261891] DNSServiceQueryRecord START -- qname: <mask.hash: '9iey9PbVjdFMhneVvM/2jA=='>, qtype: A, flags: 0x1D000, interface index: 0, client pid: 84358 (Python), name hash: d2b13305
+2026-09-12 17:47:55.126 Df mDNSResponder[185:e1a] [com.apple.mDNSResponder:Default] [R261892] DNSServiceQueryRecord START -- qname: <mask.hash: '9iey9PbVjdFMhneVvM/2jA=='>, qtype: AAAA, flags: 0x1D000, interface index: 0, client pid: 84358 (Python), name hash: d2b13305
+2026-09-12 17:47:55.126 Db mDNSResponder[185:e1a] [com.apple.mDNSResponder:Default] [R261892] QueryRecordOpCallback: Suppressed question <mask.hash: '9iey9PbVjdFMhneVvM/2jA=='> (AAAA)
+2026-09-12 17:47:55.201 Db mDNSResponder[185:e1a] [com.apple.mDNSResponder:Default] [R261890] Cancel 00000000 00000001
+2026-09-12 17:47:55.201 Df mDNSResponder[185:e1a] [com.apple.mDNSResponder:Default] [R261891] DNSServiceQueryRecord STOP -- name hash: d2b13305, duration: 0s
+2026-09-12 17:47:55.201 Db mDNSResponder[185:e1a] [com.apple.mDNSResponder:Default] [R261890] Cancel 00000000 00000002
+2026-09-12 17:47:55.201 Df mDNSResponder[185:e1a] [com.apple.mDNSResponder:Default] [R261892] DNSServiceQueryRecord STOP -- name hash: d2b13305, duration: 0s
+2026-09-12 17:47:55.205 Df mDNSResponder[185:e1a] [com.apple.mDNSResponder:Default] [R261890] DNSServiceCreateConnection STOP PID[84358](Python)
+2026-09-12 17:47:55.205 Db mDNSResponder[185:e1a] [com.apple.mDNSResponder:Default] [R261890] Removing FD 81

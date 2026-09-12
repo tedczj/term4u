@@ -1,0 +1,18 @@
+[
+  {
+    "path": ".zshrc",
+    "bytes": 0
+  },
+  {
+    "path": ".zprofile",
+    "bytes": 0
+  },
+  {
+    "path": "Library/Application Support/dev.term4u.Term4u-network-20260912-tui-final/tui/warp.sqlite",
+    "bytes": 360448
+  },
+  {
+    "path": "Library/Logs/warp-cli/term4u-tui.log",
+    "bytes": 3811
+  }
+]

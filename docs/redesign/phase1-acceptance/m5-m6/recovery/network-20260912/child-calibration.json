@@ -1,0 +1,18 @@
+{
+  "pid": 11039,
+  "utc": "2026-09-12T09:58:48.595404+00:00",
+  "probes": [
+    {
+      "tcp_port": 49330,
+      "result": "[Errno 61] Connection refused"
+    },
+    {
+      "tcp_port": 853,
+      "result": "[Errno 61] Connection refused"
+    }
+  ],
+  "child": {
+    "pid": 11040,
+    "hostname": "term4u-child-calibration-11040.example.com"
+  }
+}

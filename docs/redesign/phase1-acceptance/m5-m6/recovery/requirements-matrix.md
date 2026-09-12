@@ -5,11 +5,11 @@
 
 | 项 | 要求 | 状态 | 实现/验证/证据 | 验收 |
 |---|---|---|---|---|
-| R0.1 | HEAD/UTC/工作树/工具链/磁盘/PATH | 基线已刷新；空间不足 | [最新记录](r0-20260912/README.md)：Rust/Cargo 1.92.0，nextest 已补齐；真实 inventory 遇磁盘不足 | C10 |
+| R0.1 | HEAD/UTC/工作树/工具链/磁盘/PATH | 基线已刷新；空间已恢复 | [最新记录](r0-20260912/README.md)：Rust/Cargo 1.92.0，nextest 已补齐；真实 inventory 曾遇磁盘不足；[后续缓存清理](network-20260912/cache-cleanup.json)已恢复空间，清单尚未重跑 | C10 |
 | R0.2 | library check 原始日志及根因分组 | PASS（仅 library check） | [新日志](r0-20260912/library-check.log) exit 0；[诊断分组](r0-20260912/diagnostic-groups.json)，全仓 Clippy 仍失败 | C1 |
 | R0.3 | recovery 新记录，不覆盖历史 | 完成 | [新目录](r0-20260912/README.md)，保留历史 baseline/batches | C10 |
 | R0.4 | 清单生成失败不当空清单 | 失败保护 PASS；真实清单 FAIL | [9 项回归](r0-20260912/inventory-regressions.log)；[真实失败](r0-20260912/inventory-real.log) exit 101，不覆盖 baseline | C7 |
-| R0.5 | GUI/旧 DB/本机 macOS 网络/授权前提 | INCOMPLETE | [当前条件](r0-20260912/README.md)：本次 commit/push 已授权；[管理员受控抓包通过](r0-capture-20260912/README.md)，完整网络归因/空间仍待落实；真实旧样本归 R2.6；Linux 不再要求 | C3/C9/C10 |
+| R0.5 | GUI/旧 DB/本机 macOS 网络/授权前提 | INCOMPLETE | [当前条件](r0-20260912/README.md)：本次 commit/push 已授权；[管理员受控抓包通过](r0-capture-20260912/README.md)，空间已恢复；[DNS 已校准](network-20260912/README.md)，TCC 子进程覆盖/正式收尾仍待落实；真实旧样本归 R2.6；Linux 不再要求 | C3/C9/C10 |
 | R1.1 | 持久化本地类型与 terminal opaque 旧行 | 进行中 | block_list/sqlite/model；需补回归 | C1/C3 |
 | R1.2 | notebook/workflow/文件初始化及恢复 | 待验 | app lib/local_objects/notebooks/workflows | C1/C3 |
 | R1.3 | Settings/menu/search 去死引用 | 待验 | app settings/settings_view/search/app_menus | C1/C4 |

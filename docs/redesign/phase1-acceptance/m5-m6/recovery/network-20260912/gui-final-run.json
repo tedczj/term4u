@@ -1,0 +1,37 @@
+{
+  "pid": 9010,
+  "home": "/var/folders/zv/ygy2m9w10px2n7mbdfgcnw2m0000gp/T/term4u-net-gui-i0xbc5c0",
+  "environment": {
+    "HOME": "/var/folders/zv/ygy2m9w10px2n7mbdfgcnw2m0000gp/T/term4u-net-gui-i0xbc5c0",
+    "ZDOTDIR": "/var/folders/zv/ygy2m9w10px2n7mbdfgcnw2m0000gp/T/term4u-net-gui-i0xbc5c0",
+    "PATH": "/usr/bin:/bin:/usr/sbin:/sbin",
+    "SHELL": "/bin/zsh",
+    "USER": "tedczj",
+    "LOGNAME": "tedczj",
+    "TMPDIR": "/var/folders/zv/ygy2m9w10px2n7mbdfgcnw2m0000gp/T/term4u-net-gui-i0xbc5c0",
+    "LANG": "en_US.UTF-8",
+    "WARP_DATA_PROFILE": "network-20260912-gui-final",
+    "RUST_LOG": "info",
+    "HTTP_PROXY": "http://127.0.0.1:49330",
+    "HTTPS_PROXY": "http://127.0.0.1:49330",
+    "ALL_PROXY": "http://127.0.0.1:49330",
+    "http_proxy": "http://127.0.0.1:49330",
+    "https_proxy": "http://127.0.0.1:49330",
+    "all_proxy": "http://127.0.0.1:49330",
+    "NO_PROXY": "",
+    "no_proxy": ""
+  },
+  "start": "2026-09-12T09:54:15.301606+00:00",
+  "sha256": "722b6141f4617141735d3cffe05ff188b30f13be51ea45db8193d14fc14a939e",
+  "alive_after_620s": true,
+  "pids": [
+    9010,
+    9011,
+    9016,
+    9089,
+    9106,
+    9107,
+    9108
+  ],
+  "end": "2026-09-12T10:04:35.675947+00:00"
+}

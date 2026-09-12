@@ -1,0 +1,1 @@
+Failed to create ES client: Not permitted to create an ES Client, responsible process needs TCC Full Disk Access authorization (ES_NEW_CLIENT_RESULT_ERR_NOT_PERMITTED)

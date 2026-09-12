@@ -1,0 +1,44 @@
+{
+  "started": "2026-09-12T10:04:50.157553+00:00",
+  "status": "BLOCKED",
+  "commands": {
+    "packets": [
+      "/usr/sbin/tcpdump",
+      "-i",
+      "pktap,all",
+      "-nn",
+      "-k",
+      "INPD",
+      "-l",
+      "tcp or udp"
+    ],
+    "dns": [
+      "/usr/bin/log",
+      "stream",
+      "--level",
+      "debug",
+      "--style",
+      "compact",
+      "--predicate",
+      "process == \"mDNSResponder\""
+    ],
+    "processes": [
+      "/usr/bin/eslogger",
+      "exec",
+      "fork",
+      "exit"
+    ]
+  },
+  "error": "Collectors exited: processes",
+  "exit_codes": {
+    "packets": 0,
+    "dns": -15,
+    "processes": 1
+  },
+  "finished": "2026-09-12T10:04:52.170580+00:00",
+  "sha256": {
+    "processes.log": "004e1745eab1c0cdcc632bc30318cdae6deb7a0868079d690ad2b5e4c455e295",
+    "packets.log": "5ea52258013492e25e6577f1db83dff2456e07481f9592b7e76618a951c21679",
+    "dns.log": "a25417860220de4ccd57dc21aac3bee7fd820d8ba4f989b455bd38ea80065b4d"
+  }
+}

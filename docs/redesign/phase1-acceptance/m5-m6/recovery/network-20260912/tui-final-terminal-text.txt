@@ -1,0 +1,1 @@
+Term4u local terminalType a command to begin.ctrl-t new tab  ctrl-tab switch  ctrl-q exitTerm4u local terminal  [1/1]  ctrl-t new  ctrl-w close  ctrl-q exit Term4u local terminal            Type a command to begin.          ctrl-t new tab  ctrl-tab switch  ctrl-q exit

@@ -1,0 +1,20 @@
+{
+  "utc": "2026-09-12T09:48:53.565918+00:00",
+  "authorization": "User approved inventory and removal of rebuildable old build cache",
+  "removed": [
+    {
+      "path": "target/debug/deps",
+      "logical_bytes": 4772505430
+    },
+    {
+      "path": "target/debug/.fingerprint",
+      "logical_bytes": 15539169
+    }
+  ],
+  "preserved_sha256": {
+    "target/debug/term4u": "6733c1b41e1816789a0361f1f45c07ff45457bd0a3e2883a21969c77b85705d0",
+    "target/debug/bundle/osx/Term4u.app/Contents/MacOS/term4u": "722b6141f4617141735d3cffe05ff188b30f13be51ea45db8193d14fc14a939e"
+  },
+  "free_before": 4767350784,
+  "free_after": 9386393600
+}
