@@ -16,7 +16,11 @@ pub fn init(app: &mut AppContext) {
     app.register_fixed_bindings([
         FixedBinding::new("ctrl-c", TerminalAction::CtrlC, id!("Terminal")),
         FixedBinding::new("ctrl-d", TerminalAction::CtrlD, id!("Terminal")),
-        FixedBinding::new("up", TerminalAction::Up, id!("Terminal") & !id!(INPUT_BOX_VISIBLE_KEY)),
+        FixedBinding::new(
+            "up",
+            TerminalAction::Up,
+            id!("Terminal") & !id!(INPUT_BOX_VISIBLE_KEY),
+        ),
         FixedBinding::new(
             "down",
             TerminalAction::Down,
@@ -35,11 +39,6 @@ pub fn init(app: &mut AppContext) {
         FixedBinding::standard(
             warpui::actions::StandardAction::Paste,
             TerminalAction::Paste,
-            id!("Terminal"),
-        ),
-        FixedBinding::standard(
-            warpui::actions::StandardAction::Copy,
-            TerminalAction::Copy,
             id!("Terminal"),
         ),
     ]);

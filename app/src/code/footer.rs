@@ -36,7 +36,6 @@ use crate::ai::persisted_workspace::{
     LSPEnablementResultForFile, LspRepoStatus, PersistedWorkspace,
 };
 use crate::code::lsp_telemetry::{LspControlActionType, LspEnablementSource, LspTelemetryEvent};
-use crate::settings::AISettings;
 use crate::ui_components::blended_colors;
 #[cfg(feature = "local_fs")]
 use crate::user_config::is_tab_config_toml;
@@ -307,17 +306,9 @@ impl CodeFooterView {
             return;
         };
 
-        let is_ai_enabled = AISettings::as_ref(ctx).is_any_ai_enabled(ctx);
         button.update(ctx, |button, ctx| {
-            button.set_disabled(!is_ai_enabled, ctx);
-            button.set_tooltip(
-                Some(if is_ai_enabled {
-                    "Open agent input with the /update-tab-config skill"
-                } else {
-                    "Enable AI to use the /update-tab-config skill"
-                }),
-                ctx,
-            );
+            button.set_disabled(true, ctx);
+            button.set_tooltip(None::<String>, ctx);
         });
     }
     fn create_lsp_status_button(
@@ -355,9 +346,6 @@ impl CodeFooterView {
                 show_border: true,
             };
             footer.sync_tab_config_skill_button(ctx);
-            ctx.subscribe_to_model(&AISettings::handle(ctx), |me, _, _, ctx| {
-                me.sync_tab_config_skill_button(ctx);
-            });
             return footer;
         }
 
@@ -1609,10 +1597,6 @@ impl CodeFooterView {
                         )),
                         true,
                     ),
-                    LspRepoStatus::Installing { server_type } => (
-                        Some(format!("Installing {}...", server_type.binary_name())),
-                        false,
-                    ),
                 },
                 LSPEnablementResultForFile::Enabled => (None, false),
             },
@@ -1634,16 +1618,6 @@ impl CodeFooterView {
                 // Check if any server has a CTA-worthy status
                 if let Some(cta) = self.workspace_cta_message() {
                     return cta;
-                }
-
-                // Check if any server is installing
-                for status in lsp_repo_statuses.values() {
-                    if let LspRepoStatus::Installing { server_type } = status {
-                        return (
-                            Some(format!("Installing {}...", server_type.binary_name())),
-                            false,
-                        );
-                    }
                 }
 
                 // Check if all are still checking

@@ -18,7 +18,7 @@ use warp_terminal::model::{KeyboardModes, KeyboardModesApplyBehavior};
 use warpui::r#async::executor::Background;
 use warpui::color::ColorU;
 use warpui::units::{IntoLines, IntoPixels, Lines};
-use warpui::{AppContext, EntityId, ViewHandle, record_trace_event};
+use warpui::{AppContext, EntityId, record_trace_event};
 
 use super::ansi::{Handler, InputBufferValue};
 use super::block::{BlockId, BlockSize, BlockState};
@@ -37,16 +37,12 @@ use crate::terminal::block_list_element::GridType;
 use crate::terminal::event::Event::{AfterBlockCompleted, TerminalClear};
 use crate::terminal::event::{AfterBlockCompletedEvent, BlockType, Event as TerminalEvent};
 use crate::terminal::event_listener::ChannelEventListener;
-use crate::terminal::model::ansi;
-use crate::terminal::model::SerializedBlockListItem;
 use crate::terminal::model::ansi::{
     Attr, BootstrappedValue, CharsetIndex, ClearMode, CommandFinishedValue, CompletionMetadata,
     CursorShape, CursorStyle, LineClearMode, Mode, PrecmdValue, PreexecValue, Processor,
     PromptMetadata, StandardCharset, TabulationClearMode,
 };
-use crate::terminal::model::block::{
-    Block, SerializedBlock, TranscriptScope,
-};
+use crate::terminal::model::block::{Block, SerializedBlock, TranscriptScope};
 use crate::terminal::model::blockgrid::BlockGrid;
 use crate::terminal::model::bootstrap::BootstrapStage;
 use crate::terminal::model::grid::Dimensions;
@@ -54,8 +50,16 @@ use crate::terminal::model::index::{Point, VisibleRow};
 use crate::terminal::model::iterm_image::ITermImage;
 use crate::terminal::model::secrets::ObfuscateSecrets;
 use crate::terminal::model::terminal_model::{BlockIndex, WithinBlock};
-use crate::terminal::view::{InlineBannerId, InlineBannerItem, SeparatorId, WithinBlockBanner};
+use crate::terminal::model::{SerializedBlockListItem, ansi};
 use crate::terminal::{BlockPadding, ShellHost, SizeInfo, SizeUpdate};
+
+pub type InlineBannerId = usize;
+pub type SeparatorId = usize;
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
+pub struct InlineBannerItem {
+    pub id: InlineBannerId,
+}
 
 #[cfg(feature = "local_fs")]
 const RESTORED_BLOCK_SEPARATOR_HEIGHT: f64 = 1.5;
@@ -75,7 +79,11 @@ pub struct RichContentItem {
 }
 
 impl RichContentItem {
-    pub fn new(content_type: Option<RichContentType>, view_id: EntityId, should_hide: bool) -> Self {
+    pub fn new(
+        content_type: Option<RichContentType>,
+        view_id: EntityId,
+        should_hide: bool,
+    ) -> Self {
         Self {
             content_type,
             view_id,
@@ -1133,8 +1141,6 @@ impl BlockList {
         }
     }
 
-
-
     /// Marks the rich content item with the given view ID as needing its height
     /// to be remeasured on the next layout.
     pub fn mark_rich_content_dirty(&mut self, view_id: EntityId) {
@@ -1337,8 +1343,6 @@ impl BlockList {
         }
     }
 
-
-
     /// Resets the internal block object's index to its actual index in the block list.
     /// This does not move the block, but is necessary to be called after a move (inserting or removing blocks).
     /// Also updates the block ID to block index mapping.
@@ -1411,8 +1415,6 @@ impl BlockList {
         Some(block)
     }
 
-
-
     /// Removes command blocks at stable pre-removal indices.
     fn remove_command_blocks_at_indices(&mut self, indices_to_remove: Vec<BlockIndex>) {
         if indices_to_remove.is_empty() {
@@ -1432,8 +1434,6 @@ impl BlockList {
         self.event_proxy.send_wakeup_event();
     }
 
-
-
     /// Gets the active background block, if one exists.
     pub(super) fn background_block_mut(&mut self) -> Option<&mut Block> {
         // The active background block will be the one immediately before
@@ -1451,16 +1451,6 @@ impl BlockList {
         } else {
             None
         }
-    }
-
-    /// The setter for Block::block_banner needs to update the block_heights SumTree in order to
-    /// keep that data structure in sync.
-    pub(in crate::terminal) fn set_active_block_banner(
-        &mut self,
-        block_banner: Option<WithinBlockBanner>,
-    ) {
-        self.active_block_mut().block_banner = block_banner;
-        self.update_active_block_height();
     }
 
     pub fn active_block_mut(&mut self) -> &mut Block {
@@ -1500,9 +1490,7 @@ impl BlockList {
 
     /// Returns the conversation associated with newly created command blocks.
 
-
     /// Returns whether the active conversation executes in a cloud context.
-
 
     /// Updates the transcript membership used by the cached block-height layout.
     pub fn set_transcript_scope(&mut self, scope: TranscriptScope) {
@@ -1515,19 +1503,14 @@ impl BlockList {
 
     /// Associates subsequent command blocks with an active conversation.
 
-
     /// Clears the active conversation association without changing transcript scope.
-
 
     /// Associates command blocks with a GUI conversation and updates its transcript scope.
 
-
     /// Clears the active conversation association and returns to terminal scope.
-
 
     /// Marks AI / agent-view rich content as dirty so heights get re-laid out. Call this after
     /// any change that affects which rich content is visible for the current agent view state.
-
 
     pub fn refresh_heights_for_loaded_passive_code_diff(
         &mut self,
@@ -1542,19 +1525,15 @@ impl BlockList {
     /// Associates the given blocks with a conversation, making them visible in that conversation's agent view.
     /// Returns a Vec of (block_id, visibility) for blocks that were found.
 
-
     /// Attaches every non-oz-startup block in the list to `conversation_id` so each block is
     /// visible while that conversation is the active one in agent view. Skips blocks flagged
     /// as `is_oz_environment_startup_command` since those are hidden by their own mechanism.
 
-
     /// Removes the conversation association from the given blocks, making them disappear from that conversation's agent view.
     /// Returns a Vec of (block_id, visibility) for blocks that were modified.
 
-
     /// Promotes all blocks that are pending for the given conversation to attached.
     /// Returns a Vec of (block_id, visibility) for blocks that were modified.
-
 
     /// Update the height of an active block in the block heights SumTree. In general,
     /// blocks are immutable once finished. Only the active block and the most
@@ -1708,8 +1687,6 @@ impl BlockList {
         self.block_id_to_block_index.get(id).copied()
     }
 
-
-
     /// Scans the block at `block_index` for secrets.
     pub fn scan_block_for_secrets(&mut self, block_index: BlockIndex) {
         if let Some(block) = self.blocks.get_mut(block_index.0) {
@@ -1720,8 +1697,6 @@ impl BlockList {
     pub fn block_heights(&self) -> &SumTree<BlockHeightItem> {
         &self.block_heights
     }
-
-
 
     /// Finds the first block out of the given indices that matches the filter.
     /// This function respects the blocklist ordering, regardless of whether it renders as inverted.
@@ -1815,10 +1790,8 @@ impl BlockList {
     /// results mounted as AI blocks, agent-requested/monitored shell commands, hidden
     /// items, gaps, banners, and other non-navigable rich content.
 
-
     /// Updates whether an AI rich-content item is a navigable user-query segment.
     /// Used when streaming exchange inputs become renderable after initial mount.
-
 
     /// Return the height of the last non hidden rich content block after a block index. If there is no non hidden rich content block, return None.
     pub fn last_non_hidden_rich_content_block_after_block(
@@ -1960,11 +1933,7 @@ impl BlockList {
                         });
                     }
                     BlockHeightItem::RichContent(item) => {
-                        let should_hide = RichContentItem {
-                            should_hide: false,
-                            ..*item
-                        }
-                        .should_hide_for_transcript_scope(transcript_scope);
+                        let should_hide = item.should_hide || transcript_scope.is_conversation();
                         let updated_height = rich_content_heights
                             .and_then(|heights| heights.get(&item.view_id))
                             .copied()
@@ -2030,8 +1999,6 @@ impl BlockList {
             |_| {},
         );
     }
-
-
 
     pub fn toggle_visibility_of_block_for_env_var(&mut self, block_id: &str) {
         let block_id = block_id.to_owned();
@@ -2415,7 +2382,6 @@ impl BlockList {
             honor_ps1,
             self.obfuscate_secrets,
             self.is_ai_ugc_telemetry_enabled,
-            self.active_conversation_id(),
         );
         if let Some(is_local) = restored_block_was_local {
             block.set_restored_block_was_local(is_local);
@@ -2469,7 +2435,6 @@ impl BlockList {
             false,
             self.obfuscate_secrets,
             self.is_ai_ugc_telemetry_enabled,
-            None,
         )
     }
 
@@ -2778,20 +2743,10 @@ impl BlockList {
                 command_finished_to_precmd_delay: None,
                 block_type: BlockType::Restored,
                 num_secrets_obfuscated: self.active_block().num_secrets_obfuscated(),
-                // We don't track if a restored block was a cloud workflow execution.
-                cloud_workflow_id: None,
-                cloud_env_var_collection_id: None,
             }));
 
         // Set the completed_ts to the saved completed_ts _after_ `finish`ing the block (which would have set its own completed_ts).
         self.active_block_mut().override_completed_ts(completed_ts);
-
-        if let Some(prompt_snapshot) = &block.prompt_snapshot
-            && let Ok(prompt_snapshot) = serde_json::from_str(prompt_snapshot)
-        {
-            log::debug!("Restored prompt: {prompt_snapshot:?}");
-            self.active_block_mut().set_prompt_snapshot(prompt_snapshot);
-        }
     }
 
     /// Marks the end of the active block and creates the next block.
@@ -2938,8 +2893,6 @@ impl BlockList {
                 command_finished_to_precmd_delay: delay,
                 block_type,
                 num_secrets_obfuscated: finished_block.num_secrets_obfuscated(),
-                cloud_workflow_id: finished_block.cloud_workflow_state(),
-                cloud_env_var_collection_id: finished_block.cloud_env_var_collection_state(),
             }));
     }
 
@@ -2966,9 +2919,6 @@ impl BlockList {
                         command_finished_to_precmd_delay: None,
                         block_type,
                         num_secrets_obfuscated: num_secrets_obfuscated.unwrap_or_default(),
-                        // Background blocks are not tracked as cloud workflow executions.
-                        cloud_workflow_id: None,
-                        cloud_env_var_collection_id: None,
                     }));
             }
 
@@ -3197,13 +3147,6 @@ impl BlockList {
             return;
         }
         active_block.clear_marked_text();
-    }
-
-
-
-    pub fn has_active_ai_block(&self, app: &AppContext) -> bool {
-        self.last_non_hidden_ai_block_handle(app)
-            .is_some_and(|handle| !handle.as_ref(app).is_finished())
     }
 
     /// Returns the contents of all blocks associated with bootstrap.

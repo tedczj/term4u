@@ -26,7 +26,9 @@ pub enum CommentEditorEvent {
         line: Option<EditorLineLocation>,
     },
     CloseEditor,
-    DeleteComment { id: CommentId },
+    DeleteComment {
+        id: CommentId,
+    },
 }
 
 #[derive(Debug)]
@@ -82,14 +84,7 @@ impl CommentEditor {
                 view.reset(ctx);
                 ctx.emit(CommentEditorEvent::CloseEditor);
             }
-            EditorEvent::Activate
-            | EditorEvent::Blurred
-            | EditorEvent::Enter
-            | EditorEvent::Escape
-            | EditorEvent::Navigate(_)
-            | EditorEvent::SelectionChanged
-            | EditorEvent::UnhandledModifierKey(_)
-            | EditorEvent::UnhandledCmdEnter => {}
+            _ => {}
         });
         ctx.subscribe_to_model(&comment_model, |view, _, event, ctx| match event {
             PendingCommentEvent::NewPendingComment(line) => {
@@ -220,16 +215,15 @@ impl View for CommentEditor {
     }
 
     fn render(&self, _app: &AppContext) -> Box<dyn Element> {
-        let mut buttons = Flex::row()
-            .child(ChildView::new(&self.close_button).finish());
+        let mut buttons = Flex::row().with_child(ChildView::new(&self.close_button).finish());
         if self.show_remove_button {
-            buttons = buttons.child(ChildView::new(&self.remove_button).finish());
+            buttons = buttons.with_child(ChildView::new(&self.remove_button).finish());
         }
-        buttons = buttons.child(ChildView::new(&self.save_button).finish());
+        buttons = buttons.with_child(ChildView::new(&self.save_button).finish());
         Container::new(
             Flex::column()
-                .child(ChildView::new(&self.editor).finish())
-                .child(buttons.finish())
+                .with_child(ChildView::new(&self.editor).finish())
+                .with_child(buttons.finish())
                 .finish(),
         )
         .with_uniform_padding(8.)
@@ -285,6 +279,8 @@ where
     V: View,
 {
     ctx.add_typed_action_view(|ctx| {
-        EditorView::new_with_base_text(initial_text.unwrap_or_default(), Default::default(), ctx)
+        let mut editor = EditorView::new(Default::default(), ctx);
+        editor.system_reset_buffer_text(&initial_text.unwrap_or_default(), ctx);
+        editor
     })
 }

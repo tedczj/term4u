@@ -204,4 +204,3 @@ fn test_possible_file_paths_in_word_accepts_token_at_separator_count_cap() {
     }
     assert!(possible_file_paths_in_word(&at_cap).next().is_some());
 }
-

@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
-
 pub use warp_terminal::ImageProtocol;
+
 use crate::terminal::model::session::SessionId;
 
 #[derive(Clone, Serialize, Deserialize)]

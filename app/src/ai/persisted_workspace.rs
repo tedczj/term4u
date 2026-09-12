@@ -6,13 +6,12 @@ use ai::workspace::WorkspaceMetadata;
 use chrono::Utc;
 use lsp::LanguageId;
 use lsp::supported_servers::LSPServerType;
-use serde::{Deserialize, Serialize};
-use warpui::{Entity, ModelContext, SingletonEntity};
-
 #[cfg(feature = "local_fs")]
 use lsp::{LspManagerModel, LspServerConfig};
+use serde::{Deserialize, Serialize};
 #[cfg(feature = "local_fs")]
 use warp_core::channel::ChannelState;
+use warpui::{Entity, ModelContext, SingletonEntity};
 
 use crate::persistence::ModelEvent;
 #[cfg(feature = "local_fs")]
@@ -93,7 +92,9 @@ pub enum PersistedWorkspaceEvent {
         workspace_path: PathBuf,
         servers: Vec<LSPServerType>,
     },
-    WorkspaceAdded { path: PathBuf },
+    WorkspaceAdded {
+        path: PathBuf,
+    },
 }
 
 impl Entity for PersistedWorkspace {
@@ -131,21 +132,24 @@ impl PersistedWorkspace {
         server_type: LSPServerType,
         state: EnablementState,
     ) {
-        let workspace = self
-            .workspaces
-            .entry(path.to_path_buf())
-            .or_insert_with(|| Workspace {
-                metadata: WorkspaceMetadata {
-                    path: path.to_path_buf(),
-                    modified_ts: Some(Utc::now()),
-                    ..Default::default()
-                },
-                language_servers: HashMap::new(),
-            });
-        workspace.language_servers.insert(server_type, state);
+        let metadata = {
+            let workspace = self
+                .workspaces
+                .entry(path.to_path_buf())
+                .or_insert_with(|| Workspace {
+                    metadata: WorkspaceMetadata {
+                        path: path.to_path_buf(),
+                        modified_ts: Some(Utc::now()),
+                        ..Default::default()
+                    },
+                    language_servers: HashMap::new(),
+                });
+            workspace.language_servers.insert(server_type, state);
+            workspace.metadata.clone()
+        };
         self.save_to_db([
             ModelEvent::UpsertCodebaseIndexMetadata {
-                index_metadata: Box::new(workspace.metadata.clone()),
+                index_metadata: Box::new(metadata),
             },
             ModelEvent::UpsertWorkspaceLanguageServer {
                 workspace_path: path.to_path_buf(),
@@ -426,24 +430,21 @@ impl PersistedWorkspace {
         let servers = servers.collect::<Vec<_>>();
         let path_future = LocalShellState::handle(ctx)
             .update(ctx, |shell, ctx| shell.get_interactive_path_env_var(ctx));
-        ctx.spawn(
-            async move { path_future.await },
-            move |_, path_env, ctx| {
-                for server in servers {
-                    let config = LspServerConfig::new(
-                        server,
-                        root.clone(),
-                        path_env.clone(),
-                        ChannelState::app_id().application_name().to_owned(),
-                    );
-                    LspManagerModel::handle(ctx).update(ctx, |manager, ctx| {
-                        manager.register(root.clone(), config, ctx);
-                    });
-                }
+        ctx.spawn(async move { path_future.await }, move |_, path_env, ctx| {
+            for server in servers {
+                let config = LspServerConfig::new(
+                    server,
+                    root.clone(),
+                    path_env.clone(),
+                    ChannelState::app_id().application_name().to_owned(),
+                );
                 LspManagerModel::handle(ctx).update(ctx, |manager, ctx| {
-                    manager.spawn_servers_for_path(file_path, ctx);
+                    manager.register(root.clone(), config, ctx);
                 });
-            },
-        );
+            }
+            LspManagerModel::handle(ctx).update(ctx, |manager, ctx| {
+                manager.start_all(root, ctx);
+            });
+        });
     }
 }

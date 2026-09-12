@@ -19,7 +19,8 @@ impl GlobalResourceHandles {
         Self {
             model_event_sender: None,
             tips_completed: app.add_model(|_| TipsCompleted::default()),
-            user_default_shell_unsupported_banner_model_handle: app.add_model(|_| BannerState::default()),
+            user_default_shell_unsupported_banner_model_handle: app
+                .add_model(|_| BannerState::default()),
         }
     }
 }
@@ -43,5 +44,7 @@ impl GlobalResourceHandlesProvider {
     }
 }
 
-impl Entity for GlobalResourceHandlesProvider { type Event = (); }
+impl Entity for GlobalResourceHandlesProvider {
+    type Event = ();
+}
 impl SingletonEntity for GlobalResourceHandlesProvider {}

@@ -37,14 +37,11 @@ impl WorkflowPane {
         }
     }
 
-    pub fn restore(
-        id: WorkflowId,
-        workflow: Workflow,
-        ctx: &mut ViewContext<PaneGroup>,
-    ) -> Self {
+    pub fn restore(id: WorkflowId, workflow: Workflow, ctx: &mut ViewContext<PaneGroup>) -> Self {
         let source = WorkflowOpenSource::Existing { id, workflow };
+        let window_id = ctx.window_id();
         WorkflowManager::handle(ctx).update(ctx, |manager, ctx| {
-            manager.create_pane(&source, WorkflowViewMode::Edit, ctx.window_id(), ctx)
+            manager.create_pane(&source, WorkflowViewMode::Edit, window_id, ctx)
         })
     }
 
@@ -70,8 +67,9 @@ impl PaneContent for WorkflowPane {
         ctx.subscribe_to_view(&self.view, move |group, _, event, ctx| {
             group.handle_pane_view_event(pane_id, event, ctx);
         });
-        ctx.subscribe_to_view(&self.get_view(ctx), move |group, _, event, ctx| {
-            match event {
+        ctx.subscribe_to_view(
+            &self.get_view(ctx),
+            move |group, _, event, ctx| match event {
                 WorkflowViewEvent::Pane(event) => group.handle_pane_event(pane_id, event, ctx),
                 WorkflowViewEvent::RunWorkflow {
                     workflow,
@@ -84,10 +82,12 @@ impl PaneContent for WorkflowPane {
                     workflow_selection_source: WorkflowSelectionSource::WorkflowView,
                 }),
                 WorkflowViewEvent::UpdatedWorkflow(_) => {}
-            }
-        });
+            },
+        );
+        let pane_group_id = ctx.view_id();
+        let window_id = ctx.window_id();
         WorkflowManager::handle(ctx).update(ctx, |manager, ctx| {
-            manager.register_pane(self, ctx.view_id(), ctx.window_id(), ctx);
+            manager.register_pane(self, pane_group_id, window_id, ctx);
         });
     }
 

@@ -1,6 +1,6 @@
 use warpui::elements::{ChildView, Expanded, Flex, ParentElement};
 use warpui::{
-    AppContext, Element, Entity, TypedActionView, View, ViewContext, ViewHandle,
+    AppContext, Element, Entity, SingletonEntity, TypedActionView, View, ViewContext, ViewHandle,
 };
 
 use crate::editor::{EditorView, Event as EditorEvent, SingleLineEditorOptions};
@@ -126,7 +126,8 @@ impl NotebookView {
             title: title.clone(),
             data,
         };
-        if let Err(error) = NotebookStore::handle(ctx).update(ctx, |store, _| store.upsert(notebook))
+        if let Err(error) =
+            NotebookStore::handle(ctx).update(ctx, |store, _| store.upsert(notebook))
         {
             safe_error!(
                 safe: ("Failed to save local notebook"),
@@ -148,6 +149,11 @@ impl NotebookView {
 
     pub fn focus(&mut self, ctx: &mut ViewContext<Self>) {
         ctx.focus(&self.body);
+    }
+
+    pub fn selected_text(&self, app: &AppContext) -> Option<String> {
+        let text = self.body.as_ref(app).selected_text(app);
+        (!text.is_empty()).then_some(text)
     }
 
     pub fn notebook_id(&self) -> Option<NotebookId> {
@@ -174,8 +180,8 @@ impl View for NotebookView {
 
     fn render(&self, _app: &AppContext) -> Box<dyn Element> {
         Flex::column()
-            .child(ChildView::new(&self.title).finish())
-            .child(Expanded::new(1., ChildView::new(&self.body).finish()).finish())
+            .with_child(ChildView::new(&self.title).finish())
+            .with_child(Expanded::new(1., ChildView::new(&self.body).finish()).finish())
             .finish()
     }
 }

@@ -1,4 +1,7 @@
+use std::sync::LazyLock;
+
 use itertools::Itertools;
+use regex::Regex;
 use warp_core::session_id::SessionId;
 use warp_terminal::bootstrap::SESSION_ID_PLACEHOLDER;
 pub use warp_terminal::bootstrap::{
@@ -7,13 +10,15 @@ pub use warp_terminal::bootstrap::{
 use warpui::{AppContext, AssetProvider, SingletonEntity};
 
 #[cfg(feature = "local_fs")]
-use super::{
-    model::session::{BootstrapSessionType, SessionInfo},
-    warpify::settings::{PIPENV_SUBSHELL_COMMAND_REGEX, POETRY_SUBSHELL_COMMAND_REGEX},
-};
+use super::model::session::{BootstrapSessionType, SessionInfo};
 use crate::env_vars::{EnvVar, EnvVarExt};
 use crate::terminal::session_settings::SessionSettings;
 use crate::terminal::shell::ShellType;
+
+static POETRY_SUBSHELL_COMMAND_REGEX: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"^poetry\s+shell").expect("valid poetry subshell regex"));
+static PIPENV_SUBSHELL_COMMAND_REGEX: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"^pipenv\s+shell").expect("valid pipenv subshell regex"));
 
 #[cfg(feature = "local_fs")]
 pub fn is_container_subshell(session_info: &SessionInfo) -> bool {

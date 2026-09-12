@@ -1,10 +1,11 @@
+use std::collections::HashSet;
+
 use chrono::NaiveDateTime;
-use warpui::{AppContext, Entity, EntityId, WindowId};
+use warpui::{AppContext, Entity, EntityId, SingletonEntity, WindowId};
 
-use crate::themes::theme::AnsiColorIdentifier;
-
-use crate::pane_group::{PaneGroup, PaneId};
+use crate::pane_group::PaneId;
 use crate::terminal::model::blockgrid::BlockGrid;
+use crate::themes::theme::AnsiColorIdentifier;
 use crate::workspace::{PaneViewLocator, Workspace};
 
 #[derive(Clone, Debug)]
@@ -99,7 +100,9 @@ pub enum CommandContext {
         last_run_command: String,
         mins_since_completion: Option<i64>,
     },
-    RunningCommand { running_command: String },
+    RunningCommand {
+        running_command: String,
+    },
     None,
 }
 
@@ -127,23 +130,51 @@ impl<'a> RunningSessionSummary<'a> {
             long_running_cmds: sessions
                 .iter()
                 .filter(|session| {
-                    matches!(session.command_context, CommandContext::RunningCommand { .. })
+                    matches!(
+                        session.command_context,
+                        CommandContext::RunningCommand { .. }
+                    )
                 })
                 .collect(),
         }
     }
+
+    pub fn windows_running(&self) -> HashSet<WindowId> {
+        self.long_running_cmds
+            .iter()
+            .map(|session| session.window_id())
+            .collect()
+    }
+
+    pub fn tabs_running(&self) -> HashSet<EntityId> {
+        self.long_running_cmds
+            .iter()
+            .map(|session| session.pane_view_locator().pane_group_id)
+            .collect()
+    }
+
+    pub fn processes_in_window(&self, window_id: &WindowId) -> Vec<&SessionNavigationData> {
+        self.long_running_cmds
+            .iter()
+            .copied()
+            .filter(|session| session.window_id() == *window_id)
+            .collect()
+    }
+}
+
+pub enum SessionSource {
+    None,
+    Set {
+        active_pane_id: PaneId,
+        active_tab_id: EntityId,
+        active_window_id: WindowId,
+    },
+}
+
+impl Entity for SessionSource {
+    type Event = ();
 }
 
 pub fn num_shared_sessions(_app: &AppContext) -> usize {
     0
-}
-
-pub struct ActiveSession {
-    pub window_id: WindowId,
-    pub pane_group_id: EntityId,
-    pub pane_id: PaneId,
-}
-
-impl Entity for ActiveSession {
-    type Event = ();
 }

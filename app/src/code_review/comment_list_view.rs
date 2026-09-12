@@ -46,8 +46,8 @@ use crate::code_review::comments::{
     ReviewCommentBatch, ReviewCommentBatchEvent,
 };
 use crate::code_review::telemetry_event::CodeReviewTelemetryEvent;
-use crate::menu::{Event, Menu, MenuItem, MenuItemFields};
 use crate::editor::{EditorView, Event as EditorEvent};
+use crate::menu::{Event, Menu, MenuItem, MenuItemFields};
 use crate::send_telemetry_from_ctx;
 use crate::ui_components::icons::Icon;
 use crate::view_components::action_button::{
@@ -238,8 +238,6 @@ impl CommentListView {
             .update(ctx, |view, ctx| view.set_label(label_text, ctx));
     }
 
-
-
     fn repo_is_local(&self) -> Option<bool> {
         self.repo_path.as_ref().map(LocalOrRemotePath::is_local)
     }
@@ -324,8 +322,6 @@ impl CommentListView {
                     let card = CommentViewCard::new(
                         comment,
                         false, /* always_use_static_diff */
-                        false, /* disable_scrolling */
-                        Some(Pixels::new(DEFAULT_COMMENT_MAX_WIDTH)),
                         self.repo_path.as_ref(),
                         ctx,
                     );
@@ -443,7 +439,7 @@ impl CommentListView {
     ) {
         match event {
             EditorEvent::SelectionChanged => {
-                if view.as_ref(ctx).selected_text(ctx).is_some() {
+                if !view.as_ref(ctx).selected_text(ctx).is_empty() {
                     self.clear_other_comment_selections(Some(view.id()), ctx);
                 }
             }
@@ -482,7 +478,7 @@ impl CommentListView {
             let card = &state.card;
             if source_view_id.is_none_or(|id| card.comment_editor().id() != id) {
                 card.comment_editor()
-                    .update(ctx, |view, ctx| view.clear_text_selection(ctx));
+                    .update(ctx, |view, ctx| view.clear_selections(ctx));
             }
             if let Some(diff_editor) = card.static_diff_editor()
                 && source_view_id.is_none_or(|id| diff_editor.id() != id)
@@ -838,13 +834,10 @@ impl CommentListView {
 
     /// Whether the queued review comments can currently be sent to an agent.
 
-
     /// Keep the stored "Send to Agent" button's enabled state and tooltip in sync with the current
     /// destination / comment / AI-availability state.
 
-
     /// Computes the tooltip text for the send button based on current state.
-
 
     fn render_comment(
         &self,

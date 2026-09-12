@@ -13,7 +13,11 @@ use warpui::{
 };
 
 #[cfg(feature = "local_fs")]
-use super::features::external_editor::ExternalEditorView;
+#[path = "features/external_editor.rs"]
+mod external_editor;
+#[cfg(feature = "local_fs")]
+use external_editor::ExternalEditorView;
+
 use super::settings_page::{
     MatchData, PageTitle, PageType, SettingsPageMeta, SettingsPageViewHandle, SettingsWidget,
     render_body_item, render_dropdown_item,

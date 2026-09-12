@@ -15,27 +15,74 @@ pub type CommandPaletteMixer = SearchMixer<CommandPaletteItemAction>;
 
 #[derive(Clone, Debug)]
 pub enum CommandPaletteItemAction {
-    AcceptBinding { binding: Arc<CommandBinding> },
-    NavigateToSession { pane_view_locator: PaneViewLocator, window_id: WindowId },
-    NavigateToTab { pane_group_id: EntityId, window_id: WindowId },
-    OpenLaunchConfiguration { config: Arc<LaunchConfig>, open_in_active_window: bool },
-    NewSession { source: Arc<NewSessionOption> },
-    OpenFile { path: String, project_directory: String, line_and_column_arg: Option<LineAndColumnArg> },
-    OpenDirectory { path: String, project_directory: String },
-    CreateFile { file_name: String, current_directory: String },
+    AcceptBinding {
+        binding: Arc<CommandBinding>,
+    },
+    NavigateToSession {
+        pane_view_locator: PaneViewLocator,
+        window_id: WindowId,
+    },
+    NavigateToTab {
+        pane_group_id: EntityId,
+        window_id: WindowId,
+    },
+    OpenLaunchConfiguration {
+        config: Arc<LaunchConfig>,
+        open_in_active_window: bool,
+    },
+    NewSession {
+        source: Arc<NewSessionOption>,
+    },
+    OpenFile {
+        path: String,
+        project_directory: String,
+        line_and_column_arg: Option<LineAndColumnArg>,
+    },
+    OpenDirectory {
+        path: String,
+        project_directory: String,
+    },
+    CreateFile {
+        file_name: String,
+        current_directory: String,
+    },
     NoOp,
 }
 
 impl CommandPaletteItemAction {
     pub fn to_summary(&self) -> ItemSummary {
         match self {
-            Self::AcceptBinding { binding } => ItemSummary::Action { binding_id: binding.id },
-            Self::NavigateToSession { pane_view_locator, .. } => ItemSummary::Session { pane_view_locator: *pane_view_locator },
-            Self::NavigateToTab { pane_group_id, .. } => ItemSummary::Tab { pane_group_id: *pane_group_id },
-            Self::NewSession { source } => ItemSummary::NewSession { id: source.id().clone() },
+            Self::AcceptBinding { binding } => ItemSummary::Action {
+                binding_id: binding.id,
+            },
+            Self::NavigateToSession {
+                pane_view_locator, ..
+            } => ItemSummary::Session {
+                pane_view_locator: *pane_view_locator,
+            },
+            Self::NavigateToTab { pane_group_id, .. } => ItemSummary::Tab {
+                pane_group_id: *pane_group_id,
+            },
+            Self::NewSession { source } => ItemSummary::NewSession {
+                id: source.id().clone(),
+            },
             Self::OpenLaunchConfiguration { .. } => ItemSummary::LaunchConfiguration,
-            Self::OpenFile { path, project_directory, line_and_column_arg } => ItemSummary::File { path: path.clone(), project_directory: project_directory.clone(), line_and_column_arg: *line_and_column_arg },
-            Self::OpenDirectory { path, project_directory } => ItemSummary::Directory { path: path.clone(), project_directory: project_directory.clone() },
+            Self::OpenFile {
+                path,
+                project_directory,
+                line_and_column_arg,
+            } => ItemSummary::File {
+                path: path.clone(),
+                project_directory: project_directory.clone(),
+                line_and_column_arg: *line_and_column_arg,
+            },
+            Self::OpenDirectory {
+                path,
+                project_directory,
+            } => ItemSummary::Directory {
+                path: path.clone(),
+                project_directory: project_directory.clone(),
+            },
             Self::CreateFile { .. } | Self::NoOp => ItemSummary::NoOp,
         }
     }
@@ -47,12 +94,27 @@ impl CommandPaletteItemAction {
 
 #[derive(Clone, Debug, PartialEq, IntoStaticStr)]
 pub enum ItemSummary {
-    Action { binding_id: BindingId },
-    Session { pane_view_locator: PaneViewLocator },
-    Tab { pane_group_id: EntityId },
-    NewSession { id: NewSessionOptionId },
+    Action {
+        binding_id: BindingId,
+    },
+    Session {
+        pane_view_locator: PaneViewLocator,
+    },
+    Tab {
+        pane_group_id: EntityId,
+    },
+    NewSession {
+        id: NewSessionOptionId,
+    },
     LaunchConfiguration,
-    File { path: String, project_directory: String, line_and_column_arg: Option<LineAndColumnArg> },
-    Directory { path: String, project_directory: String },
+    File {
+        path: String,
+        project_directory: String,
+        line_and_column_arg: Option<LineAndColumnArg>,
+    },
+    Directory {
+        path: String,
+        project_directory: String,
+    },
     NoOp,
 }

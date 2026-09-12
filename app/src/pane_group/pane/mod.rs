@@ -161,9 +161,7 @@ impl PaneId {
 
     /// Creates a [`PaneId`] from a [`ViewContext<PaneView<EnvVarCollectionView>>`]
 
-
     /// Creates a [`PaneId`] from a [`ViewContext<PaneView<EnvironmentsPageView>>`]
-
 
     /// Creates a [`PaneId`] from a [`ViewContext<PaneView<WorkflowView>>`]
     pub fn from_workflow_pane_ctx(ctx: &ViewContext<PaneView<WorkflowView>>) -> Self {
@@ -177,7 +175,6 @@ impl PaneId {
 
     /// Creates a [`PaneId`] from a [`ViewContext<PaneView<CodeDiffView>>`]
 
-
     /// Creates a [`PaneId`] from a [`ViewContext<PaneView<SettingsView>>`]
     pub fn from_settings_pane_ctx(ctx: &ViewContext<PaneView<SettingsView>>) -> Self {
         Self::new_from_ctx(IPaneType::Settings, ctx)
@@ -185,22 +182,17 @@ impl PaneId {
 
     /// Creates a [`PaneId`] from a [`ViewContext<PaneView<AIFactView>>`]
 
-
     /// Creates a [`PaneId`] from a [`ViewContext<PaneView<AIDocumentView>>`]
-
 
     /// Creates a [`PaneId`] from a [`ViewContext<PaneView<CustomRouterEditorView>>`]
 
-
     /// Creates a [`PaneId`] from a [`ViewContext<PaneView<ExecutionProfileEditorView>>`]
-
 
     pub fn from_get_started_pane_ctx(ctx: &ViewContext<PaneView<GetStartedView>>) -> Self {
         Self::new_from_ctx(IPaneType::GetStarted, ctx)
     }
 
     /// Creates a [`PaneId`] from a [`ViewContext<PaneView<NetworkLogView>>`].
-
 
     /// Creates a [`PaneId`] from a [`PaneView<TerminalView>`] entity ID.
     pub fn from_terminal_pane_view(
@@ -218,7 +210,6 @@ impl PaneId {
 
     /// Creates a [`PaneId`] from a [`PaneView<FileNotebookView>`] entity ID.
 
-
     /// Creates a [`PaneId`] from a [`PaneView<TextView>`] entity ID.
     pub fn from_code_pane_view(code_pane_view: &ViewHandle<PaneView<CodeView>>) -> Self {
         Self::new(IPaneType::Code, code_pane_view)
@@ -226,12 +217,9 @@ impl PaneId {
 
     /// Creates a [`PaneId`] from a [`PaneView<CodeDiffView>`] entity ID.
 
-
     /// Creates a [`PaneId`] from a [`PaneView<EnvVarCollection>`] entity ID.
 
-
     /// Creates a [`PaneId`] from a [`PaneView<EnvironmentsPageView>`] entity ID.
-
 
     /// Creates a [`PaneId`] from a [`PaneView<WorkflowView>`] entity ID.
     pub fn from_workflow_pane_view(
@@ -249,15 +237,11 @@ impl PaneId {
 
     /// Creates a [`PaneId`] from a [`PaneView<AIFactView>`] entity ID.
 
-
     /// Creates a [`PaneId`] from a [`PaneView<AIDocumentView>`] entity ID.
-
 
     /// Creates a [`PaneId`] from a [`PaneView<CustomRouterEditorView>`] entity ID.
 
-
     /// Creates a [`PaneId`] from a [`PaneView<ExecutionProfileEditorView>`] entity ID.
-
 
     pub fn from_get_started_pane_view(
         get_started_pane_view: &ViewHandle<PaneView<GetStartedView>>,
@@ -266,7 +250,6 @@ impl PaneId {
     }
 
     /// Creates a [`PaneId`] from a [`PaneView<NetworkLogView>`] entity ID.
-
 
     #[cfg_attr(not(feature = "local_fs"), allow(dead_code))]
     pub(super) fn deferred_placeholder_pane_id() -> Self {
@@ -318,23 +301,29 @@ impl PaneId {
         false
     }
 
-
-
-
-
-
     /// Returns true if this pane contains a Warp Drive object (notebook, workflow, etc.).
-
 
     /// Renders the child view backing this pane.
     pub fn render(self, app: &AppContext) -> Box<dyn Element> {
         let mut element = match self.0.pane_type {
-            IPaneType::Terminal => ChildView::<PaneView<TerminalView>>::with_id(self.0.pane_view_id).finish(),
-            IPaneType::Notebook => ChildView::<PaneView<NotebookView>>::with_id(self.0.pane_view_id).finish(),
-            IPaneType::Code => ChildView::<PaneView<CodeView>>::with_id(self.0.pane_view_id).finish(),
-            IPaneType::Workflow => ChildView::<PaneView<WorkflowView>>::with_id(self.0.pane_view_id).finish(),
-            IPaneType::Settings => ChildView::<PaneView<SettingsView>>::with_id(self.0.pane_view_id).finish(),
-            IPaneType::GetStarted => ChildView::<PaneView<GetStartedView>>::with_id(self.0.pane_view_id).finish(),
+            IPaneType::Terminal => {
+                ChildView::<PaneView<TerminalView>>::with_id(self.0.pane_view_id).finish()
+            }
+            IPaneType::Notebook => {
+                ChildView::<PaneView<NotebookView>>::with_id(self.0.pane_view_id).finish()
+            }
+            IPaneType::Code => {
+                ChildView::<PaneView<CodeView>>::with_id(self.0.pane_view_id).finish()
+            }
+            IPaneType::Workflow => {
+                ChildView::<PaneView<WorkflowView>>::with_id(self.0.pane_view_id).finish()
+            }
+            IPaneType::Settings => {
+                ChildView::<PaneView<SettingsView>>::with_id(self.0.pane_view_id).finish()
+            }
+            IPaneType::GetStarted => {
+                ChildView::<PaneView<GetStartedView>>::with_id(self.0.pane_view_id).finish()
+            }
             IPaneType::DeferredPlaceholder => warpui::elements::Empty::new().finish(),
             #[cfg(test)]
             IPaneType::Dummy => warpui::elements::Empty::new().finish(),
@@ -343,7 +332,10 @@ impl PaneId {
             element = EventHandler::new(element)
                 .on_mouse_in(
                     move |ctx, _, _| {
-                        ctx.dispatch_typed_action(PaneGroupAction::Activate(self, ActivationReason::Hover));
+                        ctx.dispatch_typed_action(PaneGroupAction::Activate(
+                            self,
+                            ActivationReason::Hover,
+                        ));
                         DispatchEventResult::PropagateToParent
                     },
                     Some(MouseInBehavior {
@@ -656,13 +648,6 @@ impl PaneConfiguration {
     }
 
     /// Sets the shareable object in the current pane. If `None`, the share button is removed.
-
-
-
-
-
-
-
 
     /// Notifies that the header content has changed and the pane header should re-render.
     /// Use this when the backing view's state has changed in a way that affects the header

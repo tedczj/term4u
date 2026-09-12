@@ -121,10 +121,8 @@ impl WarpConfig {
     /// The local (YAML-sourced) custom model routers.
     #[cfg_attr(target_family = "wasm", allow(dead_code))]
 
-
     /// Parse errors for `custom_model_routers/` files that failed to load.
     #[cfg_attr(target_family = "wasm", allow(dead_code))]
-
 
     /// Saving the newly created launch configuration to the WarpConfig that we currently
     /// have.
@@ -198,7 +196,6 @@ pub fn launch_configs_dir() -> PathBuf {
 pub fn tab_configs_dir() -> PathBuf {
     base_dir().join("tab_configs")
 }
-
 
 /// Returns the path to the directory containing the built-in default tab configs.
 /// These are shipped with Warp and user-editable (Warp does not overwrite modifications).

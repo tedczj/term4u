@@ -27,7 +27,10 @@ fn legacy_workflow_json_preserves_local_command_fields() {
     assert_eq!(workflow.command(), Some("./deploy --target {{target}}"));
     assert_eq!(workflow.arguments().len(), 1);
     assert_eq!(workflow.arguments()[0].arg_type, ArgumentType::Text);
-    assert_eq!(workflow.arguments()[0].default_value.as_deref(), Some("dev"));
+    assert_eq!(
+        workflow.arguments()[0].default_value.as_deref(),
+        Some("dev")
+    );
 }
 
 #[test]

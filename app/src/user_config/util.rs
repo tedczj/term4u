@@ -186,7 +186,6 @@ pub(super) fn parse_tab_config_dir_entry(
     )
 }
 
-
 /// Runs the given function on each `DirEntry` within the `Path`. If the path is not a directory,
 /// an empty `Vector` is returned. It works recursively, covering directories within a given path.
 pub(super) fn for_each_dir_entry<F, T>(path: &Path, dir_entry_fn: F) -> Vec<T>

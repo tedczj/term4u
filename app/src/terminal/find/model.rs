@@ -20,9 +20,8 @@ pub use rich_content::{FindableRichContentView, RichContentMatchId};
 use settings::Setting as _;
 use warpui::{AppContext, Entity, EntityId, ModelContext, SingletonEntity, ViewHandle};
 
-use crate::settings::InputModeSettings;
+use crate::settings::{InputMode, InputModeSettings};
 use crate::terminal::block_list_element::GridType;
-use crate::terminal::block_list_viewport::InputMode;
 use crate::terminal::model::TerminalModel;
 use crate::terminal::model::grid::grid_handler::GridHandler;
 use crate::terminal::model::index::Point;

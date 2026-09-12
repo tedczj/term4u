@@ -83,22 +83,6 @@ pub(crate) fn handle(
             target,
             ctx,
         ),
-        ActionKind::SurfaceWarpDriveOpen => surface_workspace_action(
-            instance_id,
-            action,
-            SurfaceDestination::WarpDrive,
-            WorkspaceAction::OpenWarpDrive,
-            target,
-            ctx,
-        ),
-        ActionKind::SurfaceAgentManagementOpen => surface_workspace_action(
-            instance_id,
-            action,
-            SurfaceDestination::AgentManagement,
-            WorkspaceAction::OpenAgentManagementView,
-            target,
-            ctx,
-        ),
         ActionKind::SessionNext => workspace_action(
             instance_id,
             action,
@@ -122,13 +106,6 @@ pub(crate) fn handle(
             surface_command_search_open(instance_id, params, target, ctx)
         }
         ActionKind::SurfaceThemePickerOpen => surface_theme_picker_open(instance_id, target, ctx),
-        ActionKind::SurfaceWarpDriveToggle => workspace_action(
-            instance_id,
-            action,
-            WorkspaceAction::ToggleWarpDrive,
-            target,
-            ctx,
-        ),
         ActionKind::SurfaceResourceCenterToggle => workspace_action(
             instance_id,
             action,
@@ -136,23 +113,7 @@ pub(crate) fn handle(
             target,
             ctx,
         ),
-        ActionKind::SurfaceAiAssistantToggle => workspace_action(
-            instance_id,
-            action,
-            WorkspaceAction::ToggleAIAssistant,
-            target,
-            ctx,
-        ),
         ActionKind::SurfaceCodeReviewOpen => surface_code_review_open(instance_id, target, ctx),
-        ActionKind::SurfaceCodeReviewToggle | ActionKind::SurfaceRightPanelToggle => {
-            workspace_action(
-                instance_id,
-                action,
-                WorkspaceAction::ToggleRightPanel,
-                target,
-                ctx,
-            )
-        }
         ActionKind::SurfaceProjectExplorerOpen => surface_workspace_action(
             instance_id,
             action,
@@ -166,14 +127,6 @@ pub(crate) fn handle(
             action,
             SurfaceDestination::GlobalSearch,
             WorkspaceAction::OpenGlobalSearch,
-            target,
-            ctx,
-        ),
-        ActionKind::SurfaceConversationListOpen => surface_workspace_action(
-            instance_id,
-            action,
-            SurfaceDestination::ConversationList,
-            WorkspaceAction::OpenConversationListView,
             target,
             ctx,
         ),
@@ -288,9 +241,7 @@ fn surface_theme_picker_open(
     let workspace = target_workspace(action, target, ctx)?;
     activate_target(&workspace, action, target, ctx)?;
     workspace.update(ctx, |workspace, ctx| {
-        if !workspace.is_theme_chooser_open() {
-            workspace.handle_action(&WorkspaceAction::ShowThemeChooserForActiveTheme, ctx);
-        }
+        workspace.handle_action(&WorkspaceAction::ShowThemeChooserForActiveTheme, ctx);
     });
     Ok(ack(instance_id, action))
 }
@@ -687,12 +638,6 @@ fn settings_section(page: String) -> Result<SettingsSection, ControlError> {
             format!("surface.settings.open cannot resolve settings page {page:?}"),
         )
     })?;
-    if section == SettingsSection::WarpDrive {
-        return Err(ControlError::new(
-            ErrorCode::UnsupportedAction,
-            "surface.settings.open does not open Warp Drive settings",
-        ));
-    }
     Ok(section)
 }
 

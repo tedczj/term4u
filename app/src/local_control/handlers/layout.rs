@@ -49,22 +49,13 @@ pub(crate) fn create_tab(
         workspace.update(ctx, |workspace, ctx| {
             let previous_tab_count = workspace.tab_count();
             workspace.handle_action(&action, ctx);
-            let tab_id = workspace
-                .get_pane_group_view(workspace.active_tab_index())
-                .map(|tab| tab.id().to_string())
-                .ok_or_else(|| {
-                    ControlError::new(
-                        ErrorCode::Internal,
-                        "tab.create did not produce an active tab identifier",
-                    )
-                })?;
-            Ok((
-                tab_id,
+            (
+                workspace.active_tab_pane_group().id().to_string(),
                 previous_tab_count,
                 workspace.tab_count(),
                 workspace.active_tab_index(),
-            ))
-        })?;
+            )
+        });
     serde_json::to_value(TabCreateResponse {
         action: ActionKind::TabCreate.as_str(),
         created: true,
@@ -95,11 +86,10 @@ fn tab_create_action(params: &serde_json::Value) -> Result<WorkspaceAction, Cont
         None | Some(TabType::Terminal) => Ok(WorkspaceAction::AddTerminalTab {
             hide_homepage: false,
         }),
-        Some(TabType::Agent) => Ok(WorkspaceAction::AddAgentTab),
         Some(TabType::Default) => Ok(WorkspaceAction::AddDefaultTab),
-        Some(TabType::CloudAgent) => Err(ControlError::new(
+        Some(TabType::Agent | TabType::CloudAgent) => Err(ControlError::new(
             ErrorCode::UnsupportedAction,
-            "tab.create does not support cloud-agent tabs",
+            "tab.create only supports local terminal tabs",
         )),
     }
 }

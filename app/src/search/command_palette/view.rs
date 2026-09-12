@@ -38,19 +38,17 @@ use crate::search::result_renderer::QueryResultRenderer;
 use crate::search::search_bar::{
     SearchBar, SearchBarEvent, SearchBarState, SearchResultOrdering, SelectionUpdate,
 };
+use crate::send_telemetry_from_ctx;
 use crate::server::telemetry::{LaunchConfigUiLocation, TelemetryEvent};
 use crate::session_management::SessionSource;
 use crate::settings::CtrlTabBehavior;
 use crate::terminal::keys_settings::KeysSettings;
 use crate::themes::theme::WarpTheme;
 use crate::workspace::WorkspaceAction;
-use crate::send_telemetry_from_ctx;
 
 lazy_static! {
-    static ref SUGGESTED_ACTIONS: HashSet<&'static str> = HashSet::from_iter([
-        "workspace:show_theme_chooser",
-        "workspace:add_terminal_tab",
-    ]);
+    static ref SUGGESTED_ACTIONS: HashSet<&'static str> =
+        HashSet::from_iter(["workspace:show_theme_chooser", "workspace:add_terminal_tab",]);
 }
 
 /// Position ID for the command palette list.
@@ -78,9 +76,16 @@ pub enum Action {
 
 #[derive(Debug)]
 pub enum Event {
-    Close { accepted_action_type: Option<&'static str> },
-    OpenFile { path: String, line_and_column_arg: Option<LineAndColumnArg> },
-    OpenDirectory { path: String },
+    Close {
+        accepted_action_type: Option<&'static str>,
+    },
+    OpenFile {
+        path: String,
+        line_and_column_arg: Option<LineAndColumnArg>,
+    },
+    OpenDirectory {
+        path: String,
+    },
 }
 
 #[derive(Debug, Clone, Default)]
@@ -130,7 +135,7 @@ impl TypedActionView for View {
             Action::ResultClicked { action } => {
                 self.handle_result_accepted(action.clone(), ctx);
             }
-            Action::Close => self.close(ctx, None),
+            Action::Close => self.close(ctx),
             Action::CtrlPressed(pressed) => {
                 if !*pressed && matches!(self.navigation_mode, NavigationMode::CtrlTab) {
                     // Accept the selected item and reset the navigation mode on release of Ctrl key.
@@ -509,7 +514,7 @@ impl View {
     ) {
         match event {
             SearchBarEvent::Close => {
-                self.close(ctx, None);
+                self.close(ctx);
             }
             SearchBarEvent::BufferCleared { .. } => {}
             SearchBarEvent::ResultAccepted { action, .. } => {
@@ -579,24 +584,7 @@ impl View {
         ctx.notify();
     }
 
-    fn close(&mut self, ctx: &mut ViewContext<Self>, accepted_action_type: Option<&'static str>) {
-        let buffer_length = self.search_bar.as_ref(ctx).query(ctx).len();
-        let filter = self.active_query_filter(ctx);
-        let event = if let Some(result_type) = accepted_action_type {
-            TelemetryEvent::PaletteSearchResultAccepted {
-                result_type,
-                filter,
-                buffer_length,
-            }
-        } else {
-            TelemetryEvent::PaletteSearchExited {
-                filter,
-                buffer_length,
-            }
-        };
-
-        send_telemetry_from_ctx!(event, ctx);
-
+    fn close(&mut self, ctx: &mut ViewContext<Self>) {
         self.state.clipped_scroll_state = Default::default();
         self.reset(ctx);
 
@@ -605,7 +593,7 @@ impl View {
         // to update the view.
         if ctx.root_view_id(ctx.window_id()).is_some() {
             ctx.emit(Event::Close {
-                accepted_action_type,
+                accepted_action_type: None,
             });
         }
     }
@@ -710,42 +698,85 @@ impl View {
                     self.dispatch_typed_action_on_view(action, ctx);
                 }
             }
-            CommandPaletteItemAction::NavigateToSession { pane_view_locator, window_id } => {
+            CommandPaletteItemAction::NavigateToSession {
+                pane_view_locator,
+                window_id,
+            } => {
                 if let Some(root) = ctx.root_view_id(*window_id) {
-                    ctx.dispatch_action_for_view(*window_id, root, "root_view:handle_pane_navigation_event", pane_view_locator);
+                    ctx.dispatch_action_for_view(
+                        *window_id,
+                        root,
+                        "root_view:handle_pane_navigation_event",
+                        pane_view_locator,
+                    );
                 }
             }
-            CommandPaletteItemAction::NavigateToTab { pane_group_id, window_id } => {
+            CommandPaletteItemAction::NavigateToTab {
+                pane_group_id,
+                window_id,
+            } => {
                 if let Some(root) = ctx.root_view_id(*window_id) {
-                    ctx.dispatch_action_for_view(*window_id, root, "root_view:activate_tab_by_pane_group_id", pane_group_id);
+                    ctx.dispatch_action_for_view(
+                        *window_id,
+                        root,
+                        "root_view:activate_tab_by_pane_group_id",
+                        pane_group_id,
+                    );
                 }
             }
-            CommandPaletteItemAction::OpenLaunchConfiguration { open_in_active_window, config } => {
-                ctx.dispatch_global_action("root_view:open_launch_config", OpenLaunchConfigArg {
-                    open_in_active_window: *open_in_active_window,
-                    launch_config: config.deref().clone(),
-                    ui_location: LaunchConfigUiLocation::CommandPalette,
-                });
+            CommandPaletteItemAction::OpenLaunchConfiguration {
+                open_in_active_window,
+                config,
+            } => {
+                ctx.dispatch_global_action(
+                    "root_view:open_launch_config",
+                    OpenLaunchConfigArg {
+                        open_in_active_window: *open_in_active_window,
+                        launch_config: config.deref().clone(),
+                        ui_location: LaunchConfigUiLocation::CommandPalette,
+                    },
+                );
             }
-            CommandPaletteItemAction::NewSession { source } => self.dispatch_typed_action_on_view(source.action().deref(), ctx),
-            CommandPaletteItemAction::OpenFile { path, project_directory, line_and_column_arg } => {
+            CommandPaletteItemAction::NewSession { source } => {
+                self.dispatch_typed_action_on_view(source.action().deref(), ctx)
+            }
+            CommandPaletteItemAction::OpenFile {
+                path,
+                project_directory,
+                line_and_column_arg,
+            } => {
                 ctx.emit(Event::OpenFile {
-                    path: std::path::Path::new(project_directory).join(path).to_string_lossy().into_owned(),
+                    path: std::path::Path::new(project_directory)
+                        .join(path)
+                        .to_string_lossy()
+                        .into_owned(),
                     line_and_column_arg: *line_and_column_arg,
                 });
             }
-            CommandPaletteItemAction::OpenDirectory { path, project_directory } => ctx.emit(Event::OpenDirectory {
-                path: std::path::Path::new(project_directory).join(path).to_string_lossy().into_owned(),
+            CommandPaletteItemAction::OpenDirectory {
+                path,
+                project_directory,
+            } => ctx.emit(Event::OpenDirectory {
+                path: std::path::Path::new(project_directory)
+                    .join(path)
+                    .to_string_lossy()
+                    .into_owned(),
             }),
-            CommandPaletteItemAction::CreateFile { file_name, current_directory } => {
+            CommandPaletteItemAction::CreateFile {
+                file_name,
+                current_directory,
+            } => {
                 let path = std::path::Path::new(current_directory).join(file_name);
                 if std::fs::File::create_new(&path).is_ok() || path.exists() {
-                    ctx.emit(Event::OpenFile { path: path.to_string_lossy().into_owned(), line_and_column_arg: None });
+                    ctx.emit(Event::OpenFile {
+                        path: path.to_string_lossy().into_owned(),
+                        line_and_column_arg: None,
+                    });
                 }
             }
             CommandPaletteItemAction::NoOp => {}
         }
-        self.close(ctx, Some(result_action.result_type()));
+        self.close(ctx);
     }
 
     /// Dispatches `action` to the correct window and [`warpui::View`] by using the current state of

@@ -13,9 +13,17 @@ pub struct WorkflowManager {
 
 #[derive(Debug, Clone)]
 pub enum WorkflowOpenSource {
-    Existing { id: WorkflowId, workflow: Workflow },
-    New { title: Option<String>, command: Option<String> },
-    NewFromWorkflow { workflow: Box<Workflow> },
+    Existing {
+        id: WorkflowId,
+        workflow: Workflow,
+    },
+    New {
+        title: Option<String>,
+        command: Option<String>,
+    },
+    NewFromWorkflow {
+        workflow: Box<Workflow>,
+    },
 }
 
 impl WorkflowManager {
@@ -32,7 +40,9 @@ impl WorkflowManager {
                 return None;
             }
         };
-        self.panes.get(id).map(|pane| (pane.window_id, pane.locator))
+        self.panes
+            .get(id)
+            .map(|pane| (pane.window_id, pane.locator))
     }
 
     pub fn create_pane(
@@ -44,9 +54,12 @@ impl WorkflowManager {
     ) -> WorkflowPane {
         let view = ctx.add_typed_action_view(window_id, WorkflowView::new_in_pane);
         match source {
-            WorkflowOpenSource::Existing { workflow, .. }
-            | WorkflowOpenSource::NewFromWorkflow { workflow } => {
-                let workflow = (**workflow).clone();
+            WorkflowOpenSource::Existing { workflow, .. } => {
+                let workflow = workflow.clone();
+                view.update(ctx, |view, ctx| view.load(workflow, mode, ctx));
+            }
+            WorkflowOpenSource::NewFromWorkflow { workflow } => {
+                let workflow = workflow.as_ref().clone();
                 view.update(ctx, |view, ctx| view.load(workflow, mode, ctx));
             }
             WorkflowOpenSource::New { title, command } => {

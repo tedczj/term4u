@@ -5,19 +5,40 @@ use std::sync::Arc;
 use parking_lot::FairMutex;
 use pathfinder_geometry::vector::Vector2F;
 use settings::Setting as _;
+use warpui::fonts::{Cache as FontCache, FamilyId};
+use warpui::units::IntoPixels;
 use warpui::{AppContext, SingletonEntity};
 
 use super::event_listener::ChannelEventListener;
+use super::grid_size_util::grid_cell_dimensions;
 use super::model::block::BlockSize;
 use super::safe_mode_settings::get_secret_obfuscation_mode;
 use super::session_settings::SessionSettings;
 use super::settings::TerminalSettings;
-use super::view::{WARP_PROMPT_HEIGHT_LINES, create_size_info_for_blocklist};
 use super::{BlockPadding, ShellLaunchState, SizeInfo, TerminalModel, color};
-use crate::terminal::model::SerializedBlockListItem;
 use crate::appearance::Appearance;
 use crate::pane_group::pane::DetachType;
 use crate::settings::{BlockVisibilitySettings, DebugSettings, InputModeSettings};
+use crate::terminal::model::SerializedBlockListItem;
+
+const WARP_PROMPT_HEIGHT_LINES: f32 = 0.9;
+
+fn create_size_info_for_blocklist(
+    pane_size: Vector2F,
+    font_cache: &FontCache,
+    font_family_id: FamilyId,
+    font_size: f32,
+    line_height_ratio: f32,
+) -> SizeInfo {
+    let cell_size = grid_cell_dimensions(font_cache, font_family_id, font_size, line_height_ratio);
+    SizeInfo::new(
+        pane_size,
+        cell_size.x().into_pixels(),
+        cell_size.y().into_pixels(),
+        0.0.into_pixels(),
+        0.0.into_pixels(),
+    )
+}
 
 pub trait TerminalManager: Any {
     /// Returns the backing terminal model.
@@ -29,7 +50,7 @@ pub trait TerminalManager: Any {
     ///
     /// Implementations should preserve state on [`DetachType::HiddenForClose`] or
     /// [`DetachType::Moved`] and clean up only on [`DetachType::Closed`].
-    fn on_view_detached(&self, _detach_type: DetachType, _app: &mut AppContext) {}
+    fn on_view_detached(&self, _: DetachType) {}
 
     /// Returns this [`TerminalManager`] as an [`Any`], to support downcasting.
     fn as_any(&self) -> &dyn Any;

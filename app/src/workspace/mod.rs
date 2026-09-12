@@ -1,8 +1,7 @@
 mod action;
 mod active_session;
-mod registry;
-pub mod header_toolbar_editor;
 pub mod header_toolbar_item;
+mod registry;
 pub mod sync_inputs;
 pub mod tab_group;
 pub mod tab_settings;
@@ -16,14 +15,13 @@ pub use action::{
 };
 pub use active_session::ActiveSession;
 pub use registry::WorkspaceRegistry;
+use serde::{Deserialize, Serialize};
 pub use toast_stack::{ToastStack, ToastStackEvent};
 pub use util::{PaneViewLocator, TabMovement, active_terminal_in_window};
 pub use view::{
     NEW_SESSION_MENU_BUTTON_POSITION_ID, NEW_TAB_BUTTON_POSITION_ID, PANEL_HEADER_HEIGHT,
     TAB_BAR_HEIGHT, TOTAL_TAB_BAR_HEIGHT, WORKSPACE_PADDING, Workspace,
 };
-
-use serde::{Deserialize, Serialize};
 use warpui::elements::DropTargetData;
 use warpui::{AppContext, SingletonEntity as _};
 
@@ -44,11 +42,15 @@ pub enum TabBarLocation {
 }
 
 impl DropTargetData for TabBarDropTargetData {
-    fn as_any(&self) -> &dyn std::any::Any { self }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
 }
 
 impl DropTargetData for VerticalTabsPaneDropTargetData {
-    fn as_any(&self) -> &dyn std::any::Any { self }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
 }
 
 pub fn panel_header_corner_radius() -> warpui::elements::CornerRadius {

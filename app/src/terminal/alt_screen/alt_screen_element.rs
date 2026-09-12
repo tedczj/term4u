@@ -6,7 +6,6 @@ use parking_lot::FairMutex;
 use pathfinder_geometry::vector::vec2f;
 use vec1::Vec1;
 use warp_core::features::FeatureFlag;
-use warp_util::user_input::UserInput;
 use warpui::elements::new_scrollable::{NewScrollableElement, ScrollableAxis};
 use warpui::elements::{Axis, Point as UiPoint, ScrollData, ScrollableElement};
 use warpui::event::{DispatchedEvent, InBoundsExt, KeyState, ModifiersState};
@@ -41,9 +40,7 @@ use crate::terminal::model::mouse::{MouseAction, MouseButton, MouseState};
 use crate::terminal::model::selection::{SelectAction, SelectionPoint};
 use crate::terminal::model::terminal_model::WithinModel;
 use crate::terminal::safe_mode_settings::get_secret_obfuscation_mode;
-use crate::terminal::view::{
-    ActiveSessionState, TerminalAction, TerminalEditor, TerminalViewRenderContext,
-};
+use crate::terminal::view::{ActiveSessionState, TerminalAction, TerminalViewRenderContext};
 use crate::terminal::{
     SizeInfo, TerminalModel, grid_renderer, heights_approx_eq, should_right_click_paste,
 };
@@ -195,10 +192,7 @@ impl AltScreenElement {
         ctx: &mut EventContext,
     ) -> bool {
         if self.is_terminal_focused {
-            ctx.dispatch_typed_action(TerminalAction::SetMarkedText {
-                marked_text: UserInput::new(marked_text),
-                selected_range: selected_range.clone(),
-            });
+            ctx.dispatch_typed_action(TerminalAction::SetMarkedText(marked_text.to_owned()));
         }
         true
     }
@@ -212,7 +206,7 @@ impl AltScreenElement {
 
     fn drag_and_drop_file(&mut self, paths: &[String], ctx: &mut EventContext) -> bool {
         if self.is_terminal_focused && !paths.is_empty() {
-            let paths = paths.iter().map(ToOwned::to_owned).collect();
+            let paths = paths.iter().map(std::path::PathBuf::from).collect();
             ctx.dispatch_typed_action(TerminalAction::DragAndDropFiles(paths));
             return true;
         }
@@ -315,30 +309,6 @@ impl AltScreenElement {
 
         let point = self.coord_to_point(local_position);
 
-        // If SGR_MOUSE is set -- we consider user to be in an editor like vim or nano.
-        let from_editor = match self.model.lock().is_term_mode_set(TermMode::SGR_MOUSE) {
-            true => TerminalEditor::Yes,
-            false => TerminalEditor::No,
-        };
-
-        let grid_point = WithinModel::AltScreen(Point {
-            col: point.col,
-            row: point.row,
-        });
-        if get_secret_obfuscation_mode(app).is_visually_obfuscated() {
-            let secret_handle = self
-                .model
-                .lock()
-                .secret_at_point(&grid_point)
-                .map(|(handle, _)| handle);
-            ctx.dispatch_typed_action(TerminalAction::MaybeHoverSecret { secret_handle });
-        }
-
-        ctx.dispatch_typed_action(TerminalAction::MaybeLinkHover {
-            position: Some(grid_point),
-            from_editor,
-        });
-
         // For alt-screen PTY purposes, we ignore synthetic mouse events!
         // This is especially relevant for mouse drags - we do not want mouse moved
         // events being handled at the same time as mouse dragged events.
@@ -358,10 +328,7 @@ impl AltScreenElement {
 
     /// Called when the mouse is moved outside of the element.
     fn mouse_out(&self, ctx: &mut EventContext) -> bool {
-        ctx.dispatch_typed_action(TerminalAction::MaybeLinkHover {
-            position: None,
-            from_editor: TerminalEditor::No,
-        });
+        ctx.dispatch_typed_action(TerminalAction::MaybeLinkHover);
         true
     }
 
@@ -446,12 +413,6 @@ impl AltScreenElement {
             // Handle Mouse Scroll, whose delta is already in terms of lines.
             delta.y().into_lines()
         };
-
-        // The alt screen can be vertically scrollable iff we're a shared session reader
-        // and our window is smaller than the sharer's.
-        if self.model.lock().shared_session_status().is_reader() {
-            ScrollableElement::scroll(self, delta.to_pixels(cell_height), ctx);
-        }
 
         ctx.dispatch_typed_action(TerminalAction::MaybeDismissToolTip {
             from_keybinding: false,
@@ -946,8 +907,5 @@ impl ScrollableElement for AltScreenElement {
         self.scroll_top = (self.scroll_top - delta.to_lines(self.line_height()))
             .max(Lines::zero())
             .min(self.max_scroll_top.unwrap());
-        ctx.dispatch_typed_action(TerminalAction::SharedSessionViewerAltScroll {
-            new_scroll_top: self.scroll_top,
-        });
     }
 }

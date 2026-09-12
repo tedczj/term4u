@@ -25,8 +25,7 @@ use warpui::image_cache::ImageType;
 use super::super::{AltScreen, BlockList};
 use super::ansi::{BootstrappedValue, FinishUpdateValue, InputBufferValue, Mode, PendingHook};
 use super::block::{
-    Block, BlockId, BlockMetadata, BlockSize, BlockState,
-    BlocklistEnvVarMetadata, SerializedBlock,
+    Block, BlockId, BlockMetadata, BlockSize, BlockState, BlocklistEnvVarMetadata, SerializedBlock,
 };
 use super::blockgrid::BlockGrid;
 use super::blocks::{ActiveBlockCompletion, BlockFilter};
@@ -47,7 +46,6 @@ use super::secrets::{RespectObfuscatedSecrets, SecretAndHandle};
 use super::selection::ScrollDelta;
 use super::session::{BootstrapSessionType, InBandCommandOutputReceiver, SessionId};
 use super::{Secret, SecretHandle};
-use crate::terminal::model::SerializedBlockListItem;
 use crate::terminal::available_shells::AvailableShell;
 use crate::terminal::block_filter::BlockFilterQuery;
 use crate::terminal::block_list_element::GridType;
@@ -57,7 +55,6 @@ use crate::terminal::event::{
 };
 use crate::terminal::event_listener::ChannelEventListener;
 pub use crate::terminal::history::HistoryEntry;
-use crate::terminal::model::ansi;
 use crate::terminal::model::ansi::{
     ClearValue, CommandFinishedValue, CompletionMetadata, ExitShellValue, Handler, InitShellValue,
     InitSubshellValue, PreInteractiveSSHSessionValue, PrecmdValue, PreexecValue, PromptMetadata,
@@ -71,11 +68,11 @@ use crate::terminal::model::index::VisibleRow;
 use crate::terminal::model::iterm_image::{ITermImage, ITermImageMetadata};
 use crate::terminal::model::secrets::ObfuscateSecrets;
 use crate::terminal::model::session::SessionInfo;
+use crate::terminal::model::{SerializedBlockListItem, ansi};
 use crate::terminal::shell::{ShellName, ShellType};
 use crate::terminal::ssh::util::{InteractiveSshCommand, SshLoginState};
 use crate::terminal::{
-    BlockPadding, ShellHost, ShellLaunchData, ShellLaunchState, SizeUpdate,
-    color, ssh,
+    BlockPadding, ShellHost, ShellLaunchData, ShellLaunchState, SizeUpdate, color, ssh,
 };
 
 /// Max size of the window title stack.
@@ -1078,36 +1075,15 @@ impl TerminalModel {
 
     /// Creates a terminal model for a cloud mode pane before it has connected to a shared session.
     #[allow(clippy::too_many_arguments)]
-
-
     #[allow(clippy::too_many_arguments)]
-
 
     /// Creates a terminal model for a terminal session that is being viewed.
     #[allow(clippy::too_many_arguments)]
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     /// Sends an Agent ResponseEvent to viewers if this session is shared.
     /// The participant_id should be the ID of the participant who initiated the query.
     /// The forked_from_conversation_token is used for forked conversations to help viewers
     /// link the new server-assigned token to an existing conversation from historical replay.
-
-
-
-
-
 
     /// Signal to viewers that the Cloud Mode Setup V2 phase is complete and no
     /// follow-up `AppendedExchange` is coming (e.g. because the AgentDriver is
@@ -1115,29 +1091,10 @@ impl TerminalModel {
     /// Viewers use this to clear `BlockList::is_executing_oz_environment_startup_commands`
     /// and tear down the "Running setup commands…" chip.
 
-
     /// Whether the session sharing server is currently replaying
     /// conversation events (for conversation reconstruction).
 
-
-
-
-
-
-
-
-
-
-
-
-
-
     #[cfg(test)]
-
-
-
-
-
 
     /// Model-only portion of the "is this a cloud agent conversation?" check used for display
     /// purposes (e.g. the cloud agent icon). Callers holding a [`TerminalView`] should use
@@ -1150,14 +1107,10 @@ impl TerminalModel {
     /// `source_task_id` sidecar but is not a cloud agent conversation, so it must fall through
     /// here (see QUALITY-726).
 
-
     /// Loads the provided scrollback into the model.
     // TODO: we should be doing this in the constructor of the
     // terminal model for the viewers so that we're guaranteed that
     // loading scrollback is the first thing that we do.
-
-
-
 
     pub fn obfuscate_secrets(&self) -> ObfuscateSecrets {
         self.obfuscate_secrets
@@ -1200,16 +1153,9 @@ impl TerminalModel {
         self.commit_lifecycle_transition(&transition);
     }
 
-    pub fn is_read_only(&self) -> bool { false }
-
-
-
-
-
-
-
-
-
+    pub fn is_read_only(&self) -> bool {
+        false
+    }
 
     pub fn colors(&self) -> color::List {
         self.colors
@@ -1372,10 +1318,8 @@ impl TerminalModel {
 
     /// Starts the execution for a command in a shared session (sharer or viewer).
 
-
     /// Starts the command execution (per `Self::start_command_execution`) and additionally sets
     /// the given `ai_metadata` on the active block.
-
 
     pub(in crate::terminal) fn start_in_band_command_execution(&mut self) -> StartCommandOutcome {
         self.start_command_execution_for_kind(CommandStartKind::InBand)
@@ -1678,12 +1622,7 @@ impl TerminalModel {
         }
     }
 
-
-
-
-
     /// Returns whether this terminal is viewing a shared session.
-
 
     /// Resize terminal to new dimensions.
     /// The block sort direction is needed to update the state of the find dialog.
@@ -1799,7 +1738,6 @@ impl TerminalModel {
     ///
     /// Specifically, secret obfuscation is disabled starting
     /// from the `first_scrollback_block_index` onwards.
-
 
     fn restored_block_commands(&self) -> Vec<HistoryEntry> {
         let mut commands = Vec::new();

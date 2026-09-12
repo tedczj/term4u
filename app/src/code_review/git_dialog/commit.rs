@@ -19,7 +19,7 @@ use crate::code_review::diff_state::CommitChainMode;
 use crate::code_review::git_dialog::pr::show_pr_created_toast;
 use crate::code_review::git_dialog::{
     GitDialog, GitDialogAction, GitDialogEvent, GitDialogMode, render_branch_section,
-    render_file_changes_box, should_send_git_ops_ai_request, show_toast, user_facing_git_error,
+    render_file_changes_box, show_toast, user_facing_git_error,
 };
 use crate::code_review::telemetry_event::{
     CodeReviewTelemetryEvent, GitDialogStatus, GitOperationKind,
@@ -92,7 +92,7 @@ pub(super) fn new_state(
     // If AI autogen is on, the dialog opens with "Generating\u{2026}" and a
     // background request fills the editor when it resolves. Otherwise, we
     // land on the manual-type prompt immediately.
-    let ai_autogen_enabled = should_send_git_ops_ai_request(ctx);
+    let ai_autogen_enabled = false;
     let initial_placeholder = if ai_autogen_enabled {
         GENERATING_PLACEHOLDER_TEXT
     } else {
@@ -277,26 +277,6 @@ pub(super) fn apply_generated_commit_message(
     }
 }
 
-/// Kicks off AI commit-message autogen request.
-/// The model runs the generation (local in-process, remote on the daemon) and  
-/// the result returns via `DiffStateModelEvent::CommitMessageGenerated`, applied by `apply_generated_commit_message`.
-pub(super) fn maybe_start_commit_message_autogen(me: &GitDialog, ctx: &mut ViewContext<GitDialog>) {
-    if !should_send_git_ops_ai_request(ctx) {
-        return;
-    }
-    // Generate from the same scope that will be committed (the "include
-    // unstaged" toggle), so the message describes what `run_commit` stages
-    // rather than always assuming the full working set.
-    let include_unstaged = match me.mode() {
-        GitDialogMode::Commit(state) => state.include_unstaged,
-        _ => return,
-    };
-    let branch_name = me.branch_name().to_string();
-    me.diff_state_model().update(ctx, |m, ctx| {
-        m.generate_commit_message(include_unstaged, branch_name, ctx);
-    });
-}
-
 /// Sources the commit Changes box from synced metadata (`against_head.files`).
 /// Remote repos can't read the working tree, so the list comes from metadata
 /// instead of `get_file_change_entries`. No-op for local repos, which load it
@@ -374,10 +354,6 @@ pub(super) fn start_confirm(me: &mut GitDialog, ctx: &mut ViewContext<GitDialog>
     let include_unstaged = state.include_unstaged;
     let message_editor = state.message_editor.clone();
     let branch_name = me.branch_name().to_string();
-    // When the chain includes create-PR, AI-generate the PR title/body when the
-    // user has it enabled (ignored for commit-only / commit-and-push).
-    let autogenerate_pr_content = should_send_git_ops_ai_request(ctx);
-
     me.set_loading(LOADING_LABEL, ctx);
 
     // Lock the commit message editor while the async op is in flight.
@@ -386,14 +362,7 @@ pub(super) fn start_confirm(me: &mut GitDialog, ctx: &mut ViewContext<GitDialog>
     });
 
     me.diff_state_model().update(ctx, |m, ctx| {
-        m.git_commit_chain(
-            intent,
-            message,
-            include_unstaged,
-            branch_name,
-            autogenerate_pr_content,
-            ctx,
-        );
+        m.git_commit_chain(intent, message, include_unstaged, branch_name, ctx);
     });
 }
 

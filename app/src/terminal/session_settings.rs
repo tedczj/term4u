@@ -11,8 +11,6 @@ use warp_core::settings::macros::define_settings_group;
 use warp_core::settings::{SupportedPlatforms, SyncToCloud};
 pub use working_directory_config::*;
 
-use crate::context_chips::prompt::PromptSelection;
-
 lazy_static! {
     pub static ref DEFAULT_THRESHOLD_FOR_LONG_RUNNING_NOTIFICATION: Duration =
         Duration::from_secs(30);
@@ -159,14 +157,6 @@ define_settings_group!(SessionSettings, settings: [
         private: false,
         toml_path: "terminal.input.honor_ps1",
         description: "Whether to use your shell's PS1 prompt instead of the Warp prompt.",
-    },
-    saved_prompt: SavedPrompt {
-        type: PromptSelection,
-        default: PromptSelection::default(),
-        supported_platforms: SupportedPlatforms::ALL,
-        sync_to_cloud: SyncToCloud::Never,
-        surface: settings::SettingSurfaces::GUI,
-        private: true,
     },
     should_confirm_close_session: ShouldConfirmCloseSession {
         type: bool,

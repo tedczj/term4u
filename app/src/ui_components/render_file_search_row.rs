@@ -25,9 +25,19 @@ use warpui::{AppContext, Element, SingletonEntity};
 
 use crate::appearance::Appearance;
 use crate::search::ItemHighlightState;
-use crate::search::ai_context_menu::safe_truncate;
-
 pub const MAX_COMBINED_LENGTH: usize = 55;
+
+fn safe_truncate(value: &mut String, max_bytes: usize) {
+    if max_bytes >= value.len() {
+        return;
+    }
+
+    let mut boundary = max_bytes;
+    while !value.is_char_boundary(boundary) {
+        boundary -= 1;
+    }
+    value.truncate(boundary);
+}
 
 pub struct FileSearchRowOptions<'a> {
     pub match_result: Option<&'a FuzzyMatchResult>,

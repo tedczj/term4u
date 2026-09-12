@@ -637,32 +637,11 @@ impl DiffStateModel {
         message: String,
         include_unstaged: bool,
         branch: String,
-        autogenerate_pr_content: bool,
         ctx: &mut ModelContext<Self>,
     ) {
         match self {
             Self::Local(model) => model.update(ctx, |model, ctx| {
-                model.git_commit_chain(
-                    mode,
-                    message,
-                    include_unstaged,
-                    branch,
-                    autogenerate_pr_content,
-                    ctx,
-                );
-            }),
-        }
-    }
-
-    pub(crate) fn generate_commit_message(
-        &self,
-        include_unstaged: bool,
-        branch_name: String,
-        ctx: &mut ModelContext<Self>,
-    ) {
-        match self {
-            Self::Local(model) => model.update(ctx, |model, ctx| {
-                model.generate_commit_message(include_unstaged, branch_name, ctx);
+                model.git_commit_chain(mode, message, include_unstaged, branch, ctx);
             }),
         }
     }
@@ -673,15 +652,10 @@ impl DiffStateModel {
         }
     }
 
-    pub(crate) fn create_pr(
-        &self,
-        branch: String,
-        autogenerate_content: bool,
-        ctx: &mut ModelContext<Self>,
-    ) {
+    pub(crate) fn create_pr(&self, branch: String, ctx: &mut ModelContext<Self>) {
         match self {
             Self::Local(model) => model.update(ctx, |model, ctx| {
-                model.create_pr(branch, autogenerate_content, ctx);
+                model.create_pr(branch, ctx);
             }),
         }
     }

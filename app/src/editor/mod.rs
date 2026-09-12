@@ -12,8 +12,8 @@ use std::ops::Range;
 pub use view::*;
 use warp_core::semantic_selection::SemanticSelection;
 use warp_editor::selection::TextUnit;
-use warpui::{AppContext, SingletonEntity as _};
 pub use warpui::text::point::Point;
+use warpui::{AppContext, SingletonEntity as _};
 
 // Re-exported for use by the `warp_tui` TUI front-end, which needs to
 // construct and subscribe to `CodeEditorModel` in char-cell mode.

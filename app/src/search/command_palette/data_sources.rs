@@ -163,21 +163,6 @@ impl DataSourceStore {
                 .actions_data_source
                 .as_ref(app)
                 .query_result(*binding_id),
-            ItemSummary::Workflow { id } => self
-                .warp_drive_data_source
-                .as_ref()?
-                .as_ref(app)
-                .query_result(id, app),
-            ItemSummary::EnvVarCollection { id } => self
-                .warp_drive_data_source
-                .as_ref()?
-                .as_ref(app)
-                .query_result(id, app),
-            ItemSummary::Notebook { id } => self
-                .warp_drive_data_source
-                .as_ref()?
-                .as_ref(app)
-                .query_result(id, app),
             ItemSummary::Session { pane_view_locator } => self
                 .sessions_data_source
                 .as_ref(app)
@@ -185,12 +170,6 @@ impl DataSourceStore {
             ItemSummary::LaunchConfiguration => {
                 // TODO(CLD-205): Launch configurations are not supported in the recent section of the
                 // zero state yet.
-                None
-            }
-            ItemSummary::CloudObject => {
-                // We don't yet support all cloud objects in the command palette but
-                // we have a `ViewInWarpDrive` action that supports all of them, so
-                // this is necessary to make the compiler happy.
                 None
             }
             ItemSummary::NewSession { id } => self
@@ -234,26 +213,6 @@ impl DataSourceStore {
                 };
                 Some(QueryResult::from(search_item))
             }
-            ItemSummary::Project { path: _ } => {
-                // For project summaries, we would need a project data source to reconstruct the item,
-                // but this is typically handled by the welcome palette, not the command palette.
-                // For now, return None as projects aren't expected in the regular command palette.
-                None
-            }
-            ItemSummary::Conversation { id } => conversations::DataSource::query_result(id, app),
-
-            ItemSummary::NewConversation => {
-                // The new conversation item should not show up in the recent command list,
-                // as its use is specific to the conversation filter.
-                None
-            }
-
-            ItemSummary::ForkConversation => {
-                // The forked conversation item should not show up in the recent command list,
-                // as its use is specific to the conversation filter.
-                None
-            }
-
             ItemSummary::NoOp => {
                 // No-op action (used for non-interactable separator items that don't do anything on click).
                 None

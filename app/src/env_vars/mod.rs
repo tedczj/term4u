@@ -31,7 +31,9 @@ pub trait EnvVarCollectionExt {
 impl EnvVarCollectionExt for EnvVarCollection {
     fn export_variables_for_shell(&self, shell_type: ShellType) -> String {
         serialize_variables_for_shell(
-            self.vars.iter().map(|variable| (variable.name.as_str(), &variable.value)),
+            self.vars
+                .iter()
+                .map(|variable| (variable.name.as_str(), &variable.value)),
             shell_type,
         )
     }

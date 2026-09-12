@@ -61,7 +61,6 @@ use super::git_dialog::{GitDialog, GitDialogEvent, GitDialogKind};
 use super::{GlobalCodeReviewEvent, GlobalCodeReviewModel};
 #[cfg(feature = "local_fs")]
 use crate::TelemetryEvent;
-use crate::code_review::context::{CurrentHead, DiffBase};
 use crate::appearance::Appearance;
 use crate::code::ShowCommentEditorProvider;
 #[cfg(not(target_family = "wasm"))]
@@ -84,7 +83,7 @@ use crate::code::view::PendingSaveIntent;
 use crate::code_review::comments::{
     AttachedReviewCommentTarget, CommentId, ReviewCommentBatch, ReviewCommentBatchEvent,
 };
-use crate::code_review::context::convert_file_diffs_to_diffset_hunks;
+use crate::code_review::context::{CurrentHead, DiffBase, convert_file_diffs_to_diffset_hunks};
 use crate::code_review::diff_selector::{DiffSelector, DiffSelectorEvent, DiffTarget};
 use crate::code_review::diff_state::{
     DiffHunk, DiffLineType, DiffMode, DiffState, DiffStateModel, DiffStateModelEvent, DiffStats,
@@ -114,7 +113,7 @@ use crate::server::telemetry::CodePanelsFileOpenEntrypoint;
 use crate::settings::CodeSettings;
 use crate::settings_view::SettingsSection;
 use crate::terminal::input::MenuPositioning;
-use crate::terminal::view::{TerminalAction, TerminalView};
+use crate::terminal::view::TerminalView;
 use crate::themes::theme::WarpTheme;
 use crate::ui_components::blended_colors::{neutral_2, neutral_3};
 use crate::ui_components::buttons::icon_button_with_color;
@@ -137,7 +136,7 @@ use crate::view_components::action_button::{
     NakedTheme, PaneHeaderTheme, SecondaryTheme, TooltipAlignment,
 };
 use crate::view_components::find::{Event as FindViewEvent, Find, FindEvent, FindWithinBlockState};
-use crate::workspace::{ToastStack, Workspace, WorkspaceAction};
+use crate::workspace::{ToastStack, WorkspaceAction};
 
 pub struct CodeReviewHeaderFields {
     pub is_in_split_pane: bool,
@@ -1309,8 +1308,6 @@ impl CodeReviewView {
 
         view
     }
-
-
 
     pub fn debug_review_comment_state(&self, ctx: &AppContext) -> CodeReviewCommentDebugState {
         let comment_list = self.comment_list_view.as_ref(ctx).debug_state(ctx);
@@ -3118,19 +3115,7 @@ impl CodeReviewView {
                 self.mark_editor_loaded_for_file(file_location, ctx);
                 ctx.notify();
             }
-            LocalCodeEditorEvent::SelectionAddedAsContext {
-                relative_file_path,
-                line_range,
-                selected_text,
-            } => {
-                self.insert_selection_as_context(
-                    relative_file_path.clone(),
-                    line_range.start.as_usize(),
-                    line_range.end.as_usize(),
-                    selected_text.clone(),
-                    ctx,
-                );
-            }
+            LocalCodeEditorEvent::SelectionAddedAsContext { .. } => {}
             LocalCodeEditorEvent::DiscardUnsavedChanges { path: _path } => {
                 #[cfg(feature = "local_fs")]
                 GlobalBufferModel::handle(ctx).update(ctx, |global_buffer, ctx| {
@@ -4082,13 +4067,10 @@ impl CodeReviewView {
     /// Prepares review comments and emits an event for a higher-level view to route
     /// them to an available terminal.
 
-
     /// Called by the routing layer (RightPanelView) after attempting to submit review
     /// comments to a terminal.
 
-
     /// TODO(CODE-1649): de-duplicate entries in the diff set.
-
 
     /// Renders additions and deletions counts
     pub fn render_additions_and_deletions(
@@ -5360,9 +5342,7 @@ impl CodeReviewView {
         ctx: &mut ViewContext<Self>,
     ) {
         match event {
-            CodeEditorEvent::DiffHunkContextAdded { line_range } => {
-                self.insert_diff_hunk_as_context(file_path, line_range.clone(), ctx);
-            }
+            CodeEditorEvent::DiffHunkContextAdded { .. } => {}
             CodeEditorEvent::DiffReverted => {
                 send_telemetry_from_ctx!(
                     CodeReviewTelemetryEvent::RevertHunkClicked {
@@ -5436,8 +5416,6 @@ impl CodeReviewView {
         }
     }
 
-
-
     fn maybe_undo_revert(&mut self, ctx: &mut ViewContext<Self>) {
         if let Some((editor, _)) = self.last_revert.take() {
             editor.update(ctx, |editor, ctx| {
@@ -5460,13 +5438,6 @@ impl CodeReviewView {
     pub fn has_unsaved_changes(&self, ctx: &AppContext) -> bool {
         !self.get_unsaved_file_paths(ctx).is_empty()
     }
-
-    /// Insert diff set as context in the terminal input (either all files or a specific file)
-    #[cfg(feature = "local_fs")]
-
-
-    #[cfg(not(feature = "local_fs"))]
-
 
     fn get_current_head(&self, ctx: &ViewContext<Self>) -> Option<CurrentHead> {
         self.diff_state_model
@@ -5512,7 +5483,6 @@ impl CodeReviewView {
     }
 
     /// Insert diff hunk as an inline attachment in the terminal input
-
 
     /// Extract diff hunk data for the given file and line range
     fn extract_diff_hunk_data(
@@ -6810,11 +6780,7 @@ impl TypedActionView for CodeReviewView {
                 ctx.focus_self();
             }
             CodeReviewAction::OpenRepository => {
-                if let Some(terminal_view) = self.focused_terminal(ctx) {
-                    terminal_view.update(ctx, |terminal, ctx| {
-                        terminal.handle_action(&TerminalAction::PickRepoToOpen, ctx);
-                    });
-                }
+                ctx.dispatch_typed_action(&WorkspaceAction::OpenRepository { path: None });
             }
             CodeReviewAction::OpenCommitDialog => {
                 send_telemetry_from_ctx!(
@@ -6960,26 +6926,8 @@ impl BackingView for CodeReviewView {
                 .on_cancel(handle_save_intent(PendingSaveIntent::Cancel))
                 .build();
 
-            if cfg!(all(not(target_family = "wasm"), target_os = "macos")) {
-                AppContext::show_native_platform_modal(ctx, dialog);
-            } else if cfg!(all(
-                not(target_family = "wasm"),
-                any(
-                    target_os = "linux",
-                    target_os = "freebsd",
-                    target_os = "windows"
-                )
-            )) {
-                // Find the workspace to show the Warp-native modal
-                if let Some(workspace) = ctx
-                    .views_of_type::<Workspace>(ctx.window_id())
-                    .and_then(|workspaces| workspaces.first().cloned())
-                {
-                    workspace.update(ctx, |view, ctx| {
-                        view.show_native_modal(dialog, ctx);
-                    });
-                }
-            }
+            #[cfg(not(target_family = "wasm"))]
+            AppContext::show_native_platform_modal(ctx, dialog);
         } else {
             ctx.emit(CodeReviewViewEvent::Pane(PaneEvent::Close));
         }

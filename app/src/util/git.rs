@@ -193,8 +193,6 @@ pub struct RepoGitSummary {
 /// Returns None if not a git repo or git is unavailable.
 #[cfg(feature = "local_fs")]
 pub async fn get_repo_git_summary(repo_root: &Path) -> Option<RepoGitSummary> {
-    use crate::context_chips::display_chip::GitLineChanges;
-
     let branch = {
         log::debug!("[GIT OPERATION] git.rs get_repo_git_summary git symbolic-ref --short HEAD");
         let result = run_git_command(repo_root, &["symbolic-ref", "--short", "HEAD"]).await;
@@ -218,10 +216,23 @@ pub async fn get_repo_git_summary(repo_root: &Path) -> Option<RepoGitSummary> {
     let stats = run_git_command(repo_root, &["diff", "--shortstat", "HEAD"])
         .await
         .ok()
-        .and_then(|o| GitLineChanges::parse_from_git_output(&o));
+        .map(|output| {
+            let mut added = 0;
+            let mut removed = 0;
+            let words = output.split_whitespace().collect::<Vec<_>>();
+            for pair in words.windows(2) {
+                if pair[1].starts_with("insertion") {
+                    added = pair[0].parse().unwrap_or_default();
+                } else if pair[1].starts_with("deletion") {
+                    removed = pair[0].parse().unwrap_or_default();
+                }
+            }
+            (added, removed)
+        })
+        .unwrap_or_default();
 
-    let mut lines_added = stats.as_ref().map_or(0, |s| s.lines_added);
-    let lines_removed = stats.as_ref().map_or(0, |s| s.lines_removed);
+    let mut lines_added = stats.0;
+    let lines_removed = stats.1;
 
     // Also count lines in untracked files to match what the git diff chip shows.
     log::debug!(

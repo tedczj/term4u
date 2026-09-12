@@ -1457,20 +1457,12 @@ impl ButtonSize {
             // Should be 20px high at a 14px font size, and scale accordingly.
             ButtonSize::InputPrompt => 6. + appearance.monospace_font_size(),
             ButtonSize::UDIButton => 6. + appearance.monospace_font_size(),
-            ButtonSize::UDIPromptChip => {
-                // Add 1 to the vertical padding to account for the border.
-                let vertical_padding =
-                    1. + crate::context_chips::spacing::UDI_CHIP_VERTICAL_PADDING;
-                2. * vertical_padding + self.font_size(appearance)
-            }
+            ButtonSize::UDIPromptChip => 6. + self.font_size(appearance),
             ButtonSize::AgentInputButton => {
-                // Add 1 to the vertical padding to account for the border.
-                let vertical_padding =
-                    1. + crate::context_chips::spacing::UDI_CHIP_VERTICAL_PADDING;
                 let line_height = app
                     .font_cache()
                     .line_height(self.font_size(appearance), appearance.line_height_ratio());
-                2. * vertical_padding + line_height
+                6. + line_height
             }
         }
     }
@@ -1498,9 +1490,7 @@ impl ButtonSize {
             ButtonSize::InlineActionHeader => 8.,
             ButtonSize::InputPrompt => 4.,
             ButtonSize::UDIButton => 4.,
-            ButtonSize::UDIPromptChip | ButtonSize::AgentInputButton => {
-                crate::context_chips::spacing::UDI_CHIP_HORIZONTAL_PADDING
-            }
+            ButtonSize::UDIPromptChip | ButtonSize::AgentInputButton => 4.,
         }
     }
 

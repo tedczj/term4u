@@ -1,18 +1,20 @@
 use std::collections::HashMap;
-use std::ops::Range;
-
-use string_offset::ByteOffset;
-use urlocator::{UrlLocation, UrlLocator};
-use warpui::text::char_slice;
-
-use crate::terminal::model::grid::grid_handler::{is_file_link_separator, is_url_link_separator};
-
 #[cfg(feature = "local_fs")]
 use std::collections::HashSet;
+use std::ops::Range;
 #[cfg(feature = "local_fs")]
 use std::path::{Path, PathBuf};
+
+use string_offset::{ByteOffset, CharOffset};
+use urlocator::{UrlLocation, UrlLocator};
+use warp_editor::content::buffer::Buffer;
 #[cfg(feature = "local_fs")]
 use warp_util::path::CleanPathResult;
+use warpui::text::char_slice;
+use warpui::text::word_boundaries::WordBoundariesPolicy;
+
+use crate::terminal::ShellLaunchData;
+use crate::terminal::model::grid::grid_handler::{is_file_link_separator, is_url_link_separator};
 
 #[derive(Clone, Debug)]
 pub(crate) enum DetectedLinkType {
@@ -23,6 +25,8 @@ pub(crate) enum DetectedLinkType {
         line_and_column_num: Option<warp_util::path::LineAndColumnArg>,
     },
 }
+
+type SeparatorByteRange = Range<ByteOffset>;
 
 const MAX_WORD_LEN_FOR_FILE_PATH: usize = 96 * 1024;
 const MAX_SEPARATORS_PER_WORD: usize = 256;

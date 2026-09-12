@@ -28,9 +28,9 @@ use super::kitty::{
 };
 use super::terminal_model::BlockIndex;
 use super::{ObfuscateSecrets, TerminalModel};
-use crate::terminal::model::SerializedBlockListItem;
 use crate::terminal::color::{self, Colors};
 use crate::terminal::event_listener::ChannelEventListener;
+use crate::terminal::model::SerializedBlockListItem;
 use crate::terminal::{BlockPadding, SizeInfo};
 
 pub fn block_size() -> BlockSize {
@@ -285,7 +285,6 @@ impl TestBlockBuilder {
             self.honor_ps1,
             ObfuscateSecrets::No,
             false, /* is_telemetry_enabled */
-            None,
         )
     }
 }

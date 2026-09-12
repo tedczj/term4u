@@ -100,6 +100,7 @@ struct CommandSearchViewState {
 
 /// A panel that allows the user to search for a command to execute next.
 pub struct CommandSearchView {
+    handle: WeakViewHandle<Self>,
     zero_state_handle: ViewHandle<CommandSearchZeroStateView>,
     menu_positioning: MenuPositioning,
     state: CommandSearchViewState,
@@ -151,7 +152,7 @@ impl CommandSearchView {
             me.handle_search_bar_event(event, ctx);
         });
 
-        let zero_state_handle = ctx.add_typed_action_view(CommandSearchZeroStateView::new);
+        let zero_state_handle = ctx.add_typed_action_view(|_| CommandSearchZeroStateView::new());
         ctx.subscribe_to_view(&zero_state_handle, |me, _handle, event, ctx| {
             me.handle_zero_state_event(event, ctx);
         });
@@ -174,6 +175,7 @@ impl CommandSearchView {
             });
 
         Self {
+            handle: ctx.handle(),
             zero_state_handle,
             menu_positioning: Default::default(),
             visible_results_range_sender,
@@ -204,7 +206,7 @@ impl CommandSearchView {
             );
             if History::as_ref(ctx).is_queryable(&session_id) {
                 let source = History::handle(ctx).read(ctx, |history, app| {
-                    history_data_source_for_session(session_id, history, app)
+                    history_data_source_for_session(session_id, history)
                 });
                 mixer.add_async_source(
                     source,
@@ -451,11 +453,7 @@ impl CommandSearchView {
             .finish()
     }
 
-    fn render_error_header(
-        &self,
-        message: String,
-        appearance: &Appearance,
-    ) -> Box<dyn Element> {
+    fn render_error_header(&self, message: String, appearance: &Appearance) -> Box<dyn Element> {
         self.render_error_header_text(message, appearance)
     }
 
@@ -571,10 +569,9 @@ impl CommandSearchView {
                     .first_data_source_error()
                     .map(|(.., e)| e)
                 {
-                    column.add_child(self.render_error_header(
-                        error.user_facing_error(),
-                        appearance,
-                    ));                }
+                    column
+                        .add_child(self.render_error_header(error.user_facing_error(), appearance));
+                }
 
                 let scrollable_results = Scrollable::vertical(
                     self.state.scroll_state.clone(),

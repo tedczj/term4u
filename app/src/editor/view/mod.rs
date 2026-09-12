@@ -92,7 +92,6 @@ pub use {
 use self::model::{LocalSelections, Selection, UpdateBufferOption};
 use super::Point;
 use super::soft_wrap::{ClampDirection, DisplayPointAndClampDirection};
-use crate::BlocklistAIHistoryModel;
 use crate::appearance::Appearance;
 use crate::channel::{Channel, ChannelState};
 use crate::editor::RangeExt;
@@ -100,10 +99,8 @@ use crate::editor::accept_autosuggestion_keybinding_view::AcceptAutosuggestionKe
 use crate::editor::autosuggestion_ignore_view::{AutosuggestionIgnore, AutosuggestionIgnoreEvent};
 use crate::features::FeatureFlag;
 use crate::server::telemetry::TelemetryEvent;
-#[cfg(feature = "voice_input")]
-use crate::settings::AISettingsChangedEvent;
 use crate::settings::{
-    AISettings, AppEditorSettings, AppEditorSettingsChangedEvent, CursorBlink, CursorDisplayType,
+    AppEditorSettings, AppEditorSettingsChangedEvent, CursorBlink, CursorDisplayType,
     InputSettings, SelectionSettings,
 };
 use crate::settings_view::flags;
@@ -121,7 +118,7 @@ use crate::view_components::DismissibleToast;
 #[cfg(feature = "voice_input")]
 use crate::view_components::FeaturePopup;
 use crate::vim_registers::{RegisterContent, VimRegisters};
-use crate::workspace::{ToastStack, Workspace};
+use crate::workspace::ToastStack;
 
 const CURSOR_BLINK_INTERVAL: Duration = Duration::from_millis(500);
 const DEFAULT_TAB_SIZE: usize = 4;
@@ -1709,14 +1706,12 @@ pub struct EditorView {
     #[cfg(feature = "voice_input")]
     voice_new_feature_popup: ViewHandle<FeaturePopup>,
 
-
     /// Whether this editor should delegate handling of paste events to its parent.
     delegate_paste_handling: bool,
 
     /// Optional hook that transforms each dropped path before it is escaped and inserted into
     /// the buffer. See [`EditorOptions::drag_drop_path_transformer`].
     drag_drop_path_transformer: Option<PathTransformerFn>,
-
 
     is_password: bool,
 
@@ -2806,10 +2801,6 @@ impl EditorView {
         Self::new_internal("", options, ctx)
     }
 
-
-
-
-
     /// Creates an [`EditorView`] with the initial text
     /// equal to `base_text` and with behaviour specified by `options`.
     #[cfg(test)]
@@ -2836,28 +2827,6 @@ impl EditorView {
                 }
             },
         );
-
-        #[cfg(feature = "voice_input")]
-        {
-            use crate::workspaces::user_workspaces::UserWorkspaces;
-
-            ctx.subscribe_to_model(&UserWorkspaces::handle(ctx), |me, _handle, _event, ctx| {
-                me.update_voice_transcription_options(Self::voice_options(ctx), ctx);
-                // Re-render if teams-related data changed that may affect whether features such as voice input are enabled.
-                ctx.notify();
-            });
-
-            ctx.subscribe_to_model(
-                &AISettings::handle(ctx),
-                |editor, _, event, ctx| match event {
-                    AISettingsChangedEvent::VoiceInputEnabled { .. } => {
-                        editor.update_voice_transcription_options(Self::voice_options(ctx), ctx)
-                    }
-                    AISettingsChangedEvent::VoiceInputToggleKey { .. } => ctx.notify(),
-                    _ => {}
-                },
-            );
-        }
 
         let editor_model = ctx.add_model(|ctx| {
             EditorModel::new(
@@ -2970,12 +2939,6 @@ impl EditorView {
             keymap_context_modifier: options.keymap_context_modifier,
         }
     }
-
-
-
-
-
-
 
     /// The replica ID of the collaborative buffer.
     pub fn replica_id<C: ModelAsRef>(&self, ctx: &C) -> ReplicaId {
@@ -3192,8 +3155,6 @@ impl EditorView {
         buffer.to_point(char_offset)
     }
 
-
-
     /// Set an autosuggestion that is rendered natively within the editor as "ghosted" text. This
     /// autosuggestion will continue to be displayed as long as the text in the editor stays the
     /// same or a user inserts a prefix of autosuggestion text.
@@ -3228,7 +3189,6 @@ impl EditorView {
 
     /// Clears any existing autosuggestions (intelligent or not) that weren't for the current input_type.
     /// If there's an empty buffer, populates the input with an intelligent autosuggestion for the input_type.
-
 
     /// Set placeholder text that appears when buffer matches the given prefix.
     /// Use empty string prefix "" for the default placeholder (shown when buffer is empty).
@@ -3296,7 +3256,6 @@ impl EditorView {
     }
 
     /// Clears any next command state. Autosuggestion (ghosted text) is not cleared.
-
 
     /// Remove a specific placeholder by prefix.
     pub fn clear_placeholder_text_with_prefix(
@@ -4033,67 +3992,16 @@ impl EditorView {
             return;
         }
 
-        let terminal_view = ctx
-            .windows()
-            .active_window()
-            .and_then(|active_window| {
-                ctx
-                    // Need to get the workspace info since we don't have access to the terminal view
-                    // from the ClearBuffer action.
-                    .views_of_type::<Workspace>(active_window)
-                    .and_then(|views| views.first().cloned())
-            })
-            .and_then(|workspace| {
-                workspace
-                    .as_ref(ctx)
-                    .active_tab_pane_group()
-                    .as_ref(ctx)
-                    .active_session_view(ctx)
-            });
-
-        // If an agent is responding, we don't want ctrl+c to clear the persistent input.
-        let is_agent_responding = terminal_view
-            .as_ref()
-            .and_then(|terminal_view| {
-                BlocklistAIHistoryModel::as_ref(ctx).active_conversation(terminal_view.id())
-            })
-            .is_some_and(|conversation| {
-                conversation.status().is_in_progress() && conversation.exchange_count() > 0
-            });
-
-        // If there is a pending passive ai block, we don't want ctrl+c to clear the buffer.
-        let is_pending_passive_ai_block = terminal_view.is_some_and(|terminal_view| {
-            let terminal_model = terminal_view.as_ref(ctx).model.lock();
-            terminal_model
-                .block_list()
-                .last_non_hidden_ai_block_handle(ctx)
-                .is_some_and(|ai_block| {
-                    let block = ai_block.as_ref(ctx);
-                    // Ctrl+c should dismiss the passive ai block only if the keybindings for the block are not hidden.
-                    block.is_passive_conversation()
-                        && (block.find_undismissed_code_diff(ctx).is_some()
-                            || block.pending_unit_test_suggestion(ctx).is_some_and(
-                                |suggested_prompt| {
-                                    !suggested_prompt.as_ref(ctx).is_keybindings_hidden()
-                                },
-                            ))
-                })
-        });
-
         let mut cleared_buffer_len = 0;
-        if (!self.vim_mode_enabled(ctx)
+        if !self.vim_mode_enabled(ctx)
             || self
                 .vim_mode(ctx)
-                .is_some_and(|vim_mode| matches![vim_mode, VimMode::Normal | VimMode::Insert]))
-            && !is_agent_responding
-            && !is_pending_passive_ai_block
+                .is_some_and(|vim_mode| matches![vim_mode, VimMode::Normal | VimMode::Insert])
         {
             cleared_buffer_len = self.buffer_size(ctx).as_usize();
             self.clear_buffer(ctx);
         }
-        if !is_agent_responding || !is_pending_passive_ai_block {
-            self.vim_interrupt(ctx);
-        }
+        self.vim_interrupt(ctx);
 
         ctx.emit(Event::CtrlC { cleared_buffer_len });
     }
@@ -4662,31 +4570,17 @@ impl EditorView {
         );
     }
 
-    fn voice_input_toggle_key_code(&self, ctx: &AppContext) -> Option<KeyCode> {
-        let ai_settings_handle = &AISettings::handle(ctx);
-        ai_settings_handle
-            .as_ref(ctx)
-            .voice_input_toggle_key
-            .value()
-            .to_key_code()
-    }
-
-
-
     /// Reads and processes images asynchronously from file paths.
     ///
     /// This function reads image files from the given paths, validates they are supported formats,
     /// and processes them for AI context attachment via `process_and_attach_images_as_ai_context`.
-
 
     /// Processes and attaches images to the AI context model.
     ///
     /// This function handles the final step of image attachment after validation,
     /// updating the context model and UI state accordingly.
 
-
     /// Stores non-image files selected via the file picker into the pending files context.
-
 
     /// Alternate path to Self::user_insert for when Vim mode is enabled. Forwards character
     /// commands to the VimFSA for interpretation.
@@ -7351,14 +7245,6 @@ impl EditorView {
         })
     }
 
-
-
-
-
-
-
-
-
     /// Commits the currently composed text from the IME (if there is any) to properly handle one of the following:
     /// - a new selection
     /// - clicking outside of the editor
@@ -7837,7 +7723,7 @@ impl View for EditorView {
             local_selection_data,
             remote_selections_data,
             self.cursor_display_override,
-            self.voice_input_toggle_key_code(ctx),
+            None,
         )
         .with_input_editor_icons(
             &self.accept_autosuggestion_keybinding_view,

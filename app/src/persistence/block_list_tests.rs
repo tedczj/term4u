@@ -134,9 +134,15 @@ fn restoring_blocks_does_not_rewrite_unknown_legacy_columns() {
     let SerializedBlockListItem::Command { block } = &restored[&PaneUuid(vec![1])][0];
 
     assert_eq!(block.stylized_output, b"hello");
-    assert_eq!(block.removed_feature_metadata.as_deref(), Some("opaque legacy metadata"));
+    assert_eq!(
+        block.removed_feature_metadata.as_deref(),
+        Some("opaque legacy metadata")
+    );
     let legacy: (Option<String>, Option<String>) = schema::blocks::table
-        .select((schema::blocks::ai_metadata, schema::blocks::agent_view_visibility))
+        .select((
+            schema::blocks::ai_metadata,
+            schema::blocks::agent_view_visibility,
+        ))
         .first(&mut conn)
         .unwrap();
     assert_eq!(
@@ -164,7 +170,10 @@ fn old_terminal_fixture_remains_readable_after_migrations() {
 
     let restored = get_all_restored_blocks(&mut conn).unwrap();
 
-    assert!(before > 0, "the historical fixture must contain terminal output");
+    assert!(
+        before > 0,
+        "the historical fixture must contain terminal output"
+    );
     assert!(restored.values().any(|blocks| !blocks.is_empty()));
     let after: i64 = schema::blocks::table.count().get_result(&mut conn).unwrap();
     assert_eq!(after, before);

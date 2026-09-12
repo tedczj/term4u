@@ -2,7 +2,6 @@ use serde::{Deserialize, Serialize};
 use warpui::elements::MouseStateHandle;
 use warpui::{AppContext, EntityId, SingletonEntity, ViewContext, ViewHandle, WindowId};
 
-use super::OneTimeModalModel;
 use crate::appearance::Appearance;
 use crate::pane_group::PaneId;
 use crate::terminal::TerminalView;
@@ -125,15 +124,15 @@ pub struct WorkspaceState {
 }
 
 impl WorkspaceState {
-    pub fn is_any_non_terminal_view_open(&self, app: &AppContext) -> bool {
-        self.is_any_modal_open(app)
+    pub fn is_any_non_terminal_view_open(&self) -> bool {
+        self.is_any_modal_open()
             || self.is_theme_chooser_open
             || self.is_ai_assistant_panel_open
             || self.is_workflow_modal_open
             || self.is_warp_drive_open
     }
 
-    pub fn is_any_non_palette_modal_open(&self, app: &AppContext) -> bool {
+    pub fn is_any_non_palette_modal_open(&self) -> bool {
         self.is_theme_creator_modal_open
             || self.is_theme_deletion_modal_open
             || self.is_changelog_modal_open
@@ -159,16 +158,11 @@ impl WorkspaceState {
             || self.is_session_config_modal_open
             || self.is_new_worktree_modal_open
             || self.is_remove_tab_config_dialog_open
-            || {
-                let one_time_modal = OneTimeModalModel::as_ref(app);
-                one_time_modal.is_oz_launch_modal_open()
-                    || one_time_modal.is_build_plan_migration_modal_open()
-            }
     }
 
     /// Returns whether any modal (sitting over terminal views) is open.
-    pub fn is_any_modal_open(&self, app: &AppContext) -> bool {
-        self.is_any_non_palette_modal_open(app)
+    pub fn is_any_modal_open(&self) -> bool {
+        self.is_any_non_palette_modal_open()
             || self.is_palette_open
             || self.is_ctrl_tab_palette_open
     }
@@ -351,13 +345,15 @@ pub fn is_terminal_view_in_same_tab(
         return false;
     };
     let workspace = workspace.as_ref(app);
-    workspace
-        .list_tab_pane_groups(app)
-        .into_iter()
-        .any(|tab_pane_group| {
-            tab_pane_group.terminal_ids.contains(terminal_view_id_1)
-                && tab_pane_group.terminal_ids.contains(terminal_view_id_2)
-        })
+    workspace.tab_views().any(|pane_group| {
+        let terminal_ids = pane_group
+            .as_ref(app)
+            .terminal_views(app)
+            .into_iter()
+            .map(|view| view.id())
+            .collect::<Vec<_>>();
+        terminal_ids.contains(terminal_view_id_1) && terminal_ids.contains(terminal_view_id_2)
+    })
 }
 
 /// Returns the active terminal session view in the active tab. This is used as the target for any

@@ -29,13 +29,16 @@ pub(crate) fn render_icon_with_status(
         }
         IconWithStatusVariant::NeutralElement { icon_element } => icon_element,
     };
-    Container::new(
-        ConstrainedBox::new(icon)
-            .with_width(total_size * NEUTRAL_GLYPH_RATIO)
-            .with_height(total_size * NEUTRAL_GLYPH_RATIO)
-            .finish(),
+    ConstrainedBox::new(
+        Container::new(
+            ConstrainedBox::new(icon)
+                .with_width(total_size * NEUTRAL_GLYPH_RATIO)
+                .with_height(total_size * NEUTRAL_GLYPH_RATIO)
+                .finish(),
+        )
+        .with_background(internal_colors::fg_overlay_2(theme))
+        .finish(),
     )
-    .with_background(internal_colors::fg_overlay_2(theme))
     .with_width(total_size)
     .with_height(total_size)
     .finish()

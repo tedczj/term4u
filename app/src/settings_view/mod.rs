@@ -9,7 +9,7 @@ use itertools::Itertools as _;
 use keybindings::KeybindingsView;
 use nav::{SettingsNavItem, SettingsUmbrella};
 use pathfinder_geometry::vector::Vector2F;
-use privacy_page::{PrivacyPageView, PrivacyPageViewEvent};
+use privacy_page::PrivacyPageView;
 use scripting_page::ScriptingSettingsPageView;
 use settings_file_footer::{SettingsFooterKind, SettingsFooterMouseStates, render_footer};
 use settings_page::{
@@ -38,7 +38,6 @@ use warpui::{
 };
 
 use self::telemetry::SettingsTelemetryEvent;
-use crate::GlobalResourceHandlesProvider;
 use crate::appearance::Appearance;
 use crate::editor::{
     EditorView, Event as EditorEvent, PropagateAndNoOpNavigationKeys, SingleLineEditorOptions,
@@ -61,7 +60,6 @@ mod appearance_page;
 mod code_editor_review_page;
 mod code_indexing_page;
 mod directory_color_add_picker;
-mod features;
 mod features_page;
 pub mod keybindings;
 mod nav;
@@ -71,7 +69,6 @@ mod privacy_page;
 mod scripting_page;
 mod settings_file_footer;
 pub(crate) mod settings_page;
-mod tab_menu;
 mod telemetry;
 
 pub use code_indexing_page::CodeIndexingPageView;
@@ -268,10 +265,6 @@ impl SettingsSection {
 
 pub fn settings_widget_deeplink_target(slug: &str) -> Option<(SettingsSection, &'static str)> {
     match slug {
-        "global_hotkey" => Some((
-            SettingsSection::Features,
-            features_page::global_hotkey_widget_id(),
-        )),
         _ => None,
     }
 }
@@ -484,18 +477,9 @@ pub fn init_actions_from_parent_view<T: Action + Clone>(
     context: &ContextPredicate,
     builder: fn(SettingsAction) -> T,
 ) {
-    main_page::init_actions_from_parent_view(app, context, builder);
     appearance_page::init_actions_from_parent_view(app, context, builder);
-    features_page::init_actions_from_parent_view(app, context, builder);
-    warpify_page::init_actions_from_parent_view(app, context, builder);
-    privacy_page::init_actions_from_parent_view(app, context, builder);
-    warp_agent_page::init_actions_from_parent_view(app, context, builder);
-    agent_profiles_page::init_actions_from_parent_view(app, context, builder);
-    knowledge_page::init_actions_from_parent_view(app, context, builder);
-    cli_agents_page::init_actions_from_parent_view(app, context, builder);
     code_indexing_page::init_actions_from_parent_view(app, context, builder);
     code_editor_review_page::init_actions_from_parent_view(app, context, builder);
-    warp_drive_page::init_actions_from_parent_view(app, context, builder);
 
     if ChannelState::enable_debug_features() || cfg!(windows) {
         ToggleSettingActionPair::add_toggle_setting_action_pairs_as_bindings(
@@ -980,15 +964,11 @@ pub struct SettingsView {
 impl SettingsView {
     pub fn new(page: Option<SettingsSection>, ctx: &mut ViewContext<Self>) -> Self {
         let pane_configuration = ctx.add_model(|_| PaneConfiguration::new("Settings"));
-        let global_resource_handles = GlobalResourceHandlesProvider::as_ref(ctx).get().clone();
-
         let appearance_page = ctx.add_typed_action_view(AppearanceSettingsPageView::new);
         ctx.subscribe_to_view(&appearance_page, |view, _, event, ctx| {
             view.handle_appearance_page_event(event, ctx);
         });
-        let features_page = ctx.add_typed_action_view(|ctx| {
-            FeaturesPageView::new(global_resource_handles, ctx)
-        });
+        let features_page = ctx.add_typed_action_view(FeaturesPageView::new);
         ctx.subscribe_to_view(&features_page, |view, _, event, ctx| {
             view.handle_features_page_event(event, ctx);
         });
@@ -997,12 +977,8 @@ impl SettingsView {
         ctx.subscribe_to_view(&code_indexing_page, |view, _, event, ctx| {
             view.handle_code_indexing_page_event(event, ctx);
         });
-        let editor_review_page =
-            ctx.add_typed_action_view(EditorAndCodeReviewPageView::new);
+        let editor_review_page = ctx.add_typed_action_view(EditorAndCodeReviewPageView::new);
         let privacy_page = ctx.add_typed_action_view(PrivacyPageView::new);
-        ctx.subscribe_to_view(&privacy_page, |view, _, event, ctx| {
-            view.handle_privacy_page_event(event, ctx);
-        });
         let about_page = ctx.add_view(AboutPageView::new);
         let scripting_page = FeatureFlag::WarpControlCli
             .is_enabled()
@@ -1059,10 +1035,7 @@ impl SettingsView {
         ];
         if let Some(scripting_page) = scripting_page {
             settings_pages.push(SettingsPage::new(scripting_page));
-            nav_items.insert(
-                3,
-                SettingsNavItem::Page(SettingsSection::Scripting),
-            );
+            nav_items.insert(3, SettingsNavItem::Page(SettingsSection::Scripting));
         }
 
         let initial_page = page
@@ -1355,30 +1328,8 @@ impl SettingsView {
         ctx: &mut ViewContext<Self>,
     ) {
         match event {
-            FeaturesSettingsPageEvent::SearchForKeybinding(query) => {
-                self.search_for_keybinding(query, ctx);
-            }
+            FeaturesSettingsPageEvent::SearchForKeybinding(_) => {}
             FeaturesSettingsPageEvent::FocusModal => ctx.focus(&self.search_editor),
-        }
-    }
-
-    fn handle_privacy_page_event(
-        &mut self,
-        event: &PrivacyPageViewEvent,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        match event {
-            PrivacyPageViewEvent::LaunchNetworkLogging => {
-                ctx.emit(SettingsViewEvent::LaunchNetworkLogging);
-            }
-            PrivacyPageViewEvent::ShowAddRegexModal => {
-                // Modal rendering is handled in get_modal_content_for_page
-                ctx.notify();
-            }
-            PrivacyPageViewEvent::HideAddRegexModal => {
-                // Modal rendering is handled in get_modal_content_for_page
-                ctx.notify();
-            }
         }
     }
 
@@ -1527,16 +1478,6 @@ impl SettingsView {
             })
     }
 
-    pub fn refresh_preferred_graphics_backend_dropdown(&mut self, ctx: &mut ViewContext<Self>) {
-        if let Some(features_page) = self.settings_page(SettingsSection::Features)
-            && let SettingsPageViewHandle::Features(view) = &features_page.view_handle
-        {
-            view.update(ctx, |view, ctx| {
-                view.refresh_preferred_graphics_backend_dropdown(ctx);
-            });
-        }
-    }
-
     fn key_up(&mut self, ctx: &mut ViewContext<Self>) {
         self.cycle_pages(CycleDirection::Up, ctx)
     }
@@ -1655,13 +1596,10 @@ impl SettingsView {
     fn get_modal_content_for_page(
         &self,
         page_handle: &SettingsPageViewHandle,
-        app: &AppContext,
     ) -> Option<Box<dyn Element>> {
         match page_handle {
-            SettingsPageViewHandle::Privacy(view) => {
-                view.read(app, |view, _| view.get_modal_content())
-            }
-            SettingsPageViewHandle::Appearance(_)
+            SettingsPageViewHandle::Privacy(_)
+            | SettingsPageViewHandle::Appearance(_)
             | SettingsPageViewHandle::Features(_)
             | SettingsPageViewHandle::Keybindings(_)
             | SettingsPageViewHandle::About(_)
@@ -1902,7 +1840,6 @@ impl View for SettingsView {
             footer_kind,
             appearance,
             self.settings_file_error.as_ref(),
-            false,
             &self.footer_mouse_states,
         );
 
@@ -1974,7 +1911,7 @@ impl View for SettingsView {
         }
 
         if let Some(modal_content) =
-            current_page_handle.and_then(|handle| self.get_modal_content_for_page(handle, app))
+            current_page_handle.and_then(|handle| self.get_modal_content_for_page(handle))
         {
             stack.add_positioned_overlay_child(
                 modal_content,

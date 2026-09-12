@@ -8,13 +8,12 @@ use repo_metadata::RepositoryUpdate;
 use warpui::{ModelContext, ModelHandle, SingletonEntity};
 
 use super::util::{
-    for_each_dir_entry, has_name, is_config_file,
-    parse_multi_launch_config_dir_entry, parse_multi_workflow_dir_entry,
-    parse_single_theme_dir_entry, parse_tab_config_dir_entry,
+    for_each_dir_entry, has_name, is_config_file, parse_multi_launch_config_dir_entry,
+    parse_multi_workflow_dir_entry, parse_single_theme_dir_entry, parse_tab_config_dir_entry,
 };
 use super::{
-    LAUNCH_CONFIG_COMMENT, WarpConfigUpdateEvent, launch_configs_dir,
-    tab_configs_dir, themes_dir, workflows_dir,
+    LAUNCH_CONFIG_COMMENT, WarpConfigUpdateEvent, launch_configs_dir, tab_configs_dir, themes_dir,
+    workflows_dir,
 };
 use crate::features::FeatureFlag;
 use crate::launch_configs::launch_config::LaunchConfig;
@@ -145,12 +144,10 @@ impl super::WarpConfig {
     /// (`_2`, `_3`, …) until a free slot is found. Returns the path written to.
     #[cfg(feature = "local_fs")]
 
-
     /// Deletes a custom model router file from disk.
     /// The filesystem watcher in [`Self::handle_warp_managed_paths_event`] will
     /// pick up the deletion and reload `custom_model_routers`.
     #[cfg(feature = "local_fs")]
-
 
     /// This method takes a file name candidate (appends .yaml if missing) and a LaunchConfig as
     /// arguments. It saves the file and returns the filename used if successful.
@@ -207,7 +204,6 @@ pub fn load_launch_configs(launch_config_path: &Path) -> Vec<LaunchConfig> {
         .flatten()
         .collect_vec()
 }
-
 
 /// Loads all tab configs from `tab_config_path`. Each tab config is an individual TOML file.
 ///

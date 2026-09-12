@@ -25,16 +25,15 @@ mod default_terminal;
 #[cfg(windows)]
 mod dynamic_libraries;
 mod env_vars;
-mod external_secrets;
 mod global_resource_handles;
 mod gpu_state;
 mod input_classifier;
 mod interval_timer;
 #[cfg(feature = "local_fs")]
 mod local_control;
+mod local_objects;
 #[cfg(any(target_os = "macos", target_os = "windows"))]
 mod login_item;
-mod local_objects;
 mod menu;
 mod modal;
 mod network;
@@ -48,7 +47,6 @@ mod plugin;
 mod prefix;
 mod profiling;
 mod projects;
-mod prompt;
 mod quit_warning;
 mod resource_limits;
 mod safe_triangle;
@@ -151,7 +149,6 @@ pub use persistence::testing as sqlite_testing;
 #[cfg(feature = "plugin_host")]
 pub use plugin::{PLUGIN_HOST_FLAG, run_plugin_host};
 use settings::{ExtraMetaKeys, PrivacySettings};
-use terminal::input;
 use terminal::session_settings::SessionSettings;
 use url::Url;
 // Re-export the debounce function to simplify imports.
@@ -215,11 +212,7 @@ use crate::util::bindings::is_binding_cross_platform;
 use crate::vim_registers::VimRegisters;
 use crate::warp_managed_paths_watcher::{WarpManagedPathsWatcher, ensure_warp_watch_roots_exist};
 use crate::workflows::local_workflows::LocalWorkflows;
-use crate::workspace::{
-    ActiveSession, OneTimeModalModel, PaneViewLocator, ToastStack, Workspace, WorkspaceAction,
-};
-use crate::workspaces::user_profiles::UserProfiles;
-use crate::workspaces::user_workspaces::UserWorkspaces;
+use crate::workspace::{ActiveSession, PaneViewLocator, ToastStack, Workspace, WorkspaceAction};
 
 /// Our embedded application assets.
 pub static ASSETS: warp_assets::Assets = warp_assets::Assets;
@@ -350,12 +343,7 @@ impl LaunchMode {
     /// Returns `true` if Warp should run headlessly, without a visible UI.
     fn is_headless(&self) -> bool {
         match self {
-            LaunchMode::CommandLine { command, .. } => match command {
-                CliCommand::Agent(AgentCommand::Run(args)) => !args.gui,
-                _ => true,
-            },
-            // The TUI front-end renders to the terminal, with no GUI window.
-            LaunchMode::Tui { .. } => true,
+            LaunchMode::CommandLine { .. } | LaunchMode::Tui { .. } => true,
             LaunchMode::App { .. } | LaunchMode::Test { .. } => false,
         }
     }
@@ -372,16 +360,8 @@ impl LaunchMode {
     /// Returns `true` if this process can build and sync codebase indices.
     fn supports_indexing(&self) -> bool {
         match self {
-            LaunchMode::CommandLine { command, .. } => {
-                matches!(command, CliCommand::Agent(AgentCommand::Run { .. }))
-            }
             LaunchMode::App { .. } | LaunchMode::Test { .. } => true,
-            // Codebase indexing stays off for the TUI until it has deferred
-            // persisted-index restore and multi-process-safe snapshot writes
-            // (the GUI may run concurrently against the same data dir).
-            // Project rules/skills discovery does not depend on this; see
-            // `PersistedWorkspace::new`.
-            LaunchMode::Tui { .. } => false,
+            LaunchMode::CommandLine { .. } | LaunchMode::Tui { .. } => false,
         }
     }
 
@@ -514,25 +494,11 @@ pub fn run() -> Result<()> {
             warp_cli::Command::Completions { shell } => {
                 return warp_cli::completions::generate_to_stdout(*shell);
             }
-            warp_cli::Command::CommandLine(cmd) => {
-                let (is_sandboxed, computer_use_override) = match cmd.as_ref() {
-                    warp_cli::CliCommand::Agent(warp_cli::agent::AgentCommand::Run(run_args)) => (
-                        run_args.sandboxed,
-                        run_args.computer_use.computer_use_override(),
-                    ),
-                    _ => (false, None),
-                };
-
-                return run_internal(LaunchMode::CommandLine {
-                    command: cmd.as_ref().clone(),
-                    global_options: GlobalOptions {
-                        output_format: args.output_format(),
-                        api_key: args.api_key().cloned(),
-                    },
-                    debug: args.debug(),
-                    is_sandboxed,
-                    computer_use_override,
-                });
+            warp_cli::Command::CommandLine(command) => {
+                return Err(anyhow!(
+                    "The cloud command '{}' is not available in Term4u",
+                    command.as_str_for_tracing()
+                ));
             }
             warp_cli::Command::DumpDebugInfo => {
                 return debug_dump::run();
@@ -543,7 +509,7 @@ pub fn run() -> Result<()> {
             }
             #[cfg(not(target_family = "wasm"))]
             warp_cli::Command::PrintTelemetryEvents => {
-                return TelemetryEvent::print_telemetry_events_json();
+                return Err(anyhow!("Telemetry is not available in Term4u"));
             }
         }
     }
@@ -1099,13 +1065,11 @@ fn initialize_local_app(
     let tips_handle = ctx.add_model(|_| user_defaults.tips_data);
     let unsupported_shell =
         ctx.add_model(|_| user_defaults.user_default_shell_unsupported_banner_state);
-    let settings_file_error = user_defaults.settings_file_error;
     ctx.add_singleton_model(move |_| {
         GlobalResourceHandlesProvider::new(GlobalResourceHandles {
             model_event_sender,
             tips_completed: tips_handle,
             user_default_shell_unsupported_banner_model_handle: unsupported_shell,
-            settings_file_error,
         })
     });
 
@@ -1203,7 +1167,7 @@ fn initialize_local_app(
     workspace::init(ctx);
     pane_group::init(ctx);
     terminal::init(ctx);
-    input::init(ctx);
+    terminal::input::Input::init(ctx);
     editor::init(ctx);
     menu::init(ctx);
     tips::tip_view::init(ctx);
@@ -1215,7 +1179,6 @@ fn initialize_local_app(
     root_view::init(ctx);
     voltron::init(ctx);
     crate::view_components::find::init(ctx);
-    prompt::editor_modal::init(ctx);
     undo_close::init(ctx);
     tab_configs::new_worktree_modal::init(ctx);
     tab_configs::params_modal::init(ctx);
@@ -1552,12 +1515,6 @@ pub(crate) fn app_callbacks(
                 );
             }
 
-            if let Some(active_window_id) = active_window_id {
-                OneTimeModalModel::handle(ctx).update(ctx, |model, ctx| {
-                    model.update_target_window_id(active_window_id, ctx);
-                });
-            }
-
             ctx.dispatch_global_action("workspace:save_app", &());
         })),
         on_window_will_close: Some(Box::new(move |closed_window_data, ctx| {
@@ -1601,13 +1558,7 @@ fn focus_running_window_and_show_native_modal(
             .expect("already checked len > 0")
     });
     ctx.windows().show_window_and_focus_app(window_id_to_focus);
-    if let Some(workspaces) = ctx.views_of_type::<Workspace>(window_id_to_focus)
-        && let Some(handle) = workspaces.first()
-    {
-        handle.update(ctx, |view, ctx| {
-            view.show_native_modal(dialog_with_callbacks, ctx);
-        });
-    }
+    ctx.show_native_platform_modal(dialog_with_callbacks);
 }
 
 fn on_close_app_cancelled(open_navigation_palette: bool, ctx: &mut AppContext) {
@@ -1691,15 +1642,6 @@ fn on_close_window_cancelled(
     }
 }
 
-fn is_cloud_agent_web_home_launch_url(url: &Url) -> bool {
-    url.scheme() == ChannelState::url_scheme()
-        && url.host_str() == Some("action")
-        && url.path() == "/new_cloud_agent_conversation"
-        && url
-            .query_pairs()
-            .any(|(key, value)| key == "source" && value == "web_home")
-}
-
 #[::tracing::instrument(skip_all, fields(tags.cloud_agent = true))]
 fn launch(ctx: &mut warpui::AppContext, app_state: Option<AppState>, launch_mode: LaunchMode) {
     IntervalTimer::handle(ctx).update(ctx, |timer, _ctx| {
@@ -1717,12 +1659,6 @@ fn launch(ctx: &mut warpui::AppContext, app_state: Option<AppState>, launch_mode
         // before reaching launch().
         LaunchMode::Tui { .. } => unreachable!("LaunchMode::Tui is handled before launch()"),
         LaunchMode::App { .. } | LaunchMode::Test { .. } => {
-            let should_skip_restore = launch_mode
-                .args()
-                .urls
-                .iter()
-                .any(is_cloud_agent_web_home_launch_url);
-            let app_state = if should_skip_restore { None } else { app_state };
             // Attempt to restore windows from the persisted application state.
             let arg = OpenFromRestoredArg { app_state };
             ctx.dispatch_global_action("root_view:open_from_restored", &arg);
@@ -1758,22 +1694,8 @@ fn launch(ctx: &mut warpui::AppContext, app_state: Option<AppState>, launch_mode
             }
         }
         #[cfg_attr(target_family = "wasm", allow(unused_variables))]
-        LaunchMode::CommandLine {
-            command,
-            global_options,
-            ..
-        } => {
-            cfg_if::cfg_if! {
-                if #[cfg(target_family = "wasm")] {
-                    panic!("Cannot execute CLI command {command:?} on the web");
-                } else {
-                    if let Err(err) = crate::ai::agent_sdk::run(ctx, command.clone(), global_options.clone()) {
-                        eprintln!("{err:#}");
-                        report_error!(err);
-                        std::process::exit(1);
-                    }
-                }
-            }
+        LaunchMode::CommandLine { command, .. } => {
+            panic!("Cloud command {command:?} reached local app initialization")
         }
     }
 }

@@ -1,4 +1,3 @@
-pub(crate) mod action_sidecar;
 pub mod branch_picker;
 pub mod new_worktree_modal;
 pub mod params_modal;

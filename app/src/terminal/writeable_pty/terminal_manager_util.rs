@@ -72,11 +72,6 @@ pub fn wire_up_pty_controller_with_surface<T: EventLoopSender, S: TerminalSurfac
                     controller.write_bytes(bytes, ctx);
                 });
             }
-            PtyIntent::WriteAgentInput { bytes, mode } => {
-                controller.update(ctx, |controller, ctx| {
-                    controller.write_agent_bytes(bytes, &mode, ctx);
-                });
-            }
             PtyIntent::Resize(size_update) => {
                 controller.update(ctx, |controller, ctx| {
                     controller.resize_pty(size_update, ctx);
@@ -98,12 +93,6 @@ pub fn wire_up_pty_controller_with_surface<T: EventLoopSender, S: TerminalSurfac
                 if !outcome.is_accepted() {
                     return;
                 }
-                model_clone
-                    .lock()
-                    .block_list_mut()
-                    .active_block_mut()
-                    .set_cloud_workflow_state(event.workflow_id);
-
                 if event.should_add_command_to_history {
                     update_command_history(
                         &event,

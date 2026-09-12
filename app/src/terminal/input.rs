@@ -1,12 +1,11 @@
 use std::sync::Arc;
 
 use warpui::elements::{ChildView, Container, ParentElement, SavePosition};
-use warpui::{
-    AppContext, Element, Entity, TypedActionView, View, ViewContext, ViewHandle,
-    keymap,
-};
+use warpui::{AppContext, Element, Entity, TypedActionView, View, ViewContext, ViewHandle, keymap};
 
 use crate::editor::{EditorView, Event as EditorEvent};
+
+pub const OPEN_COMPLETIONS_KEYBINDING_NAME: &str = "input:open_completion_suggestions";
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum CommandExecutionSource {
@@ -29,8 +28,20 @@ pub enum MenuPositioning {
     BelowInputBox,
 }
 
+impl Default for MenuPositioning {
+    fn default() -> Self {
+        Self::BelowInputBox
+    }
+}
+
 pub trait MenuPositioningProvider: Send + Sync {
     fn menu_position(&self, app: &AppContext) -> MenuPositioning;
+}
+
+impl MenuPositioningProvider for MenuPositioning {
+    fn menu_position(&self, _: &AppContext) -> MenuPositioning {
+        *self
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -60,13 +71,7 @@ impl Input {
         ctx.subscribe_to_view(&editor, |input, _, event, ctx| match event {
             EditorEvent::Enter | EditorEvent::CmdEnter => input.submit(ctx),
             EditorEvent::Activate => ctx.emit(Event::EditorFocused),
-            EditorEvent::Edited(_)
-            | EditorEvent::Blurred
-            | EditorEvent::Navigate(_)
-            | EditorEvent::SelectionChanged
-            | EditorEvent::Escape
-            | EditorEvent::UnhandledModifierKey(_)
-            | EditorEvent::UnhandledCmdEnter => {}
+            _ => {}
         });
         Self {
             editor,
@@ -106,7 +111,8 @@ impl Input {
     }
 
     pub fn clear_buffer_and_reset_undo_stack(&mut self, ctx: &mut ViewContext<Self>) {
-        self.editor.update(ctx, |editor, ctx| editor.clear_buffer(ctx));
+        self.editor
+            .update(ctx, |editor, ctx| editor.clear_buffer(ctx));
     }
 
     pub fn set_pending_command(&mut self, command: &str, ctx: &mut ViewContext<Self>) {

@@ -22,12 +22,11 @@ use warp_util::path::LineAndColumnArg;
 use warp_util::standardized_path::StandardizedPath;
 use warpui::clipboard::ClipboardContent;
 use warpui::elements::{
-    AcceptedByDropTarget, Align, ChildAnchor, ChildView, Clipped, ConstrainedBox, Container,
-    CrossAxisAlignment, Dismiss, Draggable, DraggableState, Empty, Flex, FormattedTextElement,
-    Hoverable, MainAxisAlignment, MainAxisSize, MouseStateHandle, OffsetPositioning, ParentAnchor,
-    ParentElement, ParentOffsetBounds, Percentage, Rect, SavePosition, ScrollStateHandle,
-    Scrollable, ScrollableElement, ScrollbarWidth, Shrinkable, Stack, Text, UniformList,
-    UniformListState,
+    Align, ChildAnchor, ChildView, Clipped, ConstrainedBox, Container, CrossAxisAlignment, Dismiss,
+    Draggable, DraggableState, Empty, Flex, FormattedTextElement, Hoverable, MainAxisAlignment,
+    MainAxisSize, MouseStateHandle, OffsetPositioning, ParentAnchor, ParentElement,
+    ParentOffsetBounds, Percentage, Rect, SavePosition, ScrollStateHandle, Scrollable,
+    ScrollableElement, ScrollbarWidth, Shrinkable, Stack, Text, UniformList, UniformListState,
 };
 use warpui::fonts::{Properties, Style, Weight};
 use warpui::keymap::FixedBinding;
@@ -47,8 +46,6 @@ use crate::menu::{Menu, MenuItem, MenuItemFields};
 #[cfg(feature = "local_fs")]
 use crate::server::telemetry::CodePanelsFileOpenEntrypoint;
 use crate::server::telemetry::TelemetryEvent;
-use crate::terminal::input::InputDropTargetData;
-use crate::terminal::view::{TerminalDropTargetData, TerminalView};
 use crate::ui_components::icons::Icon;
 use crate::ui_components::item_highlight::{ImageOrIcon, ItemHighlightState};
 #[cfg(feature = "local_fs")]
@@ -131,14 +128,6 @@ pub enum FileTreeAction {
         id: FileTreeIdentifier,
     },
     DismissEditor,
-    ItemDroppedOnInput {
-        id: FileTreeIdentifier,
-        terminal_input_data: InputDropTargetData,
-    },
-    ItemDroppedOnTerminal {
-        id: FileTreeIdentifier,
-        terminal_view: WeakViewHandle<TerminalView>,
-    },
 }
 
 pub fn init(app: &mut AppContext) {
@@ -1973,7 +1962,6 @@ impl FileTreeView {
         let editor_view = is_pending_edit.then_some(&self.editor_view);
         let id_for_click = id.clone();
         let id_for_context = id.clone();
-        let id_for_drop = id.clone();
         let id_for_drag = id.clone();
         let hoverable = Hoverable::new(render_state.mouse_state.clone(), move |mouse_state| {
             let item_highlight_state = ItemHighlightState::new(is_selected, mouse_state);
@@ -2014,42 +2002,6 @@ impl FileTreeView {
                     pathfinder_geometry::vector::Vector2F::zero(),
                     window_size,
                 ))
-            })
-            .use_copy_cursor_when_dragging_over_drop_target()
-            .with_accepted_by_drop_target_fn(move |drop_target_data, _| {
-                // Allow drops on terminal input and terminal block list
-                if drop_target_data
-                    .as_any()
-                    .downcast_ref::<InputDropTargetData>()
-                    .is_some()
-                    || drop_target_data
-                        .as_any()
-                        .downcast_ref::<TerminalDropTargetData>()
-                        .is_some()
-                {
-                    AcceptedByDropTarget::Yes
-                } else {
-                    AcceptedByDropTarget::No
-                }
-            })
-            .on_drop(move |ctx, _app, _drag_position, data| {
-                if let Some(terminal_input_data) = data
-                    .as_ref()
-                    .and_then(|data| data.as_any().downcast_ref::<InputDropTargetData>())
-                {
-                    ctx.dispatch_typed_action(FileTreeAction::ItemDroppedOnInput {
-                        id: id_for_drop.clone(),
-                        terminal_input_data: terminal_input_data.clone(),
-                    });
-                } else if let Some(terminal_drop_data) = data
-                    .as_ref()
-                    .and_then(|data| data.as_any().downcast_ref::<TerminalDropTargetData>())
-                {
-                    ctx.dispatch_typed_action(FileTreeAction::ItemDroppedOnTerminal {
-                        id: id_for_drop.clone(),
-                        terminal_view: terminal_drop_data.terminal_view.clone(),
-                    });
-                }
             })
             .with_alternate_drag_element(self.render_item_while_dragging(&id_for_drag, appearance))
             .with_keep_original_visible(true)
@@ -3112,43 +3064,6 @@ impl TypedActionView for FileTreeView {
             }
             FileTreeAction::DismissEditor => {
                 self.handle_pending_edit(ctx);
-            }
-            FileTreeAction::ItemDroppedOnInput {
-                id,
-                terminal_input_data,
-            } => {
-                let Some(relative_path) = self.relative_path_for_item(id) else {
-                    return;
-                };
-
-                let weak_view_handle = terminal_input_data.weak_view_handle();
-                let Some(input_view) = weak_view_handle.upgrade(ctx) else {
-                    return;
-                };
-
-                let file_path = relative_path.to_string_lossy();
-                input_view.update(ctx, |input_view, ctx| {
-                    input_view.append_to_buffer(&file_path, ctx);
-                });
-            }
-            FileTreeAction::ItemDroppedOnTerminal { id, terminal_view } => {
-                let Some(root_dir) = self.root_directories.get(&id.root) else {
-                    return;
-                };
-                let Some(item) = root_dir.items.get(id.index) else {
-                    return;
-                };
-
-                let path_str = item.path().as_str();
-
-                let Some(terminal_view) = terminal_view.upgrade(ctx) else {
-                    return;
-                };
-
-                let file_path = path_str.to_string();
-                terminal_view.update(ctx, |view, ctx| {
-                    view.handle_file_tree_drop_on_active_command(&file_path, ctx);
-                });
             }
         }
     }

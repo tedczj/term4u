@@ -17,6 +17,7 @@ use instant::Instant;
 pub use interaction_mode::*;
 use pathfinder_color::ColorU;
 use pathfinder_geometry::vector::Vector2F;
+use secret_redaction::redact_secrets;
 pub use serialized_block::*;
 use warp_core::command::ExitCode;
 use warp_core::features::FeatureFlag;
@@ -40,10 +41,6 @@ use super::kitty::{KittyAction, KittyResponse};
 use super::secrets::RespectObfuscatedSecrets;
 use super::selection::ScrollDelta;
 use super::session::{Sessions, command_executor};
-use secret_redaction::redact_secrets;
-use crate::context_chips::prompt_snapshot::PromptSnapshot;
-use crate::server::block::DisplaySetting;
-use crate::server::ids::SyncId;
 use crate::terminal::block_filter::BlockFilterQuery;
 use crate::terminal::block_list_element::GridType;
 use crate::terminal::event::{
@@ -64,7 +61,6 @@ use crate::terminal::model::secrets::ObfuscateSecrets;
 use crate::terminal::model::session::SessionId;
 use crate::terminal::model::terminal_model::{BlockIndex, WithinBlock};
 use crate::terminal::shell::ShellType;
-use crate::terminal::view::WithinBlockBanner;
 use crate::terminal::{BlockPadding, ShellHost, SizeInfo};
 
 pub const LONG_RUNNING_COMMAND_DURATION_MS: u64 = 50;
@@ -89,7 +85,9 @@ pub enum TranscriptScope {
 }
 
 impl TranscriptScope {
-    pub fn is_conversation(self) -> bool { false }
+    pub fn is_conversation(self) -> bool {
+        false
+    }
 }
 
 pub(super) const MAX_SERIALIZED_STYLIZED_OUTPUT_LINES: usize = 5000;
@@ -207,31 +205,15 @@ pub struct Block {
     /// Blocklist Env var metadata associated with this block, if any.
     env_var_metadata: Option<BlocklistEnvVarMetadata>,
 
-    /// Represents the 'interaction mode' for a command block with respect to the agent.
-    ///
-    /// See doc comment on [`InteractionMode`] for detailed explanation of semantics.
-
-    /// This represents when a banner appears in this Block above the prompt.
-    pub(super) block_banner: Option<WithinBlockBanner>,
-
     /// If true, we should discard the next right prompt data we receive
     /// (whether it comes from a precmd hook or from a marked prompt
     /// printed by the shell).
     ignore_next_rprompt: bool,
 
-    prompt_snapshot: Option<PromptSnapshot>,
-
     /// The home directory the block was executed in.
     home_dir: Option<String>,
 
     filter_query: Option<BlockFilterQuery>,
-
-    /// If the command is a cloud workflow, this is set to its id. If the block was not a workflow,
-    /// this is None.
-    cloud_workflow_id: Option<SyncId>,
-
-    /// If the command included an env var invocation. If not this will be None.
-    cloud_env_var_collection_id: Option<SyncId>,
 
     /// The last time this block was painted (i.e.: visible in the window),
     /// if ever.
@@ -840,13 +822,9 @@ impl Block {
             shell_host: None,
             is_for_in_band_command: false,
             env_var_metadata: None,
-            block_banner: None,
             ignore_next_rprompt: false,
-            prompt_snapshot: None,
             home_dir: None,
             filter_query: None,
-            cloud_workflow_id: None,
-            cloud_env_var_collection_id: None,
             last_painted_at: None.into(),
             has_received_user_input: false,
             hidden: false,
@@ -869,35 +847,24 @@ impl Block {
         self.size
     }
 
-
-
     /// Replaces this block's visibility to be associated with the given conversation.
     /// Use this when a block is being created/assigned to a conversation (e.g., entering agent view).
-
 
     /// Resets this block's visibility to terminal mode.
     /// Use this when a block is being returned to terminal context (e.g., exiting agent view).
 
-
     /// Sets this block's agent view visibility state directly.
     /// Use this when restoring a block from serialization.
 
-
     /// Adds a conversation ID to the set of conversations where this block is attached as context.
-
 
     /// Adds a conversation ID to the set of conversations where this block is pending context.
     /// It maybe removed if the user removes the block attachment before sending the request, else if it is attached it will be 'promoted'.
 
-
     /// Removes a conversation ID from the set of conversations where this block should be visible.
     /// Returns true if the conversation ID was present and removed, false if it wasn't present.
 
-
     /// Moves the block from pending context to attached context for the given conversation ID.
-
-
-
 
     /// Returns whether NLD was overridden (input type was manually locked) when this block's
     /// command was submitted.
@@ -966,16 +933,6 @@ impl Block {
     #[cfg(any(test, feature = "test-util"))]
     pub fn set_output_grid(&mut self, output_grid: BlockGrid) {
         self.output_grid = output_grid;
-    }
-
-    #[cfg(not(feature = "integration_tests"))]
-    pub(in crate::terminal) fn block_banner(&self) -> Option<&WithinBlockBanner> {
-        self.block_banner.as_ref()
-    }
-
-    #[cfg(feature = "integration_tests")]
-    pub fn block_banner(&self) -> Option<&WithinBlockBanner> {
-        self.block_banner.as_ref()
     }
 
     /// Prefer using the `reset_block_index` fn on the BlockList instead.
@@ -1108,14 +1065,6 @@ impl Block {
         }
     }
 
-    pub fn set_prompt_snapshot(&mut self, prompt_snapshot: PromptSnapshot) {
-        self.prompt_snapshot = Some(prompt_snapshot);
-    }
-
-    pub fn prompt_snapshot(&self) -> Option<&PromptSnapshot> {
-        self.prompt_snapshot.as_ref()
-    }
-
     /// Sets the prompt and right prompt grids in this block from grids that
     /// we cached when the last user command was submitted.
     ///
@@ -1197,7 +1146,6 @@ impl Block {
             return true;
         }
 
-
         let is_bootstrap_block = self.bootstrap_stage == BootstrapStage::WarpInput;
         let is_empty_bootstrap_script_execution_block = self.bootstrap_stage
             == BootstrapStage::ScriptExecution
@@ -1214,7 +1162,6 @@ impl Block {
                 .as_ref()
                 .is_some_and(|metadata| metadata.should_hide_block)
             || (self.is_for_in_band_command && !self.show_in_band_command_blocks)
-
     }
 
     pub fn is_hidden(&self) -> bool {
@@ -1308,28 +1255,6 @@ impl Block {
         self.honor_ps1()
     }
 
-    /// Used for determining the height of the block with `DisplaySettings` used when sharing a block.
-    pub fn full_content_height_with_display_options(
-        &self,
-        display_setting: &DisplaySetting,
-        show_prompt: bool,
-    ) -> Lines {
-        let mut height = self.padding_top();
-        if show_prompt && !self.render_prompt_on_same_line() {
-            height += self.prompt_height() + self.command_padding_top();
-        }
-
-        let command_height = self.prompt_and_command_height();
-
-        height += match display_setting {
-            DisplaySetting::Command => command_height,
-            DisplaySetting::Output => self.output_grid_full_content_height(),
-            _ => command_height + self.padding_middle() + self.output_grid_full_content_height(),
-        };
-        height += self.padding_bottom();
-        height
-    }
-
     /// The last part of the lifecycle for the block. After this, its contents
     /// are immutable.
     pub fn finish(&mut self, exit_code: impl Into<ExitCode>) {
@@ -1351,8 +1276,6 @@ impl Block {
             _ => BlockState::DoneWithNoExecution,
         };
         log::info!("Block finished with new state {:?}", self.state);
-
-        self.block_banner = None;
 
         let block_type: BlockType = self.into();
         self.event_proxy
@@ -1809,28 +1732,14 @@ impl Block {
     }
 
     pub(in crate::terminal) fn block_banner_height(&self) -> Lines {
-        if !self.ready_to_render() {
-            Lines::zero()
-        } else {
-            match &self.block_banner {
-                Some(banner) => {
-                    (banner.banner_height() / self.prompt_grid_cell_height() as f32).into_lines()
-                }
-                None => Lines::zero(),
-            }
-        }
+        Lines::zero()
     }
 
     pub fn padding_top(&self) -> Lines {
         if self.missing_command() || !self.ready_to_render() {
             Lines::zero()
         } else {
-            match self.block_banner {
-                // Truncate the padding if there is a banner, so not break the visual relationship
-                // between the block and banner, but still allow it to be smaller in compact mode.
-                Some(_) => self.padding.padding_top.min(0.6).into_lines(),
-                None => self.padding.padding_top.into_lines(),
-            }
+            self.padding.padding_top.into_lines()
         }
     }
 
@@ -2443,22 +2352,6 @@ impl Block {
         self.home_dir = home_dir;
     }
 
-    pub fn set_cloud_env_var_state(&mut self, env_var_collection_id: Option<SyncId>) {
-        self.cloud_env_var_collection_id = env_var_collection_id;
-    }
-
-    pub fn cloud_env_var_collection_state(&self) -> Option<SyncId> {
-        self.cloud_env_var_collection_id
-    }
-
-    pub fn set_cloud_workflow_state(&mut self, workflow_id: Option<SyncId>) {
-        self.cloud_workflow_id = workflow_id;
-    }
-
-    pub fn cloud_workflow_state(&self) -> Option<SyncId> {
-        self.cloud_workflow_id
-    }
-
     pub fn server_pwd(&self) -> Option<Cow<'_, str>> {
         self.pwd
             .as_ref()
@@ -2648,7 +2541,6 @@ impl Block {
     }
 
     /// Returns `true` if this block is a valid option to use as context for an AI model.
-
 
     pub fn estimated_heap_usage_bytes(&self) -> usize {
         // For now, we're only factoring in heap allocations in grids, and not

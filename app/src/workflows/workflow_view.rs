@@ -69,7 +69,12 @@ impl WorkflowView {
         }
     }
 
-    pub fn load(&mut self, workflow: Workflow, _mode: WorkflowViewMode, ctx: &mut ViewContext<Self>) {
+    pub fn load(
+        &mut self,
+        workflow: Workflow,
+        _mode: WorkflowViewMode,
+        ctx: &mut ViewContext<Self>,
+    ) {
         self.name.update(ctx, |editor, ctx| {
             editor.system_reset_buffer_text(&workflow.name, ctx)
         });
@@ -160,8 +165,8 @@ impl View for WorkflowView {
     fn render(&self, _app: &AppContext) -> Box<dyn Element> {
         Container::new(
             Flex::column()
-                .child(ChildView::new(&self.name).finish())
-                .child(ChildView::new(&self.command).finish())
+                .with_child(ChildView::new(&self.name).finish())
+                .with_child(ChildView::new(&self.command).finish())
                 .finish(),
         )
         .with_uniform_padding(16.)
@@ -201,7 +206,10 @@ impl BackingView for WorkflowView {
         self.handle_action(action, ctx);
     }
 
-    fn pane_header_overflow_menu_items(&self, app: &AppContext) -> Vec<MenuItem<WorkflowViewAction>> {
+    fn pane_header_overflow_menu_items(
+        &self,
+        app: &AppContext,
+    ) -> Vec<MenuItem<WorkflowViewAction>> {
         let is_maximized = self
             .focus_handle
             .as_ref()

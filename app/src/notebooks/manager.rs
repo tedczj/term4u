@@ -4,7 +4,7 @@ use warpui::{Entity, EntityId, ModelContext, SingletonEntity, WeakViewHandle, Wi
 
 use crate::notebooks::model::NotebookId;
 use crate::notebooks::notebook::NotebookView;
-use crate::pane_group::NotebookPane;
+use crate::pane_group::{NotebookPane, PaneContent};
 use crate::workspace::PaneViewLocator;
 
 pub struct NotebookManager {

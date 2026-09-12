@@ -5,7 +5,8 @@ use warpui::{AppContext, Entity, TypedActionView, View, ViewContext, ViewHandle}
 
 use super::SettingsSection;
 use super::settings_page::{
-    MatchData, PageType, SettingsPageEvent, SettingsPageMeta, SettingsPageViewHandle, SettingsWidget,
+    MatchData, PageType, SettingsPageEvent, SettingsPageMeta, SettingsPageViewHandle,
+    SettingsWidget,
 };
 use crate::appearance::Appearance;
 

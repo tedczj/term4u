@@ -130,7 +130,7 @@ impl From<app_state::PaneFlex> for PaneFlex {
 }
 
 pub struct PaneBranch {
-    axis: SplitDirection,
+    pub axis: SplitDirection,
     pub nodes: Vec<(PaneFlex, PaneNode)>,
     dividers: Vec<Divider>,
 }

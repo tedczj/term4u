@@ -91,7 +91,7 @@ impl Element for TerminalSizeElement {
                 }
                 Event::DragAndDropFiles { paths, location } => {
                     if self.mouse_position_is_in_bounds(*location) && !paths.is_empty() {
-                        let paths = paths.iter().map(ToOwned::to_owned).collect();
+                        let paths = paths.iter().map(std::path::PathBuf::from).collect();
                         ctx.dispatch_typed_action(TerminalAction::DragAndDropFiles(paths));
                     }
                     return true;

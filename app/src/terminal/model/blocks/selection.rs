@@ -20,7 +20,6 @@ use crate::terminal::model::block::BlockSection;
 use crate::terminal::model::index::{Direction, Point, Side};
 use crate::terminal::model::selection::{ExpandedSelectionRange, Selection, SelectionDirection};
 use crate::terminal::model::terminal_model::{BlockIndex, WithinBlock};
-use crate::terminal::warpify::success_block::WarpifySuccessBlock;
 
 /// A selection that can span multiple blocks (and thus grids). Here row is the number of lines from
 /// the top of all blocks.
@@ -982,17 +981,7 @@ impl BlockList {
                                     .push(command_block.bounds_to_string(start_point, end_point));
                             }
                         }
-                        BlockHeightItem::RichContent(RichContentItem { view_id, .. }) => {
-                            if let Some(active_window_id) = app.windows().active_window()
-                                && let Some(ssh_block) = app
-                                    .view_with_id::<WarpifySuccessBlock>(active_window_id, *view_id)
-                            {
-                                let warpify_success_block = app.view(&ssh_block);
-                                if let Some(selected_text) = warpify_success_block.selected_text() {
-                                    selected_texts.push(selected_text);
-                                }
-                            }
-                        }
+                        BlockHeightItem::RichContent(_) => {}
                         BlockHeightItem::Gap(_)
                         | BlockHeightItem::RestoredBlockSeparator { .. }
                         | BlockHeightItem::InlineBanner { .. }
@@ -1052,18 +1041,7 @@ impl BlockList {
 
                 Some(selected_texts.join("\n"))
             }
-            None => {
-                let active_window_id = app.windows().active_window()?;
-                let selected_texts = self
-                    .rich_content_blocks_in_selection()
-                    .into_iter()
-                    .filter_map(|view_id| {
-                        app.view_with_id::<WarpifySuccessBlock>(active_window_id, view_id)
-                            .and_then(|view| app.view(&view).selected_text())
-                    })
-                    .collect::<Vec<_>>();
-                (!selected_texts.is_empty()).then(|| selected_texts.join("\n"))
-            }
+            None => None,
         }
     }
 
@@ -1490,8 +1468,6 @@ impl BlockList {
         end.absolute_point
     }
 }
-
-
 
 #[cfg(test)]
 #[path = "selection_tests.rs"]

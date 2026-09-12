@@ -45,20 +45,14 @@ impl ModalSizes {
         let universal_search_width = window_snapshot
             .universal_search_width
             .unwrap_or(DEFAULT_UNIVERSAL_SEARCH_WIDTH);
-        let warp_ai_width = window_snapshot
-            .warp_ai_width
-            .unwrap_or(DEFAULT_WARP_AI_WIDTH);
+        let warp_ai_width = DEFAULT_WARP_AI_WIDTH;
         let voltron_width = window_snapshot
             .voltron_width
             .unwrap_or(DEFAULT_VOLTRON_WIDTH);
-        let warp_drive_index_width = window_snapshot
-            .warp_drive_index_width
-            .unwrap_or(DEFAULT_WARP_DRIVE_INDEX_WIDTH);
+        let warp_drive_index_width = DEFAULT_WARP_DRIVE_INDEX_WIDTH;
         let settings_panel_width = DEFAULT_SETTINGS_PANEL_WIDTH;
         let left_panel_width = window_snapshot.left_panel_width.unwrap_or(left_panel_size);
-        let right_panel_width = window_snapshot
-            .right_panel_width
-            .unwrap_or(right_panel_size);
+        let right_panel_width = right_panel_size;
 
         Self {
             universal_search_width: resizable_state_handle(universal_search_width),

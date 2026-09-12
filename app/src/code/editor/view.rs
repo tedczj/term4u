@@ -27,8 +27,9 @@ use warp_editor::render::element::{
     DisplayOptions, DisplayStateHandle, RichTextElement, VerticalExpansionBehavior,
 };
 use warp_editor::render::model::{
-    AutoScrollMode, BlockSpacing, CODE_EDITOR_HIDDEN_SECTION_EXPANSION_LINES, Decoration,
-    ExpansionType, LineCount, ParagraphStyles, RichTextStyles,
+    AutoScrollMode, BlockSpacing, BlockSpacings, BrokenLinkStyle,
+    CODE_EDITOR_HIDDEN_SECTION_EXPANSION_LINES, CheckBoxStyle, Decoration, ExpansionType,
+    HorizontalRuleStyle, InlineCodeStyle, LineCount, ParagraphStyles, RichTextStyles, TableStyle,
 };
 use warp_editor::search::{MATCH_FILL, SELECTED_MATCH_FILL, SearchEvent, Searcher};
 use warp_util::content_version::ContentVersion;
@@ -37,7 +38,7 @@ use warpui::elements::new_scrollable::{
     AxisConfiguration, DualAxisConfig, NewScrollableElement, ScrollableAppearance,
 };
 use warpui::elements::{
-    ChildAnchor, ChildView, Dismiss, Fill, Flex, Margin, MouseStateHandle, NewScrollable,
+    Border, ChildAnchor, ChildView, Dismiss, Fill, Flex, Margin, MouseStateHandle, NewScrollable,
     OffsetPositioning, Padding, ParentAnchor, ParentElement, ParentOffsetBounds, ScrollStateHandle,
     Shrinkable, Stack,
 };
@@ -298,7 +299,6 @@ impl CodeEditorView {
         let font_settings_handle = FontSettings::handle(ctx);
         let initial_styles = code_text_styles(
             appearance_handle.as_ref(ctx),
-            font_settings_handle.as_ref(ctx),
             render_options.line_height_override,
         );
         ctx.subscribe_to_model(&appearance_handle, |me, _, _, ctx| {
@@ -1377,7 +1377,6 @@ impl CodeEditorView {
     fn handle_appearance_or_font_change(&mut self, ctx: &mut ViewContext<Self>) {
         let new_styles = code_text_styles(
             Appearance::as_ref(ctx),
-            FontSettings::as_ref(ctx),
             self.display_options.line_height_override,
         );
         self.model.update(ctx, move |model, ctx| {
@@ -2460,12 +2459,10 @@ impl View for CodeEditorView {
 
 pub fn code_text_styles(
     appearance: &Appearance,
-    font_settings: &FontSettings,
     line_height_override: Option<f32>,
 ) -> RichTextStyles {
-    let mut styling = RichTextStyles::default();
     let theme = appearance.theme();
-    styling.base_text = ParagraphStyles {
+    let base_text = ParagraphStyles {
         font_size: appearance.monospace_font_size(),
         line_height_ratio: line_height_override.unwrap_or(appearance.line_height_ratio()),
         font_family: appearance.monospace_font_family(),
@@ -2474,16 +2471,66 @@ pub fn code_text_styles(
         baseline_ratio: 0.8,
         fixed_width_tab_size: Some(4),
     };
-    styling.block_spacings.text = BlockSpacing {
+    let foreground = theme.main_text_color(theme.background()).into_solid();
+    let surface = theme.surface_2().into_solid();
+    let outline = theme.outline().into_solid();
+    let mut block_spacings = BlockSpacings::default();
+    block_spacings.text = BlockSpacing {
         margin: Margin::uniform(0.).with_left(1.),
         padding: Padding::uniform(0.),
     };
-    styling.show_placeholder_text_on_empty_block = false;
-    styling.minimum_paragraph_height = None;
-    styling.cursor_width = 2.;
-    // URLs are not clickable in code editors, so we should not highlight them.
-    styling.highlight_urls = false;
-    styling
+    RichTextStyles {
+        base_text,
+        code_text: base_text,
+        code_background: theme.background().into(),
+        embedding_background: theme.surface_2().into(),
+        embedding_text: base_text,
+        code_border: Border::all(1.).with_border_fill(theme.surface_3()),
+        placeholder_color: theme.hint_text_color(theme.background()).into_solid(),
+        selection_fill: theme.text_selection_color().into(),
+        cursor_fill: theme.accent().into(),
+        inline_code_style: InlineCodeStyle {
+            font_family: appearance.monospace_font_family(),
+            background: surface,
+            font_color: foreground,
+        },
+        check_box_style: CheckBoxStyle {
+            border_width: 1.,
+            border_color: outline,
+            icon_path: "bundled/svg/check.svg",
+            background: theme.accent().into_solid(),
+            hover_background: surface,
+        },
+        horizontal_rule_style: HorizontalRuleStyle {
+            rule_height: 1.,
+            color: outline,
+        },
+        broken_link_style: BrokenLinkStyle {
+            icon_path: "bundled/svg/link-broken-02.svg",
+            icon_color: foreground,
+        },
+        block_spacings,
+        minimum_paragraph_height: None,
+        show_placeholder_text_on_empty_block: false,
+        cursor_width: 2.,
+        highlight_urls: false,
+        table_style: TableStyle {
+            border_color: outline,
+            header_background: surface,
+            cell_background: theme.background().into_solid(),
+            alternate_row_background: None,
+            text_color: foreground,
+            header_text_color: foreground,
+            scrollbar_nonactive_thumb_color: outline,
+            scrollbar_active_thumb_color: foreground,
+            font_family: appearance.monospace_font_family(),
+            font_size: appearance.monospace_font_size(),
+            cell_padding: 4.,
+            outer_border: true,
+            column_dividers: true,
+            row_dividers: true,
+        },
+    }
 }
 
 #[cfg(feature = "integration_tests")]

@@ -1,11 +1,10 @@
 use warpui::elements::{Container, Element, Flex, ParentElement, Text};
-use warpui::{
-    AppContext, Entity, TypedActionView, View, ViewContext, ViewHandle,
-};
+use warpui::{AppContext, Entity, TypedActionView, View, ViewContext, ViewHandle};
 
 use super::SettingsSection;
 use super::settings_page::{
-    MatchData, PageType, SettingsPageEvent, SettingsPageMeta, SettingsPageViewHandle, SettingsWidget,
+    MatchData, PageType, SettingsPageEvent, SettingsPageMeta, SettingsPageViewHandle,
+    SettingsWidget,
 };
 use crate::appearance::Appearance;
 use crate::settings::local_privacy_policy::LocalPrivacyPolicy;
@@ -75,7 +74,10 @@ impl SettingsWidget for LocalPrivacyWidget {
     ) -> Box<dyn Element> {
         let values = [
             ("Telemetry", LocalPrivacyPolicy::TELEMETRY_ENABLED),
-            ("Crash reporting", LocalPrivacyPolicy::CRASH_REPORTING_ENABLED),
+            (
+                "Crash reporting",
+                LocalPrivacyPolicy::CRASH_REPORTING_ENABLED,
+            ),
             ("Cloud storage", LocalPrivacyPolicy::CLOUD_STORAGE_ENABLED),
         ];
         let mut column = Flex::column().with_spacing(12.);
@@ -86,11 +88,18 @@ impl SettingsWidget for LocalPrivacyWidget {
                     appearance.ui_font_family(),
                     appearance.ui_font_size(),
                 )
-                .with_color(appearance.theme().main_text_color(appearance.theme().background()).into_solid())
+                .with_color(
+                    appearance
+                        .theme()
+                        .main_text_color(appearance.theme().background())
+                        .into_solid(),
+                )
                 .finish(),
             );
         }
-        Container::new(column.finish()).with_uniform_padding(16.).finish()
+        Container::new(column.finish())
+            .with_uniform_padding(16.)
+            .finish()
     }
 }
 

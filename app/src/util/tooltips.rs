@@ -186,46 +186,10 @@ where
         }
     }
 
-    let is_secret = matches!(
-        redaction,
-        TooltipRedaction::SecretNotSentToLLMMessaging { .. }
-            | TooltipRedaction::SecretWillNotBeSentToLLMMessaging { .. }
-    );
-
-    // If enterprise secret redaction is enabled, add additional messaging and padding to the tooltip.
-    let is_enterprise_secret_redaction_enabled =
-        is_secret && PrivacySettings::as_ref(app).is_enterprise_secret_redaction_enabled();
-    let tooltip_element = if is_enterprise_secret_redaction_enabled {
-        let tooltip_column = Flex::column()
-            .with_child(tooltip.finish())
-            .with_child(
-                appearance
-                    .ui_builder()
-                    .span("*Secrets are not sent to Warp's server.")
-                    .with_style(UiComponentStyles {
-                        font_size: Some(12.),
-                        margin: Some(Coords::default().top(4.)),
-                        font_color: Some(blended_colors::text_disabled(
-                            appearance.theme(),
-                            background_color,
-                        )),
-                        ..Default::default()
-                    })
-                    .build()
-                    .finish(),
-            )
-            .finish();
-
-        Container::new(tooltip_column)
-            .with_vertical_padding(4.)
-            .with_horizontal_padding(6.)
-            .finish()
-    } else {
-        Container::new(tooltip.finish())
-            .with_vertical_padding(4.)
-            .with_horizontal_padding(6.)
-            .finish()
-    };
+    let tooltip_element = Container::new(tooltip.finish())
+        .with_vertical_padding(4.)
+        .with_horizontal_padding(6.)
+        .finish();
 
     Container::new(tooltip_element)
         .with_background(background_color)
@@ -246,7 +210,6 @@ pub fn should_show_open_in_warp_link(path: &Path, app: &AppContext) -> bool {
     use warpui::SingletonEntity;
 
     use crate::code::view::is_binary_file;
-    use crate::notebooks::file::renders_in_warp_notebook_viewer;
     use crate::util::file::external_editor::EditorSettings;
     use crate::util::file::external_editor::settings::EditorChoice;
 
@@ -256,7 +219,7 @@ pub fn should_show_open_in_warp_link(path: &Path, app: &AppContext) -> bool {
         return false;
     }
 
-    !renders_in_warp_notebook_viewer(path) && !is_binary_file(path) && !path.is_dir()
+    !is_binary_file(path) && !path.is_dir()
 }
 
 #[cfg(not(feature = "local_fs"))]

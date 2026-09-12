@@ -20,6 +20,7 @@ pub struct TerminalPane {
     model_event_sender: Option<SyncSender<ModelEvent>>,
     uuid: Vec<u8>,
     pane_configuration: ModelHandle<PaneConfiguration>,
+    terminal_manager: ModelHandle<Box<dyn TerminalManager>>,
     view: ViewHandle<TerminalPaneView>,
 }
 
@@ -36,7 +37,7 @@ impl TerminalPane {
             PaneView::new(
                 PaneId::from_terminal_pane_ctx(ctx),
                 terminal_view,
-                terminal_manager,
+                (),
                 pane_configuration.clone(),
                 ctx,
             )
@@ -45,6 +46,7 @@ impl TerminalPane {
             model_event_sender,
             uuid,
             pane_configuration,
+            terminal_manager,
             view,
         }
     }
@@ -66,7 +68,7 @@ impl TerminalPane {
         &self,
         ctx: &AppContext,
     ) -> ModelHandle<Box<dyn TerminalManager>> {
-        self.view.as_ref(ctx).child_data(ctx).clone()
+        self.terminal_manager.clone()
     }
 
     pub(in crate::pane_group) fn delete_blocks(&self) {
@@ -119,8 +121,9 @@ impl PaneContent for TerminalPane {
         let pane_id = self.id();
         let sender = self.model_event_sender.clone();
         let uuid = self.uuid.clone();
-        ctx.subscribe_to_view(&self.terminal_view(ctx), move |group, _, event, ctx| {
-            match event {
+        ctx.subscribe_to_view(
+            &self.terminal_view(ctx),
+            move |group, _, event, ctx| match event {
                 Event::Pane(event) => group.handle_pane_event(pane_id, event, ctx),
                 Event::ExecuteCommand(event) => {
                     ctx.emit(pane_group::Event::ExecuteCommand(event.clone()))
@@ -178,8 +181,8 @@ impl PaneContent for TerminalPane {
                 | Event::ShellSpawned(_)
                 | Event::PtySpawnFailed { .. }
                 | Event::RunNativeShellCompletions { .. } => {}
-            }
-        });
+            },
+        );
         ctx.subscribe_to_view(&self.view, move |group, _, event, ctx| {
             group.handle_pane_view_event(pane_id, event, ctx);
         });
@@ -195,7 +198,7 @@ impl PaneContent for TerminalPane {
         ctx.unsubscribe_to_view(&self.view);
         self.terminal_manager(ctx)
             .as_ref(ctx)
-            .on_view_detached(detach_type, ctx);
+            .on_view_detached(detach_type);
     }
 
     fn snapshot(&self, app: &AppContext) -> LeafContents {
@@ -238,6 +241,6 @@ impl PaneContent for TerminalPane {
 
 impl TerminalPane {
     fn has_application_focus_for_snapshot(&self, app: &AppContext) -> bool {
-        self.view.is_self_or_child_focused(app)
+        self.view.is_focused(app)
     }
 }

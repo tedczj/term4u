@@ -10,7 +10,6 @@ use regex::Regex;
 use string_offset::{ByteOffset, CharCounter, CharOffset};
 
 use super::workflow::{ArgumentType, Workflow};
-use crate::server::ids::SyncId;
 
 lazy_static! {
     /// Regex for escaped arguments in workflow command.
@@ -76,7 +75,7 @@ pub struct WorkflowDisplayData {
     /// the entry for "foo" would be [5-8, 13-16].
     pub argument_index_to_char_range_map: HashMap<WorkflowArgumentIndex, Vec<Range<CharOffset>>>,
 
-    pub argument_index_to_object_id_map: HashMap<WorkflowArgumentIndex, SyncId>,
+    pub argument_index_to_object_id_map: HashMap<WorkflowArgumentIndex, String>,
 }
 
 #[derive(Clone)]
@@ -326,7 +325,8 @@ fn compute_workflow_display_data_internal(
             );
 
         if let ArgumentType::Enum { enum_id } = workflow_argument.argument_type {
-            argument_index_to_object_id_map.insert(workflow_argument.argument_index, *enum_id);
+            argument_index_to_object_id_map
+                .insert(workflow_argument.argument_index, enum_id.clone());
         }
     }
 

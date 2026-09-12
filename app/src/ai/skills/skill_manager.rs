@@ -181,14 +181,6 @@ impl SkillManager {
         deduplicator.extend_paths(&skill_paths, &self.skills_by_path);
         let mut skills = deduplicator.into_descriptors();
 
-        // Apply icon overrides for well-known skill names (e.g. partner integrations).
-        for skill in &mut skills {
-            if skill.icon_override.is_none() {
-                skill.icon_override =
-                    crate::ai::skills::skill_utils::icon_override_for_skill_name(&skill.name);
-            }
-        }
-
         // Append bundled skills whose activation condition is met, from the
         // catalog of the active execution host: SSH sessions see the remote
         // daemon's catalog (empty until its snapshot arrives),

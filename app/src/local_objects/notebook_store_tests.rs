@@ -3,7 +3,7 @@ use super::NotebookStore;
 #[test]
 fn legacy_notebook_can_be_edited_and_reloaded() {
     let directory = tempfile::tempdir().unwrap();
-    let legacy = r#"{"data":"# Legacy\noriginal","unknown":"ignored"}"#;
+    let legacy = r##"{"data":"# Legacy\noriginal","unknown":"ignored"}"##;
     let mut store = NotebookStore::load(
         directory.path().to_path_buf(),
         vec![(7, Some("Legacy title".to_owned()), Some(legacy.to_owned()))],

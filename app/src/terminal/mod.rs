@@ -4,15 +4,14 @@ use model::blocks::BlockList;
 pub use model::terminal_model::TerminalModel;
 use ordered_float::Float;
 mod package_installers;
-pub use history::{
-    History, HistoryEntry, HistoryEvent, LinkedWorkflowData, ShellHost, UpArrowHistoryConfig,
-};
+pub use history::{History, HistoryEntry, HistoryEvent, LinkedWorkflowData, ShellHost};
 pub use view::{Event, TerminalView};
 pub use warp_terminal::shell::{self, ShellLaunchData};
 pub use warp_terminal::{CellSizeAndWindowPadding, ClipboardType, SizeInfo};
 use warpui::geometry::vector::Vector2F;
 use warpui::units::Lines;
 use warpui::{AppContext, SingletonEntity, WindowId};
+pub mod block_filter;
 mod block_list_settings;
 
 mod alias;
@@ -69,8 +68,6 @@ pub use writeable_pty::{PtyIntent, PtyIntentEvent, TerminalSurface};
 #[cfg(windows)]
 pub mod wsl;
 
-pub use cli_agent::CLIAgent;
-
 pub use block_list_settings::*;
 pub use mock_terminal_manager::MockTerminalManager;
 use model_events::{ModelEvent, ModelEventDispatcher};
@@ -91,7 +88,7 @@ use crate::settings::SelectionSettings;
 pub const PTY_READS_BROADCAST_CHANNEL_SIZE: usize = 1024;
 
 pub fn init(app: &mut AppContext) {
-    view::init(app);
+    view::init::init(app);
 }
 
 pub fn should_right_click_paste(shift: bool, ctx: &AppContext) -> bool {

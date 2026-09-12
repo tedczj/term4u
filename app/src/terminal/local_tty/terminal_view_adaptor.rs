@@ -67,7 +67,9 @@ pub(crate) fn create_terminal_view_surface(
 
     TerminalSurfaceResult {
         surface: view,
-        post_wire: move |terminal_manager, _, _| {
+        post_wire: move |terminal_manager: &mut TerminalManager<TerminalView>,
+                         _: &ViewHandle<TerminalView>,
+                         _: &mut AppContext| {
             if has_restored_command_blocks && !should_use_live_appearance {
                 terminal_manager
                     .model()

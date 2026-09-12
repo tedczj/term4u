@@ -47,11 +47,7 @@ impl ActiveSkillLookupError {
     }
 }
 
-#[cfg(not(target_family = "wasm"))]
-mod global_skills;
 pub use ai::skills::SkillDescriptor;
-#[cfg(not(target_family = "wasm"))]
-pub use global_skills::{filter_skills_by_spec, resolve_skill_repos};
 
 mod skill_utils;
 pub use skill_utils::skill_path_from_location;
@@ -76,13 +72,6 @@ impl SkillPathQuery for PathBuf {
         LocalOrRemotePath::Local(self.clone())
     }
 }
-
-#[cfg(not(target_family = "wasm"))]
-mod resolve_skill_spec;
-#[cfg(not(target_family = "wasm"))]
-pub use resolve_skill_spec::{
-    ResolveSkillError, ResolvedSkill, clone_repo_for_skill, resolve_skill_spec,
-};
 
 cfg_if::cfg_if! {
     if #[cfg(feature = "local_fs")] {

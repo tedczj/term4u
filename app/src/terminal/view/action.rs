@@ -12,18 +12,29 @@ use crate::terminal::model::terminal_model::WithinModel;
 
 #[derive(Clone, Debug)]
 pub enum TerminalAction {
-    Scroll { delta: Lines },
-    AltScroll { delta: i32, point: Point },
+    Scroll {
+        delta: Lines,
+    },
+    AltScroll {
+        delta: i32,
+        point: Point,
+    },
     AltSelect(SelectAction<Point>),
     AltMouseAction(MouseState),
-    AltScreenContextMenu { position: Vector2F },
+    AltScreenContextMenu {
+        position: Vector2F,
+    },
     MaybeClearAltSelect,
     ClickOnGrid {
         position: WithinModel<Point>,
         modifiers: ModifiersState,
     },
-    MiddleClickOnGrid { position: Option<WithinModel<Point>> },
-    MaybeDismissToolTip { from_keybinding: bool },
+    MiddleClickOnGrid {
+        position: Option<WithinModel<Point>>,
+    },
+    MaybeDismissToolTip {
+        from_keybinding: bool,
+    },
     MaybeHoverSecret,
     MaybeLinkHover,
     Paste,

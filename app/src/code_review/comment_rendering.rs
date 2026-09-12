@@ -29,8 +29,7 @@ use crate::code::editor::view::{CodeEditorRenderOptions, CodeEditorView};
 use crate::code_review::comments::{
     AttachedReviewComment, AttachedReviewCommentTarget, LineDiffContent,
 };
-use crate::editor::InteractionState;
-use crate::editor::EditorView;
+use crate::editor::{EditorView, InteractionState};
 use crate::util::time_format::human_readable_approx_duration;
 
 /// Configuration for making the comment header clickable.
@@ -300,17 +299,11 @@ impl CommentViewCard {
     pub(crate) fn new<V: View>(
         source: AttachedReviewComment,
         always_use_static_diff: bool,
-        disable_scrolling: bool,
-        max_width: Option<Pixels>,
         repo_path: Option<&LocalOrRemotePath>,
         ctx: &mut ViewContext<V>,
     ) -> Self {
-        let comment_editor = create_readonly_comment_markdown_editor(
-            &source.content,
-            disable_scrolling,
-            max_width,
-            ctx,
-        );
+        let comment_editor =
+            create_readonly_comment_markdown_editor(Some(source.content.clone()), ctx);
         let diff_content = Self::diff_content_for_comment(&source, always_use_static_diff, ctx);
         let title = Self::compute_title(&source, repo_path);
         let last_updated_duration = Local::now() - source.last_update_time;

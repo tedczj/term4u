@@ -2,10 +2,11 @@ use std::fmt::{Display, Formatter};
 
 use chrono::{DateTime, Local};
 use warp_editor::render::model::LineCount;
-use crate::code_review::context::{CurrentHead, DiffBase};
+
 use crate::code::buffer_location::LocalOrRemotePath;
 use crate::code::editor::EditorReviewComment;
 use crate::code::editor::line::EditorLineLocation;
+use crate::code_review::context::{CurrentHead, DiffBase};
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub enum CommentOrigin {

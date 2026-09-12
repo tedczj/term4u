@@ -204,7 +204,9 @@ impl Argument {
 pub enum ArgumentType {
     #[default]
     Text,
-    Enum { enum_id: String },
+    Enum {
+        enum_id: String,
+    },
 }
 
 fn deserialize_arg_type<'de, D>(deserializer: D) -> Result<ArgumentType, D::Error>
@@ -227,7 +229,8 @@ fn deserialize_optional_legacy_id<'de, D>(deserializer: D) -> Result<Option<Stri
 where
     D: Deserializer<'de>,
 {
-    Option::<Value>::deserialize(deserializer).map(|value| value.map(|value| stable_legacy_id(&value)))
+    Option::<Value>::deserialize(deserializer)
+        .map(|value| value.map(|value| stable_legacy_id(&value)))
 }
 
 fn stable_legacy_id(value: &Value) -> String {

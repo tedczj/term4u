@@ -23,28 +23,46 @@ struct ReviewCommentThread<'a, T> {
 }
 
 impl<'a, T> ReviewCommentThread<'a, T> {
-    fn root(&self) -> &'a T { self.comments[0] }
-    fn comments(&self) -> &[&'a T] { &self.comments }
-    fn missing_parent_id(&self) -> Option<&'a str> { self.missing_parent_id }
+    fn root(&self) -> &'a T {
+        self.comments[0]
+    }
+    fn comments(&self) -> &[&'a T] {
+        &self.comments
+    }
+    fn missing_parent_id(&self) -> Option<&'a str> {
+        self.missing_parent_id
+    }
 }
 
-fn group_review_comment_threads<T: ReviewCommentThreadItem>(comments: &[T]) -> Vec<ReviewCommentThread<'_, T>> {
+fn group_review_comment_threads<T: ReviewCommentThreadItem>(
+    comments: &[T],
+) -> Vec<ReviewCommentThread<'_, T>> {
     let existing_ids: HashSet<&str> = comments.iter().map(T::comment_id).collect();
     let mut roots = HashMap::new();
     let mut children: HashMap<&str, Vec<&T>> = HashMap::new();
     for comment in comments {
         match comment.parent_comment_id() {
-            Some(parent) if existing_ids.contains(parent) => children.entry(parent).or_default().push(comment),
-            missing => { roots.insert(comment.comment_id(), (comment, missing)); }
+            Some(parent) if existing_ids.contains(parent) => {
+                children.entry(parent).or_default().push(comment)
+            }
+            missing => {
+                roots.insert(comment.comment_id(), (comment, missing));
+            }
         }
     }
     let mut roots: Vec<_> = roots.into_values().collect();
     roots.sort_by(|(a, _), (b, _)| a.comment_id().cmp(b.comment_id()));
-    roots.into_iter().map(|(root, missing_parent_id)| {
-        let mut comments = Vec::new();
-        collect_thread(root, &children, &mut comments);
-        ReviewCommentThread { comments, missing_parent_id }
-    }).collect()
+    roots
+        .into_iter()
+        .map(|(root, missing_parent_id)| {
+            let mut comments = Vec::new();
+            collect_thread(root, &children, &mut comments);
+            ReviewCommentThread {
+                comments,
+                missing_parent_id,
+            }
+        })
+        .collect()
 }
 
 fn collect_thread<'a, T: ReviewCommentThreadItem>(
@@ -62,8 +80,15 @@ fn collect_thread<'a, T: ReviewCommentThreadItem>(
     }
 }
 
-fn format_review_comment_thread<T: ReviewCommentThreadItem>(thread: &ReviewCommentThread<'_, T>) -> String {
-    thread.comments().iter().map(|comment| format!("**@{}**:\n{}", comment.author(), comment.body())).collect::<Vec<_>>().join(THREAD_REPLY_DIVIDER)
+fn format_review_comment_thread<T: ReviewCommentThreadItem>(
+    thread: &ReviewCommentThread<'_, T>,
+) -> String {
+    thread
+        .comments()
+        .iter()
+        .map(|comment| format!("**@{}**:\n{}", comment.author(), comment.body()))
+        .collect::<Vec<_>>()
+        .join(THREAD_REPLY_DIVIDER)
 }
 
 /// Converts pending imported provider comments into attached review comments by:

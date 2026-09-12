@@ -235,18 +235,15 @@ impl CodeSource {
         !matches!(
             self,
             Self::FileTree {
-                    location: LocalOrRemotePath::Remote(_),
-                }
-                | Self::CommandPalette {
-                    location: LocalOrRemotePath::Remote(_),
-                }
-                | Self::ProjectRules {
-                    location: LocalOrRemotePath::Remote(_),
-                }
-                | Self::Skill {
-                    location: LocalOrRemotePath::Remote(_),
-                    ..
-                }
+                location: LocalOrRemotePath::Remote(_),
+            } | Self::CommandPalette {
+                location: LocalOrRemotePath::Remote(_),
+            } | Self::ProjectRules {
+                location: LocalOrRemotePath::Remote(_),
+            } | Self::Skill {
+                location: LocalOrRemotePath::Remote(_),
+                ..
+            }
         )
     }
 }
@@ -312,20 +309,6 @@ impl CodeManager {
                     && source.location().as_ref() == Some(location)
             })
             .map(|(_, data)| data.locator)
-    }
-
-    // Allow dead_code here for wasm compilation
-    #[allow(dead_code)]
-    pub fn complete_pending_diffs(&mut self, source: CodeSource, ctx: &mut ModelContext<Self>) {
-        if !self.source_to_pane_data.contains_key(&source) {
-            log::warn!("Trying to complete an edit on a source that doesn't exist");
-        }
-
-        let CodeSource::AIAction { id } = source else {
-            return;
-        };
-
-        ctx.emit(CodeManagerEvent::EditCompleted { action_id: id })
     }
 }
 

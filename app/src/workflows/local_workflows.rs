@@ -4,8 +4,6 @@ use std::sync::Arc;
 
 use warp_util::path::ShellFamily;
 use warp_workflows::workflows as global_workflows;
-#[cfg(not(target_family = "wasm"))]
-use warpui::platform::OperatingSystem;
 use warpui::{AppContext, Entity, ModelContext, SingletonEntity};
 
 use super::WorkflowSource;
@@ -140,17 +138,7 @@ impl LocalWorkflows {
                     .iter()
                     .map(|workflow| (WorkflowSource::Local, workflow)),
             )
-            .find(|(_, workflow)| {
-                if let Workflow::Command {
-                    command: workflow_command,
-                    ..
-                } = workflow
-                {
-                    workflow_command == command
-                } else {
-                    false
-                }
-            })
+            .find(|(_, workflow)| workflow.command == command)
             .map(|(workflow_source, workflow)| (workflow_source, workflow.clone()))
     }
 }
@@ -161,19 +149,8 @@ impl Entity for LocalWorkflows {
 
 impl SingletonEntity for LocalWorkflows {}
 
-/// Returns all app workflows.
 fn app_workflows() -> Vec<Workflow> {
-    #[cfg(not(target_family = "wasm"))]
-    {
-        let shell_family = OperatingSystem::get().default_shell_family();
-        self::prompt_chip_logging_workflow(shell_family)
-            .into_iter()
-            .collect()
-    }
-    #[cfg(target_family = "wasm")]
-    {
-        Vec::new()
-    }
+    Vec::new()
 }
 
 /// Loads project-level workflows (if any) from the warp config directory in the current working
@@ -205,29 +182,6 @@ pub fn tail_command_for_shell(shell_family: ShellFamily, path: &PathBuf) -> Stri
             format!("Get-Content -Wait -Tail 10 -Path \"{}\"", path.display())
         }
     }
-}
-
-#[cfg(not(target_family = "wasm"))]
-pub fn prompt_chip_logging_workflow(shell_family: ShellFamily) -> Option<Workflow> {
-    if !warp_core::channel::ChannelState::enable_debug_features() {
-        return None;
-    }
-    let log_file_path = crate::context_chips::logging::log_file_path().ok()?;
-    Some(Workflow::Command {
-        name: "Tail prompt chip log".into(),
-        command: tail_command_for_shell(shell_family, &log_file_path),
-        tags: vec!["warp".into(), "debug".into()],
-        description: Some(
-            "Shows the diagnostic log of shell commands run by prompt context chips (dogfood only)"
-                .into(),
-        ),
-        arguments: vec![],
-        source_url: None,
-        author: Some("Warp".into()),
-        author_url: None,
-        shells: vec![],
-        environment_variables: None,
-    })
 }
 
 #[cfg(test)]

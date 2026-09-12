@@ -1,12 +1,10 @@
 //! Utility functions for working with skills.
 
-use std::collections::hash_map::Entry;
 use std::collections::HashMap;
+use std::collections::hash_map::Entry;
 use std::hash::{Hash, Hasher};
 
-use ai::skills::{
-    ParsedSkill, provider_parent_directory_for_skills_root, provider_rank,
-};
+use ai::skills::{ParsedSkill, provider_parent_directory_for_skills_root, provider_rank};
 use lazy_static::lazy_static;
 use siphasher::sip::SipHasher;
 use warp_util::local_or_remote_path::LocalOrRemotePath;
@@ -100,9 +98,6 @@ pub(crate) fn unique_skills(
     deduplicator.extend_paths(skill_paths, skills_by_path);
     deduplicator.into_descriptors()
 }
-
-
-
 
 pub fn skill_path_from_location(location: &LocalOrRemotePath) -> Option<LocalOrRemotePath> {
     let mut current = Some(location.clone());

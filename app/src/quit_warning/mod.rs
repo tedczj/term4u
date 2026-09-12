@@ -238,35 +238,8 @@ impl QuitScope<'_> {
         }
     }
 
-    /// Count of shared sessions in this scope.
-    fn shared_sessions(&self, ctx: &AppContext) -> usize {
-        match self {
-            Self::Pane {
-                pane_group,
-                pane_id,
-                ..
-            } => pane_group
-                .terminal_view_from_pane_id(*pane_id, ctx)
-                .filter(|view| view.as_ref(ctx).is_sharing_session())
-                .into_iter()
-                .count(),
-            Self::Tabs(tabs) => tabs
-                .iter()
-                .filter_map(|tab| tab.upgrade(ctx))
-                .map(|tab| tab.as_ref(ctx).number_of_shared_sessions(ctx))
-                .sum(),
-            Self::Window(window_id) => ctx
-                .views_of_type::<PaneGroup>(*window_id)
-                .map(|views| {
-                    views
-                        .into_iter()
-                        .map(|view| view.as_ref(ctx).number_of_shared_sessions(ctx))
-                        .sum()
-                })
-                .unwrap_or_default(),
-            Self::App => crate::session_management::num_shared_sessions(ctx),
-            Self::EditorTab { .. } => 0,
-        }
+    fn shared_sessions(&self) -> usize {
+        0
     }
 
     fn close_target(&self) -> CloseTarget {
@@ -336,7 +309,7 @@ impl<'a> UnsavedStateSummary<'a> {
         let code_review_views = scope.code_review_views(ctx);
         let code_review_summary = CodeEditorSummary::new(&code_review_views);
 
-        let num_shared_sessions = scope.shared_sessions(ctx);
+        let num_shared_sessions = scope.shared_sessions();
 
         UnsavedStateSummary {
             scope,
@@ -565,37 +538,13 @@ impl<'a> QuitWarningDialog<'a> {
             ctx
         );
 
-        let session_summary = self.state.running_sessions();
-        let dialog = self.build();
-        // We don't support showing a modal on all platforms.
-        let mut shown = false;
-        if cfg!(all(not(target_family = "wasm"), target_os = "macos")) {
-            ctx.show_native_platform_modal(dialog);
-            shown = true;
-        } else if cfg!(all(
-            not(target_family = "wasm"),
-            any(target_os = "linux", target_os = "freebsd", windows)
-        )) {
-            // Find a window to show the Warp-native modal in. If there is no active window, use
-            // one of the windows with a running process.
-            let window_id_to_focus = ctx
-                .windows()
-                .active_window()
-                .or_else(|| session_summary.windows_running().iter().next().copied());
-            if let Some(window_id_to_focus) = window_id_to_focus {
-                ctx.windows().show_window_and_focus_app(window_id_to_focus);
-                if let Some(workspace) = ctx
-                    .views_of_type::<Workspace>(window_id_to_focus)
-                    .and_then(|workspaces| workspaces.first().cloned())
-                {
-                    workspace.update(ctx, |view, ctx| {
-                        view.show_native_modal(dialog, ctx);
-                    });
-                    shown = true;
-                }
-            }
+        #[cfg(not(target_family = "wasm"))]
+        {
+            ctx.show_native_platform_modal(self.build());
+            true
         }
-        shown
+        #[cfg(target_family = "wasm")]
+        false
     }
 }
 

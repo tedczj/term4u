@@ -10,8 +10,8 @@ use serde::{Deserialize, Serialize};
 use warpui::elements::{ChildView, Element};
 use warpui::platform::{WindowBounds, WindowStyle};
 use warpui::{
-    AddWindowOptions, AppContext, DisplayId, Entity, FocusContext, SingletonEntity,
-    TypedActionView, View, ViewContext, ViewHandle, WindowId,
+    AddWindowOptions, AppContext, Entity, FocusContext, SingletonEntity, TypedActionView, View,
+    ViewContext, ViewHandle, WindowId,
 };
 
 use crate::app_state::{AppState, PaneUuid, WindowSnapshot};
@@ -38,11 +38,25 @@ lazy_static! {
 #[derive(Debug, Clone)]
 pub struct QuakeModeState {
     window_id: WindowId,
-    active_display_id: DisplayId,
 }
 
-#[derive(Debug, Clone, Copy, Hash, Eq, PartialEq, Deserialize, Serialize, Default, schemars::JsonSchema, settings_value::SettingsValue)]
-#[schemars(description = "Screen edge to pin the hotkey window to.", rename_all = "snake_case")]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Hash,
+    Eq,
+    PartialEq,
+    Deserialize,
+    Serialize,
+    Default,
+    schemars::JsonSchema,
+    settings_value::SettingsValue,
+)]
+#[schemars(
+    description = "Screen edge to pin the hotkey window to.",
+    rename_all = "snake_case"
+)]
 pub enum QuakeModePinPosition {
     #[default]
     Top,
@@ -102,7 +116,9 @@ pub enum NewWorkspaceSource {
 impl NewWorkspaceSource {
     pub fn has_horizontal_split(&self) -> bool {
         match self {
-            Self::Restored { window_snapshot, .. } => window_snapshot
+            Self::Restored {
+                window_snapshot, ..
+            } => window_snapshot
                 .tabs
                 .get(window_snapshot.active_tab_index)
                 .or_else(|| window_snapshot.tabs.first())
@@ -153,43 +169,67 @@ impl RootView {
     }
 
     fn toggle_maximize_window(&mut self, _: &(), ctx: &mut ViewContext<Self>) -> bool {
-        ctx.toggle_maximize_window();
+        ctx.toggle_maximized_window();
         true
     }
 
     fn toggle_fullscreen(&mut self, _: &(), ctx: &mut ViewContext<Self>) -> bool {
-        ctx.windows().toggle_fullscreen(self.window_id, ctx);
+        ctx.toggle_fullscreen();
         true
     }
 
     fn focus_pane(&mut self, locator: &PaneViewLocator, ctx: &mut ViewContext<Self>) -> bool {
-        self.workspace.update(ctx, |workspace, ctx| workspace.focus_pane(*locator, ctx));
+        self.workspace
+            .update(ctx, |workspace, ctx| workspace.focus_pane(*locator, ctx));
         true
     }
 
-    fn activate_tab_by_pane_group_id(&mut self, id: &warpui::EntityId, ctx: &mut ViewContext<Self>) -> bool {
-        let index = self.workspace.as_ref(ctx).tab_views().position(|group| group.id() == *id);
+    fn activate_tab_by_pane_group_id(
+        &mut self,
+        id: &warpui::EntityId,
+        ctx: &mut ViewContext<Self>,
+    ) -> bool {
+        let index = self
+            .workspace
+            .as_ref(ctx)
+            .tab_views()
+            .position(|group| group.id() == *id);
         if let Some(index) = index {
-            self.workspace.update(ctx, |workspace, ctx| workspace.handle_action(&WorkspaceAction::ActivateTab(index), ctx));
+            self.workspace.update(ctx, |workspace, ctx| {
+                workspace.handle_action(&WorkspaceAction::ActivateTab(index), ctx)
+            });
         }
         true
     }
 
-    pub fn open_settings_page_in_existing_window(&mut self, section: &SettingsSection, ctx: &mut ViewContext<Self>) -> bool {
-        self.workspace.update(ctx, |workspace, ctx| workspace.handle_action(&WorkspaceAction::ShowSettingsPage(*section), ctx));
+    pub fn open_settings_page_in_existing_window(
+        &mut self,
+        section: &SettingsSection,
+        ctx: &mut ViewContext<Self>,
+    ) -> bool {
+        self.workspace.update(ctx, |workspace, ctx| {
+            workspace.handle_action(&WorkspaceAction::ShowSettingsPage(*section), ctx)
+        });
         true
     }
 
-    pub fn open_settings_in_existing_window(&mut self, args: &OpenSettingsArgs, ctx: &mut ViewContext<Self>) -> bool {
+    pub fn open_settings_in_existing_window(
+        &mut self,
+        args: &OpenSettingsArgs,
+        ctx: &mut ViewContext<Self>,
+    ) -> bool {
         let action = workspace_action_for_open_settings(args);
-        self.workspace.update(ctx, |workspace, ctx| workspace.handle_action(&action, ctx));
+        self.workspace
+            .update(ctx, |workspace, ctx| workspace.handle_action(&action, ctx));
         true
     }
 
     fn add_session_at_path(&mut self, path: &PathBuf, ctx: &mut ViewContext<Self>) -> bool {
         self.workspace.update(ctx, |workspace, ctx| {
             workspace.add_tab_with_pane_layout(
-                PanesLayout::SingleTerminal(Box::new(NewTerminalOptions::default().with_initial_directory(path))),
+                PanesLayout::SingleTerminal(Box::new(
+                    NewTerminalOptions::default().with_initial_directory(path),
+                )),
                 Arc::new(HashMap::new()),
                 None,
                 ctx,
@@ -205,25 +245,32 @@ impl RootView {
     }
 }
 
-impl Entity for RootView { type Event = (); }
+impl Entity for RootView {
+    type Event = ();
+}
 
 impl TypedActionView for RootView {
     type Action = WorkspaceAction;
 
     fn handle_action(&mut self, action: &Self::Action, ctx: &mut ViewContext<Self>) {
-        self.workspace.update(ctx, |workspace, ctx| workspace.handle_action(action, ctx));
+        self.workspace
+            .update(ctx, |workspace, ctx| workspace.handle_action(action, ctx));
     }
 }
 
 impl View for RootView {
-    fn ui_name() -> &'static str { "RootView" }
+    fn ui_name() -> &'static str {
+        "RootView"
+    }
 
     fn render(&self, _app: &AppContext) -> Box<dyn Element> {
         ChildView::new(&self.workspace).finish()
     }
 
     fn on_focus(&mut self, focus: &FocusContext, ctx: &mut ViewContext<Self>) {
-        if focus.is_self_focused() { self.focus(ctx); }
+        if focus.is_self_focused() {
+            self.focus(ctx);
+        }
     }
 }
 
@@ -235,18 +282,41 @@ pub fn init(app: &mut AppContext) {
     app.add_global_action("root_view:open_from_restored", open_from_restored);
     app.add_global_action("root_view:open_new", open_new);
     app.add_global_action("root_view:open_new_with_shell", open_new_with_shell);
-    app.add_global_action("root_view:open_new_from_path", |path, ctx| { let _ = open_new_from_path(path, ctx); });
+    app.add_global_action("root_view:open_new_from_path", |path, ctx| {
+        let _ = open_new_from_path(path, ctx);
+    });
     app.add_global_action("root_view:open_launch_config", open_launch_config);
     app.add_global_action("root_view:send_feedback", send_feedback);
-    app.add_global_action("root_view:toggle_quake_mode_window", toggle_quake_mode_window);
-    app.add_action("root_view:handle_pane_navigation_event", RootView::focus_pane);
-    app.add_action("root_view:activate_tab_by_pane_group_id", RootView::activate_tab_by_pane_group_id);
-    app.add_action("root_view:add_session_at_path", RootView::add_session_at_path);
-    app.add_action("root_view:open_settings_page_in_existing_window", RootView::open_settings_page_in_existing_window);
-    app.add_action("root_view:open_settings_in_existing_window", RootView::open_settings_in_existing_window);
+    app.add_global_action(
+        "root_view:toggle_quake_mode_window",
+        toggle_quake_mode_window,
+    );
+    app.add_action(
+        "root_view:handle_pane_navigation_event",
+        RootView::focus_pane,
+    );
+    app.add_action(
+        "root_view:activate_tab_by_pane_group_id",
+        RootView::activate_tab_by_pane_group_id,
+    );
+    app.add_action(
+        "root_view:add_session_at_path",
+        RootView::add_session_at_path,
+    );
+    app.add_action(
+        "root_view:open_settings_page_in_existing_window",
+        RootView::open_settings_page_in_existing_window,
+    );
+    app.add_action(
+        "root_view:open_settings_in_existing_window",
+        RootView::open_settings_in_existing_window,
+    );
     app.add_action("root_view:close_window", RootView::close_window);
     app.add_action("root_view:minimize_window", RootView::minimize_window);
-    app.add_action("root_view:toggle_maximize_window", RootView::toggle_maximize_window);
+    app.add_action(
+        "root_view:toggle_maximize_window",
+        RootView::toggle_maximize_window,
+    );
     app.add_action("root_view:toggle_fullscreen", RootView::toggle_fullscreen);
 }
 
@@ -285,17 +355,24 @@ pub(crate) fn open_new_with_workspace_source(
     ctx: &mut AppContext,
 ) -> (WindowId, ViewHandle<RootView>) {
     let resources = GlobalResourceHandlesProvider::as_ref(ctx).get().clone();
-    ctx.add_window(default_window_options(WindowSettings::as_ref(ctx), ctx), |ctx| {
+    ctx.add_window(default_window_options(), |ctx| {
         let mut root = RootView::new(resources, source, ctx);
         root.focus(ctx);
         root
     })
 }
 
-pub(crate) fn open_new_from_path(arg: &OpenPath, ctx: &mut AppContext) -> (WindowId, ViewHandle<RootView>) {
+pub(crate) fn open_new_from_path(
+    arg: &OpenPath,
+    ctx: &mut AppContext,
+) -> (WindowId, ViewHandle<RootView>) {
     open_new_with_workspace_source(
         NewWorkspaceSource::Session {
-            options: Box::new(NewTerminalOptions::default().with_initial_directory_opt(path_if_directory(&arg.path).map(Path::to_path_buf))),
+            options: Box::new(
+                NewTerminalOptions::default().with_initial_directory_opt(
+                    path_if_directory(&arg.path).map(Path::to_path_buf),
+                ),
+            ),
         },
         ctx,
     )
@@ -306,36 +383,60 @@ pub(crate) fn open_new_window_get_handles(
     ctx: &mut AppContext,
 ) -> (WindowId, ViewHandle<RootView>) {
     open_new_with_workspace_source(
-        NewWorkspaceSource::Empty { previous_active_window: ctx.windows().active_window(), shell },
+        NewWorkspaceSource::Empty {
+            previous_active_window: ctx.windows().active_window(),
+            shell,
+        },
         ctx,
     )
 }
 
-fn open_new(_: &(), ctx: &mut AppContext) { open_new_window_get_handles(None, ctx); }
-fn open_new_with_shell(shell: &Option<AvailableShell>, ctx: &mut AppContext) { open_new_window_get_handles(shell.clone(), ctx); }
+fn open_new(_: &(), ctx: &mut AppContext) {
+    open_new_window_get_handles(None, ctx);
+}
+fn open_new_with_shell(shell: &Option<AvailableShell>, ctx: &mut AppContext) {
+    open_new_window_get_handles(shell.clone(), ctx);
+}
 
-fn path_if_directory(path: &Path) -> Option<&Path> { path.is_dir().then_some(path) }
+fn path_if_directory(path: &Path) -> Option<&Path> {
+    path.is_dir().then_some(path)
+}
 
 fn workspace_action_for_open_settings(args: &OpenSettingsArgs) -> WorkspaceAction {
     match args {
         OpenSettingsArgs::Default => WorkspaceAction::ShowSettings,
-        OpenSettingsArgs::Search { query } => WorkspaceAction::ShowSettingsPageWithSearch { search_query: query.clone(), section: None },
-        OpenSettingsArgs::Widget { page, widget_id } => WorkspaceAction::ScrollToSettingsWidget { page: *page, widget_id },
+        OpenSettingsArgs::Search { query } => WorkspaceAction::ShowSettingsPageWithSearch {
+            search_query: query.clone(),
+            section: None,
+        },
+        OpenSettingsArgs::Widget { page, widget_id } => WorkspaceAction::ScrollToSettingsWidget {
+            page: *page,
+            widget_id,
+        },
     }
 }
 
-fn default_window_options(settings: &WindowSettings, _ctx: &AppContext) -> AddWindowOptions {
+fn default_window_options() -> AddWindowOptions {
     AddWindowOptions {
         window_style: WindowStyle::Normal,
-        window_bounds: WindowBounds::new(settings.window_size.value().map(|size| RectF::new(vec2f(100., 100.), vec2f(size.width as f32, size.height as f32)))),
+        window_bounds: WindowBounds::new(Some(RectF::new(
+            vec2f(100., 100.),
+            *FALLBACK_WINDOW_SIZE,
+        ))),
         title: Some(WINDOW_TITLE.to_owned()),
         ..Default::default()
     }
 }
 
-pub fn quake_mode_window_is_open() -> bool { QUAKE_STATE.lock().is_some() }
-pub fn quake_mode_window_id() -> Option<WindowId> { QUAKE_STATE.lock().as_ref().map(|state| state.window_id) }
-pub fn set_quake_mode(state: Option<QuakeModeState>) { *QUAKE_STATE.lock() = state; }
+pub fn quake_mode_window_is_open() -> bool {
+    QUAKE_STATE.lock().is_some()
+}
+pub fn quake_mode_window_id() -> Option<WindowId> {
+    QUAKE_STATE.lock().as_ref().map(|state| state.window_id)
+}
+pub fn set_quake_mode(state: Option<QuakeModeState>) {
+    *QUAKE_STATE.lock() = state;
+}
 
 fn toggle_quake_mode_window(_: &GlobalResourceHandles, ctx: &mut AppContext) {
     if let Some(window_id) = quake_mode_window_id() {
@@ -346,8 +447,7 @@ fn toggle_quake_mode_window(_: &GlobalResourceHandles, ctx: &mut AppContext) {
         set_quake_mode(None);
     }
     let (window_id, _) = open_new_window_get_handles(None, ctx);
-    let display_id = ctx.windows().active_display().map(|display| display.id()).unwrap_or_default();
-    set_quake_mode(Some(QuakeModeState { window_id, active_display_id: display_id }));
+    set_quake_mode(Some(QuakeModeState { window_id }));
 }
 
 pub fn update_quake_window_bounds(_settings: &QuakeModeSettings, _ctx: &mut AppContext) {}

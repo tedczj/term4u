@@ -35,14 +35,12 @@ use crate::code_review::diff_state::{
 use crate::code_review::telemetry_event::{
     CodeReviewTelemetryEvent, GitDialogStatus, GitOperationKind,
 };
-use crate::settings::AISettings;
 use crate::ui_components::dialog::{Dialog, dialog_styles};
 use crate::ui_components::icons::Icon;
 use crate::util::git::{Commit, FileChangeEntry};
 use crate::view_components::DismissibleToast;
 use crate::view_components::action_button::{ActionButton, ButtonSize, NakedTheme, SecondaryTheme};
 use crate::workspace::ToastStack;
-use crate::workspaces::user_workspaces::UserWorkspaces;
 
 pub(crate) mod commit;
 pub(crate) mod pr;
@@ -105,21 +103,6 @@ fn show_toast(msg: impl Into<String>, ctx: &mut ViewContext<GitDialog>) {
         let toast = DismissibleToast::default(msg);
         toast_stack.add_ephemeral_toast(toast, window_id, ctx);
     });
-}
-
-/// Whether the git-operations AI autogen flow should send an AI request.
-///
-/// Folds the parent feature flag, the user's dedicated per-feature AI toggle
-/// (which itself requires active AI / auth / remote-session org policy to
-/// allow AI), and the current team's Git Operations AI tier policy.
-///
-/// When this returns `false`, call sites skip AI entirely: commit.rs opens
-/// with the manual-type placeholder and pr.rs goes straight to
-/// `gh pr create --fill`.
-fn should_send_git_ops_ai_request(app: &AppContext) -> bool {
-    FeatureFlag::GitOperationsInCodeReview.is_enabled()
-        && AISettings::as_ref(app).is_git_operations_autogen_enabled(app)
-        && UserWorkspaces::as_ref(app).is_git_operations_ai_enabled()
 }
 
 /// Maps a raw git error string to a user-friendly toast message. Known
@@ -511,7 +494,6 @@ impl GitDialog {
         // Open-time AI commit-message autogen runs for both backends; the model
         // generates it (local in-process, remote on the daemon) and the result
         // returns via the diff-state subscription wired up just above.
-        commit::maybe_start_commit_message_autogen(&this, ctx);
         // Remote repos source the Changes box from synced metadata (the local
         // path loads it from the working tree in `commit::new_state`).
         commit::refresh_remote_file_changes(&mut this, ctx);

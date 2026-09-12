@@ -18,10 +18,7 @@ impl NotebookStore {
         Self::load(warp_core::paths::data_dir().join("notebooks"), legacy_rows)
     }
 
-    fn load(
-        storage_dir: PathBuf,
-        legacy_rows: Vec<(i32, Option<String>, Option<String>)>,
-    ) -> Self {
+    fn load(storage_dir: PathBuf, legacy_rows: Vec<(i32, Option<String>, Option<String>)>) -> Self {
         let mut notebooks = load_notebook_files(&storage_dir);
         for (id, title, serialized) in legacy_rows {
             let id = NotebookId::from_legacy_id(id);
@@ -114,8 +111,12 @@ fn load_notebook_files(storage_dir: &Path) -> HashMap<NotebookId, Notebook> {
 }
 
 fn write_notebook(storage_dir: &Path, notebook: &Notebook) -> Result<()> {
-    fs::create_dir_all(storage_dir)
-        .with_context(|| format!("failed to create notebook directory {}", storage_dir.display()))?;
+    fs::create_dir_all(storage_dir).with_context(|| {
+        format!(
+            "failed to create notebook directory {}",
+            storage_dir.display()
+        )
+    })?;
     let path = storage_dir.join(format!("{}.json", notebook.id));
     let temporary = storage_dir.join(format!(".{}.tmp", notebook.id));
     let serialized = serde_json::to_vec_pretty(notebook)?;

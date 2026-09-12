@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 use std::collections::VecDeque;
-use std::sync::Arc;
+use std::sync::{Arc, LazyLock};
 
 use async_channel::{Receiver, Sender};
 use parking_lot::FairMutex;
@@ -24,7 +24,8 @@ use crate::terminal::model::session::{
 use crate::terminal::model::{StartCommandOutcome, escape_sequences};
 use crate::terminal::model_events::{AnsiHandlerEvent, ModelEvent, ModelEventDispatcher};
 use crate::terminal::shell::ShellType;
-use crate::terminal::view::LINEFEED_REGEX;
+static LINEFEED_REGEX: LazyLock<regex::Regex> =
+    LazyLock::new(|| regex::Regex::new("\r?\n").expect("valid linefeed regex"));
 #[cfg(not(target_family = "wasm"))]
 use crate::terminal::writeable_pty::bootstrap_file::{TempBootstrapFile, permanent_bootstrap_file};
 use crate::terminal::{SizeUpdate, TerminalModel, bootstrap};
@@ -551,7 +552,6 @@ impl<T: EventLoopSender> PtyController<T> {
     }
 
     /// Writes agent input to the PTY.
-
 
     /// Writes user input to the PTY.
     ///

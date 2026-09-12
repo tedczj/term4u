@@ -7,9 +7,8 @@ use repo_metadata::{Repository, RepositoryUpdate, RepositoryWatchMode};
 use warpui::r#async::SpawnedFutureHandle;
 use warpui::{Entity, ModelContext, ModelHandle};
 
-use super::{GitRepoStatusEvent, GitStatusMetadata};
+use super::{GitBranchTrackingStatus, GitRepoStatusEvent, GitStatusMetadata};
 use crate::code_review::diff_state::diff_metadata_against_head;
-use crate::context_chips::display_chip::GitBranchTrackingStatus;
 use crate::throttle::throttle;
 use crate::util::git::{detect_current_branch_display, detect_main_branch};
 

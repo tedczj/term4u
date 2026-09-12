@@ -1,5 +1,6 @@
 use std::collections::{HashMap, VecDeque};
 use std::mem;
+use std::sync::LazyLock;
 
 use pathfinder_color::ColorU;
 use string_offset::CharOffset;
@@ -17,7 +18,9 @@ use super::session::SessionInfo;
 use crate::safe_debug;
 use crate::terminal::event::Event as TerminalEvent;
 use crate::terminal::event_listener::ChannelEventListener;
-use crate::terminal::view::CONTROL_MASTER_ERROR_REGEX;
+static CONTROL_MASTER_ERROR_REGEX: LazyLock<regex::Regex> = LazyLock::new(|| {
+    regex::Regex::new(r"(?m)^channel (\d)+: open failed:").expect("valid ControlMaster error regex")
+});
 
 #[cfg(test)]
 #[path = "early_output_tests.rs"]

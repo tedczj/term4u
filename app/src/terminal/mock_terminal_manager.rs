@@ -10,8 +10,8 @@ use super::model::session::Sessions;
 use super::model_events::ModelEventDispatcher;
 use super::terminal_manager::BlockSpacing;
 use super::{ShellLaunchState, TerminalManager, TerminalModel, TerminalView};
-use crate::terminal::model::SerializedBlockListItem;
 use crate::pane_group::TerminalViewResources;
+use crate::terminal::model::SerializedBlockListItem;
 
 pub struct MockTerminalManager {
     model: Arc<FairMutex<TerminalModel>>,
@@ -99,13 +99,6 @@ impl MockTerminalManager {
 impl TerminalManager for MockTerminalManager {
     fn model(&self) -> Arc<FairMutex<TerminalModel>> {
         self.model.clone()
-    }
-
-    fn on_view_detached(
-        &self,
-        _detach_type: crate::pane_group::pane::DetachType,
-        _: &mut AppContext,
-    ) {
     }
 
     fn as_any(&self) -> &dyn std::any::Any {

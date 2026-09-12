@@ -4,8 +4,8 @@ use std::path::PathBuf;
 
 use pathfinder_geometry::vector::Vector2F;
 use warp::tui_export::{
-    BannerState, IsSharedSessionCreator, LocalTtyTerminalManager, PersistenceWriter,
-    TerminalManagerTrait, TerminalSurfaceResult,
+    BannerState, LocalTtyTerminalManager, PersistenceWriter, TerminalManagerTrait,
+    TerminalSurfaceResult,
 };
 use warpui::SingletonEntity;
 use warpui_core::runtime::TuiDriverHandle;
@@ -69,7 +69,6 @@ impl TuiSessions {
         let manager = LocalTtyTerminalManager::<TuiTerminalSessionView>::create_tui_model(
             startup_directory,
             HashMap::<OsString, OsString>::from_iter(std::env::vars_os()),
-            IsSharedSessionCreator::No,
             None,
             banner,
             Vector2F::new(120., 24.),

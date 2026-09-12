@@ -37,7 +37,6 @@ pub use sqlite::database_file_path_for_scope;
 pub use sqlite::establish_ro_connection;
 use warp_core::command::ExitCode;
 use warp_errors::report_error;
-use warp_graphql::scalars::time::ServerTimestamp;
 use warpui::{AppContext, Entity, SingletonEntity};
 
 use self::model::Project;
@@ -253,17 +252,39 @@ pub enum ModelEvent {
     SaveBlock(BlockCompleted),
     DeleteBlocks(Vec<u8>),
     Snapshot(AppState),
-    InsertCommand { metadata: StartedCommandMetadata },
-    UpdateFinishedCommand { metadata: FinishedCommandMetadata },
+    InsertCommand {
+        metadata: StartedCommandMetadata,
+    },
+    UpdateFinishedCommand {
+        metadata: FinishedCommandMetadata,
+    },
     Terminate,
-    UpsertCodebaseIndexMetadata { index_metadata: Box<CodeWorkspaceMetadata> },
-    DeleteCodebaseIndexMetadata { repo_path: PathBuf },
-    UpsertProject { project: Project },
-    DeleteProject { path: String },
-    UpsertProjectRules { project_rule_paths: Vec<ProjectRulePath> },
-    DeleteProjectRules { path: Vec<PathBuf> },
-    AddIgnoredSuggestion { suggestion: String, suggestion_type: SuggestionType },
-    RemoveIgnoredSuggestion { suggestion: String, suggestion_type: SuggestionType },
+    UpsertCodebaseIndexMetadata {
+        index_metadata: Box<CodeWorkspaceMetadata>,
+    },
+    DeleteCodebaseIndexMetadata {
+        repo_path: PathBuf,
+    },
+    UpsertProject {
+        project: Project,
+    },
+    DeleteProject {
+        path: String,
+    },
+    UpsertProjectRules {
+        project_rule_paths: Vec<ProjectRulePath>,
+    },
+    DeleteProjectRules {
+        path: Vec<PathBuf>,
+    },
+    AddIgnoredSuggestion {
+        suggestion: String,
+        suggestion_type: SuggestionType,
+    },
+    RemoveIgnoredSuggestion {
+        suggestion: String,
+        suggestion_type: SuggestionType,
+    },
     UpsertWorkspaceLanguageServer {
         workspace_path: PathBuf,
         lsp_type: LSPServerType,

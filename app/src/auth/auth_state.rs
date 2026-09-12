@@ -54,7 +54,10 @@ impl AuthState {
     }
 
     pub fn user_id(&self) -> Option<UserUid> {
-        self.test_identity.read().as_ref().map(|identity| identity.uid)
+        self.test_identity
+            .read()
+            .as_ref()
+            .map(|identity| identity.uid)
     }
 
     pub fn user_email(&self) -> Option<String> {

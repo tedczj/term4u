@@ -11,7 +11,6 @@ use sysinfo::ProcessesToUpdate;
 use warp_core::channel::ChannelState;
 use warpui::{App, AppContext, Entity, ModelContext, SingletonEntity};
 
-use crate::server::telemetry;
 use crate::system::memory_footprint;
 use crate::terminal::TerminalView;
 use crate::{TelemetryEvent, send_telemetry_from_app_ctx, send_telemetry_sync_from_ctx};
@@ -479,16 +478,6 @@ struct CpuUsageStats {
     avg_usage: f32,
 }
 
-impl From<CpuUsageStats> for telemetry::CpuUsageStats {
-    fn from(value: CpuUsageStats) -> Self {
-        Self {
-            num_cpus: value.num_cpus,
-            max_usage: value.max_usage,
-            avg_usage: value.avg_usage,
-        }
-    }
-}
-
 #[derive(Copy, Clone)]
 struct MemoryUsageStats {
     total_application_usage_bytes: usize,
@@ -552,34 +541,6 @@ impl MemoryUsageStats {
     }
 }
 
-impl From<MemoryUsageStats> for TelemetryEvent {
-    fn from(value: MemoryUsageStats) -> Self {
-        TelemetryEvent::MemoryUsageStats {
-            total_application_usage_bytes: value.total_application_usage_bytes,
-            total_blocks: value.total_blocks,
-            total_lines: value.total_lines,
-            active_block_stats: value.active_block_stats.into(),
-            inactive_5m_stats: value.inactive_5m_stats.into(),
-            inactive_1h_stats: value.inactive_1h_stats.into(),
-            inactive_24h_stats: value.inactive_24h_stats.into(),
-        }
-    }
-}
-
-impl From<MemoryUsageStats> for telemetry::MemoryUsageStats {
-    fn from(value: MemoryUsageStats) -> Self {
-        Self {
-            total_application_usage_bytes: value.total_application_usage_bytes,
-            total_blocks: value.total_blocks,
-            total_lines: value.total_lines,
-            active_block_stats: value.active_block_stats.into(),
-            inactive_5m_stats: value.inactive_5m_stats.into(),
-            inactive_1h_stats: value.inactive_1h_stats.into(),
-            inactive_24h_stats: value.inactive_24h_stats.into(),
-        }
-    }
-}
-
 #[derive(Copy, Clone, Default, Serialize, PartialEq)]
 struct BlockMemoryStats {
     num_blocks: usize,
@@ -598,16 +559,6 @@ impl std::fmt::Debug for BlockMemoryStats {
                     .get_adjusted_unit(byte_unit::Unit::MB),
             )
             .finish()
-    }
-}
-
-impl From<BlockMemoryStats> for telemetry::BlockMemoryUsageStats {
-    fn from(value: BlockMemoryStats) -> Self {
-        Self {
-            num_blocks: value.num_blocks,
-            num_lines: value.num_lines,
-            estimated_memory_usage_bytes: value.estimated_memory_usage_bytes,
-        }
     }
 }
 

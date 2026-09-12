@@ -5,23 +5,23 @@ use std::borrow::Cow;
 use std::sync::Arc;
 use std::sync::mpsc::SyncSender;
 
+pub use action::TerminalAction;
 use async_channel::{Receiver, Sender};
 use parking_lot::FairMutex;
 use pathfinder_geometry::vector::Vector2F;
-use vec1::Vec1;
+use vec1::{Vec1, vec1};
 use warp_completer::meta::Span;
 use warp_core::semantic_selection::SemanticSelection;
 use warp_editor::model::CoreEditorModel as _;
+use warp_util::path::ShellFamily;
 use warpui::clipboard::ClipboardContent;
-use warpui::elements::{
-    ChildView, Clipped, Expanded, Flex, ParentElement, Shrinkable,
-};
+use warpui::elements::{ChildView, Clipped, Expanded, Flex, ParentElement, Shrinkable};
+use warpui::ui_components::components::UiComponent;
+use warpui::units::Lines;
 use warpui::{
     AppContext, Element, Entity, EntityId, FocusContext, ModelHandle, SingletonEntity,
     TypedActionView, View, ViewContext, ViewHandle,
 };
-
-pub use action::TerminalAction;
 
 use super::alt_screen::alt_screen_element::AltScreenElement;
 use super::blockgrid_element::BlockGridElement;
@@ -43,7 +43,6 @@ use super::{
 use crate::appearance::Appearance;
 use crate::code::buffer_location::LocalOrRemotePath;
 use crate::code::editor_management::CodeSource;
-use crate::util::openable_file_type::EditorLayout;
 use crate::menu::{MenuItem, MenuItemFields};
 use crate::pane_group::focus_state::PaneFocusHandle;
 use crate::pane_group::pane::view;
@@ -57,9 +56,8 @@ use crate::terminal::model::block::SerializedBlock;
 use crate::terminal::model::index::Point;
 use crate::terminal::model::mouse::MouseState;
 use crate::terminal::shell::ShellType;
-use warp_util::path::ShellFamily;
 use crate::throttle::throttle;
-use crate::util::openable_file_type::FileTarget;
+use crate::util::openable_file_type::{EditorLayout, FileTarget};
 use crate::view_components::find::Find;
 use crate::workspace::CommandSearchOptions;
 
@@ -88,20 +86,31 @@ pub enum Event {
     CtrlD,
     InterruptPty,
     ShutdownPty,
-    WriteBytesToPty { bytes: Cow<'static, [u8]> },
-    Resize { size_update: SizeUpdate },
+    WriteBytesToPty {
+        bytes: Cow<'static, [u8]>,
+    },
+    Resize {
+        size_update: SizeUpdate,
+    },
     ExecuteCommand(ExecuteCommandEvent),
-    BlockStarted { is_for_in_band_command: bool },
+    BlockStarted {
+        is_for_in_band_command: bool,
+    },
     FocusSession,
     SessionBootstrapped,
     ShellSpawned(ShellType),
-    PtySpawnFailed { reason: String },
+    PtySpawnFailed {
+        reason: String,
+    },
     OpenFileInWarp {
         path: std::path::PathBuf,
         session: Arc<Session>,
     },
     #[cfg(feature = "local_fs")]
-    OpenCodeInWarp { source: CodeSource, layout: EditorLayout },
+    OpenCodeInWarp {
+        source: CodeSource,
+        layout: EditorLayout,
+    },
     #[cfg(feature = "local_fs")]
     OpenFileWithTarget {
         path: std::path::PathBuf,
@@ -209,6 +218,7 @@ pub struct TerminalView {
     current_repo_path: Option<LocalOrRemotePath>,
     pty_spawn_error: Option<String>,
     is_selecting: bool,
+    pending_commands: Vec<String>,
 }
 
 impl TerminalView {
@@ -225,7 +235,9 @@ impl TerminalView {
         ctx: &mut ViewContext<Self>,
     ) -> Self {
         let input = ctx.add_typed_action_view(Input::new);
-        ctx.subscribe_to_view(&input, |view, _, event, ctx| view.handle_input_event(event, ctx));
+        ctx.subscribe_to_view(&input, |view, _, event, ctx| {
+            view.handle_input_event(event, ctx)
+        });
         let find_model = ctx.add_model(|ctx| TerminalFindModel::new(model.clone(), ctx));
         let find_bar = ctx.add_typed_action_view(|ctx| Find::new(find_model.clone(), ctx));
         let pane_configuration = ctx.add_model(|_| PaneConfiguration::new("Terminal"));
@@ -256,6 +268,7 @@ impl TerminalView {
             current_repo_path: None,
             pty_spawn_error: None,
             is_selecting: false,
+            pending_commands: Vec::new(),
         }
     }
 
@@ -283,7 +296,7 @@ impl TerminalView {
 
     pub fn shell_family(&self, ctx: &AppContext) -> ShellFamily {
         self.active_session(ctx)
-            .map(|session| session.shell().shell_family())
+            .map(|session| ShellFamily::from(session.shell().shell_type()))
             .unwrap_or(ShellFamily::Posix)
     }
 
@@ -292,12 +305,115 @@ impl TerminalView {
         self.sessions.as_ref(ctx).get(id)
     }
 
+    pub fn sessions_model(&self) -> &ModelHandle<Sessions> {
+        &self.sessions
+    }
+
+    pub fn active_block_session_id(&self) -> Option<SessionId> {
+        self.model.lock().block_list().active_block().session_id()
+    }
+
+    pub fn active_session_is_local(&self, ctx: &AppContext) -> Option<bool> {
+        self.active_session(ctx).map(|session| session.is_local())
+    }
+
+    pub fn active_session_wsl_distro(&self, ctx: &AppContext) -> Option<String> {
+        self.active_session(ctx)
+            .and_then(|session| session.wsl_distro_name().map(str::to_owned))
+    }
+
+    pub fn active_session_path_if_local(&self, ctx: &AppContext) -> Option<std::path::PathBuf> {
+        if self.active_session_is_local(ctx) != Some(true) {
+            return None;
+        }
+        let path = std::path::PathBuf::from(self.current_working_directory(ctx)?);
+        path.is_dir().then_some(path)
+    }
+
+    pub fn canonical_session_pwd_if_local(&self, ctx: &AppContext) -> Option<std::path::PathBuf> {
+        let path = self.active_session_path_if_local(ctx)?;
+        dunce::canonicalize(path).ok()
+    }
+
+    pub fn pwd_as_local_or_remote(&self, ctx: &AppContext) -> Option<LocalOrRemotePath> {
+        self.canonical_session_pwd_if_local(ctx)
+            .map(LocalOrRemotePath::Local)
+    }
+
     pub fn current_working_directory(&self, _app: &AppContext) -> Option<String> {
         self.model.lock().block_list().active_block().pwd().cloned()
     }
 
     pub fn active_shell_launch_data(&self) -> Option<ShellLaunchData> {
         self.active_shell_launch_data.clone()
+    }
+
+    pub fn pwd(&self) -> Option<String> {
+        self.model.lock().block_list().active_block().pwd().cloned()
+    }
+
+    pub fn display_working_directory(&self, app: &AppContext) -> Option<String> {
+        self.current_working_directory(app)
+    }
+
+    pub fn selected_text_from_input(&self, app: &AppContext) -> Option<String> {
+        let text = self
+            .input
+            .as_ref(app)
+            .editor()
+            .as_ref(app)
+            .selected_text(app);
+        (!text.is_empty()).then_some(text)
+    }
+
+    pub fn selected_text(&self, app: &AppContext) -> Option<String> {
+        self.model
+            .lock()
+            .selection_to_string(SemanticSelection::as_ref(app), false, app)
+    }
+
+    pub fn is_long_running(&self) -> bool {
+        self.model
+            .lock()
+            .block_list()
+            .active_block()
+            .is_active_and_long_running()
+    }
+
+    pub fn set_pending_command_queue(
+        &mut self,
+        commands: Vec<String>,
+        ctx: &mut ViewContext<Self>,
+    ) {
+        self.pending_commands = commands;
+        if let Some(command) = self.pending_commands.first().cloned() {
+            self.input
+                .update(ctx, |input, ctx| input.set_pending_command(&command, ctx));
+            self.pending_commands.remove(0);
+        }
+    }
+
+    pub fn clear_orchestration_split_off(&mut self, _: &mut ViewContext<Self>) {}
+
+    pub fn has_highlighted_link(&self) -> bool {
+        false
+    }
+
+    pub fn mark_as_visible(&mut self) {}
+
+    pub fn dismiss_tooltips(&mut self, _: &mut ViewContext<Self>) {}
+
+    pub fn shell_indicator_type(&self) -> Option<crate::shell_indicator::ShellIndicatorType> {
+        self.active_shell_launch_data
+            .as_ref()
+            .and_then(|launch_data| launch_data.try_into().ok())
+    }
+
+    pub fn show_notification_error(
+        &mut self,
+        _: warpui::notification::NotificationSendError,
+        _: &mut ViewContext<Self>,
+    ) {
     }
 
     pub fn full_prompt(&self, _app: &AppContext) -> String {
@@ -322,9 +438,11 @@ impl TerminalView {
             .iter()
             .rev()
             .find(|block| block.finished() && !block.command_to_string().is_empty())
-            .map_or(CommandContext::None, |block| CommandContext::LastRunCommand {
-                last_run_command: block.command_to_string(),
-                mins_since_completion: None,
+            .map_or(CommandContext::None, |block| {
+                CommandContext::LastRunCommand {
+                    last_run_command: block.command_to_string(),
+                    mins_since_completion: None,
+                }
             })
     }
 
@@ -357,8 +475,9 @@ impl TerminalView {
                 });
             }
             SyncInputType::RanCommand => {
-                self.input
-                    .update(ctx, |input, ctx| input.run_command_in_synced_terminal_input(ctx));
+                self.input.update(ctx, |input, ctx| {
+                    input.run_command_in_synced_terminal_input(ctx)
+                });
             }
             SyncInputType::StartSyncing | SyncInputType::StopSyncing => {}
         }
@@ -366,7 +485,8 @@ impl TerminalView {
 
     pub fn focus(&mut self, ctx: &mut ViewContext<Self>) {
         if self.input_is_visible() {
-            self.input.update(ctx, |input, ctx| input.focus_input_box(ctx));
+            self.input
+                .update(ctx, |input, ctx| input.focus_input_box(ctx));
         } else {
             ctx.focus_self();
         }
@@ -374,8 +494,9 @@ impl TerminalView {
     }
 
     pub fn clear_buffer(&mut self, ctx: &mut ViewContext<Self>) {
-        self.input
-            .update(ctx, |input, ctx| input.clear_buffer_and_reset_undo_stack(ctx));
+        self.input.update(ctx, |input, ctx| {
+            input.clear_buffer_and_reset_undo_stack(ctx)
+        });
     }
 
     pub fn install_focus_handle(
@@ -433,14 +554,15 @@ impl TerminalView {
                     .lock()
                     .block_list()
                     .block_with_id(block_id)
-                    .map(|block| Arc::new(block.serialized()))
+                    .map(|block| Arc::new(SerializedBlock::from(block)))
                 {
                     ctx.emit(Event::BlockCompleted {
                         block,
                         is_local: true,
                     });
                 }
-                self.input.update(ctx, |input, ctx| input.focus_input_box(ctx));
+                self.input
+                    .update(ctx, |input, ctx| input.focus_input_box(ctx));
             }
             ModelEvent::AfterBlockStarted {
                 is_for_in_band_command,
@@ -461,6 +583,13 @@ impl TerminalView {
             | ModelEvent::TerminalModeSwapped(_)
             | ModelEvent::VisibleBootstrapBlock
             | ModelEvent::PromptUpdated
+            | ModelEvent::HonorPS1OutOfSync
+            | ModelEvent::SelectedTextChanged
+            | ModelEvent::ShellSpawned(_)
+            | ModelEvent::ImageReceived { .. }
+            | ModelEvent::BootstrapPrecmdDone
+            | ModelEvent::AgentTaggedInChanged { .. }
+            | ModelEvent::PluggableNotification { .. }
             | ModelEvent::FinishUpdate(_)
             | ModelEvent::Typeahead
             | ModelEvent::CompletionsFinished(_, _)
@@ -510,7 +639,9 @@ impl TerminalView {
         };
         self.model.lock().resize(update);
         self.size_info = new_size;
-        ctx.emit(Event::Resize { size_update: update });
+        ctx.emit(Event::Resize {
+            size_update: update,
+        });
         ctx.notify();
     }
 
@@ -555,7 +686,19 @@ impl TerminalView {
     fn render_alt_screen(&self, app: &AppContext) -> Box<dyn Element> {
         let semantic_selection = SemanticSelection::as_ref(app);
         let model = self.model.lock();
-        let selection = model.alt_screen().selection_range(semantic_selection);
+        let selection = model
+            .alt_screen()
+            .selection_range(semantic_selection)
+            .map(|selection| match selection {
+                crate::terminal::model::selection::ExpandedSelectionRange::Regular {
+                    start,
+                    end,
+                    ..
+                } => vec1![start..end],
+                crate::terminal::model::selection::ExpandedSelectionRange::Rect { rows } => {
+                    rows.mapped(|(start, end)| start..end)
+                }
+            });
         drop(model);
         AltScreenElement::new(
             self.model.clone(),
@@ -575,7 +718,7 @@ impl TerminalView {
             EnforceMinimumContrast::default(),
             selection,
             Appearance::as_ref(app),
-            0.into(),
+            Lines::zero(),
             None,
             None,
         )
@@ -638,8 +781,9 @@ impl TypedActionView for TerminalView {
             TerminalAction::TypedCharacters(text) | TerminalAction::KeyDown(text) => {
                 self.write_bytes(text.as_bytes().to_vec(), ctx)
             }
-            TerminalAction::UserInputSequence(bytes)
-            | TerminalAction::ControlSequence(bytes) => self.write_bytes(bytes.clone(), ctx),
+            TerminalAction::UserInputSequence(bytes) | TerminalAction::ControlSequence(bytes) => {
+                self.write_bytes(bytes.clone(), ctx)
+            }
             TerminalAction::Up => self.write_bytes(b"\x1b[A".to_vec(), ctx),
             TerminalAction::Down => self.write_bytes(b"\x1b[B".to_vec(), ctx),
             TerminalAction::Home => self.write_bytes(b"\x1b[H".to_vec(), ctx),
@@ -647,21 +791,18 @@ impl TypedActionView for TerminalView {
             TerminalAction::PageUp => self.write_bytes(b"\x1b[5~".to_vec(), ctx),
             TerminalAction::PageDown => self.write_bytes(b"\x1b[6~".to_vec(), ctx),
             TerminalAction::Paste => {
-                if !self.input_is_visible()
-                    && let Some(ClipboardContent::Text(text)) = ctx.clipboard().read()
-                {
-                    self.write_bytes(text.into_bytes(), ctx);
+                if !self.input_is_visible() {
+                    let content = ctx.clipboard().read();
+                    if !content.plain_text.is_empty() {
+                        self.write_bytes(content.plain_text.into_bytes(), ctx);
+                    }
                 }
             }
             TerminalAction::ClearBuffer => self.clear_buffer(ctx),
             TerminalAction::Focus | TerminalAction::FocusInputAndClearSelection => self.focus(ctx),
-            TerminalAction::ShowFindBar => {
-                self.find_bar.update(ctx, |find, ctx| find.open(ctx));
-            }
+            TerminalAction::ShowFindBar => {}
             TerminalAction::Close => ctx.emit(Event::Pane(PaneEvent::Close)),
-            TerminalAction::ToggleMaximizePane => {
-                ctx.emit(Event::Pane(PaneEvent::ToggleMaximized))
-            }
+            TerminalAction::ToggleMaximizePane => ctx.emit(Event::Pane(PaneEvent::ToggleMaximized)),
             TerminalAction::SplitRight(shell) => {
                 ctx.emit(Event::Pane(PaneEvent::SplitRight(shell.clone())))
             }
@@ -678,11 +819,7 @@ impl TypedActionView for TerminalView {
                 self.model.lock().alt_screen_mut().clear_selection();
                 ctx.notify();
             }
-            TerminalAction::AltMouseAction(mouse) => {
-                if let Some(bytes) = mouse.to_escape_sequence(&*self.model.lock()) {
-                    self.write_bytes(bytes, ctx);
-                }
-            }
+            TerminalAction::AltMouseAction(_) => {}
             TerminalAction::AltSelect(action) => match action {
                 SelectAction::Begin {
                     point,
@@ -690,10 +827,11 @@ impl TypedActionView for TerminalView {
                     selection_type,
                     ..
                 } => {
-                    self.model
-                        .lock()
-                        .alt_screen_mut()
-                        .start_selection(*point, *selection_type, *side);
+                    self.model.lock().alt_screen_mut().start_selection(
+                        *point,
+                        *selection_type,
+                        *side,
+                    );
                     self.is_selecting = true;
                     ctx.notify();
                 }
@@ -734,7 +872,10 @@ impl View for TerminalView {
 
     fn render(&self, app: &AppContext) -> Box<dyn Element> {
         let output = if let Some(error) = &self.pty_spawn_error {
-            warpui::elements::Text::new(format!("Unable to start local shell: {error}"))
+            Appearance::as_ref(app)
+                .ui_builder()
+                .paragraph(format!("Unable to start local shell: {error}"))
+                .build()
                 .finish()
         } else if self.model.lock().is_alt_screen_active() {
             self.render_alt_screen(app)
@@ -742,9 +883,10 @@ impl View for TerminalView {
             self.render_blocks(app)
         };
         let output = TerminalSizeElement::new(self.resize_tx.clone(), output).finish();
-        let mut column = Flex::column().child(Expanded::new(1., output).finish());
+        let mut column = Flex::column().with_child(Expanded::new(1., output).finish());
         if self.input_is_visible() {
-            column = column.child(Shrinkable::new(0., ChildView::new(&self.input).finish()).finish());
+            column = column
+                .with_child(Shrinkable::new(0., ChildView::new(&self.input).finish()).finish());
         }
         column.finish()
     }

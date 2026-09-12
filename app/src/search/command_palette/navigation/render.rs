@@ -1,7 +1,7 @@
 use pathfinder_geometry::vector::vec2f;
 use warpui::elements::{
-    Align, Border, ConstrainedBox, Container, CornerRadius, CrossAxisAlignment, Flex, Highlight,
-    ParentElement, Radius, Shrinkable, Wrap,
+    Align, ConstrainedBox, Container, CornerRadius, CrossAxisAlignment, Flex, Highlight,
+    ParentElement, Radius, Shrinkable,
 };
 use warpui::fonts::{Properties, Weight};
 use warpui::ui_components::components::{UiComponent, UiComponentStyles};
@@ -9,12 +9,6 @@ use warpui::units::IntoPixels;
 use warpui::{AppContext, Element, SingletonEntity};
 
 use crate::appearance::Appearance;
-use crate::context_chips::display_chip::{
-    GitLineChanges, UdiChipConfig, chip_container, render_git_diff_stats_content, render_udi_chip,
-    udi_font_size,
-};
-use crate::context_chips::prompt_snapshot::PromptSnapshot;
-use crate::context_chips::{ChipValue, ContextChipKind};
 use crate::search::command_palette::navigation::search::SessionHighlightIndices;
 use crate::search::result_renderer::ItemHighlightState;
 use crate::session_management::{CommandContext, SessionNavigationData};
@@ -67,11 +61,17 @@ fn render_session_label(
 
     let prompt = if let Some(ps1_grid) = &session.prompt_elements().ps1_prompt_grid {
         render_prompt_ps1(ps1_grid, appearance, app)
-    } else if let Some(snapshot) = &session.prompt_elements().prompt_chip_snapshot {
-        render_prompt_udi(snapshot, appearance)
     } else {
-        // Fallback: empty container if neither is available (e.g. very early startup).
-        Container::new(Flex::row().finish()).finish()
+        appearance
+            .ui_builder()
+            .span(session.prompt().to_owned())
+            .with_style(UiComponentStyles {
+                font_family_id: Some(appearance.monospace_font_family()),
+                font_size: Some(appearance.monospace_font_size()),
+                ..Default::default()
+            })
+            .build()
+            .finish()
     };
 
     let command_info = render_command_context(
@@ -130,8 +130,8 @@ fn render_current_session_pill(
     Shrinkable::new(
         // We need different flex values when different hint texts are present, otherwise the actual command won't take up enough room.
         match command_context {
-            CommandContext::LastRunCommand { .. } | CommandContext::LastRunAIBlock { .. } => 0.5,
-            CommandContext::RunningCommand { .. } | CommandContext::RunningAIBlock { .. } => 0.35,
+            CommandContext::LastRunCommand { .. } => 0.5,
+            CommandContext::RunningCommand { .. } => 0.35,
             CommandContext::None => 1.,
         },
         Align::new(
@@ -143,59 +143,6 @@ fn render_current_session_pill(
         .finish(),
     )
     .finish()
-}
-
-/// Renders the prompt as UDI-style context chips from a [`PromptSnapshot`].
-fn render_prompt_udi(snapshot: &PromptSnapshot, appearance: &Appearance) -> Box<dyn Element> {
-    let mut chip_row = Wrap::row().with_spacing(4.);
-
-    for chip_result in snapshot.chips() {
-        let Some(value) = chip_result.value() else {
-            continue;
-        };
-        // GitDiffStats are rendered differently than other chips, so we handle them separately.
-        // This ensures that the rendered chip matches the live input chip.
-        if matches!(chip_result.kind(), ContextChipKind::GitDiffStats) {
-            let line_changes = match value {
-                ChipValue::GitDiffStats(g) => g.clone(),
-                ChipValue::Text(raw) => {
-                    let Some(parsed) = GitLineChanges::parse_from_git_output(raw) else {
-                        continue;
-                    };
-                    parsed
-                }
-                ChipValue::GitBranchStatus(_) => continue,
-            };
-            let font_size = udi_font_size(appearance);
-            let content = render_git_diff_stats_content(
-                &line_changes,
-                font_size,
-                appearance.monospace_font_family(),
-                font_size,
-                appearance,
-            );
-            chip_row.add_child(chip_container(content, Some(Border::all(0.)), appearance).finish());
-            continue;
-        }
-
-        let color = chip_result
-            .kind()
-            .default_styles(appearance, false)
-            .value_color;
-        let value_text = value.to_string();
-        let config = if let Some(icon) = chip_result.kind().udi_icon() {
-            UdiChipConfig::new_with_icon(icon, color, value_text)
-        } else {
-            UdiChipConfig::new(color, value_text)
-        }
-        .with_border_override(Border::all(0.));
-        chip_row.add_child(render_udi_chip(config, appearance));
-    }
-
-    let prompt_section = Container::new(chip_row.finish())
-        .with_margin_right(styles::NAVIGATION_PALETTE_COMMAND_HINT_MARGIN * 2.);
-
-    prompt_section.finish()
 }
 
 /// Renders the prompt from the raw PS1 terminal grid, preserving full
@@ -360,18 +307,6 @@ impl CommandRenderInfo {
                     Some(mins) => format!("Completed {mins} minutes ago"),
                     None => "No timestamp found".to_string(),
                 },
-            },
-            CommandContext::RunningAIBlock { prompt } => CommandRenderInfo {
-                command_text: Some(prompt),
-                hint_text: "Running...".to_string(),
-                row_spacing: styles::NAVIGATION_PALETTE_COMMAND_ROW_SPACING,
-                hint_margin: styles::NAVIGATION_PALETTE_COMMAND_HINT_MARGIN,
-            },
-            CommandContext::LastRunAIBlock { prompt } => CommandRenderInfo {
-                command_text: Some(prompt),
-                hint_text: "Completed".to_string(),
-                row_spacing: styles::NAVIGATION_PALETTE_COMMAND_ROW_SPACING,
-                hint_margin: styles::NAVIGATION_PALETTE_COMMAND_HINT_MARGIN,
             },
             CommandContext::None => CommandRenderInfo {
                 command_text: Some(String::new()),

@@ -7,7 +7,52 @@ pub use local::LocalGitRepoStatusModel;
 
 use super::diff_state::DiffStats;
 pub use super::git_repo_models::GitRepoModels;
-use crate::context_chips::display_chip::GitBranchTrackingStatus;
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct GitBranchTrackingStatus {
+    pub branch: String,
+    pub upstream: Option<String>,
+    pub ahead: u32,
+    pub behind: u32,
+    pub counts_available: bool,
+    pub rebased: bool,
+}
+
+impl GitBranchTrackingStatus {
+    fn new(branch: String, upstream: Option<String>, ahead: u32, behind: u32) -> Self {
+        let counts_available = upstream.is_some();
+        Self {
+            branch,
+            upstream,
+            ahead,
+            behind,
+            counts_available,
+            rebased: false,
+        }
+    }
+
+    fn without_counts(branch: String, upstream: Option<String>) -> Self {
+        Self {
+            branch,
+            upstream,
+            ahead: 0,
+            behind: 0,
+            counts_available: false,
+            rebased: false,
+        }
+    }
+
+    fn rebased(branch: String, upstream: String) -> Self {
+        Self {
+            branch,
+            upstream: Some(upstream),
+            ahead: 0,
+            behind: 0,
+            counts_available: true,
+            rebased: true,
+        }
+    }
+}
 
 /// Public metadata exposed to consumers — the subset of diff metadata
 /// that the git chip (prompt display, agent view footer) needs.

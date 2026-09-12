@@ -67,7 +67,7 @@ use crate::code::global_buffer_model::{BufferState, GlobalBufferModel, GlobalBuf
 use crate::code::{SaveOutcome, ShowFindReferencesCardProvider};
 use crate::code_review::comments::CommentId;
 use crate::menu::{Event, Menu, MenuItem, MenuItemFields};
-use crate::settings::{AISettings, CodeSettings};
+use crate::settings::CodeSettings;
 use crate::terminal::TerminalView;
 use crate::workspace::WorkspaceAction;
 
@@ -2320,21 +2320,6 @@ impl View for LocalCodeEditorView {
             .with_child(base_with_handler);
 
         let editor = self.editor().as_ref(app);
-        if self.selection_as_context_tooltip.is_some() {
-            // When a single terminal exists in the window and the user has made a selection (but isn't currently selecting),
-            // we render a tooltip that allows them to add the selected text to the terminal context.
-            let is_ai_enabled = AISettings::as_ref(app).is_any_ai_enabled(app);
-            if is_ai_enabled
-                && FeatureFlag::SelectionAsContext.is_enabled()
-                && !editor.is_selecting()
-            {
-                let tooltip = self.render_selection_tooltip(app);
-                if let Some(tooltip) = tooltip {
-                    stack.add_positioned_child(tooltip, editor.selection_position_anchor(app))
-                }
-            }
-        }
-
         // Render context menu if open
         if self.context_menu_state.is_open {
             stack.add_positioned_child(

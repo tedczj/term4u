@@ -6,8 +6,7 @@ use warp_core::command::ExitCode;
 use crate::terminal::ShellHost;
 use crate::terminal::model::BlockId;
 use crate::terminal::model::block::{
-    Block, BlockState, MAX_SERIALIZED_STYLIZED_OUTPUT_LINES, PromptInfo,
-    has_block_failed,
+    Block, BlockState, MAX_SERIALIZED_STYLIZED_OUTPUT_LINES, PromptInfo, has_block_failed,
 };
 use crate::terminal::model::session::SessionId;
 use crate::util::extensions::TrimStringExt;
@@ -158,10 +157,6 @@ impl From<&Block> for SerializedBlock {
             grid_content.trim_trailing_newline();
             hex::encode(grid_content)
         });
-        let prompt_snapshot = block
-            .prompt_snapshot
-            .as_ref()
-            .and_then(|prompt_snapshot| serde_json::to_string(prompt_snapshot).ok());
         let prompt_info = PromptInfo {
             pwd: block.pwd().map(String::from),
             git_branch: block.git_branch.clone(),
@@ -172,7 +167,7 @@ impl From<&Block> for SerializedBlock {
             ps1,
             rprompt,
             honor_ps1: block.honor_ps1(),
-            prompt_snapshot,
+            prompt_snapshot: None,
         };
 
         SerializedBlock {

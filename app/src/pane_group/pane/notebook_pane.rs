@@ -2,7 +2,9 @@ use warpui::{AppContext, ModelHandle, SingletonEntity, ViewContext, ViewHandle};
 
 use super::super::PaneGroup;
 use super::view::PaneView;
-use super::{DetachType, PaneConfiguration, PaneContent, PaneId, ShareableLink, ShareableLinkError};
+use super::{
+    DetachType, PaneConfiguration, PaneContent, PaneId, ShareableLink, ShareableLinkError,
+};
 use crate::app_state::{LeafContents, NotebookPaneSnapshot};
 use crate::notebooks::manager::{NotebookManager, NotebookSource};
 use crate::notebooks::model::NotebookId;
@@ -31,8 +33,9 @@ impl NotebookPane {
             NotebookSource::New { title: None },
             NotebookSource::Existing,
         );
+        let window_id = ctx.window_id();
         NotebookManager::handle(ctx).update(ctx, |manager, ctx| {
-            manager.create_pane(&source, ctx.window_id(), ctx)
+            manager.create_pane(&source, window_id, ctx)
         })
     }
 
@@ -68,8 +71,10 @@ impl PaneContent for NotebookPane {
         ctx.subscribe_to_view(&self.view, move |group, _, event, ctx| {
             group.handle_pane_view_event(pane_id, event, ctx);
         });
+        let pane_group_id = ctx.view_id();
+        let window_id = ctx.window_id();
         NotebookManager::handle(ctx).update(ctx, |manager, ctx| {
-            manager.register_pane(self, ctx.view_id(), ctx.window_id(), ctx);
+            manager.register_pane(self, pane_group_id, window_id, ctx);
         });
     }
 

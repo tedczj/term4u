@@ -16,7 +16,9 @@ impl CurrentHead {
     pub fn title(&self) -> String {
         match self {
             Self::BranchName(name) => name.clone(),
-            Self::HeadlessCommitSha(sha) => format!("Commit {}", sha.chars().take(7).collect::<String>()),
+            Self::HeadlessCommitSha(sha) => {
+                format!("Commit {}", sha.chars().take(7).collect::<String>())
+            }
         }
     }
 }

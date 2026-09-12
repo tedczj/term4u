@@ -16,7 +16,6 @@ use crate::workflows::local_workflows::LocalWorkflows;
 use crate::workflows::workflow::Workflow;
 use crate::workflows::{WorkflowSource, WorkflowType};
 
-
 /// Data model for a history command persisted to sqlite, used as an intermediate representation
 /// between the sqlite schema (sqlite::model::Command) and the [`History`] model.
 #[derive(Debug)]
@@ -220,7 +219,6 @@ pub struct HistoryEntry {
     workflow_command: Option<String>,
 
     pub is_for_restored_block: bool,
-
 }
 
 impl HistoryEntry {
@@ -342,7 +340,9 @@ impl HistoryEntry {
     /// Returns `LinkedWorkflowData` referring to the workflow used to create this history command,
     /// if any.
     pub fn linked_workflow_data(&self) -> Option<LinkedWorkflowData> {
-self.workflow_command.clone().map(LinkedWorkflowData::Command)
+        self.workflow_command
+            .clone()
+            .map(LinkedWorkflowData::Command)
     }
 }
 

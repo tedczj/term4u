@@ -13,7 +13,7 @@ use warpui::elements::{
     Align, Border, ChildView, Clipped, ConstrainedBox, Container, CornerRadius, CrossAxisAlignment,
     DEFAULT_UI_LINE_HEIGHT_RATIO, Dismiss, Element, Empty, Fill, Flex, FormattedTextElement,
     Hoverable, MainAxisAlignment, MainAxisSize, MouseStateHandle, ParentElement, Radius,
-    Shrinkable, Text, Wrap,
+    Shrinkable, Text,
 };
 use warpui::fonts::{FamilyId, FontInfo, Weight};
 use warpui::keymap::{ContextPredicate, FixedBinding};
@@ -42,31 +42,23 @@ use super::settings_page::{
 use super::{SettingsAction, SettingsSection, ToggleSettingActionPair, flags};
 use crate::appearance::{Appearance, AppearanceEvent};
 use crate::channel::{Channel, ChannelState};
-use crate::context_chips::ChipAvailability;
-use crate::context_chips::prompt::{Prompt, PromptEvent};
-use crate::context_chips::renderer::{ChipDragState, Renderer as ContextChipRenderer};
-use crate::drive::settings::WarpDriveSettings;
 use crate::editor::{
     EditOrigin, EditorView, Event as EditorEvent, InteractionState, SingleLineEditorOptions,
     TextOptions,
 };
 use crate::features::FeatureFlag;
 use crate::gpu_state::GPUState;
-use crate::prompt::editor_modal::OpenSource as PromptEditorOpenSource;
 use crate::server::telemetry::{InputUXChangeOrigin, TelemetryEvent};
 use crate::settings::app_icon::{AppIcon, AppIconSettings, ShowDockIconState};
 use crate::settings::{
-    AIFontName, AISettings, AISettingsChangedEvent, AppEditorSettings, CodeSettings, CursorBlink,
-    CursorBlinkEnabled, CursorDisplayType, DEFAULT_MONOSPACE_FONT_NAME, EnforceMinimumContrast,
-    FocusPaneOnHover, FontSettings, FontSettingsChangedEvent, GPUSettings, InputBoxType,
+    AIFontName, AppEditorSettings, CodeSettings, CursorBlink, CursorBlinkEnabled,
+    CursorDisplayType, DEFAULT_MONOSPACE_FONT_NAME, EnforceMinimumContrast, FocusPaneOnHover,
+    FontSettings, FontSettingsChangedEvent, GPUSettings, InputBoxType, InputMode,
     InputModeSettings, InputModeState, InputSettings, InputSettingsChangedEvent, MonospaceFontName,
-    PaneSettings, ShouldDimInactivePanes, ThemeSettings, UsageDisplayUnit, UseSystemTheme,
-    UseThinStrokes, active_theme_kind, respect_system_theme,
+    PaneSettings, ShouldDimInactivePanes, ThemeSettings, UseSystemTheme, UseThinStrokes,
+    active_theme_kind, respect_system_theme,
 };
-use crate::terminal::block_list_viewport::InputMode;
-use crate::terminal::blockgrid_element::BlockGridElement;
 use crate::terminal::ligature_settings::{LigatureRenderingEnabled, LigatureSettings};
-use crate::terminal::model::ObfuscateSecrets;
 use crate::terminal::model::blockgrid::BlockGrid;
 use crate::terminal::session_settings::SessionSettings;
 use crate::terminal::settings::{
@@ -88,7 +80,6 @@ use crate::window_settings::{
     OpenWindowsAtCustomSize, WindowSettings, WindowSettingsChangedEvent, ZoomLevel,
 };
 use crate::workspace::WorkspaceAction;
-use crate::workspace::header_toolbar_editor::HeaderToolbarInlineEditor;
 use crate::workspace::tab_settings::{
     DirectoryTabColor, HideTitleBarSearchBarInVerticalTabs, PreserveActiveTabColor,
     ShowIndicatorsButton, ShowVerticalTabPanelInRestoredWindows, TabCloseButtonPosition,
@@ -507,8 +498,6 @@ pub enum AppearancePageAction {
     ToggleLeftPanelVisibility,
     ToggleToolsPanelProjectExplorer,
     ToggleToolsPanelGlobalSearch,
-    ToggleToolsPanelWarpDrive,
-    ToggleToolsPanelConversationHistory,
     SetEnforceMinimumContrast(EnforceMinimumContrast),
     OpenUrl(String),
     ToggleFocusPaneOnHover,
@@ -525,7 +514,6 @@ pub enum AppearancePageAction {
     RemoveDefaultDirectoryTabColor {
         path: PathBuf,
     },
-    SetUsageDisplayUnit(UsageDisplayUnit),
 }
 
 pub struct AppearanceSettingsPageView {
@@ -547,7 +535,6 @@ pub struct AppearanceSettingsPageView {
     #[allow(dead_code)]
     thin_strokes_dropdown: ViewHandle<Dropdown<AppearancePageAction>>,
     enforce_min_contrast_dropdown: ViewHandle<Dropdown<AppearancePageAction>>,
-    usage_display_unit_dropdown: ViewHandle<Dropdown<AppearancePageAction>>,
     input_mode_dropdown: ViewHandle<Dropdown<AppearancePageAction>>,
     input_type_radio_state: RadioButtonStateHandle,
     app_icon_dropdown: ViewHandle<Dropdown<AppearancePageAction>>,
@@ -560,11 +547,6 @@ pub struct AppearanceSettingsPageView {
     alt_screen_padding_editor: ViewHandle<EditorView>,
     color_picker_dot_states: Vec<Vec<MouseStateHandle>>,
     directory_tab_color_delete_buttons: Vec<ViewHandle<ActionButton>>,
-    header_toolbar_inline_editor: ViewHandle<HeaderToolbarInlineEditor>,
-
-    /// The context chip renderers based on the most recently
-    /// selected Warp prompt configuration.
-    context_chips: Vec<ContextChipRenderer>,
 
     /// The information we need to render the PS1 as a grid when we're
     /// honoring the user's PS1.
@@ -625,12 +607,6 @@ impl TypedActionView for AppearanceSettingsPageView {
             SetWorkspaceDecorationVisibility(value) => {
                 self.set_workspace_decoration_visibility(*value, ctx)
             }
-            SetUsageDisplayUnit(value) => {
-                AISettings::handle(ctx).update(ctx, |settings, ctx| {
-                    report_if_error!(settings.usage_display_unit.set_value(*value, ctx));
-                });
-                ctx.notify();
-            }
             ToggleWorkspaceDecorationVisibility => self.toggle_workspace_decoration_visiblity(ctx),
             ToggleJumpToBottomOfBlockButton => self.toggle_jump_to_bottom_of_block_button(ctx),
             ToggleShowBlockDividers => self.toggle_show_block_dividers(ctx),
@@ -653,22 +629,6 @@ impl TypedActionView for AppearanceSettingsPageView {
             ToggleToolsPanelGlobalSearch => {
                 CodeSettings::handle(ctx).update(ctx, |settings, ctx| {
                     report_if_error!(settings.show_global_search.toggle_and_save_value(ctx));
-                });
-                ctx.notify();
-            }
-            ToggleToolsPanelWarpDrive => {
-                WarpDriveSettings::handle(ctx).update(ctx, |settings, ctx| {
-                    report_if_error!(settings.enable_warp_drive.toggle_and_save_value(ctx));
-                });
-                ctx.notify();
-            }
-            ToggleToolsPanelConversationHistory => {
-                AISettings::handle(ctx).update(ctx, |settings, ctx| {
-                    report_if_error!(
-                        settings
-                            .show_conversation_history
-                            .toggle_and_save_value(ctx)
-                    );
                 });
                 ctx.notify();
             }
@@ -942,8 +902,6 @@ impl AppearanceSettingsPageView {
             ctx.notify();
         });
 
-        ctx.subscribe_to_model(&Prompt::handle(ctx), Self::handle_prompt_update);
-
         let ligature_settings_handle = LigatureSettings::handle(ctx);
         ctx.subscribe_to_model(&ligature_settings_handle, |_, _, _, ctx| ctx.notify());
 
@@ -1039,19 +997,6 @@ impl AppearanceSettingsPageView {
         // we need to update the switch if the setting gets changed elsewhere, like command palette
         ctx.subscribe_to_model(&AppEditorSettings::handle(ctx), |_, _, _, ctx| {
             ctx.notify();
-        });
-
-        ctx.subscribe_to_model(&AISettings::handle(ctx), |me, _, event, ctx| {
-            if matches!(event, AISettingsChangedEvent::UsageDisplayUnit { .. }) {
-                let current_value = AISettings::as_ref(ctx).usage_display_unit;
-                me.usage_display_unit_dropdown.update(ctx, |dropdown, ctx| {
-                    dropdown.set_selected_by_action(
-                        AppearancePageAction::SetUsageDisplayUnit(current_value),
-                        ctx,
-                    );
-                });
-                ctx.notify();
-            }
         });
 
         let line_height_editor = Self::editor(
@@ -1288,39 +1233,6 @@ impl AppearanceSettingsPageView {
             dropdown
         });
 
-        let usage_display_unit_dropdown = ctx.add_typed_action_view(|ctx| {
-            let mut dropdown = Dropdown::new(ctx);
-
-            let values = vec![UsageDisplayUnit::Credits, UsageDisplayUnit::Dollars];
-            let current_value = AISettings::as_ref(ctx).usage_display_unit;
-            let selected_index = values
-                .iter()
-                .position(|val| *val == current_value)
-                .unwrap_or_else(|| {
-                    report_error!(
-                        "Could not find current UsageDisplayUnit value in dropdown option list"
-                    );
-                    0
-                });
-
-            dropdown.add_items(
-                values
-                    .into_iter()
-                    .map(|val| {
-                        DropdownItem::new(
-                            val.display_name(),
-                            AppearancePageAction::SetUsageDisplayUnit(val),
-                        )
-                    })
-                    .collect(),
-                ctx,
-            );
-            dropdown.set_selected_by_index(selected_index, ctx);
-            dropdown
-        });
-
-        let context_chips = Self::get_context_chip_renderers(ctx);
-
         let alt_screen_padding_editor = {
             let width_and_height_editor_options = SingleLineEditorOptions {
                 text: TextOptions::ui_font_size(appearance_handle.as_ref(ctx)),
@@ -1347,9 +1259,6 @@ impl AppearanceSettingsPageView {
         let input_type = InputSettings::as_ref(ctx).input_type(ctx);
         let input_type_radio_state = RadioButtonStateHandle::default();
         input_type_radio_state.set_selected_idx(input_type as usize);
-        let header_toolbar_inline_editor =
-            ctx.add_typed_action_view(HeaderToolbarInlineEditor::new);
-
         AppearanceSettingsPageView {
             page: Self::build_page(ctx),
             window_id: ctx.window_id(),
@@ -1371,7 +1280,6 @@ impl AppearanceSettingsPageView {
             input_type_radio_state,
             app_icon_dropdown,
             enforce_min_contrast_dropdown,
-            usage_display_unit_dropdown,
             workspace_decorations_dropdown: Self::build_workspace_decoration_visibility_dropdown(
                 ctx,
             ),
@@ -1388,9 +1296,7 @@ impl AppearanceSettingsPageView {
                 })
                 .collect(),
             directory_tab_color_delete_buttons: build_directory_delete_buttons(ctx),
-            header_toolbar_inline_editor,
             alt_screen_padding_editor,
-            context_chips,
             ps1_grid_info: None,
         }
     }
@@ -1466,23 +1372,15 @@ impl AppearanceSettingsPageView {
         if cfg!(feature = "local_fs") {
             tools_panel_widgets.push(Box::new(ToolsPanelProjectExplorerWidget::default()));
         }
-        if FeatureFlag::AgentViewConversationListView.is_enabled() {
-            tools_panel_widgets.push(Box::new(ToolsPanelConversationHistoryWidget::default()));
-        }
         if cfg!(feature = "local_fs") && FeatureFlag::GlobalSearch.is_enabled() {
             tools_panel_widgets.push(Box::new(ToolsPanelGlobalSearchWidget::default()));
         }
-        tools_panel_widgets.push(Box::new(ToolsPanelWarpDriveWidget::default()));
         if !tools_panel_widgets.is_empty() {
             categories.push(Category::new("Tools panel", tools_panel_widgets));
         }
 
-        // Create the Input category with all widgets
-        // The PromptWidget and InputModeWidget will handle their own visibility
-
         let category_widgets: Vec<Box<dyn SettingsWidget<View = Self>>> = vec![
             Box::new(InputTypeWidget::default()),
-            Box::new(PromptWidget::default()),
             Box::new(InputModeWidget::default()),
         ];
 
@@ -1568,9 +1466,6 @@ impl AppearanceSettingsPageView {
             tab_settings_widgets.push(Box::new(
                 UseLatestUserPromptAsConversationTitleInTabNamesWidget::default(),
             ));
-            if FeatureFlag::ConfigurableToolbar.is_enabled() {
-                tab_settings_widgets.push(Box::new(EditToolbarWidget));
-            }
         }
 
         if FeatureFlag::DirectoryTabColors.is_enabled() {
@@ -1586,11 +1481,6 @@ impl AppearanceSettingsPageView {
         categories.push(Category::new(
             "Full-screen Apps",
             vec![Box::new(AltScreenPaddingWidget::default())],
-        ));
-
-        categories.push(Category::new(
-            "Usage",
-            vec![Box::new(UsageDisplayUnitWidget::default())],
         ));
 
         PageType::new_categorized(categories, None)
@@ -1636,36 +1526,11 @@ impl AppearanceSettingsPageView {
                     editor.set_buffer_text(&format!("{line_height_ratio}"), ctx);
                 });
             }
-            AppearanceEvent::ThemeChanged => {
-                // Context-chip colors are theme-derived, so rebuild the Input
-                // preview chips when the theme changes to keep them in sync.
-                self.context_chips = Self::get_context_chip_renderers(ctx);
-            }
+            AppearanceEvent::ThemeChanged => {}
             _ => {}
         }
 
         ctx.notify();
-    }
-
-    fn get_context_chip_renderers(app: &AppContext) -> Vec<ContextChipRenderer> {
-        let appearance = Appearance::as_ref(app);
-        let prompt = Prompt::as_ref(app);
-        prompt
-            .chip_kinds()
-            .into_iter()
-            .filter_map(|kind| {
-                ContextChipRenderer::default_from_kind(kind, ChipAvailability::Enabled, appearance)
-            })
-            .collect()
-    }
-
-    fn handle_prompt_update(
-        &mut self,
-        _prompt: ModelHandle<Prompt>,
-        _event: &PromptEvent,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        self.context_chips = Self::get_context_chip_renderers(ctx);
     }
 
     fn default_font_item<V>(
@@ -3607,46 +3472,6 @@ impl SettingsWidget for ToolsPanelProjectExplorerWidget {
 }
 
 #[derive(Default)]
-struct ToolsPanelConversationHistoryWidget {
-    switch_state: SwitchStateHandle,
-}
-
-impl SettingsWidget for ToolsPanelConversationHistoryWidget {
-    type View = AppearanceSettingsPageView;
-
-    fn search_terms(&self) -> &str {
-        "tools panel tabs conversation history agent conversations left panel visibility"
-    }
-
-    fn render(
-        &self,
-        _view: &Self::View,
-        appearance: &Appearance,
-        app: &AppContext,
-    ) -> Box<dyn Element> {
-        render_body_item::<AppearancePageAction>(
-            "Agent conversations".to_string(),
-            None,
-            LocalOnlyIconState::Hidden,
-            ToggleState::Enabled,
-            appearance,
-            appearance
-                .ui_builder()
-                .switch(self.switch_state.clone())
-                .check(*AISettings::as_ref(app).show_conversation_history)
-                .build()
-                .on_click(|evt_ctx, _app, _v2f| {
-                    evt_ctx.dispatch_typed_action(
-                        AppearancePageAction::ToggleToolsPanelConversationHistory,
-                    );
-                })
-                .finish(),
-            Some("Show the agent conversation history tab in the tools panel.".to_string()),
-        )
-    }
-}
-
-#[derive(Default)]
 struct ToolsPanelGlobalSearchWidget {
     switch_state: SwitchStateHandle,
 }
@@ -3681,44 +3506,6 @@ impl SettingsWidget for ToolsPanelGlobalSearchWidget {
                 })
                 .finish(),
             Some("Show the global file search tab in the tools panel.".to_string()),
-        )
-    }
-}
-
-#[derive(Default)]
-struct ToolsPanelWarpDriveWidget {
-    switch_state: SwitchStateHandle,
-}
-
-impl SettingsWidget for ToolsPanelWarpDriveWidget {
-    type View = AppearanceSettingsPageView;
-
-    fn search_terms(&self) -> &str {
-        "tools panel tabs warp drive left panel visibility"
-    }
-
-    fn render(
-        &self,
-        _view: &Self::View,
-        appearance: &Appearance,
-        app: &AppContext,
-    ) -> Box<dyn Element> {
-        render_body_item::<AppearancePageAction>(
-            "Warp Drive".to_string(),
-            None,
-            LocalOnlyIconState::Hidden,
-            ToggleState::Enabled,
-            appearance,
-            appearance
-                .ui_builder()
-                .switch(self.switch_state.clone())
-                .check(*WarpDriveSettings::as_ref(app).enable_warp_drive)
-                .build()
-                .on_click(|evt_ctx, _app, _v2f| {
-                    evt_ctx.dispatch_typed_action(AppearancePageAction::ToggleToolsPanelWarpDrive);
-                })
-                .finish(),
-            Some("Show the Warp Drive tab in the tools panel.".to_string()),
         )
     }
 }
@@ -3811,94 +3598,6 @@ impl SettingsWidget for InputModeWidget {
             None,
             &view.input_mode_dropdown,
         )
-    }
-}
-
-#[derive(Default)]
-struct PromptWidget {
-    button_mouse_state: MouseStateHandle,
-}
-
-impl SettingsWidget for PromptWidget {
-    type View = AppearanceSettingsPageView;
-
-    fn search_terms(&self) -> &str {
-        "prompt ps1 terminal warp shell custom"
-    }
-
-    fn render(
-        &self,
-        view: &Self::View,
-        appearance: &Appearance,
-        app: &AppContext,
-    ) -> Box<dyn Element> {
-        let session_settings = SessionSettings::as_ref(app);
-        let honor_ps1 = *session_settings.honor_ps1;
-        let background = internal_colors::fg_overlay_1(appearance.theme());
-
-        let body = if honor_ps1 {
-            // TODO: we should render something else when the grid info isn't available.
-            if let Some((grid, size_info)) = &view.ps1_grid_info {
-                let left_padding = size_info.padding_x_px();
-                let prompt_grid = BlockGridElement::new(
-                    grid,
-                    appearance,
-                    *FontSettings::as_ref(app).enforce_minimum_contrast,
-                    ObfuscateSecrets::No,
-                    *size_info,
-                )
-                .finish();
-
-                Flex::row()
-                    .with_main_axis_size(MainAxisSize::Max)
-                    .with_child(
-                        Clipped::new(
-                            Container::new(prompt_grid)
-                                // Remove any left-padding built into the prompt to make sure it's
-                                // left-aligned with the title.
-                                .with_padding_left(-left_padding.as_f32())
-                                .finish(),
-                        )
-                        .finish(),
-                    )
-                    .finish()
-            } else {
-                Empty::new().finish()
-            }
-        } else {
-            Wrap::row()
-                .with_children(view.context_chips.iter().map(|renderer| {
-                    Container::new(renderer.render_unused(ChipDragState::Undraggable, appearance))
-                        .with_margin_right(4.)
-                        .finish()
-                }))
-                .with_run_spacing(4.)
-                .finish()
-        };
-
-        Hoverable::new(self.button_mouse_state.clone(), |hover_state| {
-            let (border_color, border_width) = match hover_state.is_hovered() {
-                true => (appearance.theme().accent(), 1.0),
-                false => (appearance.theme().accent(), 0.0),
-            };
-
-            Container::new(body)
-                .with_background(background)
-                .with_corner_radius(CornerRadius::with_all(Radius::Pixels(8.)))
-                .with_border(Border::all(border_width).with_border_fill(border_color))
-                .with_horizontal_padding(24. - border_width)
-                .with_vertical_padding(12. - border_width)
-                .with_margin_right(4.)
-                .with_margin_bottom(16.)
-                .finish()
-        })
-        .with_cursor(Cursor::PointingHand)
-        .on_click(|ctx, _, _| {
-            ctx.dispatch_typed_action(WorkspaceAction::OpenPromptEditor {
-                open_source: PromptEditorOpenSource::AppearancePage,
-            })
-        })
-        .finish()
     }
 }
 
@@ -4573,38 +4272,6 @@ impl SettingsWidget for MinimumContrastWidget {
 }
 
 #[derive(Default)]
-struct UsageDisplayUnitWidget {}
-
-impl SettingsWidget for UsageDisplayUnitWidget {
-    type View = AppearanceSettingsPageView;
-
-    fn search_terms(&self) -> &str {
-        "usage credits dollars cost spend display unit pricing transparency"
-    }
-
-    fn should_render(&self, _app: &AppContext) -> bool {
-        FeatureFlag::PricingTransparency.is_enabled()
-    }
-
-    fn render(
-        &self,
-        view: &Self::View,
-        appearance: &Appearance,
-        app: &AppContext,
-    ) -> Box<dyn Element> {
-        render_dropdown_item(
-            appearance,
-            "Usage display unit",
-            Some("Select the unit for usage and spend amounts."),
-            None,
-            LocalOnlyIconState::Hidden,
-            None,
-            &view.usage_display_unit_dropdown,
-        )
-    }
-}
-
-#[derive(Default)]
 struct LigaturesWidget {
     switch_state: SwitchStateHandle,
     info_mouse_state: MouseStateHandle,
@@ -5053,41 +4720,6 @@ impl SettingsWidget for UseLatestUserPromptAsConversationTitleInTabNamesWidget {
                     .to_string(),
             ),
         )
-    }
-}
-
-#[derive(Default)]
-struct EditToolbarWidget;
-
-impl SettingsWidget for EditToolbarWidget {
-    type View = AppearanceSettingsPageView;
-
-    fn search_terms(&self) -> &str {
-        "edit toolbar header panel buttons configure arrange layout chip chips rearrange re-arrange customize"
-    }
-
-    fn render(
-        &self,
-        view: &Self::View,
-        appearance: &Appearance,
-        _app: &AppContext,
-    ) -> Box<dyn Element> {
-        let label = render_body_item_label::<AppearancePageAction>(
-            "Header toolbar layout".to_string(),
-            None,
-            None,
-            LocalOnlyIconState::Hidden,
-            ToggleState::Enabled,
-            appearance,
-        );
-        let editor = Container::new(ChildView::new(&view.header_toolbar_inline_editor).finish())
-            .with_padding_bottom(HEADER_PADDING)
-            .finish();
-
-        Flex::column()
-            .with_child(Container::new(label).with_margin_bottom(4.).finish())
-            .with_child(editor)
-            .finish()
     }
 }
 
