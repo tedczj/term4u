@@ -21,5 +21,3 @@ while time.monotonic()-t<620:
  for _ in range(4):known.update(pid for pid,parent,cmd in rows if parent in known)
  snapshots.append({'elapsed':time.monotonic()-t,'processes':[x for x in rows if x[0] in known]});time.sleep(.2)
 record.update(alive_after_620s=p.poll() is None,pids=sorted(known),end=datetime.datetime.now(datetime.timezone.utc).isoformat());(out/'gui-final-run.json').write_text(json.dumps(record,indent=2)+'\n');(out/'gui-final-processes.json').write_text(json.dumps(snapshots,indent=2)+'\n');print('620-second observation complete',flush=True)
-
-
