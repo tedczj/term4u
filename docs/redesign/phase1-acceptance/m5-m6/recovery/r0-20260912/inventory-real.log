@@ -1,0 +1,180 @@
+warning: patch `tink-core v0.3.0 (https://github.com/warpdotdev/tink-rust?rev=54b9ac9af93b0c08b446a7bc0582836c9403a71b#54b9ac9a)` was not used in the crate graph
+warning: patch `tink-hybrid v0.3.0 (https://github.com/warpdotdev/tink-rust?rev=54b9ac9af93b0c08b446a7bc0582836c9403a71b#54b9ac9a)` was not used in the crate graph
+warning: patch `tink-proto v0.3.0 (https://github.com/warpdotdev/tink-rust?rev=54b9ac9af93b0c08b446a7bc0582836c9403a71b#54b9ac9a)` was not used in the crate graph
+help: Check that the patched package version and available features are compatible
+      with the dependency requirements. If the patch has a different version from
+      what is locked in the Cargo.lock file, run `cargo update` to use the new
+      version. This may also occur with an optional dependency that is not enabled.
+ Downloading crates ...
+  Downloaded base64ct v1.8.0
+  Downloaded dary_heap v0.3.7
+  Downloaded base64 v0.13.1
+  Downloaded debugid v0.8.0
+  Downloaded console v0.15.11
+  Downloaded gemm-f64 v0.19.0
+  Downloaded macro_rules_attribute-proc_macro v0.2.2
+  Downloaded macro_rules_attribute v0.2.2
+  Downloaded webpki-root-certs v0.26.11
+  Downloaded pulp-wasm-simd-flag v0.1.0
+  Downloaded gemm-f16 v0.19.0
+  Downloaded number_prefix v0.4.0
+  Downloaded mappings v0.7.1
+  Downloaded enum-as-inner v0.6.1
+  Downloaded rawpointer v0.2.1
+  Downloaded mintex v0.1.2
+  Downloaded monostate v0.1.14
+  Downloaded yoke-derive v0.8.1
+  Downloaded monostate-impl v0.1.14
+  Downloaded socks v0.3.4
+  Downloaded rayon-cond v0.4.0
+  Downloaded derive_builder_macro v0.20.1
+  Downloaded gemm-c64 v0.19.0
+  Downloaded seq-macro v0.3.6
+  Downloaded reborrow v0.5.5
+  Downloaded gemm-c32 v0.19.0
+  Downloaded gemm-f32 v0.19.0
+  Downloaded protobuf-support v3.7.2
+  Downloaded memmap2 v0.8.0
+  Downloaded sys-info v0.9.1
+  Downloaded tikv-jemalloc-ctl v0.6.1
+  Downloaded sysctl v0.6.0
+  Downloaded derive_builder_core v0.20.1
+  Downloaded ort-sys v2.0.0-rc.10
+  Downloaded gemm v0.19.0
+  Downloaded rustls-pemfile v2.2.0
+  Downloaded yoke v0.8.1
+  Downloaded spin v0.10.0
+  Downloaded pprof v0.15.0
+  Downloaded ureq-proto v0.4.2
+  Downloaded unicode_categories v0.1.1
+  Downloaded unicode-normalization-alignments v0.1.12
+  Downloaded der v0.7.10
+  Downloaded zip v7.2.0
+  Downloaded ureq v3.0.12
+  Downloaded pulp v0.22.2
+  Downloaded esaxx-rs v0.1.10
+  Downloaded tokenizers v0.21.4
+  Downloaded symbolic-demangle v12.6.0
+  Downloaded protobuf v3.7.2
+  Downloaded dhat v0.3.2
+  Downloaded ndarray v0.16.1
+  Downloaded candle-core v0.9.2
+  Downloaded ort v2.0.0-rc.10
+  Downloaded typed-path v0.12.2
+  Downloaded raw-cpuid v11.5.0
+  Downloaded protobuf-parse v3.7.2
+  Downloaded indicatif v0.17.11
+  Downloaded candle-onnx v0.9.2
+  Downloaded candle-nn v0.9.2
+  Downloaded rand_distr v0.5.1
+  Downloaded cpp_demangle v0.4.3
+  Downloaded protobuf-codegen v3.7.2
+  Downloaded matrixmultiply v0.3.10
+  Downloaded pprof_util v0.8.2
+  Downloaded derive_builder v0.20.1
+  Downloaded spm_precompiled v0.1.4
+  Downloaded symbolic-common v12.6.0
+  Downloaded safetensors v0.7.0
+  Downloaded native-tls v0.2.14
+  Downloaded smallvec v2.0.0-alpha.10
+  Downloaded pem-rfc7468 v0.7.0
+  Downloaded jemalloc_pprof v0.8.2
+  Downloaded gemm-common v0.19.0
+  Downloaded dyn-stack v0.13.0
+  Downloaded float8 v0.6.0
+  Downloaded findshlibs v0.10.2
+warning: patch `tink-core v0.3.0 (https://github.com/warpdotdev/tink-rust?rev=54b9ac9af93b0c08b446a7bc0582836c9403a71b#54b9ac9a)` was not used in the crate graph
+warning: patch `tink-hybrid v0.3.0 (https://github.com/warpdotdev/tink-rust?rev=54b9ac9af93b0c08b446a7bc0582836c9403a71b#54b9ac9a)` was not used in the crate graph
+warning: patch `tink-proto v0.3.0 (https://github.com/warpdotdev/tink-rust?rev=54b9ac9af93b0c08b446a7bc0582836c9403a71b#54b9ac9a)` was not used in the crate graph
+help: Check that the patched package version and available features are compatible
+      with the dependency requirements. If the patch has a different version from
+      what is locked in the Cargo.lock file, run `cargo update` to use the new
+      version. This may also occur with an optional dependency that is not enabled.
+   Compiling aws-lc-sys v0.39.1
+   Compiling http-range-header v0.4.0
+   Compiling num_threads v0.1.7
+   Compiling web_atoms v0.1.3
+   Compiling tower-http v0.6.8
+   Compiling time v0.3.47
+   Compiling aws-lc-rs v1.16.2
+   Compiling markup5ever v0.35.0
+   Compiling html5ever v0.35.0
+   Compiling rustls-webpki v0.103.13
+   Compiling xml5ever v0.35.0
+   Compiling rustls v0.23.39
+   Compiling castaway v0.2.4
+   Compiling markup5ever_rcdom v0.35.0+unofficial
+   Compiling lru v0.18.0
+   Compiling compact_str v0.9.0
+   Compiling strum v0.28.0
+   Compiling unicode-truncate v2.0.1
+   Compiling kasuari v0.4.11
+   Compiling critical-section v1.2.0
+   Compiling markdown_parser v0.1.0 (/Users/tedczj/workspace/term4u/crates/markdown_parser)
+   Compiling ratatui-core v0.1.1
+   Compiling line-clipping v0.3.7
+   Compiling safe_arch v0.7.4
+   Compiling wide v0.7.33
+   Compiling ratatui-widgets v0.3.1
+   Compiling ratatui-crossterm v0.1.1
+   Compiling openh264-sys2 v0.8.1
+   Compiling minimp4-sys v0.1.1
+   Compiling tokio-rustls v0.26.4
+   Compiling rustls-platform-verifier v0.6.2
+   Compiling tungstenite v0.24.0
+   Compiling hyper-rustls v0.27.7
+   Compiling reqwest v0.13.3
+   Compiling async-tungstenite v0.28.2
+   Compiling graphql-ws-client v0.11.1
+   Compiling ratatui-macros v0.7.1
+   Compiling warpui_core v0.1.0 (/Users/tedczj/workspace/term4u/crates/warpui_core)
+   Compiling websocket v0.1.0 (/Users/tedczj/workspace/term4u/crates/websocket)
+   Compiling ratatui v0.30.1
+   Compiling minimp4 v0.1.2
+   Compiling warp_errors v0.0.0 (/Users/tedczj/workspace/term4u/crates/warp_errors)
+   Compiling command v0.1.0 (/Users/tedczj/workspace/term4u/crates/command)
+   Compiling sum_tree v0.1.0 (/Users/tedczj/workspace/term4u/crates/sum_tree)
+   Compiling warp_util v0.1.0 (/Users/tedczj/workspace/term4u/crates/warp_util)
+   Compiling openh264 v0.8.1
+   Compiling warp_core v0.0.0 (/Users/tedczj/workspace/term4u/crates/warp_core)
+   Compiling aha-reqwest-eventsource v0.1.0
+   Compiling rust-embed v8.7.2
+   Compiling warpui v0.0.0 (/Users/tedczj/workspace/term4u/crates/warpui)
+   Compiling local_control v0.0.0 (/Users/tedczj/workspace/term4u/crates/local_control)
+   Compiling warp_cli v0.0.0 (/Users/tedczj/workspace/term4u/crates/warp_cli)
+   Compiling arborium-javascript v2.13.0
+   Compiling zstd-sys v2.0.15+zstd.1.5.7
+   Compiling rust-embed v6.8.1
+   Compiling zstd-safe v7.2.4
+   Compiling arborium-css v2.13.0
+   Compiling warp-command-signatures v0.0.0 (https://github.com/warpdotdev/command-signatures.git?rev=d3725aa42375cc229699c87be2b38f9d9f07080f#d3725aa4)
+   Compiling zstd v0.13.3
+   Compiling ipynb_parser v0.1.0 (/Users/tedczj/workspace/term4u/crates/ipynb_parser)
+   Compiling arborium-html v2.13.0
+   Compiling arborium-c v2.13.0
+   Compiling anstyle-parse v1.0.0
+   Compiling arborium-tree-sitter v2.13.0
+   Compiling anstream v1.0.0
+   Compiling arborium-scss v2.13.0
+   Compiling arborium-yaml v2.13.0
+   Compiling arborium-typescript v2.13.0
+   Compiling arborium-toml v2.13.0
+   Compiling escape8259 v0.5.3
+   Compiling libtest-mimic v0.8.2
+   Compiling arborium-highlight v2.13.0
+   Compiling warpui_extras v0.0.0 (/Users/tedczj/workspace/term4u/crates/warpui_extras)
+   Compiling settings v0.0.0 (/Users/tedczj/workspace/term4u/crates/settings)
+   Compiling http_client v0.0.0 (/Users/tedczj/workspace/term4u/crates/http_client)
+   Compiling asset_cache v0.0.0 (/Users/tedczj/workspace/term4u/crates/asset_cache)
+rustc-LLVM ERROR: IO failure on output stream: No space left on device
+error: could not compile `warp-command-signatures` (lib)
+
+Caused by:
+  failed to create file `/Users/tedczj/workspace/term4u/target/debug/.fingerprint/warp-command-signatures-c72921a84dc84df5/output-lib-warp_command_signatures`
+
+Caused by:
+warning: build failed, waiting for other jobs to finish...
+error: failed to build archive at `/Users/tedczj/workspace/term4u/target/debug/deps/libwarpui_core-d1dc8f175884a9d0.rlib`: No space left on device (os error 28)
+
+error: could not compile `warpui_core` (lib) due to 1 previous error
+error: command `/Users/tedczj/.rustup/toolchains/1.92.0-aarch64-apple-darwin/bin/cargo '--color=auto' test --no-run --message-format json-render-diagnostics --workspace --exclude command-signatures-v2` exited with code 101

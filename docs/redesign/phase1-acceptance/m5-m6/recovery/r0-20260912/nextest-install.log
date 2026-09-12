@@ -1,0 +1,6 @@
+ INFO resolve: Resolving package: 'cargo-nextest'
+ WARN The package cargo-nextest v0.9.144 (aarch64-apple-darwin) has been downloaded from github.com
+ INFO This will install the following binaries:
+ INFO   - cargo-nextest => /Users/tedczj/.cargo/bin/cargo-nextest
+ INFO Installing binaries...
+ INFO Done in 5.226822458s

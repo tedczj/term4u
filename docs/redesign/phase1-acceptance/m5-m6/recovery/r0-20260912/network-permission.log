@@ -1,0 +1,7 @@
+crw-------  1 root  wheel  0x17000000 Aug 29 23:46 /dev/bpf0
+crw-------  1 root  wheel  0x17000001 Aug 29 23:46 /dev/bpf1
+crw-------  1 root  wheel  0x17000002 Aug 24 10:32 /dev/bpf2
+crw-------  1 root  wheel  0x17000003 Aug 24 10:32 /dev/bpf3
+sudo: a password is required
+tcpdump: lo0: You don't have permission to capture on that device
+((cannot open BPF device) /dev/bpf0: Permission denied)

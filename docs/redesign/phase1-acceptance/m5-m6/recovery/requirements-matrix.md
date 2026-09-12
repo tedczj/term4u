@@ -5,11 +5,11 @@
 
 | 项 | 要求 | 状态 | 实现/验证/证据 | 验收 |
 |---|---|---|---|---|
-| R0.1 | HEAD/UTC/工作树/工具链/磁盘/PATH | 进行中 | [start.md](start.md)，缺固定 Rust 待授权 | C10 |
-| R0.2 | library check 原始日志及根因分组 | FAIL/待重跑 | [library-check-initial.log](library-check-initial.log)，exit 127，不是编译诊断 | C1 |
-| R0.3 | recovery 新记录，不覆盖历史 | 进行中 | 本目录；历史 baseline/batches 未改 | C10 |
-| R0.4 | 清单生成失败不当空清单 | 待验 | `script/test_inventory` | C7 |
-| R0.5 | GUI/旧 DB/macOS/Linux/授权前提 | 进行中 | [start.md](start.md)，历史对象与 fixtures 存在，运行环境未全备 | C3/C9/C10 |
+| R0.1 | HEAD/UTC/工作树/工具链/磁盘/PATH | 基线已刷新；空间不足 | [最新记录](r0-20260912/README.md)：Rust/Cargo 1.92.0，nextest 已补齐；真实 inventory 遇磁盘不足 | C10 |
+| R0.2 | library check 原始日志及根因分组 | PASS（仅 library check） | [新日志](r0-20260912/library-check.log) exit 0；[诊断分组](r0-20260912/diagnostic-groups.json)，全仓 Clippy 仍失败 | C1 |
+| R0.3 | recovery 新记录，不覆盖历史 | 完成 | [新目录](r0-20260912/README.md)，保留历史 baseline/batches | C10 |
+| R0.4 | 清单生成失败不当空清单 | 失败保护 PASS；真实清单 FAIL | [9 项回归](r0-20260912/inventory-regressions.log)；[真实失败](r0-20260912/inventory-real.log) exit 101，不覆盖 baseline | C7 |
+| R0.5 | GUI/旧 DB/本机 macOS 网络/授权前提 | INCOMPLETE | [当前条件](r0-20260912/README.md)：本次 commit/push 已授权；抓包权限受阻，真实旧样本归 R2.6；Linux 不再要求 | C3/C9/C10 |
 | R1.1 | 持久化本地类型与 terminal opaque 旧行 | 进行中 | block_list/sqlite/model；需补回归 | C1/C3 |
 | R1.2 | notebook/workflow/文件初始化及恢复 | 待验 | app lib/local_objects/notebooks/workflows | C1/C3 |
 | R1.3 | Settings/menu/search 去死引用 | 待验 | app settings/settings_view/search/app_menus | C1/C4 |
@@ -55,6 +55,6 @@
 | R6.9 | 隔离 HOME/恶意代理下候选 GUI/TUI 各 60s 零网络 | 待验 | TCP/UDP/WS/可归因 DNS53/853/子进程/重试/待发文件 | C8 |
 | R6.10 | 第二道防火墙拒绝日志为空；规则先授权 | 待授权/待验 | 不以守卫拒绝当零请求，用户主动命令另测 | C8 |
 | R6.11 | macOS arm64 全门禁/实机/DB/网络/LSP/bundle/签名/scheme/身份 | 待验 | final/macos.md | C9 |
-| R6.12 | Linux x86_64 最小矩阵，同源码，远端不修不自行推送 | 待环境/待验 | 便宜门禁后 oz-dev runner 发现；final/linux.md | C9 |
+| R6.12 | Linux 验证 | 不适用（2026-09-12 用户决定） | 仅支持 macOS；Linux 代码/依赖/构建/CI 后续清理，见 [登记](r0-20260912/README.md#linux-后续清理登记)，不记 Linux PASS | C9 |
 | R6.13 | final C1–C10 全索引/源码证据关系/diff/status 审计 | 待验 | final/manifest.md 与 repository-state.txt | C10 |
 | R6.14 | V0 索引/08 章/risk-log 同步；不宣称 M7/MIT 完成 | 待验 | phase1-acceptance/final/manifest.md 引用本批，不复制日志 | C10 |

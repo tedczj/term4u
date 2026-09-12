@@ -50,7 +50,7 @@ R0–R6、C1–C10、完整验证与 Goal 指令。08 章展示阶段状态；�
 | D8 | 必须验证保留行为、旧数据、测试清单与离线边界，不能仅凭启动或抓网络验收 |
 | D9 | 阶段 1 保留 app/ + crates/ 结构；MIT 原创代码预留 crates-local/，不向其中搬运 AGPL 实现 |
 | D10 | 只改运行时身份与对外品牌，内部 warp_* crate 名及符号不全仓改名；运行时身份已原子完成 |
-| D11 | 只支持 macOS/Linux；删除 Windows 专属实现/依赖，不全仓清洗内联 cfg。两个源码例外及历史 migrations 按 11 章 §2 保留 |
+| D11 | 只支持 macOS；Linux 专属代码、依赖及构建/CI 配置后续清理，不再要求 Linux 验证。删除 Windows 专属实现/依赖，不全仓清洗内联 cfg。两个源码例外及历史 migrations 按 11 章 §2 保留 |
 
 <a id="s2-x1"></a>
 ### 已落地的运行时身份
@@ -98,6 +98,7 @@ R0–R6、C1–C10、完整验证与 Goal 指令。08 章展示阶段状态；�
 | 最近代码提交 | `948d475b wip: localize M5 and M6 runtime surfaces` |
 | 本次验证边界 | 已核对文档、目录、关键源码与 manifest/lockfile；环境未找到 Cargo，未取得新的编译/测试结论 |
 | 已落地 | 主要云目录/crate 删除、路线 A、本地模型、TUI/PATH LSP、精确 pin、TUI feature 收缩 |
+| R0 最新基线 | [2026-09-12 本机环境与检查](phase1-acceptance/m5-m6/recovery/r0-20260912/README.md)；Rust 缺失状态已过期，网络权限仍受阻 |
 | 当前待做 | R0–R6：编译、本地功能/旧数据、UI/Windows/外链、供应链、完整验收 |
 | 正式交付 | V0 历史实现完成但严格验收未关闭；当前 WIP 不保证可用；V1/V2 未达成 |
 | 后续范围 | M7 品牌/许可证发布材料与 tag；完整 MIT 另行安排 |
