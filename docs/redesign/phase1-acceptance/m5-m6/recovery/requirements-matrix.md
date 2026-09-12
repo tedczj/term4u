@@ -5,11 +5,11 @@
 
 | 项 | 要求 | 状态 | 实现/验证/证据 | 验收 |
 |---|---|---|---|---|
-| R0.1 | HEAD/UTC/工作树/工具链/磁盘/PATH | 基线已刷新；空间已恢复 | [最新记录](r0-20260912/README.md)：Rust/Cargo 1.92.0，nextest 已补齐；真实 inventory 曾遇磁盘不足；[后续缓存清理](network-20260912/cache-cleanup.json)已恢复空间，清单尚未重跑 | C10 |
+| R0.1 | HEAD/UTC/工作树/工具链/磁盘/PATH | 完成（环境基线） | [最新记录](r0-20260912/README.md)：Rust/Cargo 1.92.0，nextest 已补齐；[缓存清理](network-20260912/cache-cleanup.json)已恢复空间；[重跑](network-es-20260912/inventory-current.json)已取得真实编译失败基线 | C10 |
 | R0.2 | library check 原始日志及根因分组 | PASS（仅 library check） | [新日志](r0-20260912/library-check.log) exit 0；[诊断分组](r0-20260912/diagnostic-groups.json)，全仓 Clippy 仍失败 | C1 |
 | R0.3 | recovery 新记录，不覆盖历史 | 完成 | [新目录](r0-20260912/README.md)，保留历史 baseline/batches | C10 |
-| R0.4 | 清单生成失败不当空清单 | 失败保护 PASS；真实清单 FAIL | [9 项回归](r0-20260912/inventory-regressions.log)；[真实失败](r0-20260912/inventory-real.log) exit 101，不覆盖 baseline | C7 |
-| R0.5 | GUI/旧 DB/本机 macOS 网络/授权前提 | INCOMPLETE | [当前条件](r0-20260912/README.md)：本次 commit/push 已授权；[管理员受控抓包通过](r0-capture-20260912/README.md)，空间已恢复；[DNS 已校准](network-20260912/README.md)，TCC 子进程覆盖/正式收尾仍待落实；真实旧样本归 R2.6；Linux 不再要求 | C3/C9/C10 |
+| R0.4 | 清单生成失败不当空清单 | 失败保护 PASS；真实清单 FAIL | [9 项回归](r0-20260912/inventory-regressions.log)；[最新真实失败](network-es-20260912/inventory-current.log) exit 101，134 个编译错误；不覆盖 baseline | C7 |
+| R0.5 | GUI/旧 DB/本机 macOS 网络/授权前提 | 已核实；后续验收缺口单列 | [本机完整进程树网络验证 PASS](network-es-20260912/README.md)；真实旧样本归 R2.6，完整 C8 归 R6；仅支持 macOS | C3/C9/C10 |
 | R1.1 | 持久化本地类型与 terminal opaque 旧行 | 进行中 | block_list/sqlite/model；需补回归 | C1/C3 |
 | R1.2 | notebook/workflow/文件初始化及恢复 | 待验 | app lib/local_objects/notebooks/workflows | C1/C3 |
 | R1.3 | Settings/menu/search 去死引用 | 待验 | app settings/settings_view/search/app_menus | C1/C4 |
@@ -52,7 +52,7 @@
 | R6.6 | GUI/TUI release strings + 实际 bundle/resources + SHA256 | 待验 | 假阳性仅负责人批准精确项 | C8 |
 | R6.7 | GUI S1–S13 及所有 R2 流程 | 待验 | 操作/观察/截图；含 debug Rust panic、十分钟空闲 | C2/C3/C5/C8 |
 | R6.8 | TUI 真实 terminal 启动/输出/Ctrl-C/tab/新 tab/退出 | 待验 | run-tui + tmux 或 PTY 屏幕，不以 GUI harness 代替 | C2/C4 |
-| R6.9 | 隔离 HOME/恶意代理下候选 GUI/TUI 各 60s 零网络 | 待验 | TCP/UDP/WS/可归因 DNS53/853/子进程/重试/待发文件 | C8 |
+| R6.9 | 隔离 HOME/恶意代理下候选 GUI/TUI 各 60s 零网络 | debug 窗口 PASS；最终 release 待验 | [GUI 620 秒/TUI 65 秒及完整进程树、DNS、退出](network-es-20260912/README.md)；不是 release C8 全部通过 | C8 |
 | R6.10 | 第二道防火墙拒绝日志为空；规则先授权 | 待授权/待验 | 不以守卫拒绝当零请求，用户主动命令另测 | C8 |
 | R6.11 | macOS arm64 全门禁/实机/DB/网络/LSP/bundle/签名/scheme/身份 | 待验 | final/macos.md | C9 |
 | R6.12 | Linux 验证 | 不适用（2026-09-12 用户决定） | 仅支持 macOS；Linux 代码/依赖/构建/CI 后续清理，见 [登记](r0-20260912/README.md#linux-后续清理登记)，不记 Linux PASS | C9 |

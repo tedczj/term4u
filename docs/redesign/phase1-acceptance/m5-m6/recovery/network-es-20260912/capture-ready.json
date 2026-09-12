@@ -1,0 +1,43 @@
+{
+  "started": "2026-09-12T10:31:01.323876+00:00",
+  "status": "CAPTURING",
+  "commands": {
+    "packets": [
+      "/usr/sbin/tcpdump",
+      "-i",
+      "pktap,all",
+      "-nn",
+      "-k",
+      "INPD",
+      "-l",
+      "tcp or udp"
+    ],
+    "dns": [
+      "/usr/bin/log",
+      "stream",
+      "--level",
+      "debug",
+      "--style",
+      "compact",
+      "--predicate",
+      "process == \"mDNSResponder\""
+    ],
+    "processes": [
+      "/usr/bin/eslogger",
+      "exec",
+      "fork",
+      "exit"
+    ]
+  },
+  "calibration": {
+    "exec_probe_pid": 16079,
+    "udp_probe_pid": 16075,
+    "udp_port": 49331,
+    "dns_probe_pid": 16080
+  },
+  "process_groups": {
+    "controller": 16075,
+    "eslogger": 16078
+  },
+  "ready": "2026-09-12T10:31:05.635657+00:00"
+}

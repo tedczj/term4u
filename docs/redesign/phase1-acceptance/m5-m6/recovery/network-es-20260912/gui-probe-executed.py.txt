@@ -1,0 +1,25 @@
+import pathlib,subprocess,os,time,json,tempfile,datetime,hashlib
+out=pathlib.Path('/Users/tedczj/workspace/term4u/docs/redesign/phase1-acceptance/m5-m6/recovery/network-es-20260912');capture=pathlib.Path('/private/tmp/term4u-network-wsyko7mj')
+for _ in range(120):
+ if (capture/'ready.json').exists():break
+ time.sleep(1)
+else:raise SystemExit('collector not ready')
+if 'listening on' not in (capture/'packets.log').read_text():raise SystemExit('packet capture failed')
+task_home=pathlib.Path(tempfile.mkdtemp(prefix='term4u-net-gui-'));(task_home/'.zshrc').write_text('');(task_home/'.zprofile').write_text('')
+env={'HOME':str(task_home),'ZDOTDIR':str(task_home),'PATH':'/usr/bin:/bin:/usr/sbin:/sbin','SHELL':'/bin/zsh','USER':os.environ['USER'],'LOGNAME':os.environ['USER'],'TMPDIR':str(task_home),'LANG':'en_US.UTF-8','WARP_DATA_PROFILE':'network-es-20260912-gui','RUST_LOG':'info'}
+for key in ['HTTP_PROXY','HTTPS_PROXY','ALL_PROXY','http_proxy','https_proxy','all_proxy']:env[key]='http://127.0.0.1:49330'
+env['NO_PROXY']='';env['no_proxy']=''
+exe='/Users/tedczj/workspace/term4u/target/debug/bundle/osx/Term4u.app/Contents/MacOS/term4u'
+f=(out/'gui-final-stdout.log').open('w');start=datetime.datetime.now(datetime.timezone.utc).isoformat();p=subprocess.Popen([exe],env=env,cwd=task_home,stdout=f,stderr=subprocess.STDOUT)
+record={'pid':p.pid,'home':str(task_home),'environment':env,'start':start,'sha256':hashlib.sha256(pathlib.Path(exe).read_bytes()).hexdigest()};(out/'gui-final-run.json').write_text(json.dumps(record,indent=2)+'\n');print('GUI PID',p.pid,flush=True)
+known={p.pid};snapshots=[];t=time.monotonic()
+while time.monotonic()-t<620:
+ raw=subprocess.check_output(['ps','-axo','pid=,ppid=,comm='],text=True);rows=[]
+ for line in raw.splitlines():
+  a=line.strip().split(None,2)
+  if len(a)==3:rows.append((int(a[0]),int(a[1]),a[2]))
+ for _ in range(4):known.update(pid for pid,parent,cmd in rows if parent in known)
+ snapshots.append({'elapsed':time.monotonic()-t,'processes':[x for x in rows if x[0] in known]});time.sleep(.2)
+record.update(alive_after_620s=p.poll() is None,pids=sorted(known),end=datetime.datetime.now(datetime.timezone.utc).isoformat());(out/'gui-final-run.json').write_text(json.dumps(record,indent=2)+'\n');(out/'gui-final-processes.json').write_text(json.dumps(snapshots,indent=2)+'\n');print('620-second observation complete',flush=True)
+
+

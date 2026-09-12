@@ -1,0 +1,54 @@
+{
+  "started": "2026-09-12T10:31:01.323876+00:00",
+  "status": "COLLECTED_NOT_YET_VERIFIED",
+  "commands": {
+    "packets": [
+      "/usr/sbin/tcpdump",
+      "-i",
+      "pktap,all",
+      "-nn",
+      "-k",
+      "INPD",
+      "-l",
+      "tcp or udp"
+    ],
+    "dns": [
+      "/usr/bin/log",
+      "stream",
+      "--level",
+      "debug",
+      "--style",
+      "compact",
+      "--predicate",
+      "process == \"mDNSResponder\""
+    ],
+    "processes": [
+      "/usr/bin/eslogger",
+      "exec",
+      "fork",
+      "exit"
+    ]
+  },
+  "calibration": {
+    "exec_probe_pid": 16079,
+    "udp_probe_pid": 16075,
+    "udp_port": 49331,
+    "dns_probe_pid": 16080
+  },
+  "process_groups": {
+    "controller": 16075,
+    "eslogger": 16078
+  },
+  "ready": "2026-09-12T10:31:05.635657+00:00",
+  "exit_codes": {
+    "packets": 0,
+    "dns": -15,
+    "processes": -15
+  },
+  "finished": "2026-09-12T10:42:46.672987+00:00",
+  "sha256": {
+    "processes.log": "c2ba2fe8c8c711d9186b34f8c89591969db2d8275e5b69a687f4754fbd154872",
+    "packets.log": "24a488af97d8979b0e91deff68961607b3575314ae3fe992e08f431c9db7e49f",
+    "dns.log": "e012cc4fdbc9de917be626f0de32cc1e689c1c607c35e37b4bd00e7d669cfe30"
+  }
+}

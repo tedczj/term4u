@@ -1,0 +1,10 @@
+{
+  "utc": "2026-09-12T10:44:50.459358+00:00",
+  "command": "./script/test_inventory list",
+  "exit_code": 101,
+  "environment": {
+    "CARGO_PROFILE_DEV_DEBUG": "0",
+    "CARGO_INCREMENTAL": "0",
+    "CARGO_BUILD_JOBS": "4"
+  }
+}

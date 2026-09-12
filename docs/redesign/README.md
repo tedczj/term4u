@@ -98,7 +98,7 @@ R0–R6、C1–C10、完整验证与 Goal 指令。08 章展示阶段状态；�
 | 最近代码提交 | `948d475b wip: localize M5 and M6 runtime surfaces` |
 | 本次验证边界 | 已核对文档、目录、关键源码与 manifest/lockfile；环境未找到 Cargo，未取得新的编译/测试结论 |
 | 已落地 | 主要云目录/crate 删除、路线 A、本地模型、TUI/PATH LSP、精确 pin、TUI feature 收缩 |
-| R0 最新基线 | [2026-09-12 本机环境与检查](phase1-acceptance/m5-m6/recovery/r0-20260912/README.md)；Rust 缺失状态已过期，[本机受控抓包通过](phase1-acceptance/m5-m6/recovery/r0-capture-20260912/README.md)，[空间已恢复、DNS 已校准](phase1-acceptance/m5-m6/recovery/network-20260912/README.md)，完整进程覆盖及正式采集仍待验 |
+| R0 最新基线 | [2026-09-12 本机环境与检查](phase1-acceptance/m5-m6/recovery/r0-20260912/README.md)；Rust 缺失状态已过期，[本机受控抓包通过](phase1-acceptance/m5-m6/recovery/r0-capture-20260912/README.md)，[空间与完整进程树网络验证已落实](phase1-acceptance/m5-m6/recovery/network-es-20260912/README.md)，R2/R6 其他验收仍待完成 |
 | 当前待做 | R0–R6：编译、本地功能/旧数据、UI/Windows/外链、供应链、完整验收 |
 | 正式交付 | V0 历史实现完成但严格验收未关闭；当前 WIP 不保证可用；V1/V2 未达成 |
 | 后续范围 | M7 品牌/许可证发布材料与 tag；完整 MIT 另行安排 |
