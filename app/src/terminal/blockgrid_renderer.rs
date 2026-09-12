@@ -1,20 +1,19 @@
 use std::collections::HashMap;
 use std::ops::{Neg, RangeInclusive};
 
-use pathfinder_color::ColorU;
 use warpui::fonts::{FamilyId, Properties, Weight};
 use warpui::geometry::rect::RectF;
 use warpui::geometry::vector::{Vector2F, vec2f};
-use warpui::{AppContext, Element, EntityId, PaintContext};
+use warpui::{AppContext, PaintContext};
 
 use super::model::SecretHandle;
-use super::model::ansi::{CursorShape, CursorStyle};
+use super::model::ansi::CursorShape;
 use super::model::grid::RespectDisplayedOutput;
 use super::model::image_map::StoredImageMetadata;
 use crate::settings::EnforceMinimumContrast;
-use crate::terminal::grid_renderer::{CellGlyphCache, render_cursor, render_grid};
+use crate::terminal::grid_renderer::{CellGlyphCache, render_grid};
 use crate::terminal::model::ObfuscateSecrets;
-use crate::terminal::model::blockgrid::{BlockGrid, CursorDisplayPoint};
+use crate::terminal::model::blockgrid::BlockGrid;
 use crate::terminal::model::grid::grid_handler::Link;
 use crate::terminal::model::index::Point;
 use crate::terminal::{SizeInfo, color};
@@ -62,27 +61,6 @@ pub trait BlockGridRenderer {
         visible_cursor_shape: Option<CursorShape>,
         image_metadata: &HashMap<u32, StoredImageMetadata>,
         ctx: &mut PaintContext,
-        app: &AppContext,
-    );
-
-    fn draw_with_default_params(
-        &self,
-        grid_origin: Vector2F,
-        origin: Vector2F,
-        block_grid_params: &BlockGridParams,
-        ctx: &mut PaintContext,
-        app: &AppContext,
-    );
-
-    #[allow(clippy::too_many_arguments)]
-    fn draw_cursor(
-        &self,
-        grid_origin: Vector2F,
-        grid_render_params: &GridRenderParams,
-        ctx: &mut PaintContext,
-        terminal_view_id: EntityId,
-        cursor_hint_text: Option<&mut Box<dyn Element>>,
-        color: ColorU,
         app: &AppContext,
     );
 }
@@ -164,81 +142,6 @@ impl BlockGridRenderer for BlockGrid {
             ctx,
             app,
         );
-    }
-
-    fn draw_with_default_params(
-        &self,
-        grid_origin: Vector2F,
-        origin: Vector2F,
-        block_grid_params: &BlockGridParams,
-        ctx: &mut PaintContext,
-        app: &AppContext,
-    ) {
-        let mut glyphs = CellGlyphCache::default();
-        self.draw(
-            grid_origin,
-            origin,
-            &mut glyphs,
-            255,
-            None,
-            None,
-            None,
-            None::<std::iter::Empty<&RangeInclusive<Point>>>,
-            None,
-            Properties::default(),
-            block_grid_params,
-            None,
-            &HashMap::new(),
-            ctx,
-            app,
-        )
-    }
-
-    #[allow(clippy::too_many_arguments)]
-    fn draw_cursor(
-        &self,
-        grid_origin: Vector2F,
-        grid_render_params: &GridRenderParams,
-        ctx: &mut PaintContext,
-        terminal_view_id: EntityId,
-        cursor_hint_text: Option<&mut Box<dyn Element>>,
-        color: ColorU,
-        app: &AppContext,
-    ) {
-        let cursor_style = self.cursor_style();
-        let (cursor_display_point, is_cursor_on_wide_char, cursor_style, cursor_hint_text) =
-            match self.cursor_display_point() {
-                Some(CursorDisplayPoint::Visible(cursor_display_point)) => (
-                    cursor_display_point,
-                    self.grid_handler().is_cursor_on_wide_char(),
-                    cursor_style,
-                    cursor_hint_text,
-                ),
-                Some(CursorDisplayPoint::HiddenCache(cursor_display_point)) => (
-                    cursor_display_point,
-                    false,
-                    CursorStyle {
-                        shape: CursorShape::Hidden,
-                        ..cursor_style
-                    },
-                    None,
-                ),
-                None => return,
-            };
-
-        render_cursor(
-            grid_render_params,
-            cursor_display_point,
-            is_cursor_on_wide_char,
-            cursor_style,
-            grid_render_params.size_info.padding_x_px(),
-            grid_origin,
-            color,
-            ctx,
-            terminal_view_id,
-            cursor_hint_text,
-            app,
-        )
     }
 }
 

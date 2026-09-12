@@ -1,4 +1,4 @@
-use diesel::connection::SimpleConnection;
+use diesel_migrations::MigrationHarness;
 
 use super::*;
 use crate::app_state::{
@@ -9,9 +9,7 @@ use crate::terminal::model::block::SerializedBlock;
 fn database() -> SqliteConnection {
     let mut connection = SqliteConnection::establish(":memory:").unwrap();
     connection
-        .batch_execute(include_str!(
-            "../../../crates/persistence/migrations/2026-09-12-000000_local_app_snapshots/up.sql"
-        ))
+        .run_pending_migrations(persistence::MIGRATIONS)
         .unwrap();
     connection
 }
@@ -24,7 +22,7 @@ fn snapshot() -> AppState {
         windows: vec![WindowSnapshot {
             tabs: vec![TabSnapshot {
                 custom_title: Some("本地终端".to_owned()),
-                root: PaneNodeSnapshot::Leaf(LeafSnapshot {
+                root: PaneNodeSnapshot::Leaf(Box::new(LeafSnapshot {
                     is_focused: true,
                     custom_vertical_tabs_title: None,
                     contents: LeafContents::Terminal(TerminalPaneSnapshot {
@@ -33,7 +31,7 @@ fn snapshot() -> AppState {
                         shell_launch_data: None,
                         is_active: true,
                     }),
-                }),
+                })),
                 default_directory_color: None,
                 selected_color: Default::default(),
                 left_panel: None,

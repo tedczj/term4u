@@ -15,7 +15,7 @@ pub struct WorkflowManager {
 pub enum WorkflowOpenSource {
     Existing {
         id: WorkflowId,
-        workflow: Workflow,
+        workflow: Box<Workflow>,
     },
     New {
         title: Option<String>,
@@ -55,7 +55,7 @@ impl WorkflowManager {
         let view = ctx.add_typed_action_view(window_id, WorkflowView::new_in_pane);
         match source {
             WorkflowOpenSource::Existing { workflow, .. } => {
-                let workflow = workflow.clone();
+                let workflow = workflow.as_ref().clone();
                 view.update(ctx, |view, ctx| view.load(workflow, mode, ctx));
             }
             WorkflowOpenSource::NewFromWorkflow { workflow } => {

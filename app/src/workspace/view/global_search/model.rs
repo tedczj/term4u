@@ -1,4 +1,3 @@
-use std::future::Future;
 use std::path::PathBuf;
 
 use anyhow::Result;
@@ -20,37 +19,9 @@ const START_BATCH_AFTER_COUNT: usize = 50;
 const MAX_BATCH_SIZE: usize = 512;
 const MAX_BATCH_AGE_MS: u64 = 4000;
 
-/// Aggregate state for one logical search across all of its sources
-/// (one local ripgrep run plus one remote request per searched host).
-struct ActiveSearch {
-    search_id: u32,
-    remaining_sources: usize,
-    completed_sources: usize,
-    local_source_failed: bool,
-    remote_source_failures: usize,
-    total_match_count: usize,
-    /// True when any remote source hit the server-side match cap.
-    capped: bool,
-}
-
-#[derive(Clone, Copy)]
-enum SearchSource {
-    Local,
-}
-
-/// Result of one search source (the local ripgrep run, or one remote
-/// host's request) that ran to completion.
-struct SourceResult {
-    match_count: usize,
-    capped: bool,
-}
-
 pub struct GlobalSearch {
-    /// Spawned local/remote search tasks for the current search.
-    search_handles: Vec<SpawnedFutureHandle>,
-    /// Aggregate completion state for the current search.
-    active_search: Option<ActiveSearch>,
-    // track the search ID so that we only show results for the current search
+    search_handle: Option<SpawnedFutureHandle>,
+    active_search_id: Option<u32>,
     next_search_id: u32,
 }
 
@@ -78,18 +49,19 @@ async fn flush_batch(
 
 impl GlobalSearch {
     pub fn new() -> Self {
-        GlobalSearch {
-            search_handles: Vec::new(),
-            active_search: None,
+        Self {
+            search_handle: None,
+            active_search_id: None,
             next_search_id: 1,
         }
     }
 
-    pub fn abort_search(&mut self, _ctx: &mut ModelContext<Self>) {
-        for handle in self.search_handles.drain(..) {
+    pub fn abort_search(&mut self, ctx: &mut ModelContext<Self>) {
+        if let Some(handle) = self.search_handle.take() {
             handle.abort();
         }
-        self.active_search = None;
+        self.active_search_id = None;
+        ctx.notify();
     }
 
     pub fn run_search(
@@ -99,180 +71,56 @@ impl GlobalSearch {
         search_config: SearchConfig,
         ctx: &mut ModelContext<Self>,
     ) {
-        if !self.search_handles.is_empty() {
-            log::info!("GlobalSearch: aborting previous search");
-        }
         self.abort_search(ctx);
-
         let search_id = self.next_search_id;
         self.next_search_id += 1;
-
-        let effective_pattern = if search_config.use_regex {
+        self.active_search_id = Some(search_id);
+        ctx.emit(GlobalSearchEvent::Started { search_id });
+        let local_roots: Vec<_> = roots
+            .into_iter()
+            .filter_map(|path| path.to_local_path().map(PathBuf::from))
+            .collect();
+        if local_roots.is_empty() {
+            ctx.emit(GlobalSearchEvent::Completed {
+                search_id,
+                total_match_count: 0,
+            });
+            self.active_search_id = None;
+            return;
+        }
+        let pattern = if search_config.use_regex {
             pattern
         } else {
             escape(&pattern)
         };
-        let ignore_case = !search_config.use_case_sensitivity;
-        let multiline = effective_pattern.contains('\n');
-
-        let local_roots: Vec<PathBuf> = roots
-            .into_iter()
-            .filter_map(|path| match path {
-                LocalOrRemotePath::Local(path) => Some(path),
-                LocalOrRemotePath::Remote(_) => None,
-            })
-            .collect();
-
-        let remote_host_count = 0;
-        ctx.emit(GlobalSearchEvent::Started {
+        let multiline = pattern.contains('\n');
+        let future = Self::run_warp_ripgrep_cli(
             search_id,
-            remote_host_count,
-        });
-        let source_count = usize::from(!local_roots.is_empty());
-        if source_count == 0 {
-            ctx.emit(GlobalSearchEvent::Completed {
-                search_id,
-                total_match_count: 0,
-                capped: false,
-                local_source_failed: false,
-                remote_source_failures: 0,
-            });
-            return;
-        }
-
-        self.active_search = Some(ActiveSearch {
-            search_id,
-            remaining_sources: source_count,
-            completed_sources: 0,
-            local_source_failed: false,
-            remote_source_failures: 0,
-            total_match_count: 0,
-            capped: false,
-        });
-
-        if !local_roots.is_empty() {
-            self.spawn_local_search(
-                search_id,
-                effective_pattern.clone(),
-                local_roots,
-                ignore_case,
-                multiline,
-                ctx,
-            );
-        }
-    }
-
-    fn spawn_local_search(
-        &mut self,
-        search_id: u32,
-        pattern: String,
-        roots: Vec<PathBuf>,
-        ignore_case: bool,
-        multiline: bool,
-        ctx: &mut ModelContext<Self>,
-    ) {
-        let spawner = ctx.spawner();
-        self.spawn_source(
-            search_id,
-            SearchSource::Local,
-            async move {
-                let result = Self::run_warp_ripgrep_cli(
-                    search_id,
-                    pattern,
-                    roots,
-                    ignore_case,
-                    multiline,
-                    spawner,
-                )
-                .await;
-                match result {
-                    Ok(match_count) => Some(SourceResult {
-                        match_count,
-                        capped: false,
-                    }),
-                    Err(err) => {
-                        report_error!(
-                            err.context("GlobalSearch: warp_ripgrep CLI search failed or aborted")
-                        );
-                        None
-                    }
-                }
-            },
-            ctx,
+            pattern,
+            local_roots,
+            !search_config.use_case_sensitivity,
+            multiline,
+            ctx.spawner(),
         );
-    }
-
-    /// Spawns one search source (the local ripgrep run, or one remote
-    /// host's request) and routes its outcome into the shared completion
-    /// accounting. Sources emit their matches via `Progress`/`ProgressBatch`
-    /// while running and log their own failures.
-    fn spawn_source(
-        &mut self,
-        search_id: u32,
-        source_kind: SearchSource,
-        source: impl Future<Output = Option<SourceResult>> + Send + 'static,
-        ctx: &mut ModelContext<Self>,
-    ) {
-        let task = ctx.spawn(source, move |me, outcome, ctx| {
-            me.handle_source_completed(search_id, source_kind, outcome, ctx);
-        });
-        self.search_handles.push(task);
-    }
-
-    /// Records the completion of one search source (`None` when the source
-    /// failed; the source already logged the failure). When all sources have
-    /// finished, emits `Completed` (or `Failed` when every source failed).
-    fn handle_source_completed(
-        &mut self,
-        search_id: u32,
-        source_kind: SearchSource,
-        outcome: Option<SourceResult>,
-        ctx: &mut ModelContext<Self>,
-    ) {
-        let Some(active) = self.active_search.as_mut() else {
-            return;
-        };
-        if active.search_id != search_id {
-            return;
-        }
-
-        match outcome {
-            Some(SourceResult {
-                match_count,
-                capped,
-            }) => {
-                active.completed_sources += 1;
-                active.total_match_count += match_count;
-                active.capped |= capped;
+        self.search_handle = Some(ctx.spawn(future, move |search, result, ctx| {
+            if search.active_search_id != Some(search_id) {
+                return;
             }
-            None => match source_kind {
-                SearchSource::Local => active.local_source_failed = true,
-            },
-        }
-
-        active.remaining_sources = active.remaining_sources.saturating_sub(1);
-        if active.remaining_sources > 0 {
-            return;
-        }
-
-        let active = self
-            .active_search
-            .take()
-            .expect("active search was checked above");
-        if active.completed_sources == 0 {
-            ctx.emit(GlobalSearchEvent::Failed {
-                search_id,
-                error: "Global search failed.".to_string(),
-            });
-        } else {
-            ctx.emit(GlobalSearchEvent::Completed {
-                search_id,
-                total_match_count: active.total_match_count,
-                capped: active.capped,
-                local_source_failed: active.local_source_failed,
-                remote_source_failures: active.remote_source_failures,
-            });
-        }
+            search.active_search_id = None;
+            match result {
+                Ok(total_match_count) => ctx.emit(GlobalSearchEvent::Completed {
+                    search_id,
+                    total_match_count,
+                }),
+                Err(error) => {
+                    report_error!(error.context("Local file search failed"));
+                    ctx.emit(GlobalSearchEvent::Failed {
+                        search_id,
+                        error: "File search failed.".to_owned(),
+                    });
+                }
+            }
+        }));
     }
 
     async fn run_warp_ripgrep_cli(
@@ -283,12 +131,6 @@ impl GlobalSearch {
         multiline: bool,
         spawner: ModelSpawner<GlobalSearch>,
     ) -> Result<usize> {
-        let roots_display: Vec<_> = roots.iter().map(|r| r.display().to_string()).collect();
-        log::info!(
-            "GlobalSearch: starting warp_ripgrep CLI search with pattern={pattern}, roots={:?}",
-            roots_display
-        );
-
         let patterns = &[pattern];
         let stream =
             warp_ripgrep::search::search_streaming(patterns, &roots, ignore_case, multiline)?;

@@ -6,7 +6,17 @@ use uuid::Uuid;
 #[serde(transparent)]
 pub struct WorkflowId(String);
 
+impl Default for WorkflowId {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl WorkflowId {
+    pub fn from_legacy_id(id: i32) -> Self {
+        Self(format!("legacy-{id}"))
+    }
+
     pub fn new() -> Self {
         Self(Uuid::new_v4().to_string())
     }

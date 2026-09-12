@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-use warpui::elements::MouseStateHandle;
 use warpui::{AppContext, EntityId, SingletonEntity, ViewContext, ViewHandle, WindowId};
 
 use crate::appearance::Appearance;
@@ -14,34 +13,6 @@ use crate::workspace::tab_group::TabGroupId;
 pub struct PaneViewLocator {
     pub pane_group_id: EntityId,
     pub pane_id: PaneId,
-}
-
-#[derive(Default)]
-pub(super) struct WorkspaceMouseStates {
-    pub(super) new_tab_button: MouseStateHandle,
-    pub(super) new_tab_menu: MouseStateHandle,
-    pub(super) new_tab: MouseStateHandle,
-    pub(super) overflow_button: MouseStateHandle,
-    pub(super) banner_button: MouseStateHandle,
-    pub(super) banner_secondary_button: MouseStateHandle,
-    pub(super) more_info_banner_button: MouseStateHandle,
-    pub(super) resource_center_icon: MouseStateHandle,
-    pub(super) ai_tab_bar_button: MouseStateHandle,
-    pub(super) agent_management_view_button: MouseStateHandle,
-    pub(super) left_panel_icon: MouseStateHandle,
-    pub(super) settings_icon: MouseStateHandle,
-    pub(super) dismiss_banner_button: MouseStateHandle,
-    pub(super) offline_icon: MouseStateHandle,
-    pub(super) avatar_icon: MouseStateHandle,
-    pub(super) header_dimming: MouseStateHandle,
-    pub(super) right_panel_icon: MouseStateHandle,
-    pub(super) notifications_mailbox: MouseStateHandle,
-    pub(super) session_config_tab_config_chip_close: MouseStateHandle,
-    pub(super) tools_panel_icon: MouseStateHandle,
-    pub(super) title_bar_search_bar: MouseStateHandle,
-    pub(super) team_switcher_pill: MouseStateHandle,
-    #[cfg(target_family = "wasm")]
-    pub(super) warp_logo: MouseStateHandle,
 }
 
 #[derive(Debug)]

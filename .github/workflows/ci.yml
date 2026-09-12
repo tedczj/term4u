@@ -104,43 +104,7 @@ jobs:
         run: cargo nextest run ${{ env.WORKSPACE_TEST_ARGS }} --no-run
 
       - name: Run unit tests
-        run: cargo nextest run ${{ env.WORKSPACE_TEST_ARGS }} -E "not package(integration)"
-        env:
-          WARP_SHELL_PATH: ${{ steps.shells.outputs.zsh_path }}
-
-      - name: Run shell-agnostic integration tests
-        uses: coactions/setup-xvfb@b6b4fcfb9f5a895edadc3bc76318fae0ac17c8b3 # v1
-        with:
-          run: cargo nextest run ${{ env.WORKSPACE_TEST_ARGS }} -E "package(integration) and not test(shell_integration_tests)"
-        env:
-          WARP_SHELL_PATH: ${{ steps.shells.outputs.zsh_path }}
-
-      - name: Run shell integration tests against default Bash
-        uses: coactions/setup-xvfb@b6b4fcfb9f5a895edadc3bc76318fae0ac17c8b3 # v1
-        with:
-          run: cargo nextest run ${{ env.WORKSPACE_TEST_ARGS }} -E "package(integration) and test(shell_integration_tests)"
-        env:
-          WARP_SHELL_PATH: ${{ steps.shells.outputs.default_bash_path }}
-
-      - name: Run shell integration tests against latest Bash
-        if: matrix.os == 'macos'
-        uses: coactions/setup-xvfb@b6b4fcfb9f5a895edadc3bc76318fae0ac17c8b3 # v1
-        with:
-          run: cargo nextest run ${{ env.WORKSPACE_TEST_ARGS }} -E "package(integration) and test(shell_integration_tests)"
-        env:
-          WARP_SHELL_PATH: ${{ steps.shells.outputs.latest_bash_path }}
-
-      - name: Run shell integration tests against fish
-        uses: coactions/setup-xvfb@b6b4fcfb9f5a895edadc3bc76318fae0ac17c8b3 # v1
-        with:
-          run: cargo nextest run ${{ env.WORKSPACE_TEST_ARGS }} -E "package(integration) and test(shell_integration_tests)"
-        env:
-          WARP_SHELL_PATH: ${{ steps.shells.outputs.fish_path }}
-
-      - name: Run shell integration tests against zsh
-        uses: coactions/setup-xvfb@b6b4fcfb9f5a895edadc3bc76318fae0ac17c8b3 # v1
-        with:
-          run: cargo nextest run ${{ env.WORKSPACE_TEST_ARGS }} -E "package(integration) and test(shell_integration_tests)"
+        run: cargo nextest run ${{ env.WORKSPACE_TEST_ARGS }}
         env:
           WARP_SHELL_PATH: ${{ steps.shells.outputs.zsh_path }}
 

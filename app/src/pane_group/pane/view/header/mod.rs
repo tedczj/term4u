@@ -29,7 +29,6 @@ use crate::pane_group::pane::{
 use crate::pane_group::{
     BackingView, Direction, PaneDragDropLocation, PaneId, TabBarAxis, TabBarHoverIndex,
 };
-use crate::send_telemetry_from_ctx;
 use crate::tab::tab_position_id;
 use crate::workspace::{TabBarDropTargetData, TabBarLocation, VerticalTabsPaneDropTargetData};
 
@@ -219,11 +218,6 @@ impl<P: BackingView> PaneHeader<P> {
         ctx.notify();
     }
 
-    #[cfg(feature = "integration_tests")]
-    pub fn is_overlay_open(&self) -> bool {
-        !matches!(self.open_overlay, OpenOverlay::None)
-    }
-
     pub fn set_overflow_menu_items(
         &mut self,
         items: impl IntoIterator<Item = MenuItem<P::PaneHeaderOverflowMenuAction>>,
@@ -373,7 +367,7 @@ impl<P: BackingView> PaneHeader<P> {
         )
     }
 
-    fn render_toolbelt_buttons(&self, app: &AppContext) -> Box<dyn Element> {
+    fn render_toolbelt_buttons(&self) -> Box<dyn Element> {
         let mut flex = Flex::row();
         for toolbelt_button in &self.toolbelt_buttons {
             flex.add_child(
@@ -591,7 +585,7 @@ impl<P: BackingView> PaneHeader<P> {
                     .with_cross_axis_alignment(CrossAxisAlignment::Center)
                     .with_main_axis_size(MainAxisSize::Min);
 
-                left_justified_row.add_child(self.render_toolbelt_buttons(app));
+                left_justified_row.add_child(self.render_toolbelt_buttons());
 
                 let header_left_inset = self.pane_configuration.as_ref(app).header_left_inset;
                 let left_justified_container = Container::new(left_justified_row.finish())
@@ -800,9 +794,7 @@ impl<P: BackingView> TypedActionView for PaneHeader<P> {
                 ctx.emit(Event::PaneHeaderOverflowMenuToggled(true));
                 ctx.notify();
             }
-            PaneHeaderAction::PaneHeaderDragStarted => {
-                send_telemetry_from_ctx!(TelemetryEvent::PaneDragInitiated, ctx);
-            }
+            PaneHeaderAction::PaneHeaderDragStarted => {}
             PaneHeaderAction::PaneHeaderDragged {
                 origin,
                 drag_location,
@@ -856,26 +848,16 @@ impl<P: BackingView> TypedActionView for PaneHeader<P> {
             PaneHeaderAction::PaneHeaderDropped {
                 origin,
                 drop_location,
-            } => {
-                match drop_location {
-                    PaneDragDropLocation::TabBar(_) => {
-                        self.is_visible_in_pane_group = true;
-                        ctx.emit(Event::DroppedOnTabBar { origin: *origin })
-                    }
-                    PaneDragDropLocation::PaneGroup(_) => {
-                        ctx.emit(Event::PaneDroppedWithinPaneGroup)
-                    }
-                    PaneDragDropLocation::Other => {
-                        ctx.emit(Event::PaneDroppedOutsideofTabBarOrPaneGroup)
-                    }
+            } => match drop_location {
+                PaneDragDropLocation::TabBar(_) => {
+                    self.is_visible_in_pane_group = true;
+                    ctx.emit(Event::DroppedOnTabBar { origin: *origin })
                 }
-                send_telemetry_from_ctx!(
-                    TelemetryEvent::PaneDropped {
-                        drop_location: *drop_location
-                    },
-                    ctx
-                );
-            }
+                PaneDragDropLocation::PaneGroup(_) => ctx.emit(Event::PaneDroppedWithinPaneGroup),
+                PaneDragDropLocation::Other => {
+                    ctx.emit(Event::PaneDroppedOutsideofTabBarOrPaneGroup)
+                }
+            },
             PaneHeaderAction::PaneHeaderClicked => ctx.emit(Event::PaneHeaderClicked),
         }
     }

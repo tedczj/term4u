@@ -9,7 +9,6 @@ mod telemetry;
 mod transition;
 
 pub use telemetry::LifecycleRecoveryRecord;
-pub(in crate::terminal) use telemetry::LifecycleTelemetryEvent;
 use telemetry::LifecycleTelemetryLimiter;
 pub(in crate::terminal) use transition::{
     CommandStartKind, IgnoreReason, LifecycleAction, LifecycleInput, LifecyclePhase,
@@ -153,8 +152,10 @@ impl BlockLifecycleCoordinator {
         }
         self.phase = transition.next_phase;
     }
+}
 
-    /// Forgets the remembered phase after externally supplied block state replaces or extends it.
+#[cfg(test)]
+impl BlockLifecycleCoordinator {
     pub(super) fn reset_unknown(&mut self) {
         self.phase = LifecyclePhase::Unknown;
     }

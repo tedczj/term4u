@@ -38,10 +38,8 @@ pub const FIND_EDITOR_BORDER_RADIUS: f32 = 6.;
 pub(crate) const FIND_EDITOR_BORDER_WIDTH: f32 = 1.;
 const FIND_EDITOR_FONT_SIZE: f32 = 12.;
 
-pub const REGEX_TOGGLE_LABEL: &str = ". *";
 pub const REGEX_TOGGLE_TOOLTIP: &str = "Regex toggle";
 
-pub const CASE_SENSITIVE_LABEL: &str = "Aa";
 pub const CASE_SENSITIVE_TOOLTIP: &str = "Case sensitive search";
 
 pub const FIND_WITHIN_BLOCK_TOOLTIP: &str = "Find in selected block";
@@ -191,14 +189,6 @@ impl<T: FindModel + Entity<Event = FindEvent> + 'static> Find<T> {
             regex_search_enabled: false,
             display_find_within_block: FindWithinBlockState::Disabled,
         }
-    }
-
-    pub fn editor(&self) -> &ViewHandle<EditorView> {
-        &self.editor
-    }
-
-    pub fn is_editor_focused(&self, ctx: &AppContext) -> bool {
-        self.editor.as_ref(ctx).is_focused()
     }
 
     fn editor_text(&self, ctx: &AppContext) -> String {

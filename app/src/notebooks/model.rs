@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -32,12 +34,8 @@ pub struct Notebook {
     pub title: String,
     #[serde(default)]
     pub data: String,
-}
-
-#[derive(Clone, Debug, Default, PartialEq, Eq, Deserialize)]
-pub struct LegacySerializedNotebook {
-    #[serde(default)]
-    pub data: String,
+    #[serde(flatten)]
+    pub extra: HashMap<String, serde_json::Value>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Hash)]

@@ -1,0 +1,9 @@
+{
+  "recorded_at_utc": "2026-09-12T12:12:08.398561+00:00",
+  "command": "CARGO_PROFILE_DEV_DEBUG=0 CARGO_PROFILE_TEST_DEBUG=0 CARGO_INCREMENTAL=0 CARGO_BUILD_JOBS=4 cargo nextest run -p warp --lib --no-default-features --features local_only,test-util --no-fail-fast",
+  "exit_code": 0,
+  "passed": 1599,
+  "skipped": 3,
+  "scope": "Local GUI library only; strict clippy, TUI/workspace and live R2 acceptance remain outstanding",
+  "log_sha256": "6cb241cf80aad96bbf3ad468c9b162fe712b62684bacf68134b225f887222587"
+}

@@ -9,7 +9,6 @@ use warp_core::ui::theme::color::internal_colors::{
     accent_overlay_2, accent_overlay_3, neutral_1, neutral_3, neutral_4, neutral_6, text_main,
     text_sub,
 };
-use warp_editor::model::CoreEditorModel;
 use warpui::clipboard::ClipboardContent;
 use warpui::elements::new_scrollable::{NewScrollable, ScrollableAppearance, SingleAxisConfig};
 use warpui::elements::resizable::{
@@ -42,7 +41,6 @@ use crate::code_review::comments::{
 };
 use crate::editor::{EditorView, Event as EditorEvent};
 use crate::menu::{Event, Menu, MenuItem, MenuItemFields};
-use crate::send_telemetry_from_ctx;
 use crate::ui_components::icons::Icon;
 use crate::view_components::action_button::{
     ActionButton, ActionButtonTheme, ButtonSize, NakedTheme, SecondaryTheme,
@@ -229,10 +227,6 @@ impl CommentListView {
 
         self.comments_button
             .update(ctx, |view, ctx| view.set_label(label_text, ctx));
-    }
-
-    fn repo_is_local(&self) -> Option<bool> {
-        self.repo_path.as_ref().map(LocalOrRemotePath::is_local)
     }
 
     pub fn debug_state(&self, _ctx: &AppContext) -> CommentListDebugState {
@@ -819,19 +813,6 @@ impl CommentListView {
         Container::new(cancel_button).with_margin_right(8.).finish()
     }
 
-    fn has_non_outdated_comments(&self) -> bool {
-        self.comments_by_id
-            .values()
-            .any(|state| !state.card.source().outdated)
-    }
-
-    /// Whether the queued review comments can currently be sent to an agent.
-
-    /// Keep the stored "Send to Agent" button's enabled state and tooltip in sync with the current
-    /// destination / comment / AI-availability state.
-
-    /// Computes the tooltip text for the send button based on current state.
-
     fn render_comment(
         &self,
         comment_state: &CommentDisplayState,
@@ -1030,13 +1011,6 @@ impl TypedActionView for CommentListView {
                     }
 
                     // Telemetry: comment list view expanded.
-                    send_telemetry_from_ctx!(
-                        CodeReviewTelemetryEvent::CommentListExpanded {
-                            is_local: self.repo_is_local(),
-                            comment_count: self.comments_by_id.len(),
-                        },
-                        ctx
-                    );
                 }
                 ctx.notify();
             }
@@ -1118,12 +1092,6 @@ impl TypedActionView for CommentListView {
                 self.close_overflow_menu(ctx);
             }
             CommentListAction::JumpToCommentLocation(comment_id) => {
-                send_telemetry_from_ctx!(
-                    CodeReviewTelemetryEvent::CommentListItemClicked {
-                        is_local: self.repo_is_local(),
-                    },
-                    ctx
-                );
                 ctx.emit(CommentListEvent::JumpToCommentLocation(*comment_id));
             }
         }

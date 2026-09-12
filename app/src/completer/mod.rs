@@ -19,6 +19,7 @@ use warp_completer::completer::{
 use warp_completer::signatures::CommandRegistry;
 use warp_core::features::FeatureFlag;
 use warp_util::path::{EscapeChar, ShellFamily};
+#[cfg(test)]
 use warpui::AppContext;
 
 use crate::safe_warn;
@@ -55,20 +56,6 @@ pub struct SessionContext {
 }
 
 impl SessionContext {
-    /// Lists `directory` fresh from disk and caches the results.
-    pub(crate) async fn refresh_directory_entries(
-        &self,
-        directory: TypedPathBuf,
-    ) -> Arc<Vec<EngineDirEntry>> {
-        let result = Arc::new(
-            self.list_directory_entries_internal(&directory.to_path())
-                .await,
-        );
-        self.cached_directory_entries
-            .insert(directory, result.clone());
-        result
-    }
-
     async fn list_directory_entries_internal(
         &self,
         directory: &TypedPath<'_>,
@@ -329,6 +316,7 @@ impl CompletionContext for SessionContext {
 }
 
 impl SessionContext {
+    #[cfg(test)]
     pub fn new(
         session: impl Into<Arc<Session>>,
         command_registry: Arc<CommandRegistry>,
@@ -362,83 +350,6 @@ impl SessionContext {
                 }
             }
         }
-    }
-}
-
-/// `CompletionContext` implementation for "global" completions, that provide completions on all
-/// commands in the `command_registry` rather than providing session-specific completions.
-///
-/// This `CompletionContext` is not coupled to a specific session and thus does not provide path or
-/// generator execution, which wouldn't have clear semantics without being coupled to a session.
-#[derive(Clone)]
-pub struct SessionAgnosticContext {
-    command_registry: Arc<CommandRegistry>,
-}
-
-impl SessionAgnosticContext {
-    pub fn new(command_registry: Arc<CommandRegistry>) -> Self {
-        Self { command_registry }
-    }
-}
-
-impl CompletionContext for SessionAgnosticContext {
-    fn top_level_commands(&self) -> Box<dyn Iterator<Item = &str> + '_> {
-        Box::new(self.command_registry.registered_commands())
-    }
-
-    fn command_registry(&self) -> &CommandRegistry {
-        &self.command_registry
-    }
-
-    fn environment_variable_names(&self) -> Option<&HashSet<SmolStr>> {
-        None
-    }
-
-    fn shell_supports_autocd(&self) -> Option<bool> {
-        None
-    }
-
-    fn path_completion_context(&self) -> Option<&dyn PathCompletionContext> {
-        None
-    }
-
-    fn generator_context(&self) -> Option<&dyn GeneratorContext> {
-        None
-    }
-}
-
-/// Empty `CompletionContext` used in places without a live shell session
-/// (i.e. shared session viewers without a real terminal instance).
-#[derive(Clone)]
-pub struct EmptyCompletionContext;
-impl EmptyCompletionContext {
-    pub fn new() -> Self {
-        Self
-    }
-}
-impl CompletionContext for EmptyCompletionContext {
-    fn top_level_commands(&self) -> Box<dyn Iterator<Item = &str> + '_> {
-        Box::new(std::iter::empty())
-    }
-
-    fn command_registry(&self) -> &CommandRegistry {
-        &EMPTY_COMMAND_REGISTRY
-    }
-
-    fn environment_variable_names(&self) -> Option<&HashSet<SmolStr>> {
-        None
-    }
-
-    fn shell_supports_autocd(&self) -> Option<bool> {
-        None
-    }
-
-    fn path_completion_context(&self) -> Option<&dyn PathCompletionContext> {
-        None
-    }
-
-    fn generator_context(&self) -> Option<&dyn GeneratorContext> {
-        None
     }
 }
 
@@ -533,3 +444,19 @@ fn dir_entry_from_segment(segment: &[u8], file_type: EngineFileType) -> Option<E
 #[cfg(test)]
 #[path = "test.rs"]
 mod tests;
+
+#[cfg(test)]
+impl SessionContext {
+    pub(crate) async fn refresh_directory_entries_for_test(
+        &self,
+        directory: TypedPathBuf,
+    ) -> Arc<Vec<EngineDirEntry>> {
+        let result = Arc::new(
+            self.list_directory_entries_internal(&directory.to_path())
+                .await,
+        );
+        self.cached_directory_entries
+            .insert(directory, result.clone());
+        result
+    }
+}

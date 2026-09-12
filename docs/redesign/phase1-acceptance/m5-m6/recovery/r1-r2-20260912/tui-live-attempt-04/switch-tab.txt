@@ -1,0 +1,32 @@
+Term4u local terminal  [1/2]  ctrl-t new  ctrl-w close  ctrl-q exit                                                     
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+! printf 'R1R2_TAB_ONE\n'                                                                                               
+R1R2_TAB_ONE                                                                                                            
+                                                                                                                        
+! sleep 30                                                                                                              
+^C                                                                                                                      
+                                                                                                                        
+! printf 'R1R2_AFTER_INTERRUPT\n'                                                                                       
+R1R2_AFTER_INTERRUPT                                                                                                    

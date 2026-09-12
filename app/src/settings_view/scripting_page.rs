@@ -1,10 +1,8 @@
 //! Settings UI for local scripting and Warp control permissions.
-use std::cell::RefCell;
-use std::collections::HashMap;
 
 use settings::Setting as _;
 use warp_errors::report_if_error;
-use warpui::elements::{ChildView, Element, MouseStateHandle};
+use warpui::elements::{ChildView, Element};
 use warpui::{AppContext, Entity, SingletonEntity, TypedActionView, View, ViewContext, ViewHandle};
 
 use super::settings_page::{
@@ -24,7 +22,6 @@ pub enum ScriptingSettingsPageAction {
 
 pub struct ScriptingSettingsPageView {
     page: PageType<Self>,
-    local_only_icon_tooltip_states: RefCell<HashMap<String, MouseStateHandle>>,
     local_control_mode_dropdown: ViewHandle<Dropdown<ScriptingSettingsPageAction>>,
 }
 
@@ -52,7 +49,6 @@ impl ScriptingSettingsPageView {
 
         Self {
             page: PageType::new_uncategorized(widgets, Some(PageTitle::new("Scripting"))),
-            local_only_icon_tooltip_states: RefCell::new(HashMap::new()),
             local_control_mode_dropdown,
         }
     }
@@ -153,7 +149,7 @@ impl SettingsWidget for LocalControlModeWidget {
         &self,
         view: &Self::View,
         appearance: &Appearance,
-        app: &AppContext,
+        _: &AppContext,
     ) -> Box<dyn Element> {
         render_body_item::<ScriptingSettingsPageAction>(
             "warpctrl CLI".into(),

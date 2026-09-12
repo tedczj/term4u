@@ -1,4 +1,4 @@
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::time::Duration;
 
 use async_channel::Sender;
@@ -7,10 +7,9 @@ use repo_metadata::{Repository, RepositoryUpdate, RepositoryWatchMode};
 use warpui::r#async::SpawnedFutureHandle;
 use warpui::{Entity, ModelContext, ModelHandle};
 
-use super::{GitBranchTrackingStatus, GitRepoStatusEvent, GitStatusMetadata};
-use crate::code_review::diff_state::diff_metadata_against_head;
+use super::{GitRepoStatusEvent, GitStatusMetadata};
 use crate::throttle::throttle;
-use crate::util::git::{detect_current_branch_display, detect_main_branch};
+use crate::util::git::detect_current_branch_display;
 
 /// Per-repository model that owns the filesystem watcher and exposes git status
 /// metadata. Consumers hold a `ModelHandle<GitRepoStatusModel>` and subscribe
@@ -31,6 +30,12 @@ impl Entity for LocalGitRepoStatusModel {
 }
 
 impl LocalGitRepoStatusModel {
+    async fn load_metadata(repo_path: PathBuf) -> anyhow::Result<GitStatusMetadata> {
+        Ok(GitStatusMetadata {
+            current_branch_name: detect_current_branch_display(&repo_path).await?,
+        })
+    }
+
     /// Create a new per-repo status model, set up the filesystem watcher, and
     /// kick off the initial metadata computation.
     pub(super) fn new(
@@ -107,11 +112,6 @@ impl LocalGitRepoStatusModel {
         self.metadata.as_ref()
     }
 
-    /// The path to the repository root.
-    pub fn repo_path(&self) -> &Path {
-        &self.repo_path
-    }
-
     /// Manually trigger a metadata refresh.  Called by the terminal view after
     /// events that may have changed git state (block completed, agent file
     /// edits, etc.).
@@ -167,94 +167,6 @@ impl LocalGitRepoStatusModel {
             .count();
         changed_count > 0
     }
-
-    fn parse_branch_tracking_counts(output: &str) -> Option<(u32, u32, u32)> {
-        let mut parts = output.split_whitespace();
-        let ahead = parts.next()?.parse().ok()?;
-        let behind = parts.next()?.parse().ok()?;
-        let equivalent = parts.next().map(str::parse).transpose().ok()?.unwrap_or(0);
-        Some((ahead, behind, equivalent))
-    }
-
-    async fn branch_tracking_status(
-        repo_path: &Path,
-        current_branch_name: &str,
-    ) -> GitBranchTrackingStatus {
-        let upstream = warp_util::git::run_git_command(
-            repo_path,
-            &["rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}"],
-        )
-        .await
-        .ok()
-        .and_then(|output| {
-            output
-                .lines()
-                .next()
-                .map(str::trim)
-                .filter(|line| !line.is_empty())
-                .map(str::to_string)
-        });
-
-        let Some(upstream) = upstream else {
-            return GitBranchTrackingStatus::new(current_branch_name.to_string(), None, 0, 0);
-        };
-
-        let counts = warp_util::git::run_git_command(
-            repo_path,
-            &[
-                "rev-list",
-                "--left-right",
-                "--cherry-mark",
-                "--count",
-                "HEAD...@{u}",
-            ],
-        )
-        .await
-        .ok()
-        .and_then(|output| Self::parse_branch_tracking_counts(&output));
-
-        let Some((ahead, behind, equivalent)) = counts else {
-            return GitBranchTrackingStatus::without_counts(
-                current_branch_name.to_string(),
-                Some(upstream),
-            );
-        };
-
-        if ahead == 0 && behind == 0 && equivalent > 0 {
-            return GitBranchTrackingStatus::rebased(current_branch_name.to_string(), upstream);
-        }
-
-        GitBranchTrackingStatus::new(
-            current_branch_name.to_string(),
-            Some(upstream),
-            ahead,
-            behind,
-        )
-    }
-
-    /// Compute metadata for a repo — branch names and diff stats against HEAD.
-    ///
-    /// This reuses logic extracted from `DiffStateModel::load_metadata_for_repo`
-    /// but only computes the HEAD (uncommitted) stats since that's all the git
-    /// chip needs.
-    async fn load_metadata(repo_path: PathBuf) -> anyhow::Result<GitStatusMetadata> {
-        // Detect main branch.
-        let main_branch_name = detect_main_branch(&repo_path).await?;
-        // Detect current branch (using the display variant so detached HEAD
-        // shows the short SHA instead of the literal "HEAD").
-        let current_branch_name = detect_current_branch_display(&repo_path).await?;
-        // Diff stats against HEAD.
-        let stats_against_head = diff_metadata_against_head(&repo_path).await?;
-        let branch_tracking_status =
-            Self::branch_tracking_status(&repo_path, &current_branch_name).await;
-
-        Ok(GitStatusMetadata {
-            current_branch_name,
-            main_branch_name,
-            stats_against_head: stats_against_head.aggregate_stats,
-            branch_tracking_status,
-        })
-    }
 }
 
 #[cfg(test)]
@@ -270,15 +182,6 @@ impl LocalGitRepoStatusModel {
             metadata,
             computing_metadata_abort_handle: None,
         }
-    }
-
-    pub(crate) fn set_metadata_for_test(
-        &mut self,
-        metadata: Option<GitStatusMetadata>,
-        ctx: &mut ModelContext<Self>,
-    ) {
-        self.metadata = metadata;
-        ctx.emit(GitRepoStatusEvent::MetadataChanged);
     }
 }
 

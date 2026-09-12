@@ -298,7 +298,7 @@ impl WarpifySettings {
         }
     }
 
-    #[cfg(any(test, feature = "integration_tests"))]
+    #[cfg(test)]
     #[allow(dead_code)]
     pub fn new_with_defaults(_ctx: &mut ModelContext<Self>) -> Self {
         let added_subshell_commands = AddedSubshellCommands::new(None);

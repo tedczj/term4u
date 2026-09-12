@@ -21,7 +21,6 @@ cfg_if::cfg_if! {
 }
 #[cfg(not(target_family = "wasm"))]
 use warp_core::channel::ChannelState;
-use warp_core::send_telemetry_from_ctx;
 #[cfg(feature = "local_fs")]
 use warp_core::sync_queue::SyncQueue;
 use warp_util::git::run_git_command;
@@ -63,10 +62,10 @@ cfg_if::cfg_if! {
 use warp_errors::report_error;
 
 use super::{
-    BackendOrigin, CommitChainMode, DiffHunk, DiffLine, DiffLineType, DiffMetadata,
-    DiffMetadataAgainstBase, DiffMode, DiffState, DiffStateError, DiffStateModelEvent, DiffStats,
-    FileDiff, FileDiffAndContent, FileStatusInfo, GitDiffData, GitDiffWithBaseContent,
-    GitFileStatus, GitOpResult,
+    CommitChainMode, DiffHunk, DiffLine, DiffLineType, DiffMetadata, DiffMetadataAgainstBase,
+    DiffMode, DiffState, DiffStateError, DiffStateModelEvent, DiffStats, FileDiff,
+    FileDiffAndContent, FileStatusInfo, GitDiffData, GitDiffWithBaseContent, GitFileStatus,
+    GitOpResult,
 };
 
 // Unicode bidirectional characters that should be flagged
@@ -197,7 +196,6 @@ pub struct LocalDiffStateModel {
     #[cfg(feature = "local_fs")]
     subscriber_id: Option<SubscriberId>,
     state: InternalDiffState,
-    backend_origin: BackendOrigin,
     mode: DiffMode,
     metadata: Option<DiffMetadata>,
     computing_diffs_abort_handle: Option<SpawnedFutureHandle>,
@@ -225,11 +223,7 @@ struct GitNumStatMetadata {
 
 impl LocalDiffStateModel {
     #[cfg(feature = "local_fs")]
-    pub fn new(
-        repo_path: Option<String>,
-        backend_origin: BackendOrigin,
-        ctx: &mut ModelContext<Self>,
-    ) -> Self {
+    pub fn new(repo_path: Option<String>, ctx: &mut ModelContext<Self>) -> Self {
         // Set up file invalidation queue and subscribe to results
         // so the model can emit SingleFileUpdated events.
         let queue = SyncQueue::new_streaming(&ctx.background_executor());
@@ -255,18 +249,6 @@ impl LocalDiffStateModel {
                     }
                     Err(err) => {
                         err.report_and_log();
-                        send_telemetry_from_ctx!(
-                            CodeReviewTelemetryEvent::LoadDiffFailed {
-                                backend_origin: me.backend_origin,
-                                operation: DiffOperation::FileInvalidation,
-                                mode: me.mode.clone(),
-                                error: err.to_string(),
-                                // Per-file invalidation errors are not tied to a full
-                                // tracked load, so `load_duration` is intentionally `None`.
-                                load_duration: None,
-                            },
-                            ctx
-                        );
                     }
                 }
             },
@@ -282,7 +264,6 @@ impl LocalDiffStateModel {
             },
             subscriber_id: None,
             mode: DiffMode::default(),
-            backend_origin,
             metadata: None,
             computing_diffs_abort_handle: None,
             computing_metadata_abort_handle: None,
@@ -324,14 +305,9 @@ impl LocalDiffStateModel {
     }
 
     #[cfg(not(feature = "local_fs"))]
-    pub fn new(
-        _repo_path: Option<String>,
-        backend_origin: BackendOrigin,
-        _ctx: &mut ModelContext<Self>,
-    ) -> Self {
+    pub fn new(_repo_path: Option<String>, _ctx: &mut ModelContext<Self>) -> Self {
         Self {
             state: InternalDiffState::default(),
-            backend_origin,
             mode: DiffMode::default(),
             metadata: None,
             computing_diffs_abort_handle: None,
@@ -1347,7 +1323,7 @@ impl LocalDiffStateModel {
     /// Creates a PR for `branch` on the local working tree and emits
     /// `GitOpCompleted`. Local PR info is sourced from `GitRepoStatusModel`, so
     /// no metadata is written here.
-    pub fn create_pr(&self, branch: String, ctx: &mut ModelContext<Self>) {
+    pub fn create_pr(&self, ctx: &mut ModelContext<Self>) {
         let Some(repo_path) = self.active_repository_path(ctx) else {
             ctx.emit(DiffStateModelEvent::GitOpCompleted(GitOpResult::PrCreated(
                 Err("no active repository".to_string()),
@@ -1367,8 +1343,6 @@ impl LocalDiffStateModel {
             },
         );
     }
-
-    /// Generates an AI commit message for the working tree and emits `CommitMessageGenerated`.
 
     /// Future resolving to the user's interactive-shell `PATH` (or `None`),
     /// forwarded to git/gh so hooks and tooling resolve like an interactive
@@ -1591,14 +1565,7 @@ impl LocalDiffStateModel {
             Err(e) => {
                 let err = DiffStateError::from(e);
                 err.report_and_log();
-                send_telemetry_from_ctx!(
-                    CodeReviewTelemetryEvent::LoadMetadataFailed {
-                        backend_origin: self.backend_origin,
-                        mode: self.mode.clone(),
-                        error: err.to_string(),
-                    },
-                    ctx
-                );
+
                 self.metadata = None;
             }
         }
@@ -1632,22 +1599,10 @@ impl LocalDiffStateModel {
                 .take()
                 .map(|start| start.elapsed()),
             Err(e) => {
-                let load_duration = self
-                    .tracked_diff_load_start_time
-                    .take()
-                    .map(|start| start.elapsed());
+                self.tracked_diff_load_start_time = None;
                 let err = DiffStateError::from_message(e);
                 err.report_and_log();
-                send_telemetry_from_ctx!(
-                    CodeReviewTelemetryEvent::LoadDiffFailed {
-                        backend_origin: self.backend_origin,
-                        operation: DiffOperation::DiffLoad,
-                        mode: self.mode.clone(),
-                        error: err.to_string(),
-                        load_duration,
-                    },
-                    ctx
-                );
+
                 None
             }
         };
@@ -2957,7 +2912,6 @@ impl LocalDiffStateModel {
             state: InternalDiffState::default(),
             #[cfg(feature = "local_fs")]
             subscriber_id: None,
-            backend_origin: BackendOrigin::ClientLocal,
             mode: DiffMode::default(),
             metadata: None,
             computing_diffs_abort_handle: None,

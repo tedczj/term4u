@@ -6,7 +6,7 @@ use anyhow::{Context, Result};
 use warp_core::safe_warn;
 use warpui::{Entity, SingletonEntity};
 
-use crate::notebooks::model::{LegacySerializedNotebook, Notebook, NotebookId};
+use crate::notebooks::model::{Notebook, NotebookId};
 
 pub struct NotebookStore {
     storage_dir: PathBuf,
@@ -18,7 +18,10 @@ impl NotebookStore {
         Self::load(warp_core::paths::data_dir().join("notebooks"), legacy_rows)
     }
 
-    fn load(storage_dir: PathBuf, legacy_rows: Vec<(i32, Option<String>, Option<String>)>) -> Self {
+    pub(crate) fn load(
+        storage_dir: PathBuf,
+        legacy_rows: Vec<(i32, Option<String>, Option<String>)>,
+    ) -> Self {
         let mut notebooks = load_notebook_files(&storage_dir);
         for (id, title, serialized) in legacy_rows {
             let id = NotebookId::from_legacy_id(id);
@@ -28,22 +31,15 @@ impl NotebookStore {
             let Some(serialized) = serialized else {
                 continue;
             };
-            match serde_json::from_str::<LegacySerializedNotebook>(&serialized) {
-                Ok(legacy) => {
-                    notebooks.insert(
-                        id.clone(),
-                        Notebook {
-                            id,
-                            title: title.unwrap_or_default(),
-                            data: legacy.data,
-                        },
-                    );
-                }
-                Err(error) => safe_warn!(
-                    safe: ("Skipping malformed legacy notebook"),
-                    full: ("Skipping malformed legacy notebook {id}: {error}")
-                ),
-            }
+            notebooks.insert(
+                id.clone(),
+                Notebook {
+                    id,
+                    title: title.unwrap_or_default(),
+                    data: serialized,
+                    extra: Default::default(),
+                },
+            );
         }
         Self {
             storage_dir,
@@ -65,6 +61,7 @@ impl NotebookStore {
             id: id.clone(),
             title,
             data: String::new(),
+            extra: Default::default(),
         })?;
         Ok(id)
     }

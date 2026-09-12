@@ -1,0 +1,14 @@
+{
+  "command": [
+    "cargo",
+    "nextest",
+    "run",
+    "-p",
+    "warp",
+    "--no-default-features",
+    "--features",
+    "local_only,test-util"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 57.124
+}

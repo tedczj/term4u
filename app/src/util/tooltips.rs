@@ -7,7 +7,7 @@ use warpui::elements::{
     Border, Container, CornerRadius, Flex, MouseStateHandle, ParentElement, Radius, Text,
 };
 use warpui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
-use warpui::{AppContext, Element, EventContext, SingletonEntity};
+use warpui::{AppContext, Element, EventContext};
 
 use crate::appearance::Appearance;
 use crate::terminal::model::secrets::SecretLevel;
@@ -60,7 +60,6 @@ pub fn render_tooltip<OnClick>(
     tooltip_links: impl IntoIterator<Item = TooltipLink<OnClick>>,
     redaction: TooltipRedaction,
     appearance: &Appearance,
-    app: &AppContext,
 ) -> Box<dyn Element>
 where
     OnClick: 'static + Fn(&mut EventContext),

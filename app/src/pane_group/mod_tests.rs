@@ -8,10 +8,123 @@ use warpui::windowing::state::ApplicationStage;
 use warpui::{App, ModelHandle};
 
 use super::*;
+use crate::app_state::CodePaneTabSnapshot;
 use crate::launch_configs::launch_config::PaneMode;
 use crate::notebooks::notebook::NotebookView;
 use crate::resource_center::TipsCompleted;
 use crate::test_util::terminal::initialize_app_for_pane_group as initialize_app;
+
+#[cfg(feature = "local_fs")]
+#[test]
+fn restores_code_pane_without_source_metadata() {
+    use warp_files::FileModel;
+
+    App::test((), |mut app| async move {
+        initialize_app(&mut app);
+        app.update(lsp::init);
+        app.add_singleton_model(|_| crate::terminal::local_shell::LocalShellState::NotLoaded);
+        app.add_singleton_model(FileModel::new);
+        app.add_singleton_model(crate::code::global_buffer_model::GlobalBufferModel::new);
+        app.add_singleton_model(|_| crate::code::editor_management::CodeManager::default());
+        app.add_singleton_model(|_| crate::code::opened_files::OpenedFilesModel::new());
+        let directory = tempfile::tempdir().unwrap();
+        let path = directory.path().join("legacy.rs");
+        std::fs::write(&path, "fn main() {}\n").unwrap();
+        let panes = mock_pane_group(
+            &mut app,
+            MockOptions {
+                layout: PanesLayout::Snapshot(Box::new(PaneNodeSnapshot::Leaf(Box::new(
+                    LeafSnapshot {
+                        is_focused: true,
+                        custom_vertical_tabs_title: None,
+                        contents: LeafContents::Code(CodePaneSnapShot::Local {
+                            tabs: vec![CodePaneTabSnapshot {
+                                path: Some(path.clone()),
+                            }],
+                            active_tab_index: 0,
+                            source: None,
+                        }),
+                    },
+                )))),
+                ..Default::default()
+            },
+        );
+        let view = panes.read(&app, |panes, ctx| {
+            panes
+                .code_panes(ctx)
+                .next()
+                .expect("legacy code pane must restore")
+                .1
+        });
+        let loaded = view.update(&mut app, |view, ctx| {
+            let id = view.active_file_id_for_test(ctx).unwrap();
+            let future = FileModel::as_ref(ctx).get_future_handle(id).unwrap();
+            ctx.await_spawned_future(future.future_id())
+        });
+        loaded.await;
+        view.read(&app, |view, ctx| {
+            let id = view.active_file_id_for_test(ctx).unwrap();
+            assert_eq!(
+                FileModel::as_ref(ctx).file_path(id),
+                Some(path.canonicalize().unwrap())
+            );
+        });
+    });
+}
+
+#[cfg(feature = "local_fs")]
+#[test]
+fn restores_legacy_file_notebook_in_local_editor() {
+    use warp_files::FileModel;
+
+    App::test((), |mut app| async move {
+        initialize_app(&mut app);
+        app.update(lsp::init);
+        app.add_singleton_model(|_| crate::terminal::local_shell::LocalShellState::NotLoaded);
+        app.add_singleton_model(FileModel::new);
+        app.add_singleton_model(crate::code::global_buffer_model::GlobalBufferModel::new);
+        app.add_singleton_model(|_| crate::code::editor_management::CodeManager::default());
+        app.add_singleton_model(|_| crate::code::opened_files::OpenedFilesModel::new());
+        let directory = tempfile::tempdir().unwrap();
+        let path = directory.path().join("legacy.md");
+        std::fs::write(&path, "# Legacy notebook\n").unwrap();
+        let panes = mock_pane_group(
+            &mut app,
+            MockOptions {
+                layout: PanesLayout::Snapshot(Box::new(PaneNodeSnapshot::Leaf(Box::new(
+                    LeafSnapshot {
+                        is_focused: true,
+                        custom_vertical_tabs_title: None,
+                        contents: LeafContents::Notebook(NotebookPaneSnapshot::LocalFileNotebook {
+                            path: Some(path.clone()),
+                        }),
+                    },
+                )))),
+                ..Default::default()
+            },
+        );
+        let view = panes.read(&app, |panes, ctx| {
+            panes
+                .code_panes(ctx)
+                .next()
+                .expect("legacy notebook file must restore")
+                .1
+        });
+        let loaded = view.update(&mut app, |view, ctx| {
+            let id = view.active_file_id_for_test(ctx).unwrap();
+            let future = FileModel::as_ref(ctx).get_future_handle(id).unwrap();
+            ctx.await_spawned_future(future.future_id())
+        });
+        loaded.await;
+        view.read(&app, |view, ctx| {
+            let id = view.active_file_id_for_test(ctx).unwrap();
+            assert_eq!(
+                FileModel::as_ref(ctx).file_path(id),
+                Some(path.canonicalize().unwrap())
+            );
+        });
+    });
+}
 
 struct MockOptions {
     layout: PanesLayout,

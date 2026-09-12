@@ -748,7 +748,7 @@ macro_rules! define_settings_group {
                 }
             }
 
-            #[cfg(any(test, feature = "integration_tests"))]
+            #[cfg(test)]
             #[allow(dead_code)]
             pub fn new_with_defaults(_ctx: &mut $crate::warpui_core::ModelContext<Self>) -> Self {
                 use $crate::Setting;

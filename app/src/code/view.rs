@@ -30,7 +30,6 @@ use warpui::{
 };
 
 use super::buffer_location::LocalOrRemotePath;
-use super::diff_viewer::DiffViewer;
 use super::editor::view::{CodeEditorEvent, CodeEditorView};
 use super::editor_management::CodeSource;
 use super::local_code_editor::{LocalCodeEditorEvent, LocalCodeEditorView};
@@ -56,13 +55,12 @@ use crate::pane_group::{
 use crate::quit_warning::UnsavedStateSummary;
 use crate::search::ItemHighlightState;
 use crate::search::files::icon::icon_from_file_path;
-use crate::send_telemetry_from_ctx;
 use crate::settings::CodeSettings;
 use crate::tab::TAB_BAR_BORDER_HEIGHT;
 use crate::ui_components::blended_colors;
 use crate::ui_components::buttons::icon_button;
 use crate::util::path::{display_name_with_host, display_path_with_host};
-use crate::view_components::{DismissibleToast, MarkdownToggleView};
+use crate::view_components::DismissibleToast;
 use crate::workspace::{ActiveSession, TabBarDropTargetData, ToastStack};
 
 type SaveCallback =
@@ -80,7 +78,6 @@ pub const SAVE_FILE_BINDING_DESCRIPTION: &str = "Save file";
 
 pub fn init(app: &mut AppContext) {
     super::editor::view::init(app);
-    super::local_code_editor::init(app);
 
     let text_entry = id!("CodeEditorView") & !id!("IMEOpen");
     app.register_editable_bindings([
@@ -227,7 +224,6 @@ pub struct CodeView {
     source: CodeSource,
     window_id: WindowId,
     drag_position: Option<TabBarDragPosition>,
-    markdown_mode_segmented_control: Option<ViewHandle<MarkdownToggleView>>,
 }
 
 impl CodeView {
@@ -243,7 +239,6 @@ impl CodeView {
             source,
             window_id,
             drag_position: None,
-            markdown_mode_segmented_control: None,
         }
     }
 
@@ -255,17 +250,7 @@ impl CodeView {
         let location = source.location();
         let mut view = Self::new_internal(source, ctx);
         view.open_or_focus_existing(location, line_col, ctx);
-        #[cfg(feature = "local_fs")]
-        {
-            view.update_markdown_mode_segmented_control(ctx);
-        }
         view
-    }
-
-    #[cfg(feature = "local_fs")]
-    fn update_markdown_mode_segmented_control(&mut self, ctx: &mut ViewContext<Self>) {
-        self.markdown_mode_segmented_control = None;
-        ctx.notify();
     }
 
     /// Restore a code view from a persisted multi-tab snapshot.
@@ -298,10 +283,6 @@ impl CodeView {
 
         if let Some(path) = path {
             view.open_in_preview_or_promote(path, ctx);
-            #[cfg(feature = "local_fs")]
-            {
-                view.update_markdown_mode_segmented_control(ctx);
-            }
         } else {
             log::warn!("Preview CodeView constructed with no path");
         }
@@ -317,7 +298,7 @@ impl CodeView {
             self.set_title_after_content_update(ctx);
             self.update_tab_bar_state(ctx);
             self.focus_contents(ctx);
-            send_telemetry_from_ctx!(TelemetryEvent::PreviewPanePromoted, ctx);
+
             ctx.notify();
         }
     }
@@ -353,7 +334,6 @@ impl CodeView {
                     })
                 },
                 false,
-                None,
                 ctx,
             );
             if is_local {
@@ -393,7 +373,7 @@ impl CodeView {
         });
 
         ctx.add_typed_action_view(|ctx| {
-            LocalCodeEditorView::new(editor, None, false, None, ctx).with_find_references_provider(
+            LocalCodeEditorView::new(editor, None, false, ctx).with_find_references_provider(
                 ShowFindReferencesCard {
                     editor_window_id: ctx.window_id(),
                     parent_scrollable_position_id: None,
@@ -459,7 +439,6 @@ impl CodeView {
                 log::warn!("Failed to load file. {err:?}");
                 CodeView::display_load_failure(ctx.window_id(), ctx);
             }
-            LocalCodeEditorEvent::SelectionAddedAsContext { .. } => {}
             LocalCodeEditorEvent::FileSaved { auto_saved } => {
                 me.sync_active_tab_location(ctx);
                 me.set_title_after_content_update(ctx);
@@ -474,7 +453,7 @@ impl CodeView {
                 log::warn!("Failed to load file. {err:?}");
                 CodeView::display_save_failure(ctx.window_id(), ctx);
             }
-            LocalCodeEditorEvent::DiffAccepted | LocalCodeEditorEvent::DiffRejected => {}
+            LocalCodeEditorEvent::DiffAccepted => {}
             LocalCodeEditorEvent::DiffStatusUpdated => (),
             LocalCodeEditorEvent::UserEdited => (),
             LocalCodeEditorEvent::VimMinimizeRequested => (),
@@ -708,25 +687,6 @@ impl CodeView {
         tab.editor_view.update(ctx, |editor, ctx| {
             editor.set_pending_scroll(position, ctx);
         });
-    }
-
-    /// Seed a pending scroll fraction on the active tab, restoring scroll after a markdown
-    /// rendered->raw toggle. Applied on the next `ViewportUpdated` (after layout), overriding the
-    /// default top-of-file scroll. The fraction is used rather than a line/column because the
-    /// rendered and raw documents differ.
-    pub(crate) fn set_pending_scroll_fraction(&self, fraction: f32, ctx: &mut ViewContext<Self>) {
-        let Some(tab) = self.tab_group.get(self.active_tab_index) else {
-            return;
-        };
-        tab.editor_view.update(ctx, |editor, ctx| {
-            editor.set_pending_scroll(ScrollPosition::Fraction(fraction), ctx);
-        });
-    }
-
-    /// The current vertical scroll fraction of the active tab's editor, in `0..=1`.
-    fn scroll_fraction(&self, ctx: &AppContext) -> Option<f32> {
-        let tab = self.tab_group.get(self.active_tab_index)?;
-        Some(tab.editor_view.as_ref(ctx).scroll_fraction(ctx))
     }
 
     fn open_new_tab(
@@ -1230,11 +1190,6 @@ impl CodeView {
             location,
             tab_index: index,
         });
-
-        #[cfg(feature = "local_fs")]
-        {
-            self.update_markdown_mode_segmented_control(ctx);
-        }
 
         ctx.notify();
     }
@@ -1828,10 +1783,6 @@ impl CodeView {
             .with_cross_axis_alignment(CrossAxisAlignment::Center)
             .with_main_axis_size(MainAxisSize::Min);
 
-        if let Some(segmented) = &self.markdown_mode_segmented_control {
-            right_row.add_child(ChildView::new(segmented).finish());
-        }
-
         let show_close_button = self
             .focus_handle
             .as_ref()
@@ -1849,11 +1800,7 @@ impl CodeView {
 
         let button_count = show_close_button as u32 + header_ctx.has_overflow_items as u32;
         let buttons_width = button_count as f32 * ICON_DIMENSIONS;
-        let edge_width = if self.markdown_mode_segmented_control.is_some() {
-            220.0
-        } else {
-            view::StandardHeaderOptions::DEFAULT_CONTROL_CONTAINER_WIDTH
-        };
+        let edge_width = view::StandardHeaderOptions::DEFAULT_CONTROL_CONTAINER_WIDTH;
 
         // Get tooltip path and handle from the first tab (if any).
         let tab = self.tab_group.first();
@@ -2047,7 +1994,7 @@ impl View for CodeView {
         "CodeView"
     }
 
-    fn render(&self, app: &AppContext) -> Box<dyn Element> {
+    fn render(&self, _: &AppContext) -> Box<dyn Element> {
         let tab = self.tab_at(self.active_tab_index);
         let body = if let Some(tab) = tab {
             ChildView::new(&tab.editor_view).finish()

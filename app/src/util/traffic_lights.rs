@@ -46,14 +46,16 @@ mod windows_only {
     pub(super) const WINDOWS_BUTTON_PADDING_HORIZONTAL: f32 = 12.;
 }
 
-#[cfg(not(target_os = "windows"))]
-use warpui::elements::Empty;
+#[cfg(any(target_os = "linux", target_os = "freebsd", target_os = "windows"))]
+use warpui::Element;
 use warpui::elements::MouseStateHandle;
+#[cfg(any(target_os = "linux", target_os = "freebsd", target_os = "windows"))]
 use warpui::platform::FullscreenState;
-use warpui::{AppContext, Element, WindowId};
+use warpui::{AppContext, WindowId};
 #[cfg(target_os = "windows")]
 use windows_only::*;
 
+#[cfg(any(target_os = "linux", target_os = "freebsd", target_os = "windows"))]
 use crate::themes::theme::WarpTheme;
 
 #[cfg(any(target_os = "windows", any(target_os = "linux", target_os = "freebsd")))]
@@ -110,18 +112,7 @@ pub struct TrafficLightMouseStates {
     pub close_window_button: MouseStateHandle,
 }
 
-impl TrafficLightMouseStates {
-    /// True if any of the traffic light buttons are hovered.
-    pub fn are_traffic_lights_hovered(&self) -> bool {
-        [
-            &self.minimize_window_button,
-            &self.maximize_window_button,
-            &self.close_window_button,
-        ]
-        .into_iter()
-        .any(|state| state.lock().is_ok_and(|state| state.is_hovered()))
-    }
-}
+impl TrafficLightMouseStates {}
 
 /// Data the Warp app needs to avoid rendering anything below the traffic lights.
 #[derive(Clone, Debug)]
@@ -444,19 +435,5 @@ impl TrafficLightData {
             .with_background_color(background_color)
             .finish()
         })
-    }
-
-    #[cfg(all(
-        not(any(target_os = "linux", target_os = "freebsd")),
-        not(target_os = "windows")
-    ))]
-    pub fn render(
-        &self,
-        _fullscreen_state: FullscreenState,
-        _mouse_states: &TrafficLightMouseStates,
-        _theme: &WarpTheme,
-        _app: &AppContext,
-    ) -> Box<dyn Element> {
-        Empty::new().finish()
     }
 }

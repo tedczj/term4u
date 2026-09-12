@@ -74,17 +74,17 @@ fn test_config_from_snapshot_flattens_single_pane() {
         children: vec![
             (
                 PaneFlex(1.),
-                PaneNodeSnapshot::Leaf(LeafSnapshot {
+                PaneNodeSnapshot::Leaf(Box::new(LeafSnapshot {
                     is_focused: true,
                     custom_vertical_tabs_title: None,
                     contents: LeafContents::Notebook(NotebookPaneSnapshot::LocalNotebook {
                         notebook_id: None,
                     }),
-                }),
+                })),
             ),
             (
                 PaneFlex(1.),
-                PaneNodeSnapshot::Leaf(LeafSnapshot {
+                PaneNodeSnapshot::Leaf(Box::new(LeafSnapshot {
                     is_focused: true,
                     custom_vertical_tabs_title: None,
                     contents: LeafContents::Terminal(TerminalPaneSnapshot {
@@ -94,7 +94,7 @@ fn test_config_from_snapshot_flattens_single_pane() {
 
                         shell_launch_data: None,
                     }),
-                }),
+                })),
             ),
         ],
     }));
@@ -119,7 +119,7 @@ fn test_config_from_snapshot_filters_panes() {
         children: vec![
             (
                 PaneFlex(1.),
-                PaneNodeSnapshot::Leaf(LeafSnapshot {
+                PaneNodeSnapshot::Leaf(Box::new(LeafSnapshot {
                     is_focused: true,
                     custom_vertical_tabs_title: None,
                     contents: LeafContents::Terminal(TerminalPaneSnapshot {
@@ -129,21 +129,21 @@ fn test_config_from_snapshot_filters_panes() {
 
                         shell_launch_data: None,
                     }),
-                }),
+                })),
             ),
             (
                 PaneFlex(1.),
-                PaneNodeSnapshot::Leaf(LeafSnapshot {
+                PaneNodeSnapshot::Leaf(Box::new(LeafSnapshot {
                     is_focused: false,
                     custom_vertical_tabs_title: None,
                     contents: LeafContents::Notebook(NotebookPaneSnapshot::LocalNotebook {
                         notebook_id: None,
                     }),
-                }),
+                })),
             ),
             (
                 PaneFlex(1.),
-                PaneNodeSnapshot::Leaf(LeafSnapshot {
+                PaneNodeSnapshot::Leaf(Box::new(LeafSnapshot {
                     is_focused: false,
                     custom_vertical_tabs_title: None,
                     contents: LeafContents::Terminal(TerminalPaneSnapshot {
@@ -153,7 +153,7 @@ fn test_config_from_snapshot_filters_panes() {
 
                         shell_launch_data: None,
                     }),
-                }),
+                })),
             ),
         ],
     }));
@@ -191,13 +191,13 @@ fn test_config_from_snapshot_filters_tabs() {
         direction: SplitDirection::Vertical,
         children: vec![(
             PaneFlex(1.),
-            PaneNodeSnapshot::Leaf(LeafSnapshot {
+            PaneNodeSnapshot::Leaf(Box::new(LeafSnapshot {
                 is_focused: true,
                 custom_vertical_tabs_title: None,
                 contents: LeafContents::Notebook(NotebookPaneSnapshot::LocalNotebook {
                     notebook_id: None,
                 }),
-            }),
+            })),
         )],
     }));
 
@@ -343,7 +343,7 @@ fn test_config_with_active_tab_index() {
                     direction: SplitDirection::Vertical,
                     children: vec![(
                         PaneFlex(1.),
-                        PaneNodeSnapshot::Leaf(LeafSnapshot {
+                        PaneNodeSnapshot::Leaf(Box::new(LeafSnapshot {
                             is_focused: true,
                             custom_vertical_tabs_title: None,
                             contents: LeafContents::Terminal(TerminalPaneSnapshot {
@@ -353,7 +353,7 @@ fn test_config_with_active_tab_index() {
 
                                 shell_launch_data: None,
                             }),
-                        }),
+                        })),
                     )],
                 }),
                 left_panel: None,
@@ -382,13 +382,13 @@ fn test_config_with_active_tab_index_and_filtered_tabs() {
                     direction: SplitDirection::Vertical,
                     children: vec![(
                         PaneFlex(1.),
-                        PaneNodeSnapshot::Leaf(LeafSnapshot {
+                        PaneNodeSnapshot::Leaf(Box::new(LeafSnapshot {
                             is_focused: true,
                             custom_vertical_tabs_title: None,
                             contents: LeafContents::Notebook(NotebookPaneSnapshot::LocalNotebook {
                                 notebook_id: None,
                             }),
-                        }),
+                        })),
                     )],
                 }),
                 left_panel: None,
@@ -404,7 +404,7 @@ fn test_config_with_active_tab_index_and_filtered_tabs() {
                     direction: SplitDirection::Vertical,
                     children: vec![(
                         PaneFlex(1.),
-                        PaneNodeSnapshot::Leaf(LeafSnapshot {
+                        PaneNodeSnapshot::Leaf(Box::new(LeafSnapshot {
                             is_focused: true,
                             custom_vertical_tabs_title: None,
                             contents: LeafContents::Terminal(TerminalPaneSnapshot {
@@ -414,7 +414,7 @@ fn test_config_with_active_tab_index_and_filtered_tabs() {
 
                                 shell_launch_data: None,
                             }),
-                        }),
+                        })),
                     )],
                 }),
                 left_panel: None,
@@ -442,7 +442,7 @@ fn test_config_with_active_tab_being_filtered() {
                     direction: SplitDirection::Vertical,
                     children: vec![(
                         PaneFlex(1.),
-                        PaneNodeSnapshot::Leaf(LeafSnapshot {
+                        PaneNodeSnapshot::Leaf(Box::new(LeafSnapshot {
                             is_focused: true,
                             custom_vertical_tabs_title: None,
                             contents: LeafContents::Terminal(TerminalPaneSnapshot {
@@ -452,7 +452,7 @@ fn test_config_with_active_tab_being_filtered() {
 
                                 shell_launch_data: None,
                             }),
-                        }),
+                        })),
                     )],
                 }),
                 left_panel: None,
@@ -468,13 +468,13 @@ fn test_config_with_active_tab_being_filtered() {
                     direction: SplitDirection::Vertical,
                     children: vec![(
                         PaneFlex(1.),
-                        PaneNodeSnapshot::Leaf(LeafSnapshot {
+                        PaneNodeSnapshot::Leaf(Box::new(LeafSnapshot {
                             is_focused: true,
                             custom_vertical_tabs_title: None,
                             contents: LeafContents::Notebook(NotebookPaneSnapshot::LocalNotebook {
                                 notebook_id: None,
                             }),
-                        }),
+                        })),
                     )],
                 }),
                 left_panel: None,

@@ -10,7 +10,7 @@ use warpui::{AppContext, SingletonEntity as _, TypedActionView as _, WindowId};
 use crate::code::editor_management::CodeSource;
 use crate::root_view::{OpenLaunchConfigArg, open_new_window_get_handles};
 use crate::server::telemetry::LaunchConfigUiLocation;
-use crate::settings_view::{SettingsSection, settings_widget_deeplink_target};
+use crate::settings_view::SettingsSection;
 use crate::user_config::load_launch_configs;
 use crate::util::openable_file_type::{EditorLayout, FileTarget};
 use crate::workspace::{PaneViewLocator, WorkspaceAction, WorkspaceRegistry};
@@ -106,23 +106,14 @@ fn handle_settings(primary_window_id: Option<WindowId>, url: &Url, ctx: &mut App
     let query = url
         .query_pairs()
         .find_map(|(key, value)| (key == "q").then(|| value.into_owned()));
-    let widget = url
-        .query_pairs()
-        .find_map(|(key, value)| (key == "widget").then(|| value.into_owned()));
-    let action =
-        if let Some(widget) = widget.and_then(|widget| settings_widget_deeplink_target(&widget)) {
-            WorkspaceAction::ScrollToSettingsWidget {
-                page: widget.0,
-                widget_id: widget.1,
-            }
-        } else if let Some(query) = query.filter(|query| !query.is_empty()) {
-            WorkspaceAction::ShowSettingsPageWithSearch {
-                search_query: query,
-                section: None,
-            }
-        } else {
-            WorkspaceAction::ShowSettings
-        };
+    let action = if let Some(query) = query.filter(|query| !query.is_empty()) {
+        WorkspaceAction::ShowSettingsPageWithSearch {
+            search_query: query,
+            section: None,
+        }
+    } else {
+        WorkspaceAction::ShowSettings
+    };
     dispatch_workspace_action(primary_window_id, action, ctx);
 }
 

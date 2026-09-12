@@ -633,7 +633,7 @@ impl History {
         self.session_id_to_shell_host.contains_key(session_id)
     }
 
-    #[cfg(any(test, feature = "integration_tests"))]
+    #[cfg(test)]
     pub fn is_session_initialized(&self, session_id: &SessionId) -> bool {
         self.is_queryable(session_id) && self.is_appendable(session_id)
     }
@@ -812,11 +812,6 @@ impl History {
 
     pub fn is_empty(&self, session_id: SessionId) -> bool {
         self.len(session_id) == 0
-    }
-
-    #[cfg(feature = "integration_tests")]
-    pub fn session_commands(&self) -> &HashMap<ShellHost, Vec<Arc<HistoryEntry>>> {
-        &self.session_commands
     }
 
     pub fn mark_command_as_finished(

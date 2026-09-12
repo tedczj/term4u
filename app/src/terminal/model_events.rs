@@ -227,8 +227,7 @@ impl ModelEventDispatcher {
                 ModelEvent::PluggableNotification { title, body }
             }
             Event::ExitShell { session_id } => ModelEvent::ExitShell { session_id },
-            Event::LifecycleRecovery(record) => {
-                crate::send_telemetry_from_ctx!(LifecycleTelemetryEvent::Recovery(record), ctx);
+            Event::LifecycleRecovery(_) => {
                 return;
             }
             _ => return,
@@ -258,7 +257,7 @@ impl ModelEventDispatcher {
             session_info,
             spawning_command,
             restored_block_commands,
-            rcfiles_duration_seconds,
+            ..
         } = event;
 
         self.sessions.update(ctx, |sessions, ctx| {
@@ -266,7 +265,6 @@ impl ModelEventDispatcher {
                 *session_info,
                 spawning_command,
                 restored_block_commands,
-                rcfiles_duration_seconds,
                 ctx,
             );
         });

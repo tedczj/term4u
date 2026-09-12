@@ -43,7 +43,7 @@ fn user_command_block_is_rendered_at_top_level() {
         .block_with_id(&block_id)
         .expect("block should exist");
 
-    assert!(should_render_terminal_block(block, block_list));
+    assert!(should_render_terminal_block(block));
 }
 
 #[test]

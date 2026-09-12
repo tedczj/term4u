@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use warpui::elements::{DraggableState, MouseStateHandle};
 use warpui::{Entity, SingletonEntity, ViewHandle};
 
-use crate::launch_configs::launch_config::LaunchConfig;
+use crate::app_state::LeftPanelSnapshot;
 use crate::pane_group::PaneGroup;
 use crate::themes::theme::AnsiColorIdentifier;
 use crate::workspace::tab_group::TabGroupId;
@@ -30,14 +30,6 @@ impl SelectedTabColor {
     }
 }
 
-#[derive(Debug, Clone)]
-pub enum NewSessionMenuItem {
-    OpenLaunchConfig(LaunchConfig),
-    OpenLaunchConfigDocs,
-    CreateNewTabConfig,
-    CreateNewTabGroup,
-}
-
 #[derive(Clone)]
 pub struct TabData {
     pub pane_group: ViewHandle<PaneGroup>,
@@ -52,6 +44,7 @@ pub struct TabData {
     pub group_id: Option<TabGroupId>,
     pub in_multi_selection: bool,
     pub pinned: bool,
+    pub left_panel: Option<LeftPanelSnapshot>,
 }
 
 impl TabData {
@@ -69,6 +62,7 @@ impl TabData {
             group_id: None,
             in_multi_selection: false,
             pinned: false,
+            left_panel: None,
         }
     }
 

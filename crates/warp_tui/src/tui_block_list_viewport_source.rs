@@ -51,7 +51,7 @@ impl TuiBlockListViewportSource {
                 && let BlockHeightItem::Block(_) = item
                 && let Some(block) = block_list.block_at(cursor.start().block_count.into())
                 && height > 0
-                && should_render_terminal_block(block, block_list)
+                && should_render_terminal_block(block)
             {
                 items.push(render_terminal_item(
                     self.model.clone(),

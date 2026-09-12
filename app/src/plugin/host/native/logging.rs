@@ -32,11 +32,7 @@ impl PluginHostLogger {
             .spawn(async move {
                 while let Ok(message) = message_rx.recv().await {
                     if let Err(err) = log_service.call(message).await {
-                        // In failing tests, the app shuts down abruptly and this message pollutes the test
-                        // output.
-                        if !cfg!(feature = "integration_tests") {
-                            eprintln!("Failed to send log record to host process: {err:#}");
-                        }
+                        eprintln!("Failed to send log record to host process: {err:#}");
                     }
                 }
             })

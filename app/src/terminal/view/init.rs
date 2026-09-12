@@ -15,6 +15,13 @@ pub fn init(app: &mut AppContext) {
     app.register_binding_validator::<TerminalView>(is_binding_pty_compliant);
     app.register_editable_bindings([
         EditableBinding::new(
+            "terminal:find",
+            "Find in Terminal",
+            TerminalAction::ShowFindBar,
+        )
+        .with_context_predicate(id!("Terminal"))
+        .with_custom_action(CustomAction::Find),
+        EditableBinding::new(
             "terminal:scroll_up_one_page",
             "Scroll Up One Page",
             TerminalAction::PageUp,

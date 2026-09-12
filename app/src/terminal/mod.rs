@@ -1,20 +1,17 @@
 pub use block_list_element::GridType;
+pub use history::{History, HistoryEntry, HistoryEvent, LinkedWorkflowData, ShellHost};
 use model::alt_screen::AltScreen;
 use model::blocks::BlockList;
 pub use model::terminal_model::TerminalModel;
 use ordered_float::Float;
-mod package_installers;
-pub use history::{History, HistoryEntry, HistoryEvent, LinkedWorkflowData, ShellHost};
 pub use view::{Event, TerminalView};
 pub use warp_terminal::shell::{self, ShellLaunchData};
 pub use warp_terminal::{CellSizeAndWindowPadding, ClipboardType, SizeInfo};
-use warpui::geometry::vector::Vector2F;
 use warpui::units::Lines;
-use warpui::{AppContext, SingletonEntity, WindowId};
+use warpui::{AppContext, SingletonEntity};
 pub mod block_filter;
 mod block_list_settings;
 
-mod alias;
 pub(crate) mod alt_screen;
 pub mod alt_screen_reporting;
 mod audible_bell;
@@ -27,7 +24,6 @@ mod blockgrid_renderer;
 mod bootstrap;
 pub mod color;
 mod command_corrections_denylist;
-pub mod dynamic_enum_suggestions;
 pub mod event;
 pub mod event_listener;
 pub mod find;
@@ -45,6 +41,7 @@ pub mod local_shell;
 #[cfg(feature = "local_tty")]
 pub mod local_tty;
 mod meta_shortcuts;
+#[cfg(any(test, not(feature = "local_tty")))]
 pub mod mock_terminal_manager;
 pub mod model;
 pub mod model_events;
@@ -69,6 +66,7 @@ pub use writeable_pty::{PtyIntent, PtyIntentEvent, TerminalSurface};
 pub mod wsl;
 
 pub use block_list_settings::*;
+#[cfg(any(test, not(feature = "local_tty")))]
 pub use mock_terminal_manager::MockTerminalManager;
 use model_events::{ModelEvent, ModelEventDispatcher};
 pub use secret_regex_updater::CustomSecretRegexUpdater;
@@ -136,19 +134,6 @@ pub fn heights_approx_lt(a: Lines, b: Lines) -> bool {
 /// allowing for a bit of fudging to account for accumulated rounding errors.
 pub fn height_in_range_approx(height: Lines, start: Lines, end: Lines) -> bool {
     heights_approx_gte(height, start) && heights_approx_lte(height, end)
-}
-
-/// Returns the size of the `SavePosition`-ed element with the given ID from the last layout cycle.
-///
-/// If this is the first app layout, if if there was no laid-out element with the given ID, returns
-/// `None`.
-pub(crate) fn element_size_at_last_frame(
-    element_position_id: &str,
-    window_id: WindowId,
-    app: &AppContext,
-) -> Option<Vector2F> {
-    app.element_position_by_id_at_last_frame(window_id, element_position_id)
-        .map(|position| position.size())
 }
 
 /// The reason that the terminal size is being updated

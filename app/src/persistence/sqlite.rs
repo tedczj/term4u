@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
-use std::str::FromStr;
 use std::thread;
 
 use ai::project_context::model::ProjectRulePath;
@@ -17,7 +16,7 @@ use warpui::AppContext;
 
 use super::block_list::{delete_blocks, save_block};
 use super::model::{
-    self, NewCommand, NewWorkspaceMetadata, Project, ProjectRules,
+    self, NewCommand, NewWorkspaceMetadata, ProjectRules,
     WorkspaceMetadata as WorkspaceMetadataModel,
 };
 use super::{
@@ -25,7 +24,6 @@ use super::{
     PersistenceScope, StartedCommandMetadata, WriterHandles, schema,
 };
 use crate::ai::persisted_workspace::EnablementState;
-use crate::suggestions::ignored_suggestions_model::SuggestionType;
 use crate::terminal::history::PersistedCommand;
 
 const CHANNEL_SIZE: usize = 1024;
@@ -69,10 +67,6 @@ fn read_persisted_data(
             None
         }
     }
-}
-
-pub fn establish_ro_connection(database_url: &str) -> Result<SqliteConnection> {
-    establish_connection(database_url, true)
 }
 
 fn establish_connection(database_url: &str, read_only: bool) -> Result<SqliteConnection> {
@@ -153,21 +147,13 @@ pub fn database_file_path_for_scope(scope: &PersistenceScope) -> PathBuf {
     }
 }
 
-pub fn database_file_path_for_current_scope() -> PathBuf {
-    database_file_path_for_scope(&super::current_scope())
-}
-
 fn start_writer(connection: SqliteConnection, database_path: PathBuf) -> Result<WriterHandles> {
     let (sender, receiver) = std::sync::mpsc::sync_channel(CHANNEL_SIZE);
     let handle = thread::Builder::new()
         .name("SQLite Writer".into())
         .spawn(move || {
             let mut connection = connection;
-            loop {
-                let first = match receiver.recv() {
-                    Ok(event) => event,
-                    Err(_) => break,
-                };
+            while let Ok(first) = receiver.recv() {
                 let mut events = vec![first];
                 events.extend(receiver.try_iter());
                 for event in deduplicate_events(events) {
@@ -220,20 +206,10 @@ fn handle_model_event(event: ModelEvent, connection: &mut SqliteConnection) -> R
         ModelEvent::DeleteCodebaseIndexMetadata { repo_path } => {
             delete_codebase_index_metadata(connection, &repo_path)?;
         }
-        ModelEvent::UpsertProject { project } => save_project(connection, project)?,
-        ModelEvent::DeleteProject { path } => delete_project(connection, &path)?,
         ModelEvent::UpsertProjectRules { project_rule_paths } => {
             upsert_project_rules(connection, project_rule_paths)?;
         }
         ModelEvent::DeleteProjectRules { path } => delete_project_rules(connection, path)?,
-        ModelEvent::AddIgnoredSuggestion {
-            suggestion,
-            suggestion_type,
-        } => add_ignored_suggestion(connection, suggestion, suggestion_type)?,
-        ModelEvent::RemoveIgnoredSuggestion {
-            suggestion,
-            suggestion_type,
-        } => remove_ignored_suggestion(connection, suggestion, suggestion_type)?,
         ModelEvent::UpsertWorkspaceLanguageServer {
             workspace_path,
             lsp_type,
@@ -248,30 +224,19 @@ fn read_sqlite_data(
     data_scope: PersistedDataScope,
 ) -> Result<PersistedData, Error> {
     let codebase_indices = get_all_codebase_index_metadata(connection)?;
-    if matches!(data_scope, PersistedDataScope::CodebaseIndicesOnly) {
-        return Ok(PersistedData {
-            app_state: None,
-            command_history: Vec::new(),
-            legacy_notebooks: Vec::new(),
-            codebase_indices,
-            workspace_language_servers: HashMap::new(),
-            projects: Vec::new(),
-            project_rules: Vec::new(),
-            ignored_suggestions: Vec::new(),
-        });
-    }
-
-    let command_history = if data_scope.command_history() {
-        schema::commands::table
-            .order(schema::commands::id.desc())
-            .load_iter::<model::Command, DefaultLoadingMode>(connection)?
-            .filter_map(Result::ok)
-            .map(PersistedCommand::from)
-            .collect()
-    } else {
-        Vec::new()
-    };
+    let command_history = schema::commands::table
+        .order(schema::commands::id.desc())
+        .load_iter::<model::Command, DefaultLoadingMode>(connection)?
+        .filter_map(Result::ok)
+        .map(PersistedCommand::from)
+        .collect();
     let legacy_notebooks = schema::notebooks::table
+        .left_join(
+            schema::object_metadata::table.on(schema::object_metadata::shareable_object_id
+                .eq(schema::notebooks::id)
+                .and(schema::object_metadata::object_type.eq("NOTEBOOK"))),
+        )
+        .filter(schema::object_metadata::trashed_ts.nullable().is_null())
         .select((
             schema::notebooks::id,
             schema::notebooks::title,
@@ -280,14 +245,16 @@ fn read_sqlite_data(
         .load(connection)?;
 
     Ok(PersistedData {
-        app_state: super::local_snapshot::load(connection)?,
+        app_state: if data_scope.session_restoration() {
+            super::local_snapshot::load(connection)?
+        } else {
+            None
+        },
         command_history,
         legacy_notebooks,
         codebase_indices,
         workspace_language_servers: get_all_workspace_language_servers_by_workspace(connection)?,
-        projects: get_all_projects(connection)?,
         project_rules: get_all_project_rules(connection)?,
-        ignored_suggestions: get_all_ignored_suggestions(connection)?,
     })
 }
 
@@ -391,29 +358,6 @@ fn upsert_workspace_language_server(
     Ok(())
 }
 
-fn save_project(connection: &mut SqliteConnection, project: Project) -> Result<()> {
-    diesel::insert_into(schema::projects::table)
-        .values(project.clone())
-        .on_conflict(schema::projects::path)
-        .do_update()
-        .set(project)
-        .execute(connection)?;
-    Ok(())
-}
-
-fn get_all_projects(connection: &mut SqliteConnection) -> Result<Vec<Project>, Error> {
-    Ok(schema::projects::table
-        .load_iter::<Project, DefaultLoadingMode>(connection)?
-        .filter_map(Result::ok)
-        .collect())
-}
-
-fn delete_project(connection: &mut SqliteConnection, project_path: &str) -> Result<()> {
-    diesel::delete(schema::projects::table.filter(schema::projects::path.eq(project_path)))
-        .execute(connection)?;
-    Ok(())
-}
-
 fn get_all_project_rules(connection: &mut SqliteConnection) -> Result<Vec<ProjectRulePath>, Error> {
     Ok(schema::project_rules::table
         .load_iter::<ProjectRules, DefaultLoadingMode>(connection)?
@@ -452,56 +396,6 @@ fn delete_project_rules(connection: &mut SqliteConnection, paths: Vec<PathBuf>) 
         .collect::<Vec<_>>();
     diesel::delete(schema::project_rules::table.filter(schema::project_rules::path.eq_any(paths)))
         .execute(connection)?;
-    Ok(())
-}
-
-fn get_all_ignored_suggestions(
-    connection: &mut SqliteConnection,
-) -> Result<Vec<(String, SuggestionType)>, Error> {
-    Ok(schema::ignored_suggestions::table
-        .select((
-            schema::ignored_suggestions::suggestion,
-            schema::ignored_suggestions::suggestion_type,
-        ))
-        .load::<(String, String)>(connection)?
-        .into_iter()
-        .filter_map(|(suggestion, kind)| {
-            SuggestionType::from_str(&kind).map(|kind| (suggestion, kind))
-        })
-        .collect())
-}
-
-fn add_ignored_suggestion(
-    connection: &mut SqliteConnection,
-    suggestion: String,
-    suggestion_type: SuggestionType,
-) -> Result<()> {
-    let row = model::NewIgnoredSuggestion {
-        suggestion,
-        suggestion_type: suggestion_type.as_str().to_owned(),
-    };
-    diesel::insert_into(schema::ignored_suggestions::table)
-        .values(row)
-        .on_conflict((
-            schema::ignored_suggestions::suggestion,
-            schema::ignored_suggestions::suggestion_type,
-        ))
-        .do_nothing()
-        .execute(connection)?;
-    Ok(())
-}
-
-fn remove_ignored_suggestion(
-    connection: &mut SqliteConnection,
-    suggestion: String,
-    suggestion_type: SuggestionType,
-) -> Result<()> {
-    diesel::delete(
-        schema::ignored_suggestions::table
-            .filter(schema::ignored_suggestions::suggestion.eq(suggestion))
-            .filter(schema::ignored_suggestions::suggestion_type.eq(suggestion_type.as_str())),
-    )
-    .execute(connection)?;
     Ok(())
 }
 
@@ -563,3 +457,7 @@ fn update_finished_command(
         .execute(connection)?;
     Ok(())
 }
+
+#[cfg(test)]
+#[path = "sqlite_local_tests.rs"]
+mod tests;

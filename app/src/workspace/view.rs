@@ -1,41 +1,71 @@
+pub(crate) mod global_search;
 pub(crate) mod left_panel;
 
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Arc;
+use std::time::Duration;
 
-use warp_util::path::ShellFamily;
+use warp_util::local_or_remote_path::LocalOrRemotePath;
+use warp_util::path::{LineAndColumnArg, ShellFamily};
 use warpui::clipboard::ClipboardContent;
 use warpui::elements::{
-    ChildView, Container, CrossAxisAlignment, Element, EventHandler, Expanded, Flex, MainAxisSize,
-    ParentElement, Text,
+    Align, ChildView, ConstrainedBox, Container, CrossAxisAlignment, Element, EventHandler,
+    Expanded, Flex, MainAxisSize, ParentElement, Stack, Text,
 };
+use warpui::platform::FilePickerConfiguration;
 use warpui::{
-    AppContext, Entity, EntityId, FocusContext, SingletonEntity, TypedActionView, View,
-    ViewContext, ViewHandle, WindowId,
+    AppContext, Entity, EntityId, FocusContext, ModelHandle, SingletonEntity, TypedActionView,
+    View, ViewContext, ViewHandle, WindowId,
 };
 
+use self::global_search::view::{Event as GlobalSearchViewEvent, GlobalSearchView};
 use super::sync_inputs::SyncedInputState;
 use super::tab_group::{TabGroup, TabGroupId};
-use super::{PaneViewLocator, WorkspaceAction, WorkspaceRegistry};
+use super::{
+    ActiveSession, CommandSearchOptions, InitContent, PaneViewLocator, ToastStack, ToastStackEvent,
+    WorkspaceAction, WorkspaceRegistry,
+};
 use crate::GlobalResourceHandles;
+use crate::ai::persisted_workspace::PersistedWorkspace;
 use crate::app_state::{
-    LeftPanelSnapshot, PaneUuid, TabGroupSnapshot, TabSnapshot, WindowSnapshot,
+    LeftPanelDisplayedTab, LeftPanelSnapshot, PaneUuid, TabGroupSnapshot, TabSnapshot,
+    WindowSnapshot,
 };
 use crate::appearance::Appearance;
 use crate::code::editor_management::CodeSource;
+use crate::code::file_tree::{FileTreeEvent, FileTreeView};
+use crate::code_review::{GlobalCodeReviewEvent, GlobalCodeReviewModel};
 use crate::notebooks::manager::{NotebookManager, NotebookSource};
+use crate::palette::PaletteMode;
 use crate::pane_group::{
-    CodePane, Direction, Event as PaneGroupEvent, NewTerminalOptions, PaneGroup, PanesLayout,
+    CodePane, Direction, Event as PaneGroupEvent, LeftPanelTargetView, NewTerminalOptions,
+    PaneGroup, PanesLayout, WorkingDirectoriesEvent, WorkingDirectoriesModel,
 };
+use crate::quit_warning::UnsavedStateSummary;
 use crate::root_view::NewWorkspaceSource;
+use crate::search::QueryFilter;
+use crate::search::command_palette::view::{
+    Event as CommandPaletteEvent, NavigationMode, View as CommandPalette,
+};
+use crate::search::command_search::searcher::{AcceptedWorkflow, CommandSearchItemAction};
+use crate::search::command_search::view::{CommandSearchEvent, CommandSearchView};
+use crate::session_management::SessionSource;
 use crate::settings_view::pane_manager::SettingsPaneManager;
 use crate::settings_view::{SettingsSection, SettingsView};
 use crate::tab::{SelectedTabColor, TabData};
+use crate::terminal::TerminalView;
+use crate::terminal::input::MenuPositioning;
 use crate::terminal::model::SerializedBlockListItem;
+use crate::undo_close::UndoCloseStack;
+use crate::user_config::{WarpConfig, WarpConfigUpdateEvent};
 use crate::util::openable_file_type::{EditorLayout, FileTarget};
-use crate::workflows::WorkflowViewMode;
+use crate::view_components::{DismissibleToast, DismissibleToastStack};
+use crate::workflows::command_parser::{
+    compute_workflow_display_data, compute_workflow_display_data_with_overrides,
+};
 use crate::workflows::manager::{WorkflowManager, WorkflowOpenSource};
+use crate::workflows::{Workflow, WorkflowViewMode};
 
 pub const WORKSPACE_PADDING: f32 = 8.;
 pub const TAB_BAR_HEIGHT: f32 = 36.;
@@ -45,11 +75,6 @@ pub const NEW_TAB_BUTTON_POSITION_ID: &str = "new_tab_button";
 pub const NEW_SESSION_MENU_BUTTON_POSITION_ID: &str = "new_session_menu_button";
 pub const TOGGLE_RIGHT_PANEL_BINDING_NAME: &str = "workspace:toggle_right_panel";
 
-#[derive(Clone, Copy, Debug)]
-pub enum OpenDialogSource {
-    CloseTab { tab_index: usize },
-}
-
 pub struct Workspace {
     resources: GlobalResourceHandles,
     tabs: Vec<TabData>,
@@ -58,6 +83,11 @@ pub struct Workspace {
     left_panel_open: bool,
     vertical_tabs_panel_open: bool,
     tab_drag_preview: bool,
+    command_palette: Option<ViewHandle<CommandPalette>>,
+    command_search: Option<ViewHandle<CommandSearchView>>,
+    working_directories: ModelHandle<WorkingDirectoriesModel>,
+    global_search_views: HashMap<EntityId, ViewHandle<GlobalSearchView>>,
+    toasts: ViewHandle<DismissibleToastStack<WorkspaceAction>>,
 }
 
 impl Workspace {
@@ -67,9 +97,104 @@ impl Workspace {
         ctx: &mut ViewContext<Self>,
     ) -> Self {
         let window_id = ctx.window_id();
+        let toasts =
+            ctx.add_typed_action_view(|_| DismissibleToastStack::new(Duration::from_secs(8)));
+        ctx.subscribe_to_model(&ToastStack::handle(ctx), |workspace, _, event, ctx| {
+            match event {
+                ToastStackEvent::AddEphemeralToast { window_id, toast }
+                    if *window_id == ctx.window_id() =>
+                {
+                    workspace.toasts.update(ctx, |toasts, ctx| {
+                        toasts.add_ephemeral_toast(toast.clone(), ctx)
+                    });
+                }
+                ToastStackEvent::AddPersistentToast { window_id, toast }
+                    if *window_id == ctx.window_id() =>
+                {
+                    workspace.toasts.update(ctx, |toasts, ctx| {
+                        toasts.add_persistent_toast(toast.clone(), ctx)
+                    });
+                }
+                ToastStackEvent::RemoveToast {
+                    window_id,
+                    identifier,
+                } if *window_id == ctx.window_id() => {
+                    workspace.toasts.update(ctx, |toasts, ctx| {
+                        toasts.dismiss_older_toasts(identifier, ctx)
+                    });
+                }
+                ToastStackEvent::AddEphemeralToast { .. }
+                | ToastStackEvent::AddPersistentToast { .. }
+                | ToastStackEvent::RemoveToast { .. } => return,
+            }
+            ctx.notify();
+        });
+        ctx.subscribe_to_model(&WarpConfig::handle(ctx), |workspace, _, event, ctx| {
+            workspace.toasts.update(ctx, |toasts, ctx| match event {
+                WarpConfigUpdateEvent::SettingsErrors(error) => {
+                    let (heading, description) = error.heading_and_description();
+                    toasts.add_persistent_toast(
+                        DismissibleToast::error(format!("{heading} {description}"))
+                            .with_object_id("settings-file-error".into()),
+                        ctx,
+                    );
+                }
+                WarpConfigUpdateEvent::SettingsErrorsCleared => {
+                    toasts.dismiss_older_toasts("settings-file-error", ctx);
+                }
+                WarpConfigUpdateEvent::TabConfigErrors(errors) => {
+                    toasts.dismiss_toasts_by_prefix("tab-config-error:", ctx);
+                    for error in errors {
+                        toasts.add_persistent_toast(
+                            DismissibleToast::error(format!(
+                                "Unable to load {}: {}",
+                                error.file_name, error.error_message
+                            ))
+                            .with_object_id(format!(
+                                "tab-config-error:{}",
+                                error.file_path.display()
+                            )),
+                            ctx,
+                        );
+                    }
+                }
+                WarpConfigUpdateEvent::Themes
+                | WarpConfigUpdateEvent::LocalUserWorkflows
+                | WarpConfigUpdateEvent::LaunchConfigs
+                | WarpConfigUpdateEvent::TabConfigs
+                | WarpConfigUpdateEvent::Settings => {}
+            });
+        });
         let settings_view = ctx.add_typed_action_view(|ctx| SettingsView::new(None, ctx));
         SettingsPaneManager::handle(ctx).update(ctx, |manager, _| {
             manager.register_view(window_id, settings_view);
+        });
+        let working_directories = ctx.add_model(|_| WorkingDirectoriesModel::new());
+        ctx.subscribe_to_model(&working_directories, |workspace, _, event, ctx| {
+            if let WorkingDirectoriesEvent::DirectoriesChanged {
+                pane_group_id,
+                directories,
+            } = event
+            {
+                if let Some(tree) = workspace
+                    .working_directories
+                    .as_ref(ctx)
+                    .get_file_tree_view(*pane_group_id)
+                {
+                    let paths = directories
+                        .iter()
+                        .filter_map(|directory| directory.path.to_local_path().map(PathBuf::from))
+                        .collect();
+                    tree.update(ctx, |tree, ctx| tree.set_root_directories(paths, ctx));
+                }
+                if let Some(search) = workspace.global_search_views.get(pane_group_id) {
+                    let paths = directories
+                        .iter()
+                        .map(|directory| directory.path.clone())
+                        .collect();
+                    search.update(ctx, |search, ctx| search.set_root_directories(paths, ctx));
+                }
+            }
         });
         let mut workspace = Self {
             resources,
@@ -79,6 +204,11 @@ impl Workspace {
             left_panel_open: false,
             vertical_tabs_panel_open: false,
             tab_drag_preview: false,
+            command_palette: None,
+            command_search: None,
+            working_directories,
+            global_search_views: HashMap::new(),
+            toasts,
         };
         workspace.restore_source(source, ctx);
         if workspace.tabs.is_empty() {
@@ -91,7 +221,7 @@ impl Workspace {
         workspace
     }
 
-    #[cfg(any(test, feature = "integration_tests"))]
+    #[cfg(test)]
     pub fn new_for_test(resources: GlobalResourceHandles, ctx: &mut ViewContext<Self>) -> Self {
         Self::new(
             resources,
@@ -154,6 +284,7 @@ impl Workspace {
                         created.selected_color = metadata.1;
                         created.group_id = metadata.2;
                         created.pinned = metadata.3;
+                        created.left_panel = tab.left_panel;
                     }
                 }
                 self.activate_tab(active_tab_index.min(self.tabs.len().saturating_sub(1)), ctx);
@@ -213,13 +344,13 @@ impl Workspace {
         ctx: &mut ViewContext<Self>,
     ) {
         match event {
-            PaneGroupEvent::Exited { .. } => {
+            PaneGroupEvent::Exited { add_to_undo_stack } => {
                 if let Some(index) = self
                     .tabs
                     .iter()
                     .position(|tab| tab.pane_group == pane_group)
                 {
-                    self.close_tab(index, ctx);
+                    self.close_tab(index, *add_to_undo_stack, ctx);
                 }
             }
             PaneGroupEvent::FocusPaneInWorkspace { locator } => self.focus_pane(*locator, ctx),
@@ -259,13 +390,12 @@ impl Workspace {
                 argument_override,
                 ..
             } => {
-                let mut command = workflow.as_workflow().content().to_owned();
-                if let Some(values) = argument_override {
-                    for (name, value) in values {
-                        command = command.replace(&format!("{{{{{name}}}}}"), value);
-                    }
-                }
-                self.run_command(command, ctx);
+                self.use_workflow(
+                    workflow.as_workflow(),
+                    argument_override.as_ref(),
+                    true,
+                    ctx,
+                );
             }
             PaneGroupEvent::CDToDirectory { path } => self.run_command(
                 format!(
@@ -282,39 +412,71 @@ impl Workspace {
                 None,
                 ctx,
             ),
-            PaneGroupEvent::AppStateChanged
-            | PaneGroupEvent::ExecuteCommand(_)
-            | PaneGroupEvent::PaneTitleUpdated
-            | PaneGroupEvent::SyncInput(_)
-            | PaneGroupEvent::ShowCommandSearch(_)
+            PaneGroupEvent::PaneTitleUpdated => ctx.notify(),
+            PaneGroupEvent::ShowCommandSearch(options) => self.show_command_search(options, ctx),
+            PaneGroupEvent::AppStateChanged => {
+                self.refresh_pane_directories(&pane_group, ctx);
+                self.refresh_active_session(ctx);
+                ctx.notify();
+            }
+            PaneGroupEvent::ActiveSessionChanged
             | PaneGroupEvent::TerminalViewStateChanged
+            | PaneGroupEvent::RepoChanged
+            | PaneGroupEvent::PaneFocused => {
+                self.refresh_pane_directories(&pane_group, ctx);
+                self.refresh_active_session(ctx);
+            }
+            PaneGroupEvent::OpenPalette { mode, query, .. } => {
+                self.open_palette(*mode, query.as_deref(), ctx);
+            }
+            PaneGroupEvent::OpenFilesPalette { .. } => {
+                self.open_palette(PaletteMode::Files, None, ctx);
+            }
+            PaneGroupEvent::ToggleLeftPanel {
+                force_open,
+                target_view,
+            } => {
+                let open =
+                    *force_open || !self.left_panel_open || self.left_panel_view() != *target_view;
+                self.set_left_panel_view(*target_view);
+                self.set_left_panel_open(open, ctx);
+            }
+            PaneGroupEvent::OpenCodeReviewPane(arg) | PaneGroupEvent::ToggleCodeReviewPane(arg) => {
+                if let Some(path) = arg
+                    .repo_path
+                    .as_ref()
+                    .and_then(LocalOrRemotePath::to_local_path)
+                {
+                    let terminal_id = arg.terminal_view.upgrade(ctx).map(|view| view.id());
+                    pane_group.update(ctx, |group, ctx| {
+                        group.open_code_review(
+                            path.to_owned(),
+                            terminal_id,
+                            matches!(event, PaneGroupEvent::ToggleCodeReviewPane(_)),
+                            arg.focus_new_pane,
+                            ctx,
+                        )
+                    });
+                }
+            }
+            PaneGroupEvent::ExecuteCommand(_)
+            | PaneGroupEvent::SyncInput(_)
             | PaneGroupEvent::OpenWorkflowModalWithCommand(_)
             | PaneGroupEvent::OpenWorkflowModalWithTemporary(_)
             | PaneGroupEvent::OpenFileInWarp { .. }
             | PaneGroupEvent::PreviewCodeInWarp { .. }
-            | PaneGroupEvent::OpenCodeReviewPane(_)
-            | PaneGroupEvent::ToggleCodeReviewPane(_)
             | PaneGroupEvent::MaximizePaneToggled
-            | PaneGroupEvent::ActiveSessionChanged
             | PaneGroupEvent::FocusPaneGroup
             | PaneGroupEvent::FocusPane { .. }
-            | PaneGroupEvent::PaneFocused
             | PaneGroupEvent::DroppedOnTabBar { .. }
             | PaneGroupEvent::SwitchTabFocusAndMovePane { .. }
             | PaneGroupEvent::UpdateHoveredTabIndex { .. }
             | PaneGroupEvent::ClearHoveredTabIndex
-            | PaneGroupEvent::OpenPalette { .. }
             | PaneGroupEvent::ShowToast { .. }
             | PaneGroupEvent::OpenThemeChooser
-            | PaneGroupEvent::OpenFilesPalette { .. }
-            | PaneGroupEvent::ToggleLeftPanel { .. }
             | PaneGroupEvent::LeftPanelToggled { .. }
             | PaneGroupEvent::FileRenamed { .. }
             | PaneGroupEvent::FileDeleted { .. }
-            | PaneGroupEvent::RepoChanged
-            | PaneGroupEvent::InsertCodeReviewComments { .. }
-            | PaneGroupEvent::OpenCodeReviewPaneAndScrollToComment { .. }
-            | PaneGroupEvent::ImportAllCodeReviewComments { .. }
             | PaneGroupEvent::OpenLspLogs { .. } => {}
         }
     }
@@ -412,7 +574,11 @@ impl Workspace {
     }
 
     pub fn handle_reopen(&mut self, ctx: &mut ViewContext<Self>) {
-        ctx.notify();
+        let window_id = ctx.window_id();
+        let handle = ctx.handle();
+        WorkspaceRegistry::handle(ctx)
+            .update(ctx, |registry, _| registry.register(window_id, handle));
+        self.activate_tab(self.active_tab_index, ctx);
     }
 
     pub fn focus_pane(&mut self, locator: PaneViewLocator, ctx: &mut ViewContext<Self>) {
@@ -450,16 +616,522 @@ impl Workspace {
         };
         self.active_tab_index = index;
         tab.pane_group.update(ctx, |group, ctx| group.focus(ctx));
+        let group = tab.pane_group.clone();
+        self.refresh_pane_directories(&group, ctx);
+        self.refresh_active_session(ctx);
+        if self.left_panel_open {
+            match self.left_panel_view() {
+                LeftPanelTargetView::ProjectExplorer => {
+                    self.ensure_file_tree(ctx);
+                }
+                LeftPanelTargetView::GlobalSearch => {
+                    self.ensure_global_search(ctx);
+                }
+            }
+        }
         ctx.notify();
     }
 
-    fn close_tab(&mut self, index: usize, ctx: &mut ViewContext<Self>) {
+    fn refresh_pane_directories(&self, group: &ViewHandle<PaneGroup>, ctx: &mut ViewContext<Self>) {
+        let pane_group = group.as_ref(ctx);
+        let terminal_cwds = pane_group
+            .terminal_view_working_directories(ctx)
+            .filter_map(|(id, path)| path.map(|path| (id, path)))
+            .collect();
+        let editor_paths = pane_group
+            .code_view_paths(ctx)
+            .filter_map(|(id, path)| path.map(|path| (id, path)))
+            .collect();
+        let focused_terminal_id = pane_group.focused_session_view(ctx).map(|view| view.id());
+        self.working_directories.update(ctx, |directories, ctx| {
+            directories.refresh_working_directories_for_pane_group(
+                group.id(),
+                terminal_cwds,
+                editor_paths,
+                focused_terminal_id,
+                ctx,
+            );
+        });
+    }
+
+    fn ensure_file_tree(&self, ctx: &mut ViewContext<Self>) -> ViewHandle<FileTreeView> {
+        let group = self.active_tab_pane_group();
+        let group_id = group.id();
+        if let Some(tree) = self
+            .working_directories
+            .as_ref(ctx)
+            .get_file_tree_view(group_id)
+        {
+            return tree;
+        }
+        let tree = ctx.add_typed_action_view(FileTreeView::new);
+        let directories = self
+            .working_directories
+            .as_ref(ctx)
+            .most_recent_directories_for_pane_group(group_id)
+            .into_iter()
+            .flatten()
+            .filter_map(|directory| directory.path.to_local_path().map(PathBuf::from))
+            .collect();
+        let active_file = group.as_ref(ctx).active_file_model().clone();
+        let has_terminal = group.as_ref(ctx).has_terminal_panes();
+        tree.update(ctx, |tree, ctx| {
+            tree.set_active_file_model(active_file, ctx);
+            tree.set_root_directories(directories, ctx);
+            tree.set_has_terminal_session(has_terminal, ctx);
+            tree.set_is_active(self.left_panel_open, ctx);
+        });
+        ctx.subscribe_to_view(&tree, |workspace, _, event, ctx| match event {
+            FileTreeEvent::OpenFile {
+                path,
+                target,
+                line_col,
+            } => {
+                if let Some(local_path) = path.to_local_path() {
+                    workspace.open_file_with_target(
+                        local_path.to_owned(),
+                        target.clone(),
+                        *line_col,
+                        CodeSource::FileTree {
+                            location: path.clone(),
+                        },
+                        ctx,
+                    );
+                }
+            }
+            FileTreeEvent::CDToDirectory { path } => workspace.run_command(
+                format!(
+                    "cd {}",
+                    ShellFamily::Posix.shell_escape(path.to_string_lossy().as_ref())
+                ),
+                ctx,
+            ),
+            FileTreeEvent::OpenDirectoryInNewTab { path } => workspace.add_tab_with_pane_layout(
+                PanesLayout::SingleTerminal(Box::new(
+                    NewTerminalOptions::default().with_initial_directory(path),
+                )),
+                Arc::new(HashMap::new()),
+                None,
+                ctx,
+            ),
+            FileTreeEvent::FileRenamed { .. }
+            | FileTreeEvent::FileDeleted { .. }
+            | FileTreeEvent::AttachAsContext { .. } => {}
+        });
+        self.working_directories.update(ctx, |directories, _| {
+            directories.store_file_tree_view(group_id, tree.clone())
+        });
+        tree
+    }
+
+    fn left_panel_view(&self) -> LeftPanelTargetView {
+        match self.tabs[self.active_tab_index]
+            .left_panel
+            .as_ref()
+            .map(|panel| &panel.left_panel_displayed_tab)
+        {
+            Some(LeftPanelDisplayedTab::GlobalSearch) => LeftPanelTargetView::GlobalSearch,
+            Some(LeftPanelDisplayedTab::FileTree) | None => LeftPanelTargetView::ProjectExplorer,
+        }
+    }
+
+    fn set_left_panel_view(&mut self, view: LeftPanelTargetView) {
+        let tab = &mut self.tabs[self.active_tab_index];
+        let panel = tab.left_panel.get_or_insert_with(|| LeftPanelSnapshot {
+            left_panel_displayed_tab: LeftPanelDisplayedTab::FileTree,
+            pane_group_id: tab.pane_group.id().to_string(),
+            width: 280,
+        });
+        panel.left_panel_displayed_tab = match view {
+            LeftPanelTargetView::ProjectExplorer => LeftPanelDisplayedTab::FileTree,
+            LeftPanelTargetView::GlobalSearch => LeftPanelDisplayedTab::GlobalSearch,
+        };
+    }
+
+    fn set_left_panel_open(&mut self, open: bool, ctx: &mut ViewContext<Self>) {
+        self.left_panel_open = open;
+        match self.left_panel_view() {
+            LeftPanelTargetView::ProjectExplorer => {
+                let tree = self.ensure_file_tree(ctx);
+                tree.update(ctx, |tree, ctx| {
+                    tree.set_is_active(open, ctx);
+                    if open {
+                        tree.on_left_panel_focused(ctx);
+                    }
+                });
+            }
+            LeftPanelTargetView::GlobalSearch => {
+                let search = self.ensure_global_search(ctx);
+                if open {
+                    search.update(ctx, |search, ctx| search.on_left_panel_focused(ctx));
+                }
+            }
+        }
+        self.active_tab_pane_group().update(ctx, |group, ctx| {
+            group.set_left_panel_open(open, ctx);
+            if !open {
+                group.focus(ctx);
+            }
+        });
+        ctx.notify();
+    }
+
+    fn ensure_global_search(
+        &mut self,
+        ctx: &mut ViewContext<Self>,
+    ) -> ViewHandle<GlobalSearchView> {
+        let group_id = self.active_tab_pane_group().id();
+        if let Some(search) = self.global_search_views.get(&group_id) {
+            return search.clone();
+        }
+        let search = ctx.add_typed_action_view(GlobalSearchView::new);
+        let directories = self
+            .working_directories
+            .as_ref(ctx)
+            .most_recent_directories_for_pane_group(group_id)
+            .into_iter()
+            .flatten()
+            .map(|directory| directory.path)
+            .collect();
+        search.update(ctx, |search, ctx| {
+            search.set_root_directories(directories, ctx)
+        });
+        ctx.subscribe_to_view(&search, |workspace, _, event, ctx| match event {
+            GlobalSearchViewEvent::OpenMatch {
+                location,
+                line_number,
+                column_num,
+            } => {
+                if let Some(path) = location.to_local_path() {
+                    let line_col = Some(LineAndColumnArg {
+                        line_num: *line_number as usize,
+                        column_num: *column_num,
+                    });
+                    workspace.open_file_with_target(
+                        path.to_owned(),
+                        FileTarget::CodeEditor(EditorLayout::NewTab),
+                        line_col,
+                        CodeSource::Link {
+                            path: path.to_owned(),
+                            range_start: line_col,
+                            range_end: None,
+                        },
+                        ctx,
+                    );
+                }
+            }
+        });
+        self.global_search_views.insert(group_id, search.clone());
+        search
+    }
+
+    fn refresh_active_session(&self, ctx: &mut ViewContext<Self>) {
+        let group = self.active_tab_pane_group().as_ref(ctx);
+        let terminal = group.active_session_view(ctx);
+        let session = terminal
+            .as_ref()
+            .and_then(|view| view.as_ref(ctx).active_session(ctx));
+        let directory = terminal
+            .as_ref()
+            .and_then(|view| view.as_ref(ctx).pwd_as_local_or_remote(ctx))
+            .or_else(|| {
+                let path = PathBuf::from(group.path_from_focused_pane(ctx)?);
+                if !path.is_file() {
+                    return None;
+                }
+                path.parent()?
+                    .canonicalize()
+                    .ok()
+                    .map(LocalOrRemotePath::Local)
+            });
+        let window_id = ctx.window_id();
+        if ActiveSession::as_ref(ctx).working_directory(window_id) != directory.as_ref()
+            && let Some(LocalOrRemotePath::Local(path)) = &directory
+        {
+            PersistedWorkspace::handle(ctx)
+                .update(ctx, |workspace, ctx| workspace.navigated_to_path(path, ctx));
+        }
+        ActiveSession::handle(ctx).update(ctx, |active, ctx| {
+            active.set_session_state(
+                window_id,
+                session,
+                directory,
+                terminal.map(|view| view.id()),
+                ctx,
+            );
+        });
+    }
+
+    fn open_repository(&mut self, path: Option<&str>, ctx: &mut ViewContext<Self>) {
+        if let Some(path) = path {
+            PersistedWorkspace::handle(ctx).update(ctx, |workspace, ctx| {
+                workspace.user_added_workspace(path.into(), ctx)
+            });
+            self.add_tab_with_pane_layout(
+                PanesLayout::SingleTerminal(Box::new(
+                    NewTerminalOptions::default().with_initial_directory(path),
+                )),
+                Arc::new(HashMap::new()),
+                None,
+                ctx,
+            );
+            self.set_left_panel_view(LeftPanelTargetView::ProjectExplorer);
+            self.set_left_panel_open(true, ctx);
+        } else {
+            let window_id = ctx.window_id();
+            let workspace_id = ctx.view_id();
+            ctx.open_file_picker(
+                move |result, ctx| {
+                    if let Ok(paths) = result
+                        && let Some(path) = paths.into_iter().next()
+                    {
+                        ctx.dispatch_typed_action_for_view(
+                            window_id,
+                            workspace_id,
+                            &WorkspaceAction::OpenRepository { path: Some(path) },
+                        );
+                    }
+                },
+                FilePickerConfiguration::new().folders_only(),
+            );
+        }
+    }
+
+    fn open_code_review(&mut self, group: ViewHandle<PaneGroup>, ctx: &mut ViewContext<Self>) {
+        let terminal = group.as_ref(ctx).active_session_view(ctx);
+        let path = terminal
+            .as_ref()
+            .and_then(|view| view.as_ref(ctx).canonical_session_pwd_if_local(ctx))
+            .or_else(|| {
+                group
+                    .as_ref(ctx)
+                    .path_from_focused_pane(ctx)
+                    .map(PathBuf::from)
+                    .and_then(|path| path.parent().map(PathBuf::from))
+            });
+        let Some(path) = path else {
+            return;
+        };
+        let future = repo_metadata::repositories::DetectedRepositories::handle(ctx).update(
+            ctx,
+            |repos, ctx| {
+                repos.detect_possible_local_git_repo(
+                    &path.to_string_lossy(),
+                    repo_metadata::repositories::RepoDetectionSource::CodeReviewInitialization,
+                    ctx,
+                )
+            },
+        );
+        ctx.spawn(future, move |workspace, root, ctx| {
+            if workspace.tabs.iter().any(|tab| tab.pane_group == group) {
+                group.update(ctx, |group, ctx| {
+                    group.open_code_review(
+                        root.unwrap_or(path),
+                        terminal.map(|view| view.id()),
+                        false,
+                        true,
+                        ctx,
+                    )
+                });
+                ctx.notify();
+            }
+        });
+    }
+
+    fn open_palette(
+        &mut self,
+        mode: PaletteMode,
+        query: Option<&str>,
+        ctx: &mut ViewContext<Self>,
+    ) {
+        self.command_search = None;
+        let filter = match mode {
+            PaletteMode::Command => QueryFilter::Actions,
+            PaletteMode::Navigation => QueryFilter::Sessions,
+            PaletteMode::LaunchConfig => QueryFilter::LaunchConfigurations,
+            PaletteMode::Files => QueryFilter::Files,
+            PaletteMode::WarpDrive | PaletteMode::Conversations => return,
+        };
+        let window_id = ctx.window_id();
+        let binding_view = self
+            .command_palette
+            .as_ref()
+            .and_then(|palette| palette.as_ref(ctx).source_view(ctx))
+            .or_else(|| ctx.focused_view_id(window_id))
+            .unwrap_or(ctx.view_id());
+        let group = self.active_tab_pane_group();
+        let session_source = SessionSource::Set {
+            active_pane_id: group.as_ref(ctx).focused_pane_id(ctx),
+            active_tab_id: group.id(),
+            active_window_id: window_id,
+        };
+        self.refresh_active_session(ctx);
+        let palette =
+            ctx.add_typed_action_view(|ctx| CommandPalette::new(NavigationMode::Normal, ctx));
+        ctx.subscribe_to_view(&palette, |workspace, palette, event, ctx| match event {
+            CommandPaletteEvent::Close { .. } => {
+                if workspace.command_palette.as_ref() != Some(&palette) {
+                    return;
+                }
+                workspace.command_palette = None;
+                if workspace.command_search.is_none() {
+                    workspace
+                        .active_tab_pane_group()
+                        .update(ctx, |group, ctx| group.focus(ctx));
+                }
+                ctx.notify();
+            }
+            CommandPaletteEvent::OpenFile {
+                path,
+                line_and_column_arg,
+            } => {
+                let path = PathBuf::from(path);
+                workspace.open_file_with_target(
+                    path.clone(),
+                    FileTarget::CodeEditor(EditorLayout::NewTab),
+                    *line_and_column_arg,
+                    CodeSource::Link {
+                        path,
+                        range_start: *line_and_column_arg,
+                        range_end: None,
+                    },
+                    ctx,
+                );
+            }
+            CommandPaletteEvent::OpenDirectory { path } => workspace.add_tab_with_pane_layout(
+                PanesLayout::SingleTerminal(Box::new(
+                    NewTerminalOptions::default().with_initial_directory(path),
+                )),
+                Arc::new(HashMap::new()),
+                None,
+                ctx,
+            ),
+        });
+        palette.update(ctx, |palette, ctx| {
+            palette.set_binding_source(window_id, binding_view, ctx);
+            palette.set_session_source(session_source, ctx);
+            palette.set_active_query_filter(filter, ctx);
+            if let Some(query) = query {
+                palette.insert_query_text(query, ctx);
+            }
+        });
+        ctx.focus(&palette);
+        self.command_palette = Some(palette);
+        ctx.notify();
+    }
+
+    fn show_command_search(&mut self, options: &CommandSearchOptions, ctx: &mut ViewContext<Self>) {
+        self.command_palette = None;
+        self.refresh_active_session(ctx);
+        let active = ActiveSession::as_ref(ctx);
+        let session = active.session(ctx.window_id());
+        let directory = active.path_if_local(ctx.window_id()).map(PathBuf::from);
+        let query = match &options.init_content {
+            InitContent::Custom(query) => query.clone(),
+            InitContent::FromInputBuffer => self
+                .active_tab_pane_group()
+                .as_ref(ctx)
+                .active_session_view(ctx)
+                .map(|view| view.as_ref(ctx).input().as_ref(ctx).buffer_text(ctx))
+                .unwrap_or_default(),
+        };
+        let search = ctx.add_typed_action_view(CommandSearchView::new);
+        ctx.subscribe_to_view(&search, |workspace, search, event, ctx| {
+            if workspace.command_search.as_ref() != Some(&search) {
+                return;
+            }
+            match event {
+                CommandSearchEvent::ItemSelected { payload, .. } => match payload.as_ref() {
+                    CommandSearchItemAction::AcceptHistory(item) => {
+                        workspace.insert_in_input(&item.command, true, ctx)
+                    }
+                    CommandSearchItemAction::ExecuteHistory(command) => {
+                        workspace.run_command(command.clone(), ctx)
+                    }
+                    CommandSearchItemAction::AcceptWorkflow(AcceptedWorkflow::Local {
+                        workflow,
+                        ..
+                    }) => workspace.use_workflow(workflow.as_workflow(), None, false, ctx),
+                },
+                CommandSearchEvent::Close { .. } => {
+                    workspace.command_search = None;
+                    workspace
+                        .active_tab_pane_group()
+                        .update(ctx, |group, ctx| group.focus(ctx));
+                    ctx.notify();
+                }
+                CommandSearchEvent::Blur => {
+                    workspace.command_search = None;
+                    ctx.notify();
+                }
+                CommandSearchEvent::Resize => ctx.notify(),
+            }
+        });
+        search.update(ctx, |search, ctx| {
+            search.reset_state(
+                session,
+                directory,
+                query,
+                options.filter,
+                MenuPositioning::AboveInputBox,
+                ctx,
+            )
+        });
+        ctx.focus(&search);
+        self.command_search = Some(search);
+        ctx.notify();
+    }
+
+    fn terminal_for_input(&mut self, ctx: &mut ViewContext<Self>) -> ViewHandle<TerminalView> {
+        if let Some(terminal) = self
+            .active_tab_pane_group()
+            .as_ref(ctx)
+            .active_session_view(ctx)
+        {
+            return terminal;
+        }
+        let directory = ActiveSession::as_ref(ctx)
+            .path_if_local(ctx.window_id())
+            .map(PathBuf::from);
+        self.add_tab_with_pane_layout(
+            PanesLayout::SingleTerminal(Box::new(
+                NewTerminalOptions::default().with_initial_directory_opt(directory),
+            )),
+            Arc::new(HashMap::new()),
+            None,
+            ctx,
+        );
+        self.active_tab_pane_group()
+            .as_ref(ctx)
+            .active_session_view(ctx)
+            .expect("new terminal tab has a terminal")
+    }
+
+    fn close_tab(&mut self, index: usize, keep_for_undo: bool, ctx: &mut ViewContext<Self>) {
         if index >= self.tabs.len() {
             return;
         }
         let tab = self.tabs.remove(index);
-        tab.pane_group
-            .update(ctx, |group, ctx| group.clean_up_panes(ctx));
+        ctx.unsubscribe_to_view(&tab.pane_group);
+        self.global_search_views.remove(&tab.pane_group.id());
+        if keep_for_undo {
+            tab.pane_group.update(ctx, |group, ctx| {
+                group.detach_panes_for_close(&self.working_directories, ctx)
+            });
+            let workspace = ctx.handle();
+            UndoCloseStack::handle(ctx).update(ctx, |stack, ctx| {
+                stack.handle_tab_closed(workspace, index, tab, ctx)
+            });
+        } else {
+            self.working_directories.update(ctx, |directories, ctx| {
+                directories.remove_pane_group(tab.pane_group.id(), ctx)
+            });
+            tab.pane_group
+                .update(ctx, |group, ctx| group.clean_up_panes(ctx));
+        }
+        if index < self.active_tab_index {
+            self.active_tab_index -= 1;
+        }
         if self.tabs.is_empty() {
             self.add_terminal_tab(false, ctx);
         }
@@ -467,36 +1139,67 @@ impl Workspace {
     }
 
     fn run_command(&mut self, command: String, ctx: &mut ViewContext<Self>) {
-        if let Some(view) = self
-            .active_tab_pane_group()
-            .as_ref(ctx)
-            .focused_session_view(ctx)
-        {
-            view.update(ctx, |terminal, ctx| {
-                terminal
-                    .input()
-                    .update(ctx, |input, ctx| input.set_pending_command(&command, ctx))
+        let view = self.terminal_for_input(ctx);
+        view.update(ctx, |terminal, ctx| {
+            terminal
+                .input()
+                .update(ctx, |input, ctx| input.set_pending_command(&command, ctx))
+        });
+    }
+
+    fn use_workflow(
+        &mut self,
+        workflow: &Workflow,
+        overrides: Option<&HashMap<String, String>>,
+        execute: bool,
+        ctx: &mut ViewContext<Self>,
+    ) {
+        let data = if let Some(overrides) = overrides {
+            compute_workflow_display_data_with_overrides(workflow, overrides.clone())
+        } else {
+            compute_workflow_display_data(workflow)
+        };
+        let missing = workflow
+            .arguments
+            .iter()
+            .enumerate()
+            .find(|(index, argument)| {
+                argument.default_value.is_none()
+                    && overrides.is_none_or(|overrides| !overrides.contains_key(&argument.name))
+                    && data
+                        .argument_index_to_highlight_index_map
+                        .contains_key(&(*index).into())
             });
+        if execute && missing.is_none() {
+            self.run_command(data.command_with_replaced_arguments, ctx);
+        } else {
+            self.insert_in_input(&data.command_with_replaced_arguments, true, ctx);
+            if let Some((index, _)) = missing {
+                let ranges = data.argument_index_to_highlight_index_map[&index.into()]
+                    .iter()
+                    .map(|index| data.replaced_ranges[*index].clone())
+                    .collect::<Vec<_>>();
+                let terminal = self.terminal_for_input(ctx);
+                let editor = terminal.as_ref(ctx).input().as_ref(ctx).editor().clone();
+                editor.update(ctx, |editor, ctx| {
+                    editor.select_ranges_by_byte_offset(ranges, ctx)
+                });
+            }
         }
     }
 
     fn insert_in_input(&mut self, content: &str, replace: bool, ctx: &mut ViewContext<Self>) {
-        if let Some(view) = self
-            .active_tab_pane_group()
-            .as_ref(ctx)
-            .focused_session_view(ctx)
-        {
-            view.update(ctx, |terminal, ctx| {
-                terminal.input().update(ctx, |input, ctx| {
-                    if replace {
-                        input.replace_buffer_content(content, ctx);
-                    } else {
-                        input.append_to_buffer(content, ctx);
-                    }
-                    input.focus_input_box(ctx);
-                })
-            });
-        }
+        let view = self.terminal_for_input(ctx);
+        view.update(ctx, |terminal, ctx| {
+            terminal.input().update(ctx, |input, ctx| {
+                if replace {
+                    input.replace_buffer_content(content, ctx);
+                } else {
+                    input.append_to_buffer(content, ctx);
+                }
+                input.focus_input_box(ctx);
+            })
+        });
     }
 
     fn open_settings(
@@ -611,7 +1314,7 @@ impl Workspace {
                 root: tab.pane_group.as_ref(app).snapshot(app),
                 default_directory_color: tab.default_directory_color,
                 selected_color: tab.selected_color,
-                left_panel: None::<LeftPanelSnapshot>,
+                left_panel: tab.left_panel.clone(),
                 group_id: tab.group_id,
                 pinned: tab.pinned,
             })
@@ -661,23 +1364,76 @@ impl Workspace {
     pub fn close_tabs(
         &mut self,
         indices: impl Iterator<Item = usize>,
-        _source: OpenDialogSource,
-        _force: bool,
-        _allow_window_close: bool,
+        force: bool,
+        allow_window_close: bool,
         ctx: &mut ViewContext<Self>,
     ) -> bool {
-        let mut indices = indices.collect::<Vec<_>>();
+        let mut indices = indices
+            .filter(|index| *index < self.tabs.len())
+            .collect::<Vec<_>>();
         indices.sort_unstable_by(|a, b| b.cmp(a));
+        indices.dedup();
+        if indices.is_empty() {
+            return true;
+        }
+        if !force {
+            let groups = indices
+                .iter()
+                .map(|index| self.tabs[*index].pane_group.downgrade())
+                .collect();
+            let summary = UnsavedStateSummary::for_tabs(groups, ctx);
+            if summary.save_unsaved_code_and_should_warn(ctx) {
+                let handle = ctx.handle();
+                let ids = indices
+                    .iter()
+                    .map(|index| self.tabs[*index].pane_group.id())
+                    .collect::<Vec<_>>();
+                if summary
+                    .dialog()
+                    .on_confirm(move |ctx| {
+                        if let Some(workspace) = handle.upgrade(ctx) {
+                            workspace.update(ctx, |workspace, ctx| {
+                                let indices = workspace
+                                    .tabs
+                                    .iter()
+                                    .enumerate()
+                                    .filter_map(|(index, tab)| {
+                                        ids.contains(&tab.pane_group.id()).then_some(index)
+                                    })
+                                    .collect::<Vec<_>>();
+                                workspace.close_tabs(
+                                    indices.into_iter(),
+                                    true,
+                                    allow_window_close,
+                                    ctx,
+                                );
+                            });
+                        }
+                    })
+                    .on_cancel(|_| {})
+                    .show(ctx)
+                {
+                    return false;
+                }
+            }
+        }
+        if allow_window_close && indices.len() == self.tabs.len() {
+            ctx.close_window();
+            return true;
+        }
         for index in indices {
-            self.close_tab(index, ctx);
+            self.close_tab(index, true, ctx);
         }
         true
     }
 
-    pub fn restore_closed_tab(&mut self, _index: usize, tab: TabData, ctx: &mut ViewContext<Self>) {
+    pub fn restore_closed_tab(&mut self, index: usize, tab: TabData, ctx: &mut ViewContext<Self>) {
+        let index = index.min(self.tabs.len());
         self.subscribe_to_pane_group(&tab.pane_group, ctx);
-        self.tabs.push(tab);
-        self.activate_tab(self.tabs.len() - 1, ctx);
+        tab.pane_group
+            .update(ctx, |group, ctx| group.reattach_panes(ctx));
+        self.tabs.insert(index, tab);
+        self.activate_tab(index, ctx);
     }
 }
 
@@ -690,6 +1446,63 @@ impl TypedActionView for Workspace {
 
     fn handle_action(&mut self, action: &Self::Action, ctx: &mut ViewContext<Self>) {
         match action {
+            WorkspaceAction::ReopenClosedSession => {
+                ctx.dispatch_global_action("app:undo_close", ())
+            }
+            WorkspaceAction::ShowCommandSearch(options) => self.show_command_search(options, ctx),
+            WorkspaceAction::OpenCodeReview => {
+                self.open_code_review(self.active_tab_pane_group().clone(), ctx)
+            }
+            WorkspaceAction::OpenCodeReviewPanel(locator) => {
+                if let Some(group) = self.get_pane_group_view(locator.pane_group_id).cloned() {
+                    self.focus_pane(*locator, ctx);
+                    self.open_code_review(group, ctx);
+                }
+            }
+            WorkspaceAction::OpenRepository { path } => self.open_repository(path.as_deref(), ctx),
+            WorkspaceAction::OpenFileInNewTab {
+                full_path,
+                line_and_column,
+            } => self.open_file_with_target(
+                full_path.clone(),
+                FileTarget::CodeEditor(EditorLayout::NewTab),
+                *line_and_column,
+                CodeSource::Link {
+                    path: full_path.clone(),
+                    range_start: *line_and_column,
+                    range_end: None,
+                },
+                ctx,
+            ),
+            WorkspaceAction::OpenProjectExplorer => {
+                self.set_left_panel_view(LeftPanelTargetView::ProjectExplorer);
+                self.set_left_panel_open(true, ctx);
+            }
+            WorkspaceAction::OpenGlobalSearch => {
+                self.set_left_panel_view(LeftPanelTargetView::GlobalSearch);
+                self.set_left_panel_open(true, ctx);
+            }
+            WorkspaceAction::ToggleLeftPanel => {
+                self.set_left_panel_open(!self.left_panel_open, ctx)
+            }
+            WorkspaceAction::OpenPalette { mode, query, .. } => {
+                self.open_palette(*mode, query.as_deref(), ctx)
+            }
+            WorkspaceAction::TogglePalette { mode, .. } => {
+                if self
+                    .command_palette
+                    .as_ref()
+                    .is_some_and(|palette| palette.as_ref(ctx).is_mode_enabled(*mode, ctx))
+                {
+                    self.command_palette = None;
+                    self.active_tab_pane_group()
+                        .update(ctx, |group, ctx| group.focus(ctx));
+                    ctx.notify();
+                } else {
+                    self.open_palette(*mode, None, ctx);
+                }
+            }
+            WorkspaceAction::OpenNotebook(source) => self.open_notebook(source, ctx, false),
             WorkspaceAction::ActivateTab(index) | WorkspaceAction::ActivateTabByNumber(index) => {
                 self.activate_tab(*index, ctx);
             }
@@ -714,8 +1527,12 @@ impl TypedActionView for Workspace {
                 self.tabs.swap(*index, *index + 1);
                 self.activate_tab(*index + 1, ctx);
             }
-            WorkspaceAction::CloseTab(index) => self.close_tab(*index, ctx),
-            WorkspaceAction::CloseActiveTab => self.close_tab(self.active_tab_index, ctx),
+            WorkspaceAction::CloseTab(index) => {
+                self.close_tabs(std::iter::once(*index), false, false, ctx);
+            }
+            WorkspaceAction::CloseActiveTab => {
+                self.close_tabs(std::iter::once(self.active_tab_index), false, false, ctx);
+            }
             WorkspaceAction::AddDefaultTab | WorkspaceAction::AddTerminalTab { .. } => {
                 self.add_terminal_tab(false, ctx)
             }
@@ -752,8 +1569,13 @@ impl TypedActionView for Workspace {
             WorkspaceAction::CopyTextToClipboard(text) => ctx
                 .clipboard()
                 .write(ClipboardContent::plain_text(text.clone())),
-            WorkspaceAction::SendFeedback => {
-                ctx.dispatch_global_action("root_view:send_feedback", &())
+            WorkspaceAction::UndoRevertInCodeReviewPane { window_id, view_id } => {
+                GlobalCodeReviewModel::handle(ctx).update(ctx, |_, ctx| {
+                    ctx.emit(GlobalCodeReviewEvent::DiffReverted {
+                        window_id: *window_id,
+                        view_id: *view_id,
+                    });
+                });
             }
             WorkspaceAction::OpenInExplorer { path } => ctx.open_file_path_in_explorer(path),
             WorkspaceAction::RunCommand(command) => self.run_command(command.clone(), ctx),
@@ -766,13 +1588,12 @@ impl TypedActionView for Workspace {
                 argument_override,
                 ..
             } => {
-                let mut command = workflow.as_workflow().content().to_owned();
-                if let Some(values) = argument_override {
-                    for (name, value) in values {
-                        command = command.replace(&format!("{{{{{name}}}}}"), value);
-                    }
-                }
-                self.run_command(command, ctx);
+                self.use_workflow(
+                    workflow.as_workflow(),
+                    argument_override.as_ref(),
+                    true,
+                    ctx,
+                );
             }
             WorkspaceAction::FocusPane(locator) => self.focus_pane(*locator, ctx),
             WorkspaceAction::FocusTerminalViewInWorkspace { terminal_view_id } => {
@@ -818,24 +1639,12 @@ impl TypedActionView for Workspace {
             | WorkspaceAction::OpenSettingsFile
             | WorkspaceAction::ShowThemeChooser(_)
             | WorkspaceAction::ShowThemeChooserForActiveTheme
-            | WorkspaceAction::OpenPalette { .. }
-            | WorkspaceAction::TogglePalette { .. }
-            | WorkspaceAction::ShowCommandSearch(_)
             | WorkspaceAction::ToggleResourceCenter
-            | WorkspaceAction::OpenRepository { .. }
-            | WorkspaceAction::ReopenClosedSession
             | WorkspaceAction::ToggleRecordingMode
             | WorkspaceAction::ToggleInBandGenerators
-            | WorkspaceAction::ToggleDebugNetworkStatus
             | WorkspaceAction::ToggleShowMemoryStats
-            | WorkspaceAction::OpenProjectExplorer
-            | WorkspaceAction::OpenGlobalSearch
-            | WorkspaceAction::ToggleLeftPanel
             | WorkspaceAction::ToggleVerticalTabsPanel
             | WorkspaceAction::OpenVerticalTabsPanel
-            | WorkspaceAction::OpenCodeReviewPanel(_)
-            | WorkspaceAction::OpenFileInNewTab { .. }
-            | WorkspaceAction::UndoRevertInCodeReviewPane { .. }
             | WorkspaceAction::MoveTabLeft(_)
             | WorkspaceAction::MoveTabRight(_) => {}
         }
@@ -878,7 +1687,37 @@ impl View for Workspace {
                 .finish(),
             );
         }
-        Flex::column()
+        let mut body = Flex::row().with_cross_axis_alignment(CrossAxisAlignment::Stretch);
+        if self.left_panel_open {
+            let group_id = self.active_tab_pane_group().id();
+            let panel = match self.left_panel_view() {
+                LeftPanelTargetView::ProjectExplorer => self
+                    .working_directories
+                    .as_ref(app)
+                    .get_file_tree_view(group_id)
+                    .map(|tree| ChildView::new(&tree).finish()),
+                LeftPanelTargetView::GlobalSearch => self
+                    .global_search_views
+                    .get(&group_id)
+                    .map(|search| ChildView::new(search).finish()),
+            };
+            if let Some(panel) = panel {
+                body.add_child(
+                    ConstrainedBox::new(panel)
+                        .with_width(
+                            self.tabs[self.active_tab_index]
+                                .left_panel
+                                .as_ref()
+                                .map_or(280., |panel| panel.width as f32),
+                        )
+                        .finish(),
+                );
+            }
+        }
+        body.add_child(
+            Expanded::new(1., ChildView::new(self.active_tab_pane_group()).finish()).finish(),
+        );
+        let workspace = Flex::column()
             .with_main_axis_size(MainAxisSize::Max)
             .with_cross_axis_alignment(CrossAxisAlignment::Stretch)
             .with_child(
@@ -886,10 +1725,29 @@ impl View for Workspace {
                     .with_height(TAB_BAR_HEIGHT)
                     .finish(),
             )
-            .with_child(
-                Expanded::new(1., ChildView::new(self.active_tab_pane_group()).finish()).finish(),
+            .with_child(Expanded::new(1., body.finish()).finish())
+            .finish();
+        let mut stack = Stack::new().with_child(workspace);
+        stack.add_child(
+            Align::new(
+                Container::new(ChildView::new(&self.toasts).finish())
+                    .with_uniform_margin(8.)
+                    .finish(),
             )
-            .finish()
+            .top_right()
+            .finish(),
+        );
+        if let Some(palette) = &self.command_palette {
+            stack.add_child(ChildView::new(palette).finish());
+        }
+        if let Some(search) = &self.command_search {
+            stack.add_child(
+                Align::new(ChildView::new(search).finish())
+                    .bottom_left()
+                    .finish(),
+            );
+        }
+        stack.finish()
     }
 
     fn on_focus(&mut self, focus: &FocusContext, ctx: &mut ViewContext<Self>) {
@@ -899,3 +1757,7 @@ impl View for Workspace {
         }
     }
 }
+
+#[cfg(test)]
+#[path = "view_tests.rs"]
+mod tests;

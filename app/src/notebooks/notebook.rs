@@ -3,7 +3,10 @@ use warpui::{
     AppContext, Element, Entity, SingletonEntity, TypedActionView, View, ViewContext, ViewHandle,
 };
 
-use crate::editor::{EditorView, Event as EditorEvent, SingleLineEditorOptions};
+use crate::editor::{
+    EditorOptions, EditorView, EnterAction, EnterSettings, Event as EditorEvent,
+    SingleLineEditorOptions,
+};
 use crate::local_objects::notebook_store::NotebookStore;
 use crate::menu::{MenuItem, MenuItemFields};
 use crate::notebooks::model::{Notebook, NotebookId};
@@ -11,8 +14,6 @@ use crate::pane_group::focus_state::PaneFocusHandle;
 use crate::pane_group::pane::view;
 use crate::pane_group::{BackingView, PaneConfiguration, PaneEvent};
 use crate::{safe_error, safe_warn};
-
-pub fn init(_app: &mut AppContext) {}
 
 #[derive(Debug, Clone)]
 pub enum NotebookEvent {
@@ -47,7 +48,18 @@ impl NotebookView {
             editor.set_placeholder_text("Untitled", ctx);
             editor
         });
-        let body = ctx.add_typed_action_view(|ctx| EditorView::new(Default::default(), ctx));
+        let body = ctx.add_typed_action_view(|ctx| {
+            EditorView::new(
+                EditorOptions {
+                    enter_settings: EnterSettings {
+                        enter: EnterAction::InsertNewLineIfMultiLine,
+                        ..Default::default()
+                    },
+                    ..Default::default()
+                },
+                ctx,
+            )
+        });
         ctx.subscribe_to_view(&title, |view, _, event, ctx| {
             if matches!(event, EditorEvent::Edited(_)) {
                 view.persist(ctx);
@@ -121,10 +133,15 @@ impl NotebookView {
         };
         let title = self.title.as_ref(ctx).buffer_text(ctx);
         let data = self.body.as_ref(ctx).buffer_text(ctx);
+        let extra = NotebookStore::as_ref(ctx)
+            .get(&id)
+            .map(|notebook| notebook.extra.clone())
+            .unwrap_or_default();
         let notebook = Notebook {
             id,
             title: title.clone(),
             data,
+            extra,
         };
         if let Err(error) =
             NotebookStore::handle(ctx).update(ctx, |store, _| store.upsert(notebook))
@@ -168,6 +185,10 @@ impl NotebookView {
         self.persist(ctx);
     }
 }
+
+#[cfg(test)]
+#[path = "notebook_local_tests.rs"]
+mod tests;
 
 impl Entity for NotebookView {
     type Event = NotebookEvent;

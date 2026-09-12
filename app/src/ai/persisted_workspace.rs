@@ -104,18 +104,35 @@ impl Entity for PersistedWorkspace {
 impl SingletonEntity for PersistedWorkspace {}
 
 impl PersistedWorkspace {
-    pub fn new_local(_ctx: &mut ModelContext<Self>) -> Self {
+    pub fn new(
+        metadata: Vec<WorkspaceMetadata>,
+        mut language_servers: HashMap<PathBuf, HashMap<LSPServerType, EnablementState>>,
+        model_event_sender: Option<SyncSender<ModelEvent>>,
+    ) -> Self {
         Self {
-            workspaces: HashMap::new(),
-            model_event_sender: None,
+            workspaces: metadata
+                .into_iter()
+                .map(|metadata| {
+                    (
+                        metadata.path.clone(),
+                        Workspace {
+                            language_servers: language_servers
+                                .remove(&metadata.path)
+                                .unwrap_or_default(),
+                            metadata,
+                        },
+                    )
+                })
+                .collect(),
+            model_event_sender,
             #[cfg(feature = "local_fs")]
             lsp_installation_status: HashMap::new(),
         }
     }
 
-    #[cfg(any(test, feature = "test-util"))]
-    pub fn new_for_test(ctx: &mut ModelContext<Self>) -> Self {
-        Self::new_local(ctx)
+    #[cfg(test)]
+    pub fn new_for_test() -> Self {
+        Self::new(Vec::new(), HashMap::new(), None)
     }
 
     pub fn enable_lsp_server_for_path(&mut self, path: &Path, server_type: LSPServerType) {
@@ -199,44 +216,17 @@ impl PersistedWorkspace {
         })
     }
 
-    pub fn all_lsp_servers(
-        &self,
-        path: &Path,
-        include_suggested: bool,
-    ) -> Option<impl Iterator<Item = (LSPServerType, EnablementState)> + use<'_>> {
-        let root = self.root_for_workspace(path)?;
-        self.workspaces.get(root).map(move |workspace| {
-            workspace
-                .language_servers
-                .iter()
-                .filter(move |(_, state)| {
-                    include_suggested || **state != EnablementState::Suggested
-                })
-                .map(|(server, state)| (*server, *state))
-        })
-    }
-
-    pub fn total_lsp_server_count(&self, include_suggested: bool) -> usize {
-        self.workspaces
-            .values()
-            .flat_map(|workspace| workspace.language_servers.values())
-            .filter(|state| include_suggested || **state != EnablementState::Suggested)
-            .count()
-    }
-
     pub fn user_added_workspace(&mut self, path: PathBuf, ctx: &mut ModelContext<Self>) {
-        let metadata = WorkspaceMetadata {
-            path: path.clone(),
-            navigated_ts: Some(Utc::now()),
-            ..Default::default()
-        };
-        self.workspaces.entry(path.clone()).or_insert(Workspace {
-            metadata: metadata.clone(),
-            language_servers: HashMap::new(),
-        });
-        self.save_to_db([ModelEvent::UpsertCodebaseIndexMetadata {
-            index_metadata: Box::new(metadata),
-        }]);
+        self.workspaces
+            .entry(path.clone())
+            .or_insert_with(|| Workspace {
+                metadata: WorkspaceMetadata {
+                    path: path.clone(),
+                    ..Default::default()
+                },
+                language_servers: HashMap::new(),
+            });
+        self.navigated_to_path(&path, ctx);
         ctx.emit(PersistedWorkspaceEvent::WorkspaceAdded { path });
     }
 
@@ -250,18 +240,17 @@ impl PersistedWorkspace {
         workspaces.into_iter()
     }
 
-    pub fn navigated_to_path(&mut self, directory: &PathBuf) {
+    pub fn navigated_to_path(&mut self, directory: &Path, ctx: &mut ModelContext<Self>) {
         if let Some(root) = self.root_for_workspace(directory).map(Path::to_path_buf)
             && let Some(workspace) = self.workspaces.get_mut(&root)
         {
             workspace.metadata.navigated_ts = Some(Utc::now());
+            let metadata = workspace.metadata.clone();
+            self.save_to_db([ModelEvent::UpsertCodebaseIndexMetadata {
+                index_metadata: Box::new(metadata),
+            }]);
+            ctx.notify();
         }
-    }
-
-    pub fn workspace_for_path(&self, root_path: &Path) -> Option<WorkspaceMetadata> {
-        self.root_for_workspace(root_path)
-            .and_then(|root| self.workspaces.get(root))
-            .map(|workspace| workspace.metadata.clone())
     }
 
     fn save_to_db(&self, events: impl IntoIterator<Item = ModelEvent>) {
@@ -430,7 +419,7 @@ impl PersistedWorkspace {
         let servers = servers.collect::<Vec<_>>();
         let path_future = LocalShellState::handle(ctx)
             .update(ctx, |shell, ctx| shell.get_interactive_path_env_var(ctx));
-        ctx.spawn(async move { path_future.await }, move |_, path_env, ctx| {
+        ctx.spawn(path_future, move |_, path_env, ctx| {
             for server in servers {
                 let config = LspServerConfig::new(
                     server,
@@ -445,6 +434,14 @@ impl PersistedWorkspace {
             LspManagerModel::handle(ctx).update(ctx, |manager, ctx| {
                 manager.start_all(root, ctx);
             });
+            crate::code::language_server_shutdown_manager::LanguageServerShutdownManager::handle(
+                ctx,
+            )
+            .update(ctx, |manager, ctx| manager.schedule_next_scan(ctx));
         });
     }
 }
+
+#[cfg(test)]
+#[path = "local_workspace_tests.rs"]
+mod tests;

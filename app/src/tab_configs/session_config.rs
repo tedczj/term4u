@@ -253,11 +253,12 @@ fn snapshot_to_flat_panes(
 
             my_id
         }
-        PaneNodeSnapshot::Leaf(LeafSnapshot {
-            is_focused,
-            custom_vertical_tabs_title: _,
-            contents,
-        }) => {
+        PaneNodeSnapshot::Leaf(leaf) => {
+            let LeafSnapshot {
+                is_focused,
+                contents,
+                ..
+            } = leaf.as_ref();
             *counter += 1;
             let my_id = format!("p{counter}");
 

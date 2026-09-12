@@ -3,7 +3,6 @@ use std::sync::Arc;
 use serde::{Deserialize, Serialize};
 use warpui::AppContext;
 
-pub mod categories;
 pub mod command_parser;
 pub mod local_workflows;
 pub mod manager;
@@ -11,13 +10,11 @@ pub mod model;
 pub mod workflow;
 pub mod workflow_view;
 
-pub use categories::{CategoriesView, CategoriesViewEvent, WorkflowsViewAction};
 pub use model::{Argument, ArgumentType, Workflow, WorkflowId};
 
 use crate::notebooks::NotebookLocation;
 
 pub fn init(app: &mut AppContext) {
-    categories::init(app);
     workflow_view::init(app);
 }
 
@@ -84,10 +81,6 @@ impl WorkflowType {
         match self {
             Self::Local(workflow) | Self::Notebook(workflow) => workflow,
         }
-    }
-
-    pub(super) fn should_show_env_var_selection(&self) -> bool {
-        true
     }
 }
 

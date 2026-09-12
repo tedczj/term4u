@@ -6,11 +6,9 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use async_channel::Sender;
-use instant::Instant;
 use pathfinder_geometry::vector::vec2f;
 use string_offset::{ByteOffset, CharCounter};
 use warp_core::r#async::debounce;
-use warp_core::send_telemetry_from_ctx;
 use warp_core::ui::Icon;
 use warp_core::ui::appearance::Appearance;
 use warp_core::ui::theme::color::internal_colors;
@@ -37,7 +35,6 @@ use warpui::{
     ViewHandle, WeakViewHandle,
 };
 
-use crate::TelemetryEvent;
 use crate::code::icon_from_file_path;
 use crate::coding_panel_enablement_state::CodingPanelEnablementState;
 use crate::editor::{
@@ -64,12 +61,6 @@ const MAX_MATCH_COUNT: usize = 20000;
 const QUERY_EDITOR_MAX_LINES: usize = 6;
 
 const QUERY_DEBOUNCE_PERIOD: Duration = Duration::from_millis(300);
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum GlobalSearchEntryFocus {
-    QueryEditor,
-    Results,
-}
 
 enum FocusMode {
     QueryEditor,
@@ -110,7 +101,6 @@ pub enum GlobalSearchAction {
 pub enum GlobalSearchEvent {
     Started {
         search_id: u32,
-        remote_host_count: usize,
     },
     Progress {
         search_id: u32,
@@ -123,14 +113,6 @@ pub enum GlobalSearchEvent {
     Completed {
         search_id: u32,
         total_match_count: usize,
-        /// True when a remote source hit the server-side match cap.
-        capped: bool,
-        /// Whether the local search source failed while another source
-        /// completed. Results from the surviving sources remain valid.
-        local_source_failed: bool,
-        /// Number of remote host search sources that failed while another
-        /// source completed. Results from the surviving sources remain valid.
-        remote_source_failures: usize,
     },
     Failed {
         search_id: u32,
@@ -328,9 +310,6 @@ pub struct GlobalSearchView {
     is_search_in_progress: bool,
     capped_matches: bool,
     last_error: Option<String>,
-    /// When the current search started, for completion telemetry.
-    search_started_at: Option<Instant>,
-    active_search_remote_host_count: usize,
     scroll_state: ScrollStateHandle,
     uniform_list_state: UniformListState,
     handle: WeakViewHandle<GlobalSearchView>,
@@ -706,8 +685,6 @@ impl GlobalSearchView {
             is_search_in_progress: false,
             capped_matches: false,
             last_error: None,
-            search_started_at: None,
-            active_search_remote_host_count: 0,
             scroll_state: ScrollStateHandle::default(),
             uniform_list_state: UniformListState::new(),
             handle,
@@ -721,23 +698,8 @@ impl GlobalSearchView {
         }
     }
 
-    pub fn on_left_panel_focused(
-        &mut self,
-        entry_focus: GlobalSearchEntryFocus,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        match entry_focus {
-            GlobalSearchEntryFocus::QueryEditor => {
-                self.enter_query_mode(ctx);
-            }
-            GlobalSearchEntryFocus::Results => {
-                if self.directory_entries.is_empty() {
-                    self.enter_query_mode(ctx);
-                } else {
-                    self.enter_results_mode(ctx);
-                }
-            }
-        }
+    pub fn on_left_panel_focused(&mut self, ctx: &mut ViewContext<Self>) {
+        self.enter_query_mode(ctx);
     }
 
     fn set_query_mode_state(&mut self, ctx: &mut ViewContext<Self>) {
@@ -821,7 +783,6 @@ impl GlobalSearchView {
     fn cancel_search(&mut self, ctx: &mut ViewContext<Self>) {
         self.is_search_in_progress = false;
         self.current_search_id = None;
-        self.search_started_at = None;
 
         self.find_model.update(ctx, |model, model_ctx| {
             model.abort_search(model_ctx);
@@ -929,16 +890,8 @@ impl GlobalSearchView {
 
     fn handle_find_model_event(&mut self, event: &GlobalSearchEvent, ctx: &mut ViewContext<Self>) {
         match event {
-            GlobalSearchEvent::Started {
-                search_id,
-                remote_host_count,
-            } => {
-                send_telemetry_from_ctx!(TelemetryEvent::GlobalSearchQueryStarted, ctx);
-
+            GlobalSearchEvent::Started { search_id } => {
                 self.current_search_id = Some(*search_id);
-                self.search_started_at = Some(Instant::now());
-                self.active_search_remote_host_count = *remote_host_count;
-
                 self.is_search_in_progress = true;
                 self.reset_search_state(false);
                 ctx.notify();
@@ -968,9 +921,6 @@ impl GlobalSearchView {
             GlobalSearchEvent::Completed {
                 search_id,
                 total_match_count,
-                capped,
-                local_source_failed,
-                remote_source_failures,
             } => {
                 if Some(*search_id) != self.current_search_id {
                     return;
@@ -978,21 +928,7 @@ impl GlobalSearchView {
 
                 self.is_search_in_progress = false;
                 self.total_match_count = *total_match_count;
-                self.capped_matches |= capped;
 
-                if let Some(started_at) = self.search_started_at.take() {
-                    send_telemetry_from_ctx!(
-                        TelemetryEvent::GlobalSearchQueryCompleted {
-                            duration_ms: started_at.elapsed().as_millis() as u64,
-                            remote_host_count: self.active_search_remote_host_count,
-                            total_match_count: *total_match_count,
-                            capped: self.capped_matches,
-                            local_source_failed: *local_source_failed,
-                            remote_source_failures: *remote_source_failures,
-                        },
-                        ctx
-                    );
-                }
                 ctx.notify();
             }
             GlobalSearchEvent::Failed { search_id, error } => {
@@ -1001,7 +937,6 @@ impl GlobalSearchView {
                 }
 
                 self.is_search_in_progress = false;
-                self.search_started_at = None;
                 self.reset_search_state(false);
                 self.last_error = Some(error.clone());
                 ctx.notify();
@@ -1030,31 +965,6 @@ impl GlobalSearchView {
             .map(LocalOrRemotePath::Local)
             .collect();
         self.root_directories = roots;
-    }
-
-    /// Pre-populates the search query with the given text.
-    /// Selects all text so the user can easily overwrite or keep it, then triggers a search.
-    pub fn set_initial_query(&mut self, text: String, ctx: &mut ViewContext<Self>) {
-        self.query_editor.update(ctx, |editor, ctx| {
-            editor.set_buffer_text(&text, ctx);
-            editor.select_all(ctx);
-        });
-
-        // Trigger the debounced search
-        self.notify_query_changed();
-        ctx.notify();
-    }
-
-    pub(crate) fn set_enablement_state(
-        &mut self,
-        enablement: CodingPanelEnablementState,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        if self.enablement == enablement {
-            return;
-        }
-        self.enablement = enablement;
-        ctx.notify();
     }
 
     fn render_row_at_index(&self, index: usize, app: &AppContext) -> Box<dyn Element> {
@@ -2033,9 +1943,6 @@ impl View for GlobalSearchView {
 
     fn render(&self, app: &AppContext) -> Box<dyn Element> {
         match self.enablement {
-            CodingPanelEnablementState::PendingRemoteSession => {
-                return self.render_remote_loading_state(app);
-            }
             CodingPanelEnablementState::RemoteSession { has_remote_server } => {
                 // Remote-server sessions can search via the daemon; sessions
                 // without one (tmux / subshell SSH) stay unavailable.
@@ -2045,9 +1952,6 @@ impl View for GlobalSearchView {
             }
             CodingPanelEnablementState::UnsupportedSession => {
                 return self.render_unsupported_session_state(app);
-            }
-            CodingPanelEnablementState::Disabled => {
-                return self.render_unavailable_state(app);
             }
             CodingPanelEnablementState::Enabled => {}
         }
@@ -2299,28 +2203,11 @@ impl GlobalSearchView {
         )
     }
 
-    fn render_unavailable_state(&self, app: &AppContext) -> Box<dyn Element> {
-        self.render_zero_state(
-            Icon::AlertTriangle,
-            "Global search unavailable",
-            "Global search requires access to your local workspace. Open a new session or navigate to an active session to view.",
-            app,
-        )
-    }
-
     fn render_remote_state(&self, app: &AppContext) -> Box<dyn Element> {
         self.render_zero_state(
             Icon::AlertTriangle,
             "Global search unavailable",
             "Global search isn't available for this remote session.",
-            app,
-        )
-    }
-    fn render_remote_loading_state(&self, app: &AppContext) -> Box<dyn Element> {
-        self.render_zero_state(
-            Icon::Loading,
-            "Connecting to remote session",
-            "Global search will be available once the connection is ready.",
             app,
         )
     }

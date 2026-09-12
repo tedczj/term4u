@@ -1,0 +1,17 @@
+{
+  "files": [
+    "app/src/view_components/compact_dropdown.rs",
+    "app/src/view_components/compact_dropdown_tests.rs",
+    "app/src/view_components/clickable_text_input.rs",
+    "app/src/view_components/copyable_text_field.rs",
+    "app/src/ui_components/breadcrumb.rs",
+    "app/src/ui_components/icon_with_status.rs",
+    "app/src/tab_configs/remove_confirmation_dialog.rs",
+    "app/src/terminal/alias.rs",
+    "app/src/terminal/alias_tests.rs",
+    "app/src/util/truncation.rs",
+    "app/src/prefix.rs",
+    "app/src/prefix_tests.rs"
+  ],
+  "reason": "GUI Clippy identified unconstructed roots after legacy UI cleanup. No compiled local callers remain; companion tests cover only those removed components."
+}

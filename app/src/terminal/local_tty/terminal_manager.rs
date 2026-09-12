@@ -17,23 +17,17 @@ use pathfinder_geometry::vector::Vector2F;
 use settings::Setting as _;
 use warp_core::SessionId;
 use warp_errors::report_error;
-use warpui::r#async::executor::Background;
 use warpui::{AppContext, Entity, ModelContext, ModelHandle, SingletonEntity, ViewHandle};
 
 use super::event_loop::EventLoop;
+use super::mio_channel;
 use super::shell::{ShellStarter, ShellStarterSource};
 use super::spawner::{PtySpawnHooks, PtySpawnMode};
 #[cfg(unix)]
 use super::terminal_attributes::TerminalAttributesPoller;
-use super::{mio_channel, recorder};
-use crate::auth::AuthStateProvider;
-use crate::auth::auth_state::AuthState;
 use crate::banner::BannerState;
-use crate::features::FeatureFlag;
 use crate::persistence::ModelEvent;
-use crate::send_telemetry_on_executor;
-use crate::server::telemetry::PtySpawnMode as TelemetryPtySpawnMode;
-use crate::settings::{DebugSettings, PrivacySettings, SshSettings};
+use crate::settings::{DebugSettings, SshSettings};
 use crate::terminal::available_shells::{AvailableShell, AvailableShells};
 use crate::terminal::color::List as ColorList;
 use crate::terminal::event_listener::ChannelEventListener;
@@ -62,25 +56,14 @@ use crate::terminal::{
 };
 
 type PtyController = writeable_pty::PtyController<mio_channel::Sender<Message>>;
-struct AppPtySpawnHooks {
-    is_crash_reporting_enabled: bool,
-}
+struct AppPtySpawnHooks;
 
 impl PtySpawnHooks for AppPtySpawnHooks {
     fn before_spawn(&self) {}
 
-    fn after_spawn(&self) {
-        if self.is_crash_reporting_enabled {}
-    }
+    fn after_spawn(&self) {}
 
-    fn spawned(&self, mode: PtySpawnMode, ctx: &mut AppContext) {
-        let mode = match mode {
-            PtySpawnMode::TerminalServer => TelemetryPtySpawnMode::TerminalServer,
-            PtySpawnMode::FallbackToDirect => TelemetryPtySpawnMode::FallbackToDirect,
-            PtySpawnMode::Direct => TelemetryPtySpawnMode::Direct,
-        };
-        crate::send_telemetry_from_app_ctx!(TelemetryEvent::PtySpawned { mode }, ctx);
-    }
+    fn spawned(&self, _: PtySpawnMode, _: &mut AppContext) {}
 }
 
 /// Owns a local terminal session: the terminal model, PTY event loop, PTY
@@ -105,11 +88,6 @@ pub struct TerminalManager<S> {
     /// The manager is responsible for managing the lifetime
     /// of the PTY controller.
     pty_controller: ModelHandle<PtyController>,
-
-    /// The process ID of the PTY. Purely used for integration tests. None if the PTY has not yet
-    /// been started.
-    #[cfg(feature = "integration_tests")]
-    pub(super) pid: Option<u32>,
 
     /// An inactive receiver for PTY reads that we can upgrade to an active
     /// receiver as needed. We prefer to not create active receivers eagerly
@@ -348,30 +326,6 @@ impl<S> TerminalManager<S> {
         let colors = model.colors();
         let model = Arc::new(FairMutex::new(model));
 
-        // This is purely for measuring throughput on WarpDev.
-        if FeatureFlag::RecordPtyThroughput.is_enabled() {
-            let auth_state = AuthStateProvider::as_ref(ctx).get().clone();
-            let telemetry_executor = Arc::clone(ctx.background_executor());
-            recorder::record_pty_throughput(
-                inactive_pty_reads_rx.clone().activate(),
-                model.clone(),
-                |model| {
-                    !model.is_receiving_in_band_command_output()
-                        && model.is_active_block_bootstrapped()
-                },
-                move |max_bytes_per_second| {
-                    send_telemetry_on_executor!(
-                        auth_state,
-                        TelemetryEvent::PtyThroughput {
-                            max_bytes_per_second,
-                        },
-                        telemetry_executor
-                    );
-                },
-                ctx.background_executor().to_owned(),
-            );
-        }
-
         // Initialize the PtyController.
         let pty_controller = init_pty_controller_model(
             event_loop_tx.clone(),
@@ -411,8 +365,6 @@ impl<S> TerminalManager<S> {
             #[cfg(unix)]
             terminal_attributes_poller: None,
             pty_controller,
-            #[cfg(feature = "integration_tests")]
-            pid: None,
             inactive_pty_reads_rx,
         };
 
@@ -521,15 +473,12 @@ fn on_shell_determined<S: TerminalSurface>(
     }
 
     log::debug!("Using shell starter source {shell_starter_source:?}");
-    let bg_executor = ctx.background_executor();
-    let auth_state = AuthStateProvider::as_ref(ctx).get();
 
     let is_fallback_shell = matches!(
         shell_starter_source,
         Some(ShellStarterSource::Fallback { .. })
     );
-    let shell_starter = shell_starter_source
-        .map(|source| get_shell_starter_internal(source, bg_executor, auth_state));
+    let shell_starter = shell_starter_source.map(get_shell_starter_internal);
     let shell_starter = match shell_starter {
         Some(shell_starter) => shell_starter,
         None => {
@@ -643,8 +592,6 @@ fn on_shell_determined<S: TerminalSurface>(
         }
     };
 
-    #[cfg(feature = "integration_tests")]
-    let pid = pty.get_pid();
     #[cfg(unix)]
     let fd = pty.get_fd();
 
@@ -657,10 +604,6 @@ fn on_shell_determined<S: TerminalSurface>(
     );
 
     manager.event_loop_handle = Some(event_loop_handle);
-    #[cfg(feature = "integration_tests")]
-    {
-        manager.pid = Some(pid);
-    }
 
     manager.view.update(ctx, |surface, ctx| {
         surface.on_shell_determined(ctx);
@@ -737,7 +680,6 @@ impl<S> TerminalManager<S> {
             .is_shell_debug_mode_enabled
             .value();
         let is_honor_ps1_enabled = *SessionSettings::as_ref(ctx).honor_ps1;
-        let is_crash_reporting_enabled = PrivacySettings::as_ref(ctx).is_crash_reporting_enabled;
 
         let node_version_chip_enabled = false;
         let enable_ssh_wrapper = false;
@@ -763,9 +705,7 @@ impl<S> TerminalManager<S> {
             close_fds: true,
         };
 
-        let hooks = AppPtySpawnHooks {
-            is_crash_reporting_enabled,
-        };
+        let hooks = AppPtySpawnHooks;
         Pty::new(
             options,
             &hooks,
@@ -903,7 +843,7 @@ fn wire_up_terminal_attribute_poller_with_surface<S: TerminalSurface>(
 
 pub fn get_shell_starter(
     chosen_shell: Option<AvailableShell>,
-    auth_state: &AuthState,
+
     ctx: &mut AppContext,
 ) -> Option<ShellStarter> {
     let preferred_shell = chosen_shell.unwrap_or_else(|| {
@@ -916,41 +856,19 @@ pub fn get_shell_starter(
         .and_then(|starter| {
             warpui::r#async::block_on(async { starter.to_shell_starter_source().await })
         })
-        .map(|starter_source| {
-            get_shell_starter_internal(
-                starter_source,
-                ctx.background_executor().clone(),
-                auth_state,
-            )
-        })
+        .map(get_shell_starter_internal)
 }
 
-fn get_shell_starter_internal(
-    shell_starter_source: ShellStarterSource,
-    background_executor: Arc<Background>,
-    auth_state: &AuthState,
-) -> ShellStarter {
+fn get_shell_starter_internal(shell_starter_source: ShellStarterSource) -> ShellStarter {
     match shell_starter_source {
         ShellStarterSource::Override(shell_starter) => shell_starter,
         ShellStarterSource::Environment(starter) | ShellStarterSource::UserDefault(starter) => {
             ShellStarter::Direct(starter)
         }
         ShellStarterSource::Fallback {
-            unsupported_shell,
+            unsupported_shell: _,
             starter,
-        } => {
-            if let Some(unsupported_shell) = unsupported_shell {
-                send_telemetry_on_executor!(
-                    auth_state,
-                    TelemetryEvent::UnsupportedShell {
-                        shell: unsupported_shell
-                    },
-                    background_executor
-                );
-            }
-
-            ShellStarter::Direct(starter)
-        }
+        } => ShellStarter::Direct(starter),
     }
 }
 

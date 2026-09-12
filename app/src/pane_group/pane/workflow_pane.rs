@@ -33,7 +33,10 @@ impl WorkflowPane {
     }
 
     pub fn restore(id: WorkflowId, workflow: Workflow, ctx: &mut ViewContext<PaneGroup>) -> Self {
-        let source = WorkflowOpenSource::Existing { id, workflow };
+        let source = WorkflowOpenSource::Existing {
+            id,
+            workflow: Box::new(workflow),
+        };
         let window_id = ctx.window_id();
         WorkflowManager::handle(ctx).update(ctx, |manager, ctx| {
             manager.create_pane(&source, WorkflowViewMode::Edit, window_id, ctx)

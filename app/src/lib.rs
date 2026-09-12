@@ -2,14 +2,10 @@
 
 mod ai;
 mod alloc;
-mod antivirus;
 #[cfg(target_os = "macos")]
 mod app_menus;
 mod app_services;
 mod app_state;
-mod auth;
-#[path = "autoupdate_disabled.rs"]
-mod autoupdate;
 mod banner;
 #[path = "changelog_disabled.rs"]
 mod changelog_model;
@@ -27,7 +23,6 @@ mod dynamic_libraries;
 mod env_vars;
 mod global_resource_handles;
 mod gpu_state;
-mod input_classifier;
 mod interval_timer;
 #[cfg(feature = "local_fs")]
 mod local_control;
@@ -36,7 +31,6 @@ mod local_objects;
 mod login_item;
 mod menu;
 mod modal;
-mod network;
 mod notebooks;
 mod notification;
 mod palette;
@@ -44,9 +38,7 @@ mod persistence;
 mod platform;
 #[cfg(feature = "plugin_host")]
 mod plugin;
-mod prefix;
 mod profiling;
-mod projects;
 mod quit_warning;
 mod resource_limits;
 mod safe_triangle;
@@ -54,13 +46,11 @@ mod search_bar;
 mod server;
 mod session_management;
 mod shell_indicator;
-mod suggestions;
 mod system;
 mod tab;
 #[cfg(test)]
 mod test_util;
 mod throttle;
-mod tips;
 mod tracing;
 #[cfg(feature = "tui")]
 pub mod tui_export;
@@ -71,12 +61,10 @@ mod user_config;
 pub mod util;
 mod view_components;
 mod vim_registers;
-mod voltron;
 mod warp_managed_paths_watcher;
 #[cfg(target_family = "wasm")]
 mod wasm_nux_dialog;
 mod window_settings;
-mod word_block_editor;
 
 // PLEASE DO NOT ADD MORE PUBLIC MODULES!
 //
@@ -85,17 +73,10 @@ mod word_block_editor;
 // or not the function/type is used by another crate that pulls in this one as
 // a dependency.
 //
-// If you feel the need to export a module so that a type or function within it
-// can be used by an integration test, you should define a new assertion function
-// in the warp::integration_testing::assertions module (or a sub-module).  These
-// functions will allow us to keep types internal to this crate and expose a
-// simpler API for integration tests to consume.
 pub mod appearance;
 pub mod channel;
 pub mod editor;
 pub mod features;
-#[cfg(feature = "integration_tests")]
-pub mod integration_testing;
 pub mod keyboard;
 pub mod launch_configs;
 pub mod pane_group;
@@ -107,7 +88,6 @@ pub mod settings_view;
 pub mod tab_configs;
 pub mod terminal;
 pub mod themes;
-use auth::auth_state::{AuthState, AuthStateProvider, LocalAuthStateProvider};
 use code::editor_management::CodeManager;
 use code::opened_files::OpenedFilesModel;
 use code_review::GlobalCodeReviewModel;
@@ -125,7 +105,6 @@ use terminal::keys_settings::KeysSettings;
 #[cfg(all(not(target_family = "wasm"), feature = "local_tty"))]
 use terminal::local_shell::LocalShellState;
 pub use util::bindings::cmd_or_ctrl_shift;
-use warp_cli::GlobalOptions;
 #[cfg(feature = "local_fs")]
 use watcher::HomeDirectoryWatcher;
 
@@ -134,7 +113,6 @@ pub mod workspace;
 
 use std::borrow::Cow;
 use std::ops::Deref;
-use std::sync::Arc;
 
 use ::settings::{Setting, ToggleableSetting};
 #[cfg(feature = "local_tty")]
@@ -144,8 +122,6 @@ use appearance::AppearanceManager;
 use channel::ChannelState;
 use interval_timer::IntervalTimer;
 use itertools::Itertools;
-#[cfg(feature = "integration_tests")]
-pub use persistence::testing as sqlite_testing;
 #[cfg(feature = "plugin_host")]
 pub use plugin::{PLUGIN_HOST_FLAG, run_plugin_host};
 use settings::{ExtraMetaKeys, PrivacySettings};
@@ -163,8 +139,6 @@ use warp_errors::report_if_error;
 #[cfg(feature = "local_fs")]
 use warp_files::FileModel;
 use warp_logging::{LogDestination, LogFrontend};
-use warpui::integration::TestDriver;
-use warpui::modals::{AlertDialogWithCallbacks, AppModalCallback};
 use warpui::platform::TerminationMode;
 use warpui::platform::app::{ApproveTerminateResult, TerminationRequestSource};
 use warpui::windowing::state::ApplicationStage;
@@ -172,11 +146,8 @@ use warpui::{App, AppContext, Event, SingletonEntity, WindowId};
 use window_settings::WindowSettings;
 
 use self::features::FeatureFlag;
-use crate::ai::skills::SkillManager;
 #[cfg(not(target_family = "wasm"))]
-use crate::antivirus::AntivirusInfo;
 use crate::app_state::AppState;
-use crate::autoupdate::{AutoupdateState, RelaunchModel};
 use crate::changelog_model::ChangelogModel;
 use crate::code::global_buffer_model::GlobalBufferModel;
 #[cfg(feature = "local_fs")]
@@ -184,12 +155,10 @@ use crate::code::language_server_shutdown_manager::LanguageServerShutdownManager
 use crate::default_terminal::DefaultTerminal;
 pub use crate::global_resource_handles::{GlobalResourceHandles, GlobalResourceHandlesProvider};
 use crate::gpu_state::GPUState;
-use crate::network::NetworkStatus;
 use crate::notebooks::manager::NotebookManager;
 use crate::notification::NotificationContext;
 use crate::palette::PaletteMode;
 use crate::persistence::PersistenceWriter;
-use crate::projects::ProjectManagementModel;
 use crate::root_view::OpenFromRestoredArg;
 use crate::server::telemetry::PaletteSource;
 pub use crate::server::telemetry::TelemetryEvent;
@@ -198,7 +167,6 @@ use crate::settings::manager::SettingsManager;
 use crate::settings::{AccessibilitySettings, ScrollSettings, SelectionSettings};
 use crate::settings_view::DisplayCount;
 use crate::settings_view::keybindings::KeybindingChangedNotifier;
-use crate::suggestions::ignored_suggestions_model::IgnoredSuggestionsModel;
 use crate::system::SystemStats;
 use crate::tab::TabShortcutModifierState;
 use crate::terminal::resizable_data::ResizableData;
@@ -209,7 +177,7 @@ use crate::util::bindings::is_binding_cross_platform;
 use crate::vim_registers::VimRegisters;
 use crate::warp_managed_paths_watcher::{WarpManagedPathsWatcher, ensure_warp_watch_roots_exist};
 use crate::workflows::local_workflows::LocalWorkflows;
-use crate::workspace::{PaneViewLocator, Workspace, WorkspaceAction};
+use crate::workspace::{PaneViewLocator, Workspace, WorkspaceAction, WorkspaceRegistry};
 
 /// Our embedded application assets.
 pub static ASSETS: warp_assets::Assets = warp_assets::Assets;
@@ -219,22 +187,6 @@ pub static ASSETS: warp_assets::Assets = warp_assets::Assets;
 pub(crate) enum LaunchMode {
     /// Run the regular GUI application.
     App { args: warp_cli::AppArgs },
-
-    /// Run the Warp command-line SDK.
-    CommandLine {
-        command: warp_cli::CliCommand,
-        global_options: GlobalOptions,
-        debug: bool,
-        /// Whether this CLI invocation is running in a sandboxed environment.
-        is_sandboxed: bool,
-        /// Override for computer use permission from CLI flags. If None, uses default behavior.
-        computer_use_override: Option<bool>,
-    },
-    /// Run a test - this may be an integration test or an eval.
-    Test {
-        driver: Box<Option<TestDriver>>,
-        is_integration_test: bool,
-    },
 
     /// Run the headless TUI front-end or a one-shot command using its settings
     /// and secure-storage namespace.
@@ -256,22 +208,7 @@ impl LaunchMode {
     fn args(&self) -> Cow<'_, warp_cli::AppArgs> {
         match self {
             LaunchMode::App { args, .. } => Cow::Borrowed(args),
-            LaunchMode::CommandLine { .. } | LaunchMode::Test { .. } | LaunchMode::Tui { .. } => {
-                Cow::Owned(warp_cli::AppArgs::default())
-            }
-        }
-    }
-
-    /// Returns `true` if this process is running an integration test.
-    fn is_integration_test(&self) -> bool {
-        match self {
-            LaunchMode::Test {
-                is_integration_test,
-                ..
-            } => *is_integration_test,
-            LaunchMode::App { .. } | LaunchMode::CommandLine { .. } | LaunchMode::Tui { .. } => {
-                false
-            }
+            LaunchMode::Tui { .. } => Cow::Owned(warp_cli::AppArgs::default()),
         }
     }
 
@@ -281,9 +218,7 @@ impl LaunchMode {
     fn settings_mode(&self) -> ::settings::SettingsMode {
         match self {
             LaunchMode::Tui { .. } => ::settings::SettingsMode::Tui,
-            LaunchMode::App { .. } | LaunchMode::CommandLine { .. } | LaunchMode::Test { .. } => {
-                ::settings::SettingsMode::Gui
-            }
+            LaunchMode::App { .. } => ::settings::SettingsMode::Gui,
         }
     }
     /// The platform secure-storage service name for this launch mode.
@@ -297,20 +232,9 @@ impl LaunchMode {
 
         let frontend = match self {
             LaunchMode::Tui { .. } => ProductFrontend::Tui,
-            LaunchMode::App { .. } | LaunchMode::CommandLine { .. } | LaunchMode::Test { .. } => {
-                ProductFrontend::Gui
-            }
+            LaunchMode::App { .. } => ProductFrontend::Gui,
         };
         product_identity::keyring_service(data_domain, frontend)
-    }
-
-    fn take_test_driver(&mut self) -> Option<TestDriver> {
-        match self {
-            LaunchMode::Test { driver, .. } => driver.take(),
-            LaunchMode::App { .. } | LaunchMode::CommandLine { .. } | LaunchMode::Tui { .. } => {
-                None
-            }
-        }
     }
 
     /// Add an URL to open. Only supported for [`LaunchMode::App`]
@@ -324,24 +248,22 @@ impl LaunchMode {
     fn execution_mode(&self) -> ExecutionMode {
         match self {
             LaunchMode::App { .. } => ExecutionMode::App,
-            LaunchMode::CommandLine { .. } => ExecutionMode::Sdk,
-            LaunchMode::Test { .. } => ExecutionMode::App,
+
             LaunchMode::Tui { .. } => ExecutionMode::Tui,
         }
     }
 
     fn is_sandboxed(&self) -> bool {
         match self {
-            LaunchMode::CommandLine { is_sandboxed, .. } => *is_sandboxed,
-            LaunchMode::App { .. } | LaunchMode::Test { .. } | LaunchMode::Tui { .. } => false,
+            LaunchMode::App { .. } | LaunchMode::Tui { .. } => false,
         }
     }
 
     /// Returns `true` if Warp should run headlessly, without a visible UI.
     fn is_headless(&self) -> bool {
         match self {
-            LaunchMode::CommandLine { .. } | LaunchMode::Tui { .. } => true,
-            LaunchMode::App { .. } | LaunchMode::Test { .. } => false,
+            LaunchMode::Tui { .. } => true,
+            LaunchMode::App { .. } => false,
         }
     }
 
@@ -354,74 +276,44 @@ impl LaunchMode {
         !self.is_headless()
     }
 
-    /// Returns `true` if this process can build and sync codebase indices.
-    fn supports_indexing(&self) -> bool {
-        match self {
-            LaunchMode::App { .. } | LaunchMode::Test { .. } => true,
-            LaunchMode::CommandLine { .. } | LaunchMode::Tui { .. } => false,
-        }
-    }
-
     /// Whether or not to start a crash recovery process (on platforms that support it).
     #[cfg(enable_crash_recovery)]
     pub(crate) fn crash_recovery_enabled(&self) -> bool {
         match self {
             LaunchMode::App { .. } => true,
-            LaunchMode::CommandLine { .. } | LaunchMode::Test { .. } | LaunchMode::Tui { .. } => {
-                false
-            }
+            LaunchMode::Tui { .. } => false,
         }
     }
 
     /// Whether profiling and tracing should be initialized.
     pub(crate) fn needs_profiling(&self) -> bool {
         match self {
-            LaunchMode::App { .. }
-            | LaunchMode::CommandLine { .. }
-            | LaunchMode::Test { .. }
-            | LaunchMode::Tui { .. } => true,
+            LaunchMode::App { .. } | LaunchMode::Tui { .. } => true,
         }
     }
 
     /// Log destination for this mode.
     fn log_destination(&self) -> Option<LogDestination> {
         match self {
-            LaunchMode::CommandLine { debug, .. } => {
-                if *debug {
-                    Some(LogDestination::Stderr)
-                } else {
-                    Some(LogDestination::File)
-                }
-            }
             // A TUI owns the terminal, so logs go to a file; stdout/stderr would
             // corrupt the rendered output and the device-code prompt.
             LaunchMode::Tui { .. } => Some(LogDestination::File),
-            LaunchMode::App { .. } | LaunchMode::Test { .. } => None,
+            LaunchMode::App { .. } => None,
         }
     }
 
     fn log_frontend(&self) -> LogFrontend {
         match self {
             LaunchMode::Tui { .. } => LogFrontend::Tui,
-            LaunchMode::App { .. } | LaunchMode::Test { .. } => LogFrontend::Gui,
-            LaunchMode::CommandLine { .. } => LogFrontend::Cli,
+            LaunchMode::App { .. } => LogFrontend::Gui,
         }
     }
 
     fn as_str_for_tracing(&self) -> &'static str {
         match self {
             LaunchMode::App { .. } => "app",
-            LaunchMode::CommandLine { command, .. } => command.as_str_for_tracing(),
-            LaunchMode::Test { .. } => "test",
-            LaunchMode::Tui { .. } => "tui",
-        }
-    }
 
-    #[cfg(any(test, all(feature = "tui", feature = "test-util")))]
-    pub(crate) fn new_for_unit_test() -> Self {
-        LaunchMode::Test {
-            driver: Box::new(None),
-            is_integration_test: false,
+            LaunchMode::Tui { .. } => "tui",
         }
     }
 }
@@ -577,16 +469,6 @@ fn run_worker_command(worker: &warp_cli::WorkerCommand) -> Result<()> {
     }
 }
 
-/// Runs an integration test using the provided test driver.
-pub fn run_integration_test(driver: TestDriver) -> Result<()> {
-    let is_integration_test = std::env::var("WARP_INTEGRATION").is_ok();
-    let launch = LaunchMode::Test {
-        driver: Box::new(Some(driver)),
-        is_integration_test,
-    };
-    run_internal(launch)
-}
-
 /// Runs the headless TUI front-end (the `warp-tui` binary in the `warp_tui`
 /// crate). Bootstraps the real (headless) app and then runs `mount`, which
 /// builds the root TUI view and starts the non-blocking TUI driver.
@@ -638,7 +520,7 @@ pub type TuiMountFn = Box<dyn FnOnce(&mut warpui::AppContext)>;
 
 /// Runs the app (or CLI / daemon). TUI entry points run after `initialize_app`
 /// in place of the GUI/CLI `launch()` path.
-fn run_internal(mut launch_mode: LaunchMode) -> Result<()> {
+fn run_internal(launch_mode: LaunchMode) -> Result<()> {
     let mut timer = IntervalTimer::new();
 
     // ── Early initialization (pre-AppBuilder) ──────────────────────
@@ -831,23 +713,12 @@ fn run_internal(mut launch_mode: LaunchMode) -> Result<()> {
             ..Default::default()
         }
     } else {
-        app_callbacks(
-            launch_mode.is_integration_test(),
-            tracing_initialization.take(),
-        )
+        app_callbacks(tracing_initialization.take())
     };
     let mut app_builder = if launch_mode.is_headless() {
-        warpui::platform::AppBuilder::new_headless(
-            callbacks,
-            Box::new(ASSETS),
-            launch_mode.take_test_driver(),
-        )
+        warpui::platform::AppBuilder::new_headless(callbacks, Box::new(ASSETS), None)
     } else {
-        warpui::platform::AppBuilder::new(
-            callbacks,
-            Box::new(ASSETS),
-            launch_mode.take_test_driver(),
-        )
+        warpui::platform::AppBuilder::new(callbacks, Box::new(ASSETS), None)
     };
 
     if matches!(launch_mode, LaunchMode::Tui { .. }) {
@@ -861,9 +732,7 @@ fn run_internal(mut launch_mode: LaunchMode) -> Result<()> {
         use warpui::AssetProvider as _;
         use warpui::platform::mac::AppExt;
 
-        let activate_on_launch = !launch_mode.is_integration_test()
-            || std::env::var("WARPUI_USE_REAL_DISPLAY_IN_INTEGRATION_TESTS").is_ok();
-        app_builder.set_activate_on_launch(activate_on_launch);
+        app_builder.set_activate_on_launch(true);
 
         let dev_icon = ASSETS.get("bundled/png/local.png")?;
         app_builder.set_dev_icon(dev_icon);
@@ -980,10 +849,6 @@ fn run_internal(mut launch_mode: LaunchMode) -> Result<()> {
     })
 }
 
-pub struct UpdateQuakeModeEventArg {
-    active_window_id: Option<WindowId>,
-}
-
 pub(crate) fn initialize_app(
     launch_mode: &LaunchMode,
     timer: IntervalTimer,
@@ -1007,9 +872,7 @@ fn initialize_local_app(
     let data_domain = ChannelState::data_domain();
     let secure_storage_service_name = launch_mode.secure_storage_service_name(&data_domain);
     cfg_if::cfg_if! {
-        if #[cfg(feature = "integration_tests")] {
-            warpui_extras::secure_storage::register_noop(&secure_storage_service_name, ctx);
-        } else if #[cfg(any(target_os = "linux", target_os = "freebsd"))] {
+        if #[cfg(any(target_os = "linux", target_os = "freebsd"))] {
             warpui_extras::secure_storage::register_with_fallback(
                 &secure_storage_service_name,
                 warp_core::paths::state_dir(),
@@ -1036,23 +899,15 @@ fn initialize_local_app(
         ctx.set_zoom_factor(WindowSettings::as_ref(ctx).zoom_level.as_zoom_factor());
     }
 
-    let auth_state = Arc::new(AuthState::new_local(ctx));
-    ctx.add_singleton_model(|_| AuthStateProvider::new(auth_state.clone()));
-    ctx.add_singleton_model(|_| LocalAuthStateProvider::new(auth_state));
-    AutoupdateState::register(ctx, ());
     initialize_common_app(ctx);
 
     let persistence_scope = match launch_mode {
         LaunchMode::Tui { .. } => persistence::PersistenceScope::Tui,
-        LaunchMode::App { .. } | LaunchMode::CommandLine { .. } | LaunchMode::Test { .. } => {
-            persistence::PersistenceScope::App
-        }
+        LaunchMode::App { .. } => persistence::PersistenceScope::App,
     };
     let persisted_data_scope = match launch_mode {
         LaunchMode::Tui { .. } => persistence::PersistedDataScope::TuiFrontend,
-        LaunchMode::App { .. } | LaunchMode::CommandLine { .. } | LaunchMode::Test { .. } => {
-            persistence::PersistedDataScope::Full
-        }
+        LaunchMode::App { .. } => persistence::PersistedDataScope::Full,
     };
     let (sqlite_data, writer_handles) =
         persistence::initialize(ctx, persistence_scope, persisted_data_scope);
@@ -1076,9 +931,7 @@ fn initialize_local_app(
         legacy_notebooks,
         persisted_workspaces,
         workspace_language_servers,
-        persisted_projects,
         persisted_project_rules,
-        persisted_ignored_suggestions,
     ) = sqlite_data
         .map(|data| {
             (
@@ -1087,9 +940,7 @@ fn initialize_local_app(
                 data.legacy_notebooks,
                 data.codebase_indices,
                 data.workspace_language_servers,
-                data.projects,
                 data.project_rules,
-                data.ignored_suggestions,
             )
         })
         .unwrap_or_default();
@@ -1098,7 +949,7 @@ fn initialize_local_app(
         local_objects::notebook_store::NotebookStore::new(legacy_notebooks)
     });
     ctx.add_singleton_model(NotebookManager::new_local);
-    ctx.add_singleton_model(AntivirusInfo::new);
+    ctx.add_singleton_model(workflows::manager::WorkflowManager::new);
     ctx.set_default_binding_validator(is_binding_cross_platform);
 
     ctx.add_singleton_model(|_| SettingsPaneManager::new());
@@ -1150,14 +1001,11 @@ fn initialize_local_app(
     }
 
     ctx.add_singleton_model(|_| GitRepoModels::new());
-    ctx.add_singleton_model(|ctx| {
-        ProjectManagementModel::new(persisted_projects, persistence_writer.sender(), ctx)
-    });
     ctx.add_singleton_model(move |_| History::new(command_history));
     ctx.add_singleton_model(CustomSecretRegexUpdater::new);
 
-    ai::init(ctx);
     app_services::init(ctx);
+    code::init(ctx);
     #[cfg(not(target_family = "wasm"))]
     code::editor::find::view::init(ctx);
     workspace::init(ctx);
@@ -1166,14 +1014,12 @@ fn initialize_local_app(
     terminal::input::Input::init(ctx);
     editor::init(ctx);
     menu::init(ctx);
-    tips::tip_view::init(ctx);
     launch_configs::init(ctx);
     workflows::init(ctx);
     themes::theme_chooser::init(ctx);
     themes::theme_creator_modal::init(ctx);
     themes::theme_deletion_modal::init(ctx);
     root_view::init(ctx);
-    voltron::init(ctx);
     crate::view_components::find::init(ctx);
     undo_close::init(ctx);
     tab_configs::new_worktree_modal::init(ctx);
@@ -1184,9 +1030,7 @@ fn initialize_local_app(
 
     let display_count = ctx.windows().display_count();
     ctx.add_singleton_model(|_| DisplayCount(display_count));
-    ctx.add_singleton_model(|_| RelaunchModel::new());
     ctx.add_singleton_model(|_| ChangelogModel::new(()));
-    ctx.add_singleton_model(|_| NetworkStatus::new());
     ctx.add_singleton_model(|_| SystemStats::new());
     ctx.add_singleton_model(|_| KeybindingChangedNotifier::new());
     ctx.add_singleton_model(|_| TabShortcutModifierState::new());
@@ -1205,7 +1049,6 @@ fn initialize_local_app(
     ctx.add_singleton_model(|_| AudibleBell::new());
 
     ctx.add_singleton_model(|_| simple_logger::manager::LogManager::new());
-    ctx.add_singleton_model(SkillManager::new);
     ctx.add_singleton_model(|_| CodeManager::default());
     ctx.add_singleton_model(|_| OpenedFilesModel::new());
 
@@ -1216,13 +1059,16 @@ fn initialize_local_app(
     }
     ctx.add_singleton_model(|_| ResizableData::default());
     ctx.add_singleton_model(LocalWorkflows::new);
-    ctx.add_singleton_model(ai::persisted_workspace::PersistedWorkspace::new_local);
+    ctx.add_singleton_model(|_| {
+        ai::persisted_workspace::PersistedWorkspace::new(
+            persisted_workspaces,
+            workspace_language_servers,
+            persistence_writer.sender(),
+        )
+    });
     ctx.add_singleton_model(DefaultTerminal::new);
     let _ = persisted_project_rules;
-    let _ = (persisted_workspaces, workspace_language_servers);
     ctx.add_singleton_model(move |_| persistence_writer);
-    ctx.add_singleton_model(input_classifier::InputClassifierModel::new);
-    ctx.add_singleton_model(move |_| IgnoredSuggestionsModel::new(persisted_ignored_suggestions));
 
     #[cfg(not(target_family = "wasm"))]
     if launch_mode.should_start_local_http_server() {
@@ -1237,11 +1083,7 @@ fn initialize_local_app(
         });
     }
     #[cfg(feature = "local_fs")]
-    if matches!(
-        launch_mode,
-        LaunchMode::App { .. } | LaunchMode::Test { .. }
-    ) && FeatureFlag::WarpControlCli.is_enabled()
-    {
+    if matches!(launch_mode, LaunchMode::App { .. }) && FeatureFlag::WarpControlCli.is_enabled() {
         ctx.add_singleton_model(local_control::LocalControlBridge::new);
         ctx.add_singleton_model(local_control::LocalControlServer::new);
     }
@@ -1252,14 +1094,10 @@ fn initialize_local_app(
 }
 
 pub(crate) fn app_callbacks(
-    is_integration_test: bool,
     mut tracing_initialization: Option<tracing::Initialization>,
 ) -> warpui::platform::AppCallbacks {
     warpui::platform::AppCallbacks {
-        on_internet_reachability_changed: Some(Box::new(move |reachable, ctx| {
-            NetworkStatus::handle(ctx)
-                .update(ctx, move |me, ctx| me.reachability_changed(reachable, ctx));
-        })),
+        on_internet_reachability_changed: None,
         on_become_active: None,
         on_screen_changed: Some(Box::new(move |ctx| {
             ctx.dispatch_global_action(
@@ -1288,11 +1126,8 @@ pub(crate) fn app_callbacks(
                 system.dispatch_cpu_will_sleep(ctx);
             });
         })),
+        #[cfg(feature = "voice_input")]
         on_resigned_active: Some(Box::new(move |ctx| {
-            let active_window_id = ctx.windows().active_window();
-            let update_quake_mode_arg = UpdateQuakeModeEventArg { active_window_id };
-
-            #[cfg(feature = "voice_input")]
             {
                 if let voice_input::VoiceInputState::Listening { enabled_from, .. } =
                     voice_input::VoiceInput::as_ref(ctx).state()
@@ -1307,7 +1142,6 @@ pub(crate) fn app_callbacks(
                     }
                 }
             }
-            ctx.dispatch_global_action("root_view:update_quake_mode_state", &update_quake_mode_arg);
         })),
         on_will_terminate: Some(Box::new(move |ctx| {
             #[cfg(feature = "local_fs")]
@@ -1327,11 +1161,7 @@ pub(crate) fn app_callbacks(
                 manager.terminate(ctx);
             });
 
-            // We want to tear down the terminal server before relaunching for
-            // autoupdate, to ensure we're not running any extra Warp processes
-            // when we bring up the new process.  Additionally, this must occur
-            // after terminating the persistence writer, so we don't keep track
-            // of the fact that the shell sessions terminated.
+            // Stop persistence before PTY teardown so shutdown does not erase restored sessions.
             #[cfg(feature = "local_tty")]
             terminal::local_tty::spawner::PtySpawner::handle(ctx).update(ctx, |pty_spawner, _| {
                 pty_spawner.prepare_for_app_termination();
@@ -1340,11 +1170,7 @@ pub(crate) fn app_callbacks(
             #[cfg(all(feature = "local_tty", windows))]
             terminal::local_tty::shutdown_all_pty_event_loops(ctx);
 
-            // Tear down app services before spawning the new process, to
-            // ensure that the new process doesn't find the old process while
-            // attempting to enforce our single-instance policy on Linux.
             app_services::teardown(ctx);
-            autoupdate::spawn_child_if_necessary(ctx);
 
             // Tear down any application profilers that are running, writing
             // results to disk.
@@ -1374,7 +1200,7 @@ pub(crate) fn app_callbacks(
             let summary = UnsavedStateSummary::for_window(window_id, ctx);
 
             // Don't show dialog on integration test. Machine can't press buttons.
-            if !is_integration_test && summary.save_unsaved_code_and_should_warn(ctx) {
+            if summary.save_unsaved_code_and_should_warn(ctx) {
                 let shown = summary
                     .dialog()
                     .on_confirm(move |ctx| {
@@ -1398,34 +1224,14 @@ pub(crate) fn app_callbacks(
             }
         })),
         on_should_terminate_app: Some(Box::new(move |source, ctx| {
-            // Never interrupt a system-initiated termination (logout / restart /
-            // scheduled OS update): both cancel paths below return
-            // `ApproveTerminateResult::Cancel`, which macOS interprets as Warp
-            // refusing to quit. That can abort a scheduled OS update while the
-            // quit-warning modal has no visible window to attach to, leaving
-            // Warp waiting on a prompt nobody can see (#12441). Skipping
-            // `apply_pending_update` here doesn't lose the update: the next
-            // update check re-detects it (autoupdate state isn't persisted
-            // across restarts, so the artifact may be re-downloaded).
+            // A quit-warning modal must not block a system logout or restart.
             if source == TerminationRequestSource::System {
                 return ApproveTerminateResult::Terminate;
             }
 
-            // If there's a pending autoupdate, apply that before showing the unsaved changes
-            // dialog. We apply the update first so that the dialog can force-terminate.
-            let applying_update = autoupdate::apply_pending_update(ctx, |ctx| {
-                // Once the deferred update is applied, re-terminate the app. This termination is
-                // cancellable so that we still show the unsaved changes dialog.
-                log::info!("Deferred autoupdate applied, terminating app");
-                ctx.terminate_app(TerminationMode::Cancellable, None);
-            });
-            if applying_update {
-                return ApproveTerminateResult::Cancel;
-            }
-
             let summary = UnsavedStateSummary::for_app(ctx);
             // Don't show dialog on integration test. Machine can't press buttons.
-            if !is_integration_test && summary.save_unsaved_code_and_should_warn(ctx) {
+            if summary.save_unsaved_code_and_should_warn(ctx) {
                 let shown = summary
                     .dialog()
                     .on_confirm(|ctx| ctx.terminate_app(TerminationMode::ForceTerminate, None))
@@ -1500,18 +1306,6 @@ pub(crate) fn app_callbacks(
             });
         })),
         on_active_window_changed: Some(Box::new(move |ctx| {
-            let windowing_model = ctx.windows();
-            let active_window_id = windowing_model.active_window();
-            let key_window_is_modal_panel = windowing_model.key_window_is_modal_panel();
-
-            if !key_window_is_modal_panel {
-                let update_quake_mode_arg = UpdateQuakeModeEventArg { active_window_id };
-                ctx.dispatch_global_action(
-                    "root_view:update_quake_mode_state",
-                    &update_quake_mode_arg,
-                );
-            }
-
             ctx.dispatch_global_action("workspace:save_app", &());
         })),
         on_window_will_close: Some(Box::new(move |closed_window_data, ctx| {
@@ -1520,6 +1314,11 @@ pub(crate) fn app_callbacks(
             }
 
             if let Some(window_data) = closed_window_data {
+                let window_id = window_data.window_id;
+                crate::workspace::ActiveSession::handle(ctx)
+                    .update(ctx, |active, _| active.close_workspace(window_id));
+                WorkspaceRegistry::handle(ctx)
+                    .update(ctx, |registry, _| registry.unregister(window_id));
                 UndoCloseStack::handle(ctx).update(ctx, |stack, ctx| {
                     stack.handle_window_closed(window_data, ctx);
                 });
@@ -1536,31 +1335,7 @@ pub(crate) fn app_callbacks(
     }
 }
 
-/// Focuses the active window or if there isn't one then a window with a running process
-/// and then shows the native modal.
-fn focus_running_window_and_show_native_modal(
-    sessions_summary: RunningSessionSummary,
-    dialog_with_callbacks: AlertDialogWithCallbacks<AppModalCallback>,
-    ctx: &mut AppContext,
-) {
-    let windowing_model = ctx.windows();
-    let active_window_id = windowing_model.active_window();
-    // Show the nav palette in the active window. If there is no active window,
-    // arbitrarily pick one of the windows having a running process.
-    let window_id_to_focus = active_window_id.unwrap_or_else(|| {
-        *sessions_summary
-            .windows_running()
-            .iter()
-            .next()
-            .expect("already checked len > 0")
-    });
-    ctx.windows().show_window_and_focus_app(window_id_to_focus);
-    ctx.show_native_platform_modal(dialog_with_callbacks);
-}
-
 fn on_close_app_cancelled(open_navigation_palette: bool, ctx: &mut AppContext) {
-    autoupdate::cancel_relaunch(ctx);
-
     let sessions = SessionNavigationData::all_sessions(ctx).collect_vec();
     let sessions_summary = RunningSessionSummary::new(&sessions);
 
@@ -1655,7 +1430,7 @@ fn launch(ctx: &mut warpui::AppContext, app_state: Option<AppState>, launch_mode
         // The TUI front-end runs its own mount in the run closure and returns
         // before reaching launch().
         LaunchMode::Tui { .. } => unreachable!("LaunchMode::Tui is handled before launch()"),
-        LaunchMode::App { .. } | LaunchMode::Test { .. } => {
+        LaunchMode::App { .. } => {
             // Attempt to restore windows from the persisted application state.
             let arg = OpenFromRestoredArg { app_state };
             ctx.dispatch_global_action("root_view:open_from_restored", &arg);
@@ -1676,7 +1451,6 @@ fn launch(ctx: &mut warpui::AppContext, app_state: Option<AppState>, launch_mode
                 timer.mark_interval_end("WINDOWS_CREATED");
             });
 
-            // TODO(ben): We should skip this for LaunchMode::Test.
             #[cfg(any(target_os = "macos", target_os = "windows"))]
             {
                 use crate::login_item::maybe_register_app_as_login_item;
@@ -1689,10 +1463,6 @@ fn launch(ctx: &mut warpui::AppContext, app_state: Option<AppState>, launch_mode
                 });
                 maybe_register_app_as_login_item(ctx);
             }
-        }
-        #[cfg_attr(target_family = "wasm", allow(unused_variables))]
-        LaunchMode::CommandLine { command, .. } => {
-            panic!("Cloud command {command:?} reached local app initialization")
         }
     }
 }

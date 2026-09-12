@@ -164,6 +164,17 @@ impl UndoCloseStack {
         data: TabData,
         ctx: &mut ModelContext<Self>,
     ) {
+        let group_id = data.pane_group.id();
+        for terminal in data.pane_group.as_ref(ctx).terminal_views(ctx) {
+            ctx.unsubscribe_from_view(&terminal);
+            ctx.subscribe_to_view(&terminal, move |stack, _, event, ctx| {
+                if matches!(event, crate::terminal::view::Event::Exited)
+                    && stack.is_pane_group_tab_in_stack(group_id)
+                {
+                    stack.discard_pane_group_parent(group_id, ctx);
+                }
+            });
+        }
         self.push_item(
             ClosedItem::Tab {
                 workspace,
@@ -190,7 +201,7 @@ impl UndoCloseStack {
     }
 
     /// Undoes the last close action in the stack, if possible.
-    pub fn undo_close(&mut self, ctx: &mut AppContext) {
+    pub fn undo_close(&mut self, ctx: &mut ModelContext<Self>) {
         let Some(UndoData { closed_item, .. }) = self.stack.pop() else {
             return;
         };
@@ -215,13 +226,16 @@ impl UndoCloseStack {
 
                 // Make sure we update our session restoration state now that the
                 // window has been reopened.
-                ctx.dispatch_global_action("workspace:save_app", &());
+                ctx.dispatch_global_action("workspace:save_app", ());
             }
             ClosedItem::Tab {
                 workspace,
                 tab_index,
                 data,
             } => {
+                for terminal in data.pane_group.as_ref(ctx).terminal_views(ctx) {
+                    ctx.unsubscribe_from_view(&terminal);
+                }
                 if let Some(workspace) = workspace.upgrade(ctx) {
                     send_telemetry_from_app_ctx!(
                         TelemetryEvent::UndoClose {
@@ -237,7 +251,7 @@ impl UndoCloseStack {
                 }
                 // Make sure we update our session restoration state now that the
                 // tab has been reopened.
-                ctx.dispatch_global_action("workspace:save_app", &());
+                ctx.dispatch_global_action("workspace:save_app", ());
             }
             ClosedItem::Pane { data } => {
                 if let Some(pane_group) = data.pane_group.upgrade(ctx) {
@@ -270,7 +284,7 @@ impl UndoCloseStack {
                             });
                         }
 
-                        ctx.dispatch_global_action("workspace:save_app", &());
+                        ctx.dispatch_global_action("workspace:save_app", ());
                     }
                 }
             }

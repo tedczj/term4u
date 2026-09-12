@@ -76,7 +76,7 @@ impl TabSnapshot {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub enum PaneNodeSnapshot {
     Branch(BranchSnapshot),
-    Leaf(LeafSnapshot),
+    Leaf(Box<LeafSnapshot>),
 }
 
 impl PaneNodeSnapshot {
@@ -119,11 +119,7 @@ pub enum LeafContents {
 }
 
 #[cfg(feature = "local_fs")]
-impl LeafContents {
-    pub(crate) fn is_persisted(&self) -> bool {
-        true
-    }
-}
+impl LeafContents {}
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct TerminalPaneSnapshot {

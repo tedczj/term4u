@@ -51,7 +51,7 @@ impl TerminalPane {
         }
     }
 
-    #[cfg(any(test, feature = "integration_tests"))]
+    #[cfg(test)]
     pub(in crate::pane_group) fn pane_view(&self) -> ViewHandle<TerminalPaneView> {
         self.view.clone()
     }
@@ -64,17 +64,8 @@ impl TerminalPane {
         self.uuid.clone()
     }
 
-    pub(in crate::pane_group) fn terminal_manager(
-        &self,
-        ctx: &AppContext,
-    ) -> ModelHandle<Box<dyn TerminalManager>> {
+    pub(in crate::pane_group) fn terminal_manager(&self) -> ModelHandle<Box<dyn TerminalManager>> {
         self.terminal_manager.clone()
-    }
-
-    pub(in crate::pane_group) fn delete_blocks(&self) {
-        if let Some(sender) = &self.model_event_sender {
-            let _ = sender.send(ModelEvent::DeleteBlocks(self.uuid.clone()));
-        }
     }
 
     pub fn session_navigation_data(
@@ -138,10 +129,10 @@ impl PaneContent for TerminalPane {
                         }));
                     }
                 }
-                Event::Exited => ctx.emit(pane_group::Event::Exited {
-                    add_to_undo_stack: true,
-                }),
-                Event::FocusSession => ctx.emit(pane_group::Event::ActiveSessionChanged),
+                Event::Exited => group.terminal_exited(pane_id, ctx),
+                Event::FocusSession | Event::SessionBootstrapped => {
+                    ctx.emit(pane_group::Event::ActiveSessionChanged)
+                }
                 Event::OpenFileInWarp { path, session } => {
                     ctx.emit(pane_group::Event::OpenFileInWarp {
                         path: crate::code::buffer_location::LocalOrRemotePath::Local(path.clone()),
@@ -177,7 +168,6 @@ impl PaneContent for TerminalPane {
                 | Event::WriteBytesToPty { .. }
                 | Event::Resize { .. }
                 | Event::BlockStarted { .. }
-                | Event::SessionBootstrapped
                 | Event::ShellSpawned(_)
                 | Event::PtySpawnFailed { .. }
                 | Event::RunNativeShellCompletions { .. } => {}
@@ -196,7 +186,7 @@ impl PaneContent for TerminalPane {
     ) {
         ctx.unsubscribe_to_view(&self.terminal_view(ctx));
         ctx.unsubscribe_to_view(&self.view);
-        self.terminal_manager(ctx)
+        self.terminal_manager()
             .as_ref(ctx)
             .on_view_detached(detach_type);
     }

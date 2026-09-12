@@ -234,7 +234,6 @@ impl InputSettings {
             // TODO(CORE-3752): migrate unit and integration tests to pass with UDI instead of Classic
             let should_default_to_universal = (cfg!(feature = "preview_channel")
                 || !*SessionSettings::as_ref(app).honor_ps1.value())
-                && !cfg!(feature = "integration_tests")
                 && !cfg!(test);
 
             if should_default_to_universal {

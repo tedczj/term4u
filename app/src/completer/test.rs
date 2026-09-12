@@ -447,8 +447,9 @@ pub fn test_session_context_refresh_directory_entries_bypasses_cache() {
                 );
 
                 // `refresh_directory_entries` re-reads from disk and overwrites the cached entry.
-                let refreshed =
-                    warpui::r#async::block_on(ctx.refresh_directory_entries(tests_dir.clone()));
+                let refreshed = warpui::r#async::block_on(
+                    ctx.refresh_directory_entries_for_test(tests_dir.clone()),
+                );
                 assert_eq!(
                     HashSet::<EngineDirEntry>::from_iter(Arc::unwrap_or_clone(refreshed)),
                     HashSet::from_iter([

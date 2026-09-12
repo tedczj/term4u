@@ -930,10 +930,3 @@ impl<T: Action + Clone> View for SearchBar<T> {
         input_contents.finish()
     }
 }
-
-#[cfg(feature = "integration_tests")]
-impl<T: Action + Clone> SearchBar<T> {
-    pub fn active_query_filter(&self, app: &AppContext) -> Option<QueryFilter> {
-        self.state.as_ref(app).active_query_filter()
-    }
-}

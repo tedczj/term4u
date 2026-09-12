@@ -2,20 +2,15 @@ use core::fmt::{self, Display};
 use std::borrow::Cow;
 
 use itertools::Itertools as _;
-use markdown_parser::{FormattedText, FormattedTextFragment, FormattedTextLine};
-use pathfinder_color::ColorU;
 use pathfinder_geometry::vector::vec2f;
-use settings::Setting;
-use warp_core::ui::color::blend::Blend;
 use warp_core::ui::theme::color::internal_colors;
 use warpui::elements::new_scrollable::{
     ClippedAxisConfiguration, DualAxisConfig, SingleAxisConfig,
 };
 use warpui::elements::{
     Align, Border, ChildAnchor, ChildView, ClippedScrollStateHandle, ConstrainedBox, Container,
-    CornerRadius, CrossAxisAlignment, Element, Empty, Expanded, Flex, FormattedTextElement,
-    HighlightedHyperlink, Hoverable, HyperlinkLens, MainAxisAlignment, MainAxisSize,
-    MouseStateHandle, NewScrollable, OffsetPositioning, ParentAnchor, ParentElement,
+    CornerRadius, CrossAxisAlignment, Element, Empty, Expanded, Flex, Hoverable, MainAxisAlignment,
+    MainAxisSize, MouseStateHandle, NewScrollable, OffsetPositioning, ParentAnchor, ParentElement,
     ParentOffsetBounds, Radius, SavePosition, ScrollTarget, ScrollToPositionMode, Shrinkable,
     SizeConstraintCondition, SizeConstraintSwitch, Stack, Text,
 };
@@ -39,9 +34,7 @@ use crate::appearance::Appearance;
 use crate::themes::theme::Fill;
 use crate::ui_components::blended_colors;
 use crate::ui_components::icons::Icon;
-use crate::view_components::{
-    Dropdown, DropdownItemAction, FilterableDropdown, SubmittableTextInput,
-};
+use crate::view_components::{Dropdown, DropdownItemAction, SubmittableTextInput};
 
 pub const TOGGLE_BUTTON_RIGHT_PADDING: f32 = 5.;
 pub const HEADER_PADDING: f32 = 15.;
@@ -53,7 +46,7 @@ pub(super) const HEADER_FONT_SIZE: f32 = 23.;
 pub const SUBHEADER_FONT_SIZE: f32 = 16.;
 const ALTERNATING_LIST_CLOSE_BUTTON_DIAMETER: f32 = 20.0;
 const ALTERNATING_LIST_ITEM_PADDING: f32 = 8.0;
-const GREY_TEXT_OPACITY: u8 = 60;
+
 const MIN_PAGE_WIDTH: f32 = 520.;
 const MAX_PAGE_WIDTH: f32 = 800.;
 const INFO_TOOLTIP_MAX_WIDTH: f32 = 320.;
@@ -161,44 +154,6 @@ impl SettingsPage {
 #[derive(PartialEq, Eq)]
 pub enum SettingsPageEvent {
     FocusModal,
-    Pane(PaneEventWrapper),
-}
-
-/// Wrapper for pane events to avoid circular dependency with pane module.
-/// The actual handling converts this to the real PaneEvent.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum PaneEventWrapper {
-    Close,
-}
-
-pub fn render_customer_type_badge(appearance: &Appearance, text: String) -> Box<dyn Element> {
-    Container::new(
-        Text::new_inline(text, appearance.ui_font_family(), appearance.ui_font_size())
-            .with_color(
-                appearance
-                    .theme()
-                    .background()
-                    .blend(
-                        &appearance
-                            .theme()
-                            .foreground()
-                            .with_opacity(GREY_TEXT_OPACITY),
-                    )
-                    .into(),
-            )
-            .with_style(Properties::default().weight(Weight::Medium))
-            .finish(),
-    )
-    .with_uniform_padding(4.)
-    .with_background(
-        appearance
-            .theme()
-            .background()
-            .blend(&appearance.theme().foreground().with_opacity(25)),
-    )
-    .with_corner_radius(CornerRadius::with_all(Radius::Pixels(3.)))
-    .with_margin_left(10.)
-    .finish()
 }
 
 /// Adds padding to the sub header
@@ -279,230 +234,11 @@ pub fn render_sub_header_with_description(
     .finish()
 }
 
-#[cfg_attr(target_family = "wasm", allow(unused))]
-pub fn render_sub_sub_header(
-    appearance: &Appearance,
-    text_name: impl Into<Cow<'static, str>>,
-    local_only_icon_state: Option<LocalOnlyIconState>,
-) -> Box<dyn Element> {
-    let mut sub_sub_header = Flex::row().with_child(
-        Container::new(
-            Align::new(
-                Text::new_inline(text_name, appearance.ui_font_family(), CONTENT_FONT_SIZE)
-                    .with_style(Properties::default().weight(Weight::Bold))
-                    .with_color(appearance.theme().active_ui_text_color().into())
-                    .finish(),
-            )
-            .left()
-            .finish(),
-        )
-        .with_padding_bottom(4.)
-        .finish(),
-    );
-    if let Some(LocalOnlyIconState::Visible {
-        mouse_state,
-        custom_tooltip,
-    }) = local_only_icon_state
-    {
-        sub_sub_header.add_child(render_local_only_icon(
-            appearance,
-            mouse_state.clone(),
-            custom_tooltip,
-        ));
-    }
-    sub_sub_header.finish()
-}
-
-pub fn render_custom_size_header(
-    appearance: &Appearance,
-    text_name: impl Into<Cow<'static, str>>,
-    font_size: f32,
-    color_override: Option<Fill>,
-) -> Box<dyn Element> {
-    Flex::row()
-        .with_child(
-            Container::new(
-                Align::new(
-                    Text::new_inline(text_name, appearance.ui_font_family(), font_size)
-                        .with_style(Properties::default().weight(Weight::Bold))
-                        .with_color(
-                            color_override
-                                .unwrap_or(appearance.theme().active_ui_text_color())
-                                .into(),
-                        )
-                        .finish(),
-                )
-                .left()
-                .finish(),
-            )
-            .with_padding_bottom(4.)
-            .finish(),
-        )
-        .finish()
-}
-
 pub fn render_separator(appearance: &Appearance) -> Box<dyn Element> {
     Container::new(Empty::new().finish())
         .with_border(Border::bottom(2.).with_border_fill(appearance.theme().outline()))
         .with_margin_bottom(HEADER_PADDING)
         .finish()
-}
-
-/// A single line of sub-text whose leading phrase is a hyperlink dispatching `action`.
-pub fn render_cta_line<A: Action + Clone>(
-    link_text: &str,
-    trailing_copy: &str,
-    action: A,
-    font_size: f32,
-    appearance: &Appearance,
-) -> Box<dyn Element> {
-    let theme = appearance.theme();
-    let sub_text = theme.sub_text_color(theme.background());
-    FormattedTextElement::new(
-        FormattedText::new([FormattedTextLine::Line(vec![
-            FormattedTextFragment::hyperlink_action(link_text, action),
-            FormattedTextFragment::plain_text(format!(" {trailing_copy}")),
-        ])]),
-        font_size,
-        appearance.ui_font_family(),
-        appearance.ui_font_family(),
-        sub_text.into(),
-        HighlightedHyperlink::default(),
-    )
-    .with_no_text_wrapping()
-    .with_hyperlink_font_color(theme.accent().into_solid())
-    .register_default_click_handlers_with_action_support(|lens, event, ctx| match lens {
-        HyperlinkLens::Url(url) => ctx.open_url(url),
-        HyperlinkLens::Action(dispatched) => {
-            if let Some(action) = dispatched.as_any().downcast_ref::<A>() {
-                event.dispatch_typed_action(action.clone());
-            }
-        }
-    })
-    .finish()
-}
-
-pub fn render_cta_banner<A: Action + Clone>(
-    icon: Icon,
-    link_text: &str,
-    trailing_copy: &str,
-    action: A,
-    appearance: &Appearance,
-) -> Box<dyn Element> {
-    let body = render_cta_line(
-        link_text,
-        trailing_copy,
-        action,
-        appearance.ui_font_size(),
-        appearance,
-    );
-    render_banner(icon, body, appearance)
-}
-
-pub fn render_banner(
-    icon: Icon,
-    body: Box<dyn Element>,
-    appearance: &Appearance,
-) -> Box<dyn Element> {
-    let theme = appearance.theme();
-    let sub_text = theme.sub_text_color(theme.background());
-    let icon = ConstrainedBox::new(icon.to_warpui_icon(sub_text).finish())
-        .with_width(14.)
-        .with_height(14.)
-        .finish();
-
-    let row = Flex::row()
-        .with_main_axis_size(MainAxisSize::Max)
-        .with_cross_axis_alignment(CrossAxisAlignment::Center)
-        .with_child(Container::new(icon).with_margin_right(8.).finish())
-        .with_child(body)
-        .finish();
-
-    Container::new(row)
-        .with_background_color(theme.surface_1().into_solid())
-        .with_corner_radius(CornerRadius::with_all(Radius::Pixels(8.)))
-        .with_uniform_padding(12.)
-        .finish()
-}
-
-pub fn render_full_pane_width_ai_button(
-    text: &str,
-    is_any_ai_enabled: bool,
-    mouse_state: MouseStateHandle,
-    action: impl Action + Clone,
-    appearance: &Appearance,
-) -> Box<dyn Element> {
-    let (text_color, bg, icon_bg) = if is_any_ai_enabled {
-        (
-            appearance
-                .theme()
-                .main_text_color(appearance.theme().background())
-                .into(),
-            internal_colors::neutral_3(appearance.theme()),
-            appearance.theme().background(),
-        )
-    } else {
-        (
-            appearance.theme().disabled_ui_text_color().into(),
-            internal_colors::neutral_2(appearance.theme()),
-            appearance.theme().disabled_ui_text_color(),
-        )
-    };
-
-    let mut button = Hoverable::new(mouse_state, |_| {
-        Container::new(
-            Flex::row()
-                .with_main_axis_size(MainAxisSize::Max)
-                .with_cross_axis_alignment(CrossAxisAlignment::Center)
-                .with_main_axis_alignment(MainAxisAlignment::SpaceBetween)
-                .with_child(
-                    Expanded::new(
-                        1.,
-                        appearance
-                            .ui_builder()
-                            .wrappable_text(text.to_string(), true)
-                            .with_style(UiComponentStyles {
-                                font_size: Some(CONTENT_FONT_SIZE),
-                                font_color: Some(text_color),
-                                ..Default::default()
-                            })
-                            .build()
-                            .finish(),
-                    )
-                    .finish(),
-                )
-                .with_child(
-                    ConstrainedBox::new(
-                        Icon::ChevronRight
-                            .to_warpui_icon(appearance.theme().main_text_color(icon_bg))
-                            .finish(),
-                    )
-                    .with_width(16.)
-                    .with_height(16.)
-                    .finish(),
-                )
-                .finish(),
-        )
-        .with_background(bg)
-        .with_border(
-            Border::new(1.).with_border_fill(internal_colors::neutral_4(appearance.theme())),
-        )
-        .with_corner_radius(CornerRadius::with_all(Radius::Pixels(4.)))
-        .with_horizontal_padding(16.)
-        .with_vertical_padding(11.)
-        .with_margin_bottom(12.)
-        .finish()
-    });
-
-    if is_any_ai_enabled {
-        button = button
-            .on_click(move |ctx, _, _| {
-                ctx.dispatch_typed_action(action.clone());
-            })
-            .with_cursor(Cursor::PointingHand);
-    }
-
-    button.finish()
 }
 
 #[derive(Default)]
@@ -620,26 +356,6 @@ pub fn render_body_item_label<T: Clone + Action>(
     render_body_item_label_internal(
         label_text,
         None,
-        label_color_override,
-        additional_info,
-        local_only_icon_state,
-        toggle_state,
-        appearance,
-    )
-}
-
-pub fn render_body_item_label_with_icon<T: Clone + Action>(
-    label_text: String,
-    icon: Icon,
-    label_color_override: Option<Fill>,
-    additional_info: Option<AdditionalInfo<T>>,
-    local_only_icon_state: LocalOnlyIconState,
-    toggle_state: ToggleState,
-    appearance: &Appearance,
-) -> Box<dyn Element> {
-    render_body_item_label_internal(
-        label_text,
-        Some(icon),
         label_color_override,
         additional_info,
         local_only_icon_state,
@@ -952,117 +668,6 @@ pub(crate) fn render_dropdown_item<T: DropdownItemAction>(
     .finish()
 }
 
-/// Like [`render_dropdown_item`], but for a [`FilterableDropdown`] (a dropdown
-/// with a built-in search box). Used for long option lists such as the
-/// voice-input Speech Language picker.
-pub(crate) fn render_filterable_dropdown_item<T: DropdownItemAction>(
-    appearance: &Appearance,
-    label: &str,
-    secondary_text: Option<&str>,
-    dropdown_subtext: Option<Box<dyn Element>>,
-    local_only_icon_state: LocalOnlyIconState,
-    color_override: Option<Fill>,
-    handle: &ViewHandle<FilterableDropdown<T>>,
-) -> Box<dyn Element> {
-    let row = Flex::row().with_cross_axis_alignment(CrossAxisAlignment::Center);
-
-    let dropdown_item_label = Align::new(render_dropdown_item_label(
-        label.to_string(),
-        secondary_text.map(|secondary_text| secondary_text.to_string()),
-        local_only_icon_state,
-        color_override,
-        appearance,
-    ))
-    .left()
-    .finish();
-
-    let mut dropdown = Flex::column().with_child(ChildView::new(handle).finish());
-    if let Some(dropdown_subtext) = dropdown_subtext {
-        dropdown.add_child(dropdown_subtext);
-    }
-
-    row.with_child(
-        Shrinkable::new(
-            1.0,
-            Container::new(dropdown_item_label)
-                .with_margin_bottom(4.)
-                .with_padding_right(16.)
-                .finish(),
-        )
-        .finish(),
-    )
-    .with_child(dropdown.finish())
-    .finish()
-}
-
-pub(crate) fn render_settings_info_banner(
-    text: &str,
-    subtext: Option<&str>,
-    appearance: &Appearance,
-) -> Box<dyn Element> {
-    let icon = Container::new(
-        ConstrainedBox::new(
-            Icon::AlertCircle
-                .to_warpui_icon(appearance.theme().active_ui_text_color())
-                .finish(),
-        )
-        .with_width(16.)
-        .with_height(16.)
-        .finish(),
-    )
-    .with_margin_right(8.)
-    .finish();
-
-    let text = {
-        let mut children = vec![
-            Container::new(
-                Text::new(
-                    text.to_string(),
-                    appearance.ui_font_family(),
-                    appearance.ui_font_size(),
-                )
-                .with_color(appearance.theme().active_ui_text_color().into())
-                .finish(),
-            )
-            .finish(),
-        ];
-
-        if let Some(subtext) = subtext {
-            children.push(
-                Container::new(
-                    Text::new(
-                        subtext.to_string(),
-                        appearance.ui_font_family(),
-                        appearance.ui_font_size() - 1.,
-                    )
-                    .with_color(
-                        appearance
-                            .theme()
-                            .sub_text_color(appearance.theme().background())
-                            .into(),
-                    )
-                    .finish(),
-                )
-                .with_margin_top(4.)
-                .finish(),
-            );
-        }
-
-        Shrinkable::new(1.0, Flex::column().with_children(children).finish()).finish()
-    };
-
-    Container::new(
-        Flex::row()
-            .with_children(vec![icon, text])
-            .with_main_axis_size(MainAxisSize::Max)
-            .finish(),
-    )
-    .with_background_color(appearance.theme().accent_overlay().into())
-    .with_uniform_padding(12.)
-    .with_corner_radius(CornerRadius::with_all(Radius::Pixels(4.)))
-    .finish()
-}
-
 const WORKSPACE_OVERRIDE_TOOLTIP_TEXT: &str =
     "This option is enforced by your organization's settings and cannot be customized.";
 
@@ -1126,41 +731,6 @@ pub fn render_input_list<SettingsPageAction: Action + Clone>(
     }
 
     column.finish()
-}
-
-pub fn render_alternating_color_list<
-    ListItem: Display,
-    SettingsPageAction: Action + Clone,
-    F: Fn(usize) -> SettingsPageAction,
->(
-    body: &mut Flex,
-    patterns: &[ListItem],
-    mouse_states: &[MouseStateHandle],
-    create_action: F,
-    appearance: &Appearance,
-) {
-    debug_assert!(
-        mouse_states.len() >= patterns.len(),
-        "mouse_states length ({}) is less than patterns length ({})",
-        mouse_states.len(),
-        patterns.len()
-    );
-    for (i, pattern) in patterns.iter().enumerate() {
-        let background = if i % 2 == 0 {
-            internal_colors::fg_overlay_1(appearance.theme())
-        } else {
-            Fill::Solid(ColorU::transparent_black())
-        };
-
-        body.add_child(render_alternating_color_list_item::<SettingsPageAction>(
-            background,
-            pattern.to_string(),
-            mouse_states[i].clone(),
-            create_action(i),
-            false,
-            appearance,
-        ));
-    }
 }
 
 fn render_workspace_override_row_tooltip(
@@ -1257,27 +827,6 @@ fn render_alternating_color_list_item<SettingsPageAction: Action + Clone>(
     // than below. This visually balances that to make it look vertically centered.
     .with_padding_bottom(ALTERNATING_LIST_ITEM_PADDING + 2.)
     .finish()
-}
-
-/// Adds a setting (e.g., "Background opacity") to the parent flex if it is supported on the current platform. Returns
-/// true if the setting was added to the flex, false if not.
-///
-/// This is the default method to use when rendering a setting in the settings menu, across all pages
-/// (Appearance, Features, etc).
-pub fn add_setting<F>(
-    parent_flex: &mut Flex,
-    setting_model: &impl Setting,
-    setting_element: F,
-) -> bool
-where
-    F: FnOnce() -> Box<dyn Element>,
-{
-    if setting_model.is_supported_on_current_platform() {
-        parent_flex.add_child(setting_element());
-        true
-    } else {
-        false
-    }
 }
 
 pub(super) struct PageTitle<V: warpui::View> {
@@ -1603,17 +1152,6 @@ impl<V: warpui::View> PageType<V> {
                 ..
             } => {
                 *highlighted_widget_id = None;
-            }
-        }
-    }
-
-    /// Set the minimum page width for narrow panes.
-    pub fn set_min_page_width(&mut self, width: f32) {
-        match self {
-            Self::Monolith { min_page_width, .. }
-            | Self::Uncategorized { min_page_width, .. }
-            | Self::Categorized { min_page_width, .. } => {
-                *min_page_width = width;
             }
         }
     }
@@ -1972,11 +1510,6 @@ impl<V: warpui::View> CategoryHeader<V> {
         }
     }
 
-    pub(super) fn with_subtitle(mut self, subtitle: &'static str) -> Self {
-        self.subtitle = Some(subtitle);
-        self
-    }
-
     #[allow(dead_code)]
     pub(super) fn with_trailing_element(
         mut self,
@@ -2040,13 +1573,6 @@ pub(super) fn categories_with_visible_content<'a, V: warpui::View>(
 pub(super) trait SettingsWidget {
     /// Which View (settings page) this widget belongs to.
     type View: warpui::View;
-
-    fn static_widget_id() -> &'static str
-    where
-        Self: Sized,
-    {
-        std::any::type_name::<Self>()
-    }
 
     fn widget_id(&self) -> &'static str {
         std::any::type_name::<Self>()

@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
 use chrono::NaiveDateTime;
-use warpui::{AppContext, Entity, EntityId, SingletonEntity, WindowId};
+use warpui::{AppContext, Entity, EntityId, WindowId};
 
 use crate::pane_group::PaneId;
 use crate::terminal::model::blockgrid::BlockGrid;
@@ -173,8 +173,4 @@ pub enum SessionSource {
 
 impl Entity for SessionSource {
     type Event = ();
-}
-
-pub fn num_shared_sessions(_app: &AppContext) -> usize {
-    0
 }

@@ -38,6 +38,7 @@ pub enum WorkflowViewAction {
 
 pub struct WorkflowView {
     id: WorkflowId,
+    loaded_workflow: Workflow,
     name: ViewHandle<EditorView>,
     command: ViewHandle<EditorView>,
     pane_configuration: ModelHandle<PaneConfiguration>,
@@ -62,6 +63,7 @@ impl WorkflowView {
         });
         Self {
             id: WorkflowId::new(),
+            loaded_workflow: Workflow::new("", ""),
             name,
             command,
             pane_configuration: ctx.add_model(|_| PaneConfiguration::new("Workflow")),
@@ -82,8 +84,9 @@ impl WorkflowView {
             editor.system_reset_buffer_text(&workflow.command, ctx)
         });
         self.pane_configuration.update(ctx, |configuration, ctx| {
-            configuration.set_title(workflow.name, ctx)
+            configuration.set_title(workflow.name.clone(), ctx)
         });
+        self.loaded_workflow = workflow;
     }
 
     pub fn open_new_workflow(
@@ -105,10 +108,10 @@ impl WorkflowView {
     }
 
     pub fn workflow(&self, app: &AppContext) -> Workflow {
-        Workflow::new(
-            self.name.as_ref(app).buffer_text(app),
-            self.command.as_ref(app).buffer_text(app),
-        )
+        let mut workflow = self.loaded_workflow.clone();
+        workflow.name = self.name.as_ref(app).buffer_text(app);
+        workflow.command = self.command.as_ref(app).buffer_text(app);
+        workflow
     }
 
     pub fn pane_configuration(&self) -> &ModelHandle<PaneConfiguration> {
@@ -251,3 +254,7 @@ impl BackingView for WorkflowView {
         self.focus_handle = Some(focus_handle);
     }
 }
+
+#[cfg(test)]
+#[path = "workflow_view_tests.rs"]
+mod tests;

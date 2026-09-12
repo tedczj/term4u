@@ -211,11 +211,7 @@ fn test_iterm_image_renders_in_script_execution_block() {
 
     assert!(block_list.active_block().started());
     assert!(!block_list.active_block().output_grid().is_empty());
-    assert!(
-        block_list
-            .active_block()
-            .is_visible(&crate::terminal::model::block::TranscriptScope::Terminal)
-    );
+    assert!(block_list.active_block().is_visible());
 }
 
 #[test]
@@ -259,11 +255,7 @@ fn test_kitty_image_renders_in_script_execution_block() {
 
     assert!(block_list.active_block().started());
     assert!(!block_list.active_block().output_grid().is_empty());
-    assert!(
-        block_list
-            .active_block()
-            .is_visible(&crate::terminal::model::block::TranscriptScope::Terminal)
-    );
+    assert!(block_list.active_block().is_visible());
 }
 
 #[test]
@@ -549,11 +541,7 @@ pub fn test_script_execution_block() {
     assert_eq!(block_list.blocks.len(), 2);
     assert!(block_list.active_block().started());
     // Ensure that script execution block has a height of 0 if nothing was added to it.
-    assert!(
-        block_list
-            .active_block()
-            .is_empty(&crate::terminal::model::block::TranscriptScope::Terminal)
-    );
+    assert!(block_list.active_block().is_empty());
 
     advance_to_bootstrapped(&mut block_list, Default::default());
 
@@ -567,22 +555,14 @@ pub fn test_script_execution_block() {
 
     assert_eq!(block_list.blocks.len(), 2);
     assert!(block_list.active_block().started());
-    assert!(
-        block_list
-            .active_block()
-            .is_empty(&crate::terminal::model::block::TranscriptScope::Terminal)
-    );
+    assert!(block_list.active_block().is_empty());
 
     // Add characters to script execution block.
     block_list.input('c');
     block_list.update_active_block_height();
 
     assert_eq!(block_list.blocks.len(), 2);
-    assert!(
-        !block_list
-            .active_block()
-            .is_empty(&crate::terminal::model::block::TranscriptScope::Terminal)
-    );
+    assert!(!block_list.active_block().is_empty());
 
     advance_to_bootstrapped(&mut block_list, Default::default());
 
@@ -626,11 +606,7 @@ pub fn visible_bootstrap_block_event_fires_when_script_execution_becomes_visible
     advance_to_script_execution(&mut block_list);
 
     assert!(block_list.active_block().started());
-    assert!(
-        block_list
-            .active_block()
-            .is_empty(&crate::terminal::model::block::TranscriptScope::Terminal)
-    );
+    assert!(block_list.active_block().is_empty());
 
     let events = drain_terminal_events(&events_rx);
     assert!(
@@ -683,14 +659,8 @@ pub fn test_restore_completed_blocks() {
     // block.
     assert_eq!(block_list.blocks.len(), 3);
     let restored_block_height = 5.5;
-    assert_lines_approx_eq!(
-        block_list.blocks[0].height(&crate::terminal::model::block::TranscriptScope::Terminal),
-        restored_block_height
-    );
-    assert_lines_approx_eq!(
-        block_list.blocks[1].height(&crate::terminal::model::block::TranscriptScope::Terminal),
-        restored_block_height
-    );
+    assert_lines_approx_eq!(block_list.blocks[0].height(), restored_block_height);
+    assert_lines_approx_eq!(block_list.blocks[1].height(), restored_block_height);
     assert_lines_approx_eq!(
         block_list.block_heights.summary().height,
         2.0 * restored_block_height + RESTORED_BLOCK_SEPARATOR_HEIGHT
@@ -787,10 +757,7 @@ pub fn test_restore_block_that_wasnt_started() {
         block_list.blocks[0].bootstrap_stage(),
         BootstrapStage::WarpInput
     );
-    assert_eq!(
-        block_list.blocks[0].height(&crate::terminal::model::block::TranscriptScope::Terminal),
-        Lines::zero()
-    );
+    assert_eq!(block_list.blocks[0].height(), Lines::zero());
 
     let mut block_completed_events = Vec::new();
     while let Ok(event) = events_rx.try_recv() {
@@ -822,10 +789,7 @@ pub fn test_restore_block_that_wasnt_completed() {
         block_list.blocks[0].bootstrap_stage(),
         BootstrapStage::WarpInput
     );
-    assert_lines_approx_eq!(
-        block_list.blocks[0].height(&crate::terminal::model::block::TranscriptScope::Terminal),
-        0.0
-    );
+    assert_lines_approx_eq!(block_list.blocks[0].height(), 0.0);
 
     let mut block_completed_events = Vec::new();
     while let Ok(event) = events_rx.try_recv() {
@@ -864,18 +828,9 @@ pub fn test_basic_bootstrapping() {
 
     // We have four blocks from calling `create_warp_input_block` once and `block_finished` twice.
     assert_eq!(block_list.blocks.len(), 3);
-    assert_lines_approx_eq!(
-        block_list.blocks[0].height(&crate::terminal::model::block::TranscriptScope::Terminal),
-        0.0
-    );
-    assert_lines_approx_eq!(
-        block_list.blocks[1].height(&crate::terminal::model::block::TranscriptScope::Terminal),
-        0.0
-    );
-    assert_lines_approx_eq!(
-        block_list.blocks[2].height(&crate::terminal::model::block::TranscriptScope::Terminal),
-        0.0
-    );
+    assert_lines_approx_eq!(block_list.blocks[0].height(), 0.0);
+    assert_lines_approx_eq!(block_list.blocks[1].height(), 0.0);
+    assert_lines_approx_eq!(block_list.blocks[2].height(), 0.0);
     assert_lines_approx_eq!(block_list.block_heights.summary().height, 0.0);
 
     let mut block_completed_events = Vec::new();
@@ -907,18 +862,9 @@ pub fn test_session_restoration_separator() {
 
     block_list.set_next_gap_height_in_lines((11. + RESTORED_BLOCK_SEPARATOR_HEIGHT).into_lines());
     assert_eq!(block_list.blocks.len(), 3);
-    assert_lines_approx_eq!(
-        block_list.blocks[0].height(&crate::terminal::model::block::TranscriptScope::Terminal),
-        5.5
-    );
-    assert_lines_approx_eq!(
-        block_list.blocks[1].height(&crate::terminal::model::block::TranscriptScope::Terminal),
-        5.5
-    );
-    assert_lines_approx_eq!(
-        block_list.blocks[2].height(&crate::terminal::model::block::TranscriptScope::Terminal),
-        0.0
-    );
+    assert_lines_approx_eq!(block_list.blocks[0].height(), 5.5);
+    assert_lines_approx_eq!(block_list.blocks[1].height(), 5.5);
+    assert_lines_approx_eq!(block_list.blocks[2].height(), 0.0);
 
     // We have two blocks at height 5.5 and a separator with height 1.5.
     assert_lines_approx_eq!(
@@ -992,26 +938,11 @@ pub fn test_insert_non_block_item() {
 
     // The blocks should remain unchanged.
     assert_eq!(block_list.blocks.len(), 5);
-    assert_lines_approx_eq!(
-        block_list.blocks[0].height(&crate::terminal::model::block::TranscriptScope::Terminal),
-        0.
-    );
-    assert_lines_approx_eq!(
-        block_list.blocks[1].height(&crate::terminal::model::block::TranscriptScope::Terminal),
-        0.
-    );
-    assert_lines_approx_eq!(
-        block_list.blocks[2].height(&crate::terminal::model::block::TranscriptScope::Terminal),
-        block_height
-    );
-    assert_lines_approx_eq!(
-        block_list.blocks[3].height(&crate::terminal::model::block::TranscriptScope::Terminal),
-        block_height
-    );
-    assert_lines_approx_eq!(
-        block_list.blocks[4].height(&crate::terminal::model::block::TranscriptScope::Terminal),
-        0.
-    );
+    assert_lines_approx_eq!(block_list.blocks[0].height(), 0.);
+    assert_lines_approx_eq!(block_list.blocks[1].height(), 0.);
+    assert_lines_approx_eq!(block_list.blocks[2].height(), block_height);
+    assert_lines_approx_eq!(block_list.blocks[3].height(), block_height);
+    assert_lines_approx_eq!(block_list.blocks[4].height(), 0.);
 
     fn assert_block_height_summary_eq(a: BlockHeightSummary, b: BlockHeightSummary) {
         assert_eq!(a.block_count, b.block_count);
@@ -1217,12 +1148,8 @@ fn test_banner_insertion_and_removal() {
         total_count_after_insertion
     );
 
-    let expected_total_height = (block_list.blocks[2]
-        .height(&crate::terminal::model::block::TranscriptScope::Terminal)
-        .as_f64()
-        * 3.
-        + 3. * INLINE_BANNER_HEIGHT)
-        .into_lines();
+    let expected_total_height =
+        (block_list.blocks[2].height().as_f64() * 3. + 3. * INLINE_BANNER_HEIGHT).into_lines();
     assert_lines_approx_eq!(
         block_list.block_heights.summary().height,
         expected_total_height
@@ -1279,8 +1206,7 @@ fn test_gap_after_banner() {
     block_list.clear_visible_screen();
 
     insert_block(&mut block_list, "cmd2", "output2");
-    let baseline_block_height =
-        block_list.blocks[2].height(&crate::terminal::model::block::TranscriptScope::Terminal);
+    let baseline_block_height = block_list.blocks[2].height();
 
     {
         let summary = block_list.block_heights.summary();
@@ -1327,8 +1253,7 @@ fn test_gap_after_banner() {
 
     {
         let active_gap = block_list.active_gap.as_ref().unwrap().clone();
-        let new_block_height =
-            block_list.blocks[2].height(&crate::terminal::model::block::TranscriptScope::Terminal);
+        let new_block_height = block_list.blocks[2].height();
         assert_lines_approx_eq!(active_gap.current_height, 5.);
         assert_eq!(active_gap.index, 3);
 
@@ -1437,10 +1362,7 @@ pub fn test_block_heights_combined_prompt_command_grid_warp_prompt() {
     // we have the built-in Warp prompt, so there's padding between that prompt and the combined grid.
     // The combined grid _just_ has the command in this case! The PS1 is unset!
     // Hence, we expect heights of 8.5.
-    assert_lines_approx_eq!(
-        first_block.height(&crate::terminal::model::block::TranscriptScope::Terminal),
-        8.5
-    );
+    assert_lines_approx_eq!(first_block.height(), 8.5);
 }
 
 #[test]
@@ -1481,10 +1403,7 @@ pub fn test_block_heights_combined_prompt_command_grid_ps1() {
 
     // We have a 2-line prompt, adding 1 extra line to the combined grid (vs 0.6 default for Warp prompt).
     // Hence, we expect a height of 8.7 rather than 8.3.
-    assert_lines_approx_eq!(
-        first_block.height(&crate::terminal::model::block::TranscriptScope::Terminal),
-        8.7
-    );
+    assert_lines_approx_eq!(first_block.height(), 8.7);
 }
 
 #[test]
@@ -1668,7 +1587,7 @@ fn unfiltered_transcript_scope_shows_restored_blocks_with_legacy_visibility() {
         .block_with_id(&block_id)
         .expect("restored command block should exist");
     assert_eq!(restored_block.command_to_string(), "echo restored");
-    assert!(restored_block.is_visible(block_list.transcript_scope()));
+    assert!(restored_block.is_visible());
 }
 
 #[test]

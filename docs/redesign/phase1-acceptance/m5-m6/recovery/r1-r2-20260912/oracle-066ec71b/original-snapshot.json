@@ -1,0 +1,13 @@
+{
+  "source": "/Users/tedczj/Library/Application Support/dev.warp.WarpOss-r1r2-oracle-066ec71b-20260913/warp.sqlite",
+  "snapshot": "docs/redesign/phase1-acceptance/m5-m6/recovery/r1-r2-20260912/oracle-066ec71b/original.sqlite",
+  "sha256": "5c88f21ed0ad702fe48237248ecdeab9e3602eddabef250f741e6f77dbcee5f0",
+  "integrity_check": "ok",
+  "counts": {
+    "windows": 1,
+    "tabs": 2,
+    "terminal_panes": 3,
+    "blocks": 3
+  },
+  "created_at_utc": "2026-09-12T17:58:25.099398+00:00"
+}

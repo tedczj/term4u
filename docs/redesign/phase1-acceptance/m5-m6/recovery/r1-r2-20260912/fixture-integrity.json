@@ -1,0 +1,92 @@
+[
+  {
+    "path": "crates/persistence/fixtures/legacy/cloud_objects.sqlite",
+    "sha256": "7746df7a139e28208a137790fbd546821641ebadbb08ba2156a50539b9f91a69",
+    "integrity": "ok",
+    "tables": 29
+  },
+  {
+    "path": "crates/persistence/fixtures/legacy/deleted_cwd.sqlite",
+    "sha256": "e54f2af164f5831e8ab111bc41261ec1d0d429f5e4c73f5b07a67cd665ff5aa9",
+    "integrity": "ok",
+    "tables": 7
+  },
+  {
+    "path": "crates/persistence/fixtures/legacy/file_notebook.sqlite",
+    "sha256": "af3ae43518fb81c798d8443acc4c751f2ff0b995521950ac3b489b8c6b668653",
+    "integrity": "ok",
+    "tables": 20
+  },
+  {
+    "path": "crates/persistence/fixtures/legacy/history_with_metadata.sqlite",
+    "sha256": "bd5fcecbe387d0f532376afeaa0b3db9bf5e28ea6c619ab2e3e42d5b4f99ab56",
+    "integrity": "ok",
+    "tables": 17
+  },
+  {
+    "path": "crates/persistence/fixtures/legacy/restored_background_blocks.sqlite",
+    "sha256": "76c7ddd693d2f6ceea594163dc408936b84c863070191ba2791ed2c66cbe31b4",
+    "integrity": "ok",
+    "tables": 13
+  },
+  {
+    "path": "crates/persistence/fixtures/legacy/restored_blocks.sqlite",
+    "sha256": "1b4bcc3920bfdc0554865000646b4b715d69d45d87e365a4d02f3d8564c14396",
+    "integrity": "ok",
+    "tables": 11
+  },
+  {
+    "path": "crates/persistence/fixtures/legacy/restored_code.sqlite",
+    "sha256": "826a75c213e81fb8668a077e3c0337241df83501268a1962376da54657afab5c",
+    "integrity": "ok",
+    "tables": 25
+  },
+  {
+    "path": "crates/persistence/fixtures/legacy/restored_notebooks.sqlite",
+    "sha256": "90af98714ce5f6959603ba14c50127aeb2a03246f05b3710e8de571097e7c6e0",
+    "integrity": "ok",
+    "tables": 29
+  },
+  {
+    "path": "crates/persistence/fixtures/legacy/restored_settings.sqlite",
+    "sha256": "45e561a7bd7ec057e338dbaddd301e002d589f32a10da6b0812ff304ad86bbad",
+    "integrity": "ok",
+    "tables": 32
+  },
+  {
+    "path": "crates/persistence/fixtures/legacy/restored_workflows.sqlite",
+    "sha256": "03ef2fca4fc419a436765833b9d1712e489d67446f9684dfe7544d479fcad617",
+    "integrity": "ok",
+    "tables": 29
+  },
+  {
+    "path": "crates/persistence/fixtures/legacy/small_window.sqlite",
+    "sha256": "29ea42e0ca69c48137f44d769fd0b19ec68b47227bd463956f0a245eaf97bd11",
+    "integrity": "ok",
+    "tables": 7
+  },
+  {
+    "path": "crates/persistence/fixtures/legacy/test_duplicate_shareable_ids.sqlite",
+    "sha256": "77e58a662f4953bcf791dfedafe5ede07a3e09ccb4f5d585fa29cbbf3bb8796c",
+    "integrity": "ok",
+    "tables": 29
+  },
+  {
+    "path": "crates/persistence/fixtures/legacy/test_json_object.sqlite",
+    "sha256": "78835decd74466b924b80efd2e7e9025504a8247686fee0665457b6e94b7120a",
+    "integrity": "ok",
+    "tables": 29
+  },
+  {
+    "path": "crates/persistence/fixtures/legacy/test_restoring_tabs_with_different_shells.sqlite",
+    "sha256": "495f6275f225af4792cdb851a9d6e506503f7bec340eb4cc7d34e4f853975c3f",
+    "integrity": "ok",
+    "tables": 29
+  },
+  {
+    "path": "crates/persistence/fixtures/legacy/three_tabs.sqlite",
+    "sha256": "e270c171c269cd15bde9ffc2c9ecb11f5061cdcbbdde7f7a935be6fd333f5e03",
+    "integrity": "ok",
+    "tables": 23
+  }
+]

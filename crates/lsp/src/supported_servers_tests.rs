@@ -3,6 +3,8 @@ mod unix {
     use std::fs;
     use std::os::unix::fs::PermissionsExt as _;
 
+    use strum::IntoEnumIterator;
+
     use super::super::LSPServerType;
     use crate::CommandBuilder;
 
@@ -26,6 +28,31 @@ mod unix {
                 .is_installed(&executor)
                 .await
         );
+    }
+
+    #[tokio::test]
+    async fn every_server_uses_only_the_supplied_path_and_rejects_broken_binaries() {
+        let directory = tempfile::tempdir().unwrap();
+        let executor = CommandBuilder::new(Some(directory.path().to_string_lossy().into_owned()));
+        for server in LSPServerType::iter() {
+            assert!(!server.is_working_on_path(&executor).await, "{server:?}");
+            fake_binary(directory.path(), server.binary_name());
+            assert!(server.is_working_on_path(&executor).await, "{server:?}");
+            let path = directory.path().join(server.binary_name());
+            fs::write(&path, "#!/bin/sh\nexit 23\n").unwrap();
+            assert!(!server.is_working_on_path(&executor).await, "{server:?}");
+            fs::remove_file(path).unwrap();
+            assert!(
+                server
+                    .manual_install_message()
+                    .contains(server.binary_name())
+            );
+            assert!(
+                server
+                    .manual_install_message()
+                    .contains("Install it manually")
+            );
+        }
     }
 
     #[tokio::test]

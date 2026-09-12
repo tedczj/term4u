@@ -1,0 +1,37 @@
+[
+  {
+    "path": "app/src/persistence/sqlite.rs",
+    "kind": "function_item",
+    "symbol": "get_all_ignored_suggestions"
+  },
+  {
+    "path": "app/src/persistence/sqlite.rs",
+    "kind": "function_item",
+    "symbol": "add_ignored_suggestion"
+  },
+  {
+    "path": "app/src/persistence/sqlite.rs",
+    "kind": "function_item",
+    "symbol": "remove_ignored_suggestion"
+  },
+  {
+    "path": "app/src/code/editor/view.rs",
+    "kind": "function_item",
+    "symbol": "selected_lines"
+  },
+  {
+    "path": "app/src/code_review/code_review_view.rs",
+    "kind": "function_item",
+    "symbol": "attach_target_terminal"
+  },
+  {
+    "path": "app/src/suggestions/ignored_suggestions_model.rs",
+    "kind": "file",
+    "reason": "No live suggestion consumer; historical SQLite table and columns preserved"
+  },
+  {
+    "path": "app/src/suggestions/mod.rs",
+    "kind": "file",
+    "reason": "No live suggestion consumer; historical SQLite table and columns preserved"
+  }
+]

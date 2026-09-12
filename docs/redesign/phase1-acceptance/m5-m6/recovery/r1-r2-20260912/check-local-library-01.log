@@ -1,0 +1,80 @@
+    Checking hyper-util v0.1.16
+    Checking offline_guard v0.1.0 (/Users/tedczj/workspace/term4u/crates-local/offline_guard)
+   Compiling ahash v0.8.11
+    Checking markdown_parser v0.1.0 (/Users/tedczj/workspace/term4u/crates/markdown_parser)
+   Compiling warpui_core v0.1.0 (/Users/tedczj/workspace/term4u/crates/warpui_core)
+    Checking settings_value v0.1.0 (/Users/tedczj/workspace/term4u/crates/settings_value)
+    Checking string-offset v0.0.0 (/Users/tedczj/workspace/term4u/crates/string-offset)
+    Checking warp_features v0.0.0 (/Users/tedczj/workspace/term4u/crates/warp_features)
+   Compiling warp_core v0.0.0 (/Users/tedczj/workspace/term4u/crates/warp_core)
+    Checking hyper-rustls v0.27.7
+    Checking websocket v0.1.0 (/Users/tedczj/workspace/term4u/crates/websocket)
+    Checking reqwest v0.13.3
+    Checking jaq-json v2.0.0
+    Checking warp_errors v0.0.0 (/Users/tedczj/workspace/term4u/crates/warp_errors)
+    Checking command v0.1.0 (/Users/tedczj/workspace/term4u/crates/command)
+    Checking sum_tree v0.1.0 (/Users/tedczj/workspace/term4u/crates/sum_tree)
+    Checking warp_util v0.1.0 (/Users/tedczj/workspace/term4u/crates/warp_util)
+    Checking jaq-fmts v0.1.0
+    Checking aha-reqwest-eventsource v0.1.0
+    Checking prevent_sleep v0.0.0 (/Users/tedczj/workspace/term4u/crates/prevent_sleep)
+    Checking hashbrown v0.14.1
+    Checking jaq-all v0.1.0
+    Checking local_control v0.0.0 (/Users/tedczj/workspace/term4u/crates/local_control)
+   Compiling repo_metadata v0.1.0 (/Users/tedczj/workspace/term4u/crates/repo_metadata)
+    Checking dashmap v6.1.0
+   Compiling ouroboros_macro v0.18.0
+    Checking ipynb_parser v0.1.0 (/Users/tedczj/workspace/term4u/crates/ipynb_parser)
+   Compiling ouroboros v0.18.0
+    Checking axum v0.8.4
+    Checking fuzzy_match v0.1.0 (/Users/tedczj/workspace/term4u/crates/fuzzy_match)
+    Checking regex_dfas v0.0.0 (/Users/tedczj/workspace/term4u/crates/regex_dfas)
+   Compiling palette_derive v0.6.1
+   Compiling cynic-codegen v3.8.0
+   Compiling warpui v0.0.0 (/Users/tedczj/workspace/term4u/crates/warpui)
+    Checking channel_versions v0.1.0 (/Users/tedczj/workspace/term4u/crates/channel_versions)
+   Compiling ai v0.1.0 (/Users/tedczj/workspace/term4u/crates/ai)
+    Checking warpui_extras v0.0.0 (/Users/tedczj/workspace/term4u/crates/warpui_extras)
+    Checking watcher v0.1.0 (/Users/tedczj/workspace/term4u/crates/watcher)
+    Checking warp_assets v0.0.0 (/Users/tedczj/workspace/term4u/crates/warp_assets)
+    Checking palette v0.6.1
+    Checking settings v0.0.0 (/Users/tedczj/workspace/term4u/crates/settings)
+   Compiling cynic-proc-macros v3.8.0
+    Checking axum-extra v0.10.1
+    Checking http_client v0.0.0 (/Users/tedczj/workspace/term4u/crates/http_client)
+    Checking vim v0.1.0 (/Users/tedczj/workspace/term4u/crates/vim)
+    Checking asset_cache v0.0.0 (/Users/tedczj/workspace/term4u/crates/asset_cache)
+    Checking warp_cli v0.0.0 (/Users/tedczj/workspace/term4u/crates/warp_cli)
+    Checking warp_editor v0.1.0 (/Users/tedczj/workspace/term4u/crates/editor)
+    Checking warp_isolation_platform v0.1.0 (/Users/tedczj/workspace/term4u/crates/isolation_platform)
+    Checking secret_redaction v0.0.0 (/Users/tedczj/workspace/term4u/crates/secret_redaction)
+    Checking simple_logger v0.1.0 (/Users/tedczj/workspace/term4u/crates/simple_logger)
+    Checking jsonrpc v0.1.0 (/Users/tedczj/workspace/term4u/crates/jsonrpc)
+    Checking languages v0.0.0 (/Users/tedczj/workspace/term4u/crates/languages)
+    Checking warp_completer v0.1.0 (/Users/tedczj/workspace/term4u/crates/warp_completer)
+    Checking persistence v0.0.0 (/Users/tedczj/workspace/term4u/crates/persistence)
+    Checking syntax_tree v0.1.0 (/Users/tedczj/workspace/term4u/crates/syntax_tree)
+   Compiling warp v0.1.0 (/Users/tedczj/workspace/term4u/app)
+    Checking interaction_types v0.1.0 (/Users/tedczj/workspace/term4u/crates-local/interaction_types)
+    Checking warp_terminal v0.0.0 (/Users/tedczj/workspace/term4u/crates/warp_terminal)
+    Checking field_mask v0.0.0 (/Users/tedczj/workspace/term4u/crates/field_mask)
+    Checking warp_search_core v0.1.0 (/Users/tedczj/workspace/term4u/crates/warp_search_core)
+    Checking warp_logging v0.0.0 (/Users/tedczj/workspace/term4u/crates/warp_logging)
+    Checking warp_ripgrep v0.1.0 (/Users/tedczj/workspace/term4u/crates/warp_ripgrep)
+    Checking lsp v0.1.0 (/Users/tedczj/workspace/term4u/crates/lsp)
+    Checking warp_files v0.1.0 (/Users/tedczj/workspace/term4u/crates/warp_files)
+    Checking kmeans_colors v0.5.0
+    Checking app-installation-detection v0.1.0 (/Users/tedczj/workspace/term4u/crates/app-installation-detection)
+    Checking http_server v0.0.0 (/Users/tedczj/workspace/term4u/crates/http_server)
+    Checking ui_components v0.0.0 (/Users/tedczj/workspace/term4u/crates/ui_components)
+    Checking build_cache v0.1.0 (/Users/tedczj/workspace/term4u/crates/build_cache)
+    Checking cynic v3.8.0
+    Checking ipc v0.1.0 (/Users/tedczj/workspace/term4u/crates/ipc)
+    Checking natural_language_detection v0.1.0 (/Users/tedczj/workspace/term4u/crates/natural_language_detection)
+   Compiling asset_macro v0.1.0 (/Users/tedczj/workspace/term4u/crates/asset_macro)
+    Checking lasso v0.7.3
+    Checking ai_types v0.1.0 (/Users/tedczj/workspace/term4u/crates/ai_types)
+   Compiling variant_count v1.1.0
+    Checking bytecount v0.6.9
+    Checking handlebars v0.0.0 (/Users/tedczj/workspace/term4u/crates/handlebars)
+    Finished `dev` profile [unoptimized] target(s) in 20.22s

@@ -26,6 +26,10 @@ use warpui::AppContext;
 use warpui::elements::DropTargetData;
 use warpui::keymap::EditableBinding;
 
+use crate::notebooks::manager::NotebookSource;
+use crate::palette::PaletteMode;
+use crate::search::QueryFilter;
+use crate::server::telemetry::PaletteSource;
 use crate::settings_view::SettingsSection;
 use crate::util::bindings::CustomAction;
 
@@ -62,15 +66,92 @@ pub fn panel_header_corner_radius() -> warpui::elements::CornerRadius {
 }
 
 pub fn init(app: &mut AppContext) {
-    use warpui::keymap::macros::*;
-
     app.add_singleton_model(|_| WorkspaceRegistry::new());
     app.add_singleton_model(|_| ActiveSession::default());
     app.add_singleton_model(|_| ToastStack);
     app.add_singleton_model(|_| sync_inputs::SyncedInputState::new());
     sync_inputs::init(app);
+    view::global_search::view::GlobalSearchView::init(app);
+    register_bindings(app);
+}
+
+fn register_bindings(app: &mut AppContext) {
+    use warpui::keymap::macros::*;
+
+    app.register_editable_bindings([EditableBinding::new(
+        "workspace:open_code_review",
+        "Review Code Changes",
+        WorkspaceAction::OpenCodeReview,
+    )
+    .with_context_predicate(id!("Workspace"))]);
     app.register_editable_bindings(
         [
+            (
+                "workspace:show_command_search",
+                "Search Command History and Workflows",
+                WorkspaceAction::ShowCommandSearch(CommandSearchOptions::default()),
+                CustomAction::CommandSearch,
+            ),
+            (
+                "workspace:show_workflows",
+                "Search Workflows",
+                WorkspaceAction::ShowCommandSearch(CommandSearchOptions {
+                    filter: Some(QueryFilter::Workflows),
+                    ..Default::default()
+                }),
+                CustomAction::Workflows,
+            ),
+            (
+                "workspace:open_repository",
+                "Open Folder",
+                WorkspaceAction::OpenRepository { path: None },
+                CustomAction::OpenRepository,
+            ),
+            (
+                "workspace:open_global_search",
+                "Search in Files",
+                WorkspaceAction::OpenGlobalSearch,
+                CustomAction::ToggleGlobalSearch,
+            ),
+            (
+                "workspace:toggle_left_panel",
+                "Toggle Project Explorer",
+                WorkspaceAction::ToggleLeftPanel,
+                CustomAction::ToggleProjectExplorer,
+            ),
+            (
+                "workspace:toggle_command_palette",
+                "Command Palette",
+                WorkspaceAction::TogglePalette {
+                    mode: PaletteMode::Command,
+                    source: PaletteSource::Keybinding,
+                },
+                CustomAction::CommandPalette,
+            ),
+            (
+                "workspace:toggle_navigation_palette",
+                "Switch Session",
+                WorkspaceAction::TogglePalette {
+                    mode: PaletteMode::Navigation,
+                    source: PaletteSource::Keybinding,
+                },
+                CustomAction::NavigationPalette,
+            ),
+            (
+                "workspace:toggle_files_palette",
+                "Search Files",
+                WorkspaceAction::TogglePalette {
+                    mode: PaletteMode::Files,
+                    source: PaletteSource::Keybinding,
+                },
+                CustomAction::FilesPalette,
+            ),
+            (
+                "workspace:new_notebook",
+                "New Notebook",
+                WorkspaceAction::OpenNotebook(NotebookSource::New { title: None }),
+                CustomAction::NewPersonalNotebook,
+            ),
             (
                 "workspace:new_tab",
                 "New Tab",

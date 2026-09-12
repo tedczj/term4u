@@ -62,6 +62,7 @@ pub fn dump_dhat_heap_profile() {
 }
 
 /// Writes a heap profile to disk and returns the generated path.
+#[cfg(feature = "heap_usage_tracking")]
 pub async fn dump_heap_profile_to_disk() -> anyhow::Result<std::path::PathBuf> {
     cfg_if::cfg_if! {
         if #[cfg(feature = "dhat_heap_profiling")] {

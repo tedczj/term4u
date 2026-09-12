@@ -1,0 +1,1642 @@
+   Compiling aws-lc-rs v1.16.2
+   Compiling web_atoms v0.1.3
+   Compiling arborium-javascript v2.13.0
+   Compiling arborium-css v2.13.0
+   Compiling zstd-sys v2.0.15+zstd.1.5.7
+   Compiling arborium-html v2.13.0
+   Compiling arborium-c v2.13.0
+   Compiling zstd-safe v7.2.4
+   Compiling arborium-tree-sitter v2.13.0
+   Compiling zstd v0.13.3
+   Compiling markup5ever v0.35.0
+   Compiling rust-embed v8.7.2
+   Compiling xml5ever v0.35.0
+   Compiling html5ever v0.35.0
+   Compiling arborium-typescript v2.13.0
+   Compiling rustls-webpki v0.103.13
+   Compiling arborium-scss v2.13.0
+   Compiling arborium-toml v2.13.0
+   Compiling arborium-yaml v2.13.0
+   Compiling arborium-highlight v2.13.0
+   Compiling arborium-markdown v2.13.0
+   Compiling rustls v0.23.39
+   Compiling markup5ever_rcdom v0.35.0+unofficial
+   Compiling markdown_parser v0.1.0 (/Users/tedczj/workspace/term4u/crates/markdown_parser)
+   Compiling rust-embed v6.8.1
+   Compiling arborium-vue v2.13.0
+   Compiling arborium-go v2.13.0
+   Compiling arborium-python v2.13.0
+   Compiling arborium-php v2.13.0
+   Compiling arborium-java v2.13.0
+   Compiling arborium-xml v2.13.0
+   Compiling arborium-objc v2.13.0
+   Compiling arborium-swift v2.13.0
+   Compiling arborium-elixir v2.13.0
+   Compiling arborium-sql v2.13.0
+   Compiling arborium-hcl v2.13.0
+   Compiling arborium-powershell v2.13.0
+   Compiling arborium-rust v2.13.0
+   Compiling arborium-bash v2.13.0
+   Compiling arborium-scala v2.13.0
+   Compiling arborium-kotlin v2.13.0
+   Compiling arborium-json v2.13.0
+   Compiling arborium-starlark v2.13.0
+   Compiling arborium-lua v2.13.0
+   Compiling arborium-ruby v2.13.0
+   Compiling ipynb_parser v0.1.0 (/Users/tedczj/workspace/term4u/crates/ipynb_parser)
+   Compiling arborium-c-sharp v2.13.0
+   Compiling arborium-nix v2.13.0
+   Compiling arborium-cpp v2.13.0
+   Compiling arborium-tsx v2.13.0
+   Compiling arborium-jq v2.13.0
+   Compiling arborium-dockerfile v2.13.0
+   Compiling libsqlite3-sys v0.33.0
+   Compiling arborium v2.13.0
+   Compiling diesel v2.3.10
+   Compiling tantivy-sstable v0.7.0
+   Compiling warp-command-signatures v0.0.0 (https://github.com/warpdotdev/command-signatures.git?rev=d3725aa42375cc229699c87be2b38f9d9f07080f#d3725aa4)
+   Compiling lzma-sys v0.1.20
+   Compiling bzip2-sys v0.1.13+1.0.8
+   Compiling tantivy-columnar v0.7.0
+   Compiling tokio-rustls v0.26.4
+   Compiling rustls-platform-verifier v0.6.2
+   Compiling hyper-rustls v0.27.7
+   Compiling tungstenite v0.24.0
+   Compiling reqwest v0.13.3
+   Compiling async-tungstenite v0.28.2
+   Compiling graphql-ws-client v0.11.1
+   Compiling websocket v0.1.0 (/Users/tedczj/workspace/term4u/crates/websocket)
+   Compiling warp_errors v0.0.0 (/Users/tedczj/workspace/term4u/crates/warp_errors)
+   Compiling command v0.1.0 (/Users/tedczj/workspace/term4u/crates/command)
+   Compiling warp_util v0.1.0 (/Users/tedczj/workspace/term4u/crates/warp_util)
+   Compiling sum_tree v0.1.0 (/Users/tedczj/workspace/term4u/crates/sum_tree)
+   Compiling aha-reqwest-eventsource v0.1.0
+   Compiling warpui_core v0.1.0 (/Users/tedczj/workspace/term4u/crates/warpui_core)
+   Compiling local_control v0.0.0 (/Users/tedczj/workspace/term4u/crates/local_control)
+   Compiling bzip2 v0.5.2
+   Compiling xz2 v0.1.7
+   Compiling onig_sys v69.9.1
+   Compiling channel_versions v0.1.0 (/Users/tedczj/workspace/term4u/crates/channel_versions)
+   Compiling libz-sys v1.1.25
+   Compiling tantivy v0.26.0
+   Compiling diesel_migrations v2.3.1
+   Compiling zip v2.4.2
+   Compiling persistence v0.0.0 (/Users/tedczj/workspace/term4u/crates/persistence)
+   Compiling palette v0.6.1
+   Compiling libgit2-sys v0.18.3+1.9.2
+   Compiling onig v6.5.1
+   Compiling warpui_extras v0.0.0 (/Users/tedczj/workspace/term4u/crates/warpui_extras)
+   Compiling settings v0.0.0 (/Users/tedczj/workspace/term4u/crates/settings)
+   Compiling warp_core v0.0.0 (/Users/tedczj/workspace/term4u/crates/warp_core)
+   Compiling http_client v0.0.0 (/Users/tedczj/workspace/term4u/crates/http_client)
+   Compiling warp_cli v0.0.0 (/Users/tedczj/workspace/term4u/crates/warp_cli)
+   Compiling asset_cache v0.0.0 (/Users/tedczj/workspace/term4u/crates/asset_cache)
+   Compiling vim v0.1.0 (/Users/tedczj/workspace/term4u/crates/vim)
+   Compiling watcher v0.1.0 (/Users/tedczj/workspace/term4u/crates/watcher)
+   Compiling repo_metadata v0.1.0 (/Users/tedczj/workspace/term4u/crates/repo_metadata)
+   Compiling warp_editor v0.1.0 (/Users/tedczj/workspace/term4u/crates/editor)
+   Compiling warp_completer v0.1.0 (/Users/tedczj/workspace/term4u/crates/warp_completer)
+   Compiling languages v0.0.0 (/Users/tedczj/workspace/term4u/crates/languages)
+   Compiling warp_isolation_platform v0.1.0 (/Users/tedczj/workspace/term4u/crates/isolation_platform)
+   Compiling secret_redaction v0.0.0 (/Users/tedczj/workspace/term4u/crates/secret_redaction)
+   Compiling warp_assets v0.0.0 (/Users/tedczj/workspace/term4u/crates/warp_assets)
+   Compiling syntax_tree v0.1.0 (/Users/tedczj/workspace/term4u/crates/syntax_tree)
+   Compiling simple_logger v0.1.0 (/Users/tedczj/workspace/term4u/crates/simple_logger)
+   Compiling jsonrpc v0.1.0 (/Users/tedczj/workspace/term4u/crates/jsonrpc)
+   Compiling warp v0.1.0 (/Users/tedczj/workspace/term4u/app)
+   Compiling warpui v0.0.0 (/Users/tedczj/workspace/term4u/crates/warpui)
+   Compiling lsp v0.1.0 (/Users/tedczj/workspace/term4u/crates/lsp)
+   Compiling warp_terminal v0.0.0 (/Users/tedczj/workspace/term4u/crates/warp_terminal)
+   Compiling warp-workflows v0.1.0 (https://github.com/warpdotdev/workflows?rev=793a98ddda6ef19682aed66364faebd2829f0e01#793a98dd)
+   Compiling app-installation-detection v0.1.0 (/Users/tedczj/workspace/term4u/crates/app-installation-detection)
+   Compiling warp_logging v0.0.0 (/Users/tedczj/workspace/term4u/crates/warp_logging)
+   Compiling warp_search_core v0.1.0 (/Users/tedczj/workspace/term4u/crates/warp_search_core)
+   Compiling cynic v3.8.0
+   Compiling warp_ripgrep v0.1.0 (/Users/tedczj/workspace/term4u/crates/warp_ripgrep)
+   Compiling warp_files v0.1.0 (/Users/tedczj/workspace/term4u/crates/warp_files)
+   Compiling ui_components v0.0.0 (/Users/tedczj/workspace/term4u/crates/ui_components)
+   Compiling http_server v0.0.0 (/Users/tedczj/workspace/term4u/crates/http_server)
+   Compiling build_cache v0.1.0 (/Users/tedczj/workspace/term4u/crates/build_cache)
+   Compiling ipc v0.1.0 (/Users/tedczj/workspace/term4u/crates/ipc)
+   Compiling syntect v5.2.0
+   Compiling ai v0.1.0 (/Users/tedczj/workspace/term4u/crates/ai)
+   Compiling git2 v0.20.4
+   Compiling kmeans_colors v0.5.0
+    Finished `test` profile [unoptimized] target(s) in 46.26s
+────────────
+ Nextest run ID 3bbe1d6d-d548-42bd-9f04-ec6a2a9ec0cc with nextest profile: default
+    Starting 1512 tests across 1 binary (3 tests skipped)
+        PASS [   0.022s] (   1/1512) warp code::editor::element::tests::absolute_line_numbers_honor_starting_line_number
+        PASS [   0.022s] (   2/1512) warp code::editor::element::tests::absolute_line_numbers_default_to_one_based_values
+        PASS [   0.023s] (   3/1512) warp app_state::tests::test_code_pane_snapshot_with_multiple_tabs
+        PASS [   0.023s] (   4/1512) warp app_state::tests::test_has_horizontal_split
+        PASS [   0.024s] (   5/1512) warp app_state::tests::test_code_pane_snapshot_single_tab
+        PASS [   0.026s] (   6/1512) warp ai::persisted_workspace::tests::restored_workspace_keeps_language_server_preferences
+        PASS [   0.028s] (   7/1512) warp ai::persisted_workspace::tests::changing_language_server_preference_reaches_persistence_writer
+        PASS [   0.031s] (   8/1512) warp code::editor::diff::tests::test_unified_diff
+        PASS [   0.035s] (   9/1512) warp code::editor::diff::tests::test_reverse_action_deleted_lines
+        PASS [   0.035s] (  10/1512) warp code::editor::diff::tests::test_diff_count_before_line
+        PASS [   0.035s] (  11/1512) warp ai::persisted_workspace::tests::reopening_workspace_keeps_existing_metadata_and_lsp_preferences
+        PASS [   0.036s] (  12/1512) warp code::editor::diff::tests::test_reverse_action
+        PASS [   0.036s] (  13/1512) warp code::editor::diff::tests::test_reverse_action_replaced_newlines
+        PASS [   0.036s] (  14/1512) warp code::editor::diff::tests::test_reverse_action_replaced_text
+        PASS [   0.036s] (  15/1512) warp code::editor::diff::tests::test_diff_generation
+        PASS [   0.036s] (  16/1512) warp code::editor::diff::tests::test_coalesce_replacements
+        PASS [   0.017s] (  17/1512) warp code::editor::element::tests::relative_line_numbers_fall_back_to_absolute_without_active_line
+        PASS [   0.017s] (  18/1512) warp code::editor::element::tests::relative_line_numbers_use_starting_line_number_for_active_line_only
+        PASS [   0.018s] (  19/1512) warp code::editor::element::tests::relative_line_numbers_show_absolute_value_on_active_line
+        PASS [   0.018s] (  20/1512) warp code::editor::element::tests::relative_line_numbers_show_distance_above_and_below_active_line
+        PASS [   0.015s] (  21/1512) warp code::editor::embedded_comment::tests::test_comment_embedded_item_conversion_invalid_uuid
+        PASS [   0.013s] (  22/1512) warp code::editor::embedded_comment::tests::test_comment_embedded_item_conversion_invalid_window_id
+        PASS [   0.018s] (  23/1512) warp code::editor::embedded_comment::tests::test_comment_embedded_item_conversion_invalid_entity_id
+        PASS [   0.011s] (  24/1512) warp code::editor::embedded_comment::tests::test_comment_embedded_item_conversion_valid_input
+        PASS [   0.011s] (  25/1512) warp code::editor::embedded_comment::tests::test_comment_embedded_item_conversion_missing_window_id
+        PASS [   0.016s] (  26/1512) warp code::editor::embedded_comment::tests::test_comment_embedded_item_conversion_missing_comment_id
+        PASS [   0.012s] (  27/1512) warp code::editor::embedded_comment::tests::test_comment_embedded_item_conversion_missing_entity_id
+        PASS [   0.012s] (  28/1512) warp code::editor::embedded_comment::tests::test_comment_embedded_item_conversion_roundtrip
+        PASS [   0.032s] (  29/1512) warp code::editor::model::tests::test_char_cell_diff_pipeline_populates_ghosts_and_hidden_ranges
+        PASS [   0.131s] (  30/1512) warp code::editor::model::tests::test_match_line_to_text_exact_match
+        PASS [   0.127s] (  31/1512) warp code::editor::model::tests::test_move_by_word
+        PASS [   0.132s] (  32/1512) warp code::editor::model::tests::test_match_line_to_text_nearby_match
+        PASS [   0.136s] (  33/1512) warp code::editor::model::tests::test_line_at_vertical_offset_returns_none_for_invalid
+        PASS [   0.140s] (  34/1512) warp code::editor::model::tests::test_line_at_vertical_offset_current_line_insert_above
+        PASS [   0.134s] (  35/1512) warp code::editor::model::tests::test_match_line_to_text_search_window_expansion
+        PASS [   0.147s] (  36/1512) warp code::editor::model::tests::test_apply_single_deletion
+        PASS [   0.139s] (  37/1512) warp code::editor::model::tests::test_retrieve_unified_diff_mixed_line_endings
+        PASS [   0.152s] (  38/1512) warp code::editor::model::tests::test_apply_diff_on_empty_buffer
+        PASS [   0.157s] (  39/1512) warp code::editor::model::tests::replace_first_n_characters_handles_incremental_unicode_prefix
+        PASS [   0.155s] (  40/1512) warp code::editor::model::tests::test_hidden_lines_window_is_symmetric_around_changes
+        PASS [   0.159s] (  41/1512) warp code::editor::model::tests::test_apply_diffs
+        PASS [   0.156s] (  42/1512) warp code::editor::model::tests::test_line_at_vertical_offset_removed_line_insert_above
+        PASS [   0.158s] (  43/1512) warp code::editor::model::tests::test_reset_version
+        PASS [   0.135s] (  44/1512) warp code::editor::model::tests::test_retrieve_unified_diff_windows_line_endings
+        PASS [   0.027s] (  45/1512) warp code::editor::view::view_tests::test_interaction_state_prevents_editing
+        PASS [   0.032s] (  46/1512) warp code::editor::view::vim_handler::tests::test_clicking_find_input_after_vim_search_word_restores_editing
+        PASS [   0.027s] (  47/1512) warp code::editor::view::vim_handler::tests::test_code_editor_vim_basic_mode_switching
+        PASS [   0.024s] (  48/1512) warp code::editor::view::vim_handler::tests::test_vim_c_percent_changes_to_matching_bracket
+        PASS [   0.026s] (  49/1512) warp code::editor::view::vim_handler::tests::test_vim_begin_line_below
+        PASS [   0.034s] (  50/1512) warp code::editor::view::vim_handler::tests::test_clicking_find_input_after_vim_enter_restores_editing
+        PASS [   0.175s] (  51/1512) warp code::editor::model::tests::test_no_trailing_newline
+        PASS [   0.028s] (  52/1512) warp code::editor::view::vim_handler::tests::test_vim_begin_line_above
+        PASS [   0.020s] (  53/1512) warp code::editor::view::vim_handler::tests::test_vim_counted_double_greater_indents_two_lines
+        PASS [   0.018s] (  54/1512) warp code::editor::view::vim_handler::tests::test_vim_delete_char_backspace
+        PASS [   0.019s] (  55/1512) warp code::editor::view::vim_handler::tests::test_vim_d_percent_deletes_to_matching_bracket
+        PASS [   0.020s] (  56/1512) warp code::editor::view::vim_handler::tests::test_vim_delete_char_motion_sideways
+        PASS [   0.033s] (  57/1512) warp code::editor::view::vim_handler::tests::test_vim_ctrl_d_clears_pending_operator
+        PASS [   0.037s] (  58/1512) warp code::editor::view::vim_handler::tests::test_vim_counted_k_overflow_does_not_panic
+        PASS [   0.019s] (  59/1512) warp code::editor::view::vim_handler::tests::test_vim_delete_char_space
+        PASS [   0.018s] (  60/1512) warp code::editor::view::vim_handler::tests::test_vim_delete_lines_d0
+        PASS [   0.037s] (  61/1512) warp code::editor::view::vim_handler::tests::test_vim_ctrl_d_with_count_scrolls_n_lines
+        PASS [   0.018s] (  62/1512) warp code::editor::view::vim_handler::tests::test_vim_delete_char_x
+        PASS [   0.039s] (  63/1512) warp code::editor::view::vim_handler::tests::test_vim_ctrl_d_consumes_pending_count
+        PASS [   0.016s] (  64/1512) warp code::editor::view::vim_handler::tests::test_vim_delete_lines_d_caret
+        PASS [   0.019s] (  65/1512) warp code::editor::view::vim_handler::tests::test_vim_delete_lines_d_dollar
+        PASS [   0.042s] (  66/1512) warp code::editor::view::vim_handler::tests::test_vim_ctrl_d_scrolls_half_page_down
+        PASS [   0.020s] (  67/1512) warp code::editor::view::vim_handler::tests::test_vim_delete_word_db
+        PASS [   0.019s] (  68/1512) warp code::editor::view::vim_handler::tests::test_vim_delete_word_de
+        PASS [   0.049s] (  69/1512) warp code::editor::view::vim_handler::tests::test_vim_ctrl_u_scrolls_half_page_up
+        PASS [   0.018s] (  70/1512) warp code::editor::view::vim_handler::tests::test_vim_dgg_at_first_line_does_not_panic
+        PASS [   0.023s] (  71/1512) warp code::editor::view::vim_handler::tests::test_vim_delete_word_empty
+        PASS [   0.024s] (  72/1512) warp code::editor::view::vim_handler::tests::test_vim_delete_word_dge
+        PASS [   0.018s] (  73/1512) warp code::editor::view::vim_handler::tests::test_vim_double_less_removes_only_one_indent_unit
+        PASS [   0.022s] (  74/1512) warp code::editor::view::vim_handler::tests::test_vim_double_greater_preserves_non_leading_text
+        PASS [   0.023s] (  75/1512) warp code::editor::view::vim_handler::tests::test_vim_double_less_at_column_zero_is_noop
+        PASS [   0.025s] (  76/1512) warp code::editor::view::vim_handler::tests::test_vim_double_less_dedents_current_line
+        PASS [   0.034s] (  77/1512) warp code::editor::view::vim_handler::tests::test_vim_delete_word_dw
+        PASS [   0.033s] (  78/1512) warp code::editor::view::vim_handler::tests::test_vim_double_greater_indents_current_line
+        PASS [   0.123s] (  79/1512) warp code::editor::model::tests::test_text_for_line
+        PASS [   0.027s] (  80/1512) warp code::editor::view::vim_handler::tests::test_vim_dw_newline_quirks
+        PASS [   0.019s] (  81/1512) warp code::editor::view::vim_handler::tests::test_vim_greater_to_last_line_indents_all_lines
+        PASS [   0.024s] (  82/1512) warp code::editor::view::vim_handler::tests::test_vim_gg_at_first_line_does_not_panic
+        PASS [   0.127s] (  83/1512) warp code::editor::model::tests::test_update_comment_location_current_moved_line
+        PASS [   0.021s] (  84/1512) warp code::editor::view::vim_handler::tests::test_vim_indent_then_undo_restores_buffer
+        PASS [   0.024s] (  85/1512) warp code::editor::view::vim_handler::tests::test_vim_greater_with_down_motion_indents_two_lines
+        PASS [   0.021s] (  86/1512) warp code::editor::view::vim_handler::tests::test_vim_jump_to_end_and_beginning
+        PASS [   0.133s] (  87/1512) warp code::editor::model::tests::test_toggle_comment
+        PASS [   0.127s] (  88/1512) warp code::editor::model::tests::test_version_match
+        PASS [   0.025s] (  89/1512) warp code::editor::view::vim_handler::tests::test_vim_indent_dot_repeat_repeats_last_indent
+        PASS [   0.130s] (  90/1512) warp code::editor::model::tests::test_update_comment_location_removed_line
+        PASS [   0.024s] (  91/1512) warp code::editor::view::vim_handler::tests::test_vim_k_at_top_of_file_does_not_panic
+        PASS [   0.021s] (  92/1512) warp code::editor::view::vim_handler::tests::test_vim_linewise_delete_at_first_line_does_not_panic
+        PASS [   0.019s] (  93/1512) warp code::editor::view::vim_handler::tests::test_vim_number_repeat_action
+        PASS [   0.019s] (  94/1512) warp code::editor::view::vim_handler::tests::test_vim_number_repeat_character_motions_left
+        PASS [   0.027s] (  95/1512) warp code::editor::view::vim_handler::tests::test_vim_linewise_operations_at_eof
+        PASS [   0.025s] (  96/1512) warp code::editor::view::vim_handler::tests::test_vim_number_repeat_character_motion
+        PASS [   0.024s] (  97/1512) warp code::editor::view::vim_handler::tests::test_vim_number_repeat_character_motions_right
+        PASS [   0.020s] (  98/1512) warp code::editor::view::vim_handler::tests::test_vim_number_repeat_op_line_object
+        PASS [   0.020s] (  99/1512) warp code::editor::view::vim_handler::tests::test_vim_number_repeat_word_motion
+        PASS [   0.024s] ( 100/1512) warp code::editor::view::vim_handler::tests::test_vim_number_repeat_line_motion
+        PASS [   0.017s] ( 101/1512) warp code::editor::view::vim_handler::tests::test_vim_number_repeat_yank_paste_linewise
+        PASS [   0.022s] ( 102/1512) warp code::editor::view::vim_handler::tests::test_vim_number_repeat_op_combination
+        PASS [   0.023s] ( 103/1512) warp code::editor::view::vim_handler::tests::test_vim_number_repeat_op_word_motion
+        PASS [   0.023s] ( 104/1512) warp code::editor::view::vim_handler::tests::test_vim_number_repeat_yank_paste_charwise
+        PASS [   0.025s] ( 105/1512) warp code::editor::view::vim_handler::tests::test_vim_number_repeat_op_line_motions
+        PASS [   0.021s] ( 106/1512) warp code::editor::view::vim_handler::tests::test_vim_replace_number_repeat
+        PASS [   0.020s] ( 107/1512) warp code::editor::view::vim_handler::tests::test_vim_replace_number_repeat_end_of_line
+        PASS [   0.019s] ( 108/1512) warp code::editor::view::vim_handler::tests::test_vim_replace_simple
+        PASS [   0.022s] ( 109/1512) warp code::editor::view::vim_handler::tests::test_vim_substitute_char
+        PASS [   0.022s] ( 110/1512) warp code::editor::view::vim_handler::tests::test_vim_uppercase_r_extends_at_eol_and_dot_replays_the_session
+        PASS [   0.025s] ( 111/1512) warp code::editor::view::vim_handler::tests::test_vim_substitute_line
+        PASS [   0.019s] ( 112/1512) warp code::editor::view::vim_handler::tests::test_vim_visual_greater_across_multiple_lines
+        PASS [   0.012s] ( 113/1512) warp code::file_tree::snapshot::tests::test_expand_directory
+        PASS [   0.018s] ( 114/1512) warp code::editor::view::vim_handler::tests::test_vim_visual_linewise_greater_indents_selection
+        PASS [   0.018s] ( 115/1512) warp code::editor::view::vim_handler::tests::test_vim_y_percent_yanks_to_matching_bracket
+        PASS [   0.018s] ( 116/1512) warp code::editor::view::vim_handler::tests::test_vim_visual_linewise_less_dedents_selection
+        PASS [   0.019s] ( 117/1512) warp code::editor::view::vim_handler::tests::test_vim_visual_selection_with_newlines
+        PASS [   0.174s] ( 118/1512) warp code::editor::model::tests::test_two_editors_sharing_a_buffer_both_lay_out_a_large_content_replace
+        PASS [   0.016s] ( 119/1512) warp code::file_tree::snapshot::tests::test_child_entries_empty_directory
+        PASS [   0.016s] ( 120/1512) warp code::file_tree::snapshot::tests::test_child_entries
+        PASS [   0.023s] ( 121/1512) warp code::editor::view::vim_handler::tests::test_vim_visual_linewise_delete_first_line_does_not_panic
+        PASS [   0.020s] ( 122/1512) warp code::editor::view::vim_handler::tests::test_vim_z_followed_by_non_z_clears_pending
+        PASS [   0.022s] ( 123/1512) warp code::editor::view::vim_handler::tests::test_vim_zz_in_normal_mode_preserves_cursor_and_mode
+        PASS [   0.024s] ( 124/1512) warp code::editor::view::vim_handler::tests::test_vim_zz_in_visual_mode_preserves_cursor_and_mode
+        PASS [   0.011s] ( 125/1512) warp code::file_tree::snapshot::tests::test_file_entry_ignored
+        PASS [   0.011s] ( 126/1512) warp code::file_tree::snapshot::tests::test_handle_removed_nonexistent
+        PASS [   0.014s] ( 127/1512) warp code::file_tree::snapshot::tests::test_file_entry_creation
+        PASS [   0.012s] ( 128/1512) warp code::file_tree::snapshot::tests::test_handle_added_in_loaded_directory
+        PASS [   0.013s] ( 129/1512) warp code::file_tree::snapshot::tests::test_handle_added_in_unloaded_directory
+        PASS [   0.013s] ( 130/1512) warp code::file_tree::snapshot::tests::test_insert_and_lookup
+        PASS [   0.013s] ( 131/1512) warp code::file_tree::snapshot::tests::test_handle_renamed
+        PASS [   0.014s] ( 132/1512) warp code::file_tree::snapshot::tests::test_handle_removed
+        PASS [   0.011s] ( 133/1512) warp code::file_tree::snapshot::tests::test_is_parent_loaded_root
+        PASS [   0.013s] ( 134/1512) warp code::file_tree::snapshot::tests::test_is_parent_loaded_nested
+        PASS [   0.012s] ( 135/1512) warp code::file_tree::snapshot::tests::test_is_parent_loaded_unloaded_directory
+        PASS [   0.012s] ( 136/1512) warp code::file_tree::snapshot::tests::test_single_entry
+        PASS [   0.012s] ( 137/1512) warp code::file_tree::snapshot::tests::test_remove_entry
+        PASS [   0.014s] ( 138/1512) warp code::file_tree::snapshot::tests::test_path_key_ordering
+        PASS [   0.013s] ( 139/1512) warp code::file_tree::snapshot::tests::test_snapshot_with_root
+        PASS [   0.012s] ( 140/1512) warp code::file_tree::snapshot::tests::test_summary_add_assign
+        PASS [   0.011s] ( 141/1512) warp code::file_tree::snapshot::tests::test_summary_for_visible_directory
+        PASS [   0.011s] ( 142/1512) warp code::file_tree::snapshot::tests::test_summary_for_visible_file
+        PASS [   0.012s] ( 143/1512) warp code::file_tree::snapshot::tests::test_summary_for_ignored_file
+        PASS [   0.013s] ( 144/1512) warp code::file_tree::snapshot::tests::test_summary_for_ignored_directory
+        PASS [   0.012s] ( 145/1512) warp code::file_tree::snapshot::tests::test_update_existing_entry
+        PASS [   0.013s] ( 146/1512) warp code::file_tree::view::editing::tests::sort_entries_for_file_tree_sorts_without_panicking_on_missing_children
+        PASS [   0.013s] ( 147/1512) warp code::file_tree::view::editing::tests::sort_entries_for_file_tree_uses_natural_order_for_numbered_files
+        PASS [   0.014s] ( 148/1512) warp code::file_tree::view::editing::tests::sort_entries_for_file_tree_is_antisymmetric_for_missing_entries
+        PASS [   0.023s] ( 149/1512) warp code::file_tree::view::view_tests::absorbed_descendant_is_unregistered_from_lazy_loaded_paths
+        PASS [   0.021s] ( 150/1512) warp code::file_tree::view::view_tests::absorption_migrates_expanded_and_explicitly_collapsed_state
+        PASS [   0.022s] ( 151/1512) warp code::file_tree::view::view_tests::cd_into_descendant_absorbs_into_existing_ancestor_root
+        PASS [   0.023s] ( 152/1512) warp code::file_tree::view::view_tests::auto_expand_overrides_selection_when_most_recent_root_changes
+        PASS [   0.028s] ( 153/1512) warp code::file_tree::view::view_tests::descendant_is_absorbed_into_ancestor
+        PASS [   0.030s] ( 154/1512) warp code::file_tree::view::view_tests::click_on_file_under_absorbed_descendant_keeps_file_selected
+        PASS [   0.025s] ( 155/1512) warp code::file_tree::view::view_tests::explicit_collapse_blocks_auto_expand_on_absorption
+        PASS [   0.025s] ( 156/1512) warp code::file_tree::view::view_tests::failed_lazy_loaded_path_registration_is_retried
+        PASS [   0.032s] ( 157/1512) warp code::file_tree::view::view_tests::auto_expand_preserves_existing_selection
+        PASS [   0.025s] ( 158/1512) warp code::file_tree::view::view_tests::hidden_files_are_filtered_until_setting_is_enabled
+        PASS [   0.026s] ( 159/1512) warp code::file_tree::view::view_tests::focus_follows_absorbed_descendant_once_its_item_is_materialized
+        PASS [   0.022s] ( 160/1512) warp code::file_tree::view::view_tests::pending_repository_root_does_not_register_lazy_loaded_path
+        PASS [   0.024s] ( 161/1512) warp code::file_tree::view::view_tests::pending_focus_target_does_not_re_scroll_after_first_apply
+        PASS [   0.027s] ( 162/1512) warp code::file_tree::view::view_tests::hidden_root_directory_is_not_filtered
+        PASS [   0.026s] ( 163/1512) warp code::file_tree::view::view_tests::repo_backed_unloaded_directory_loads_through_model
+        PASS [   0.027s] ( 164/1512) warp code::file_tree::view::view_tests::repo_transition_unregisters_lazy_loaded_path
+        PASS [   0.019s] ( 165/1512) warp code_review::code_review_view::tests::test_active_comments_not_marked_outdated
+        PASS [   0.023s] ( 166/1512) warp code::file_tree::view::view_tests::sibling_roots_are_preserved
+        PASS [   0.021s] ( 167/1512) warp code_review::code_review_view::tests::test_relocate_comments_line_comment_no_matching_editor_marked_outdated
+        PASS [   0.034s] ( 168/1512) warp code::file_tree::view::view_tests::selected_hidden_file_is_cleared_when_filtered
+        PASS [   0.024s] ( 169/1512) warp code_review::code_review_view::tests::test_imported_context_line_comment_relocates_and_not_outdated
+        PASS [   0.023s] ( 170/1512) warp code_review::code_review_view::tests::test_imported_context_line_comment_removed_marked_outdated
+        PASS [   0.023s] ( 171/1512) warp code_review::code_review_view::tests::test_relocate_comments_file_comment_no_matching_editor_marked_outdated
+        PASS [   0.023s] ( 172/1512) warp code_review::code_review_view::tests::test_relocate_comments_empty_input
+        PASS [   0.031s] ( 173/1512) warp code_review::code_review_view::tests::test_handle_edit_comment_scrolls_with_buffer
+        PASS [   0.023s] ( 174/1512) warp code_review::code_review_view::tests::test_native_indented_context_comment_not_outdated
+        PASS [   0.023s] ( 175/1512) warp code_review::code_review_view::tests::test_on_close_then_on_open_reinitializes_repo_state
+        PASS [   0.024s] ( 176/1512) warp code_review::code_review_view::tests::test_relocate_comments_general_comment_passes_through
+        PASS [   0.024s] ( 177/1512) warp code_review::code_review_view::tests::test_relocate_comments_file_comment_passes_through
+        PASS [   0.024s] ( 178/1512) warp code_review::code_review_view::tests::test_relocate_comments_line_comment_with_absolute_path
+        PASS [   0.021s] ( 179/1512) warp code_review::code_review_view::tests::test_relocate_comments_multiple_comment_types
+        PASS [   0.026s] ( 180/1512) warp code_review::code_review_view::tests::test_relocate_comments_line_removed_marked_outdated
+        PASS [   0.023s] ( 181/1512) warp code_review::code_review_view::tests::test_setup_dropdown_with_branches_includes_all_items
+        PASS [   0.012s] ( 182/1512) warp code_review::comments::comment::tests::imported_original_text_handles_blank_context_line
+        PASS [   0.022s] ( 183/1512) warp code_review::code_review_view::tests::test_setup_dropdown_without_branches_only_has_uncommitted_changes
+        PASS [   0.012s] ( 184/1512) warp code_review::comments::batch::tests::file_and_line_queries_filter_by_suffix
+        PASS [   0.013s] ( 185/1512) warp code_review::comments::comment::tests::imported_original_text_strips_addition_and_deletion_markers
+        PASS [   0.011s] ( 186/1512) warp code_review::comments::comment::tests::original_text_handles_empty_content
+        PASS [   0.013s] ( 187/1512) warp code_review::comments::comment::tests::imported_original_text_strips_only_one_marker_for_markdown_list
+        PASS [   0.013s] ( 188/1512) warp code_review::comments::comment::tests::imported_original_text_strips_only_one_leading_space
+        PASS [   0.014s] ( 189/1512) warp code_review::comments::comment::tests::imported_original_text_strips_context_space_prefix
+        PASS [   0.014s] ( 190/1512) warp code_review::comments::batch::tests::editor_comments_for_file_includes_only_line_comments
+        PASS [   0.015s] ( 191/1512) warp code_review::comments::batch::tests::delete_and_clear_mutations_work
+        PASS [   0.015s] ( 192/1512) warp code_review::comments::batch::tests::upsert_replaces_existing_comment_in_place
+        PASS [   0.014s] ( 193/1512) warp code_review::comments::comment::tests::original_text_handles_plain_text_without_prefix
+        PASS [   0.012s] ( 194/1512) warp code_review::comments::comment::tests::original_text_preserves_markdown_list_dash_in_addition
+        PASS [   0.013s] ( 195/1512) warp code_review::comments::comment::tests::original_text_preserves_dash_only_content_in_addition
+        PASS [   0.014s] ( 196/1512) warp code_review::comments::comment::tests::original_text_preserves_space_prefixed_content
+        PASS [   0.011s] ( 197/1512) warp code_review::comments::comment::tests::original_text_strips_only_one_leading_plus
+        PASS [   0.014s] ( 198/1512) warp code_review::comments::comment::tests::original_text_strips_addition_prefix
+        PASS [   0.012s] ( 199/1512) warp code_review::comments::comment::tests::original_text_strips_deletion_prefix
+        PASS [   0.012s] ( 200/1512) warp code_review::comments::comment::tests::original_text_strips_trailing_newline
+        PASS [   0.013s] ( 201/1512) warp code_review::comments::comment::tests::original_text_strips_only_one_leading_minus
+        PASS [   0.013s] ( 202/1512) warp code_review::diff_state::local::tests::test_parse_git_status_file_without_spaces_still_works
+        PASS [   0.015s] ( 203/1512) warp code_review::diff_state::local::tests::num_lines_in_file_if_non_binary_counts_lines_in_text_file
+        PASS [   0.013s] ( 204/1512) warp code_review::diff_state::local::tests::test_parse_git_status_modified_file_with_multiple_spaces
+        PASS [   0.012s] ( 205/1512) warp code_review::diff_state::local::tests::test_parse_git_status_new_file_with_spaces
+        PASS [   0.016s] ( 206/1512) warp code_review::diff_state::local::tests::num_lines_in_file_if_non_binary_errors_for_directory
+        PASS [   0.015s] ( 207/1512) warp code_review::diff_state::local::tests::test_parse_git_status_mixed_entries_with_spaces
+        PASS [   0.012s] ( 208/1512) warp code_review::diff_state::local::tests::test_parse_git_status_renamed_file_with_spaces
+        PASS [   0.014s] ( 209/1512) warp code_review::diff_state::local::tests::test_parse_git_status_modified_file_with_spaces
+        PASS [   0.011s] ( 210/1512) warp code_review::diff_state::local::tests::test_parse_git_status_unmerged_file_with_spaces
+        PASS [   0.011s] ( 211/1512) warp code_review::diff_state::local::tests::test_parse_range_without_comma
+        PASS [   0.011s] ( 212/1512) warp code_review::diff_state::local::tests::test_parse_unified_diff_header_basic
+        PASS [   0.011s] ( 213/1512) warp code_review::diff_state::local::tests::test_parse_range_with_comma
+        PASS [   0.012s] ( 214/1512) warp code_review::diff_state::local::tests::test_parse_git_status_untracked_file_with_spaces
+        PASS [   0.011s] ( 215/1512) warp code_review::diff_state::local::tests::test_parse_unified_diff_header_malformed
+        PASS [   0.011s] ( 216/1512) warp code_review::diff_state::local::tests::test_sort_branches_main_first_main_already_first
+        PASS [   0.013s] ( 217/1512) warp code_review::diff_state::local::tests::test_parse_unified_diff_header_single_line
+        PASS [   0.012s] ( 218/1512) warp code_review::diff_state::local::tests::test_sort_branches_main_first_empty
+        PASS [   0.011s] ( 219/1512) warp code_review::diff_state::local::tests::test_sort_branches_main_first_promotes_main
+        PASS [   0.013s] ( 220/1512) warp code_review::diff_state::local::tests::test_sort_branches_main_first_multiple_main_flags
+        PASS [   0.012s] ( 221/1512) warp code_review::diff_state::local::tests::test_sort_branches_main_first_preserves_recency_order_for_non_main
+        PASS [   0.015s] ( 222/1512) warp code_review::diff_state::local::tests::test_parse_unified_diff_header_with_context
+        PASS [   0.014s] ( 223/1512) warp code_review::diff_state::local::tests::test_sort_branches_main_first_no_main
+        PASS [   0.015s] ( 224/1512) warp code_review::diff_state::local::tests::untracked_directory_diff_is_empty_and_non_binary
+        PASS [   0.012s] ( 225/1512) warp code_review::diff_state::local::tests::untracked_directory_has_no_baseline_content
+        PASS [   0.014s] ( 226/1512) warp code_review::diff_state::wrapper_tests::branch_info_none_for_test_model
+        PASS [   0.014s] ( 227/1512) warp code_review::diff_state::wrapper_tests::diff_mode_defaults_to_head
+        PASS [   0.015s] ( 228/1512) warp code_review::diff_state::wrapper_tests::get_returns_not_in_repository_for_test_model
+        PASS [   0.016s] ( 229/1512) warp code_review::diff_state::wrapper_tests::has_head_false_for_test_model
+        PASS [   0.013s] ( 230/1512) warp code_review::diff_state::wrapper_tests::new_for_test_creates_local_variant
+        PASS [   0.011s] ( 231/1512) warp code_review::git_repo_model::local::tests::should_refresh_metadata_ignores_ignored_file_updates
+        PASS [   0.014s] ( 232/1512) warp code_review::diff_state::wrapper_tests::uncommitted_stats_none_for_test_model
+        PASS [   0.014s] ( 233/1512) warp code_review::github_repo_model::local::tests::pr_info_cleared_on_branch_change
+        PASS [   0.015s] ( 234/1512) warp code_review::github_repo_model::local::tests::pr_info_cleared_when_branch_goes_away
+        PASS [   0.023s] ( 235/1512) warp code_review::find_model::tests::test_case_sensitive_search
+        PASS [   0.016s] ( 236/1512) warp code_review::github_repo_model::local::tests::repository_info_cleared_on_authoritative_empty_result
+        PASS [   0.023s] ( 237/1512) warp code_review::find_model::tests::test_regex_search
+        PASS [   0.023s] ( 238/1512) warp code_review::find_model::tests::test_clear_selection_when_editor_removed
+        PASS [   0.014s] ( 239/1512) warp code_review::hidden_lines::tests::test_comment_at_file_beginning
+        PASS [   0.012s] ( 240/1512) warp code_review::hidden_lines::tests::test_comment_at_file_end
+        PASS [   0.015s] ( 241/1512) warp code_review::github_repo_model::local::tests::repository_info_preserved_on_fetch_error
+        PASS [   0.011s] ( 242/1512) warp code_review::hidden_lines::tests::test_comment_outside_file_bounds
+        PASS [   0.024s] ( 243/1512) warp code_review::find_model::tests::test_search_across_multiple_editors
+        PASS [   0.013s] ( 244/1512) warp code_review::hidden_lines::tests::test_comment_separate_from_diffs
+        PASS [   0.014s] ( 245/1512) warp code_review::hidden_lines::tests::test_comment_overlapping_with_diff_context
+        PASS [   0.019s] ( 246/1512) warp code_review::github_repo_model::local::tests::repository_info_survives_branch_change
+        PASS [   0.013s] ( 247/1512) warp code_review::hidden_lines::tests::test_comments_only_no_diffs
+        PASS [   0.012s] ( 248/1512) warp code_review::hidden_lines::tests::test_empty_diffs
+        PASS [   0.011s] ( 249/1512) warp completer::tests::test_parse_ls_script_output_empty_output_fails
+        PASS [   0.011s] ( 250/1512) warp completer::tests::test_parse_ls_script_output_empty_directory_is_a_real_listing
+        PASS [   0.012s] ( 251/1512) warp code_review::hidden_lines::tests::test_multiple_diffs_overlapping_context
+        PASS [   0.012s] ( 252/1512) warp completer::tests::test_parse_ls_script_output_drops_only_the_non_utf8_entry
+        PASS [   0.012s] ( 253/1512) warp code_review::hidden_lines::tests::test_multiple_diffs_separate_context
+        PASS [   0.013s] ( 254/1512) warp code_review::hidden_lines::tests::test_insertion_at_beginning
+        PASS [   0.012s] ( 255/1512) warp code_review::hidden_lines::tests::test_single_diff_middle_of_file
+        PASS [   0.015s] ( 256/1512) warp completer::tests::test_ls_script_for_dir_builds_the_expected_command
+        PASS [   0.013s] ( 257/1512) warp completer::tests::test_parse_ls_script_output_splits_dirs_and_files
+        PASS [   0.010s] ( 258/1512) warp completer::tests::test_parse_ls_script_output_zero_files_is_a_real_listing
+        PASS [   0.012s] ( 259/1512) warp completer::tests::test_parse_ls_script_output_truncated_before_separator_fails
+        PASS [   0.013s] ( 260/1512) warp completer::tests::test_parse_ls_script_output_truncated_mid_file_entry_fails
+        PASS [   0.029s] ( 261/1512) warp completer::tests::test_session_context_lists_directory_entries_locally_with_special_characters_in_path
+        PASS [   0.030s] ( 262/1512) warp completer::tests::test_session_context_top_level_commands_includes_builtins
+        PASS [   0.034s] ( 263/1512) warp completer::tests::test_session_context_lists_directory_entries_locally
+        PASS [   0.033s] ( 264/1512) warp completer::tests::test_session_context_top_level_commands_includes_aliases
+        PASS [   0.034s] ( 265/1512) warp completer::tests::test_session_context_top_level_commands_includes_abbreviations
+        PASS [   0.032s] ( 266/1512) warp completer::wsl_guest_listing::tests::test_list_entries_returns_none_on_guest_failure
+        PASS [   0.036s] ( 267/1512) warp completer::tests::test_session_context_refresh_directory_entries_bypasses_cache
+        PASS [   0.034s] ( 268/1512) warp completer::tests::test_session_context_top_level_commands_includes_function_names
+        PASS [   0.035s] ( 269/1512) warp completer::tests::test_session_context_top_level_commands_includes_keywords
+        PASS [   0.044s] ( 270/1512) warp completer::tests::test_session_context_follows_symlinked_directories_remotely
+        PASS [   0.042s] ( 271/1512) warp completer::tests::test_session_context_lists_directory_entries_remotely
+        PASS [   0.012s] ( 272/1512) warp editor::soft_wrap::tests::test_displayed_lines_end_line_greater_than_iterator_size
+        PASS [   0.011s] ( 273/1512) warp editor::soft_wrap::tests::test_soft_wrapped_frame_displayed_lines
+        PASS [   0.012s] ( 274/1512) warp editor::soft_wrap::tests::test_singleton_frames_displayed_lines
+        PASS [   0.042s] ( 275/1512) warp completer::wsl_guest_listing::tests::test_list_entries_follows_symlinks_and_succeeds
+        PASS [   0.013s] ( 276/1512) warp editor::soft_wrap::tests::test_soft_wrapped_row_bounds
+        PASS [   0.012s] ( 277/1512) warp editor::view::element::tests::scroll_position_y_fract_is_continuous_at_first_visible_row_boundary_with_top_section
+        PASS [   0.013s] ( 278/1512) warp editor::view::element::tests::scroll_position_y_fract_is_continuous_at_first_visible_row_boundary_without_top_section
+        PASS [   0.012s] ( 279/1512) warp editor::view::element::tests::scroll_position_y_fract_tracks_fractional_offset_after_boundary
+        PASS [   0.014s] ( 280/1512) warp editor::soft_wrap::tests::test_soft_wrapped_row_bounds_multi_codepoint_cluster
+        PASS [   0.051s] ( 281/1512) warp completer::tests::test_session_context_lists_directory_entries_remotely_with_special_characters_in_path
+        PASS [   0.013s] ( 282/1512) warp editor::view::model::buffer::deferred_ops::tests::test_ordering
+        PASS [   0.011s] ( 283/1512) warp editor::view::model::buffer::deferred_ops::tests::test_replica_deferred
+        PASS [   0.012s] ( 284/1512) warp editor::view::model::buffer::subword_boundaries::tests::test_subword_boundaries_backward_starts
+        PASS [   0.015s] ( 285/1512) warp editor::view::model::buffer::subword_boundaries::tests::test_subword_boundaries_forward_ends
+        PASS [   0.015s] ( 286/1512) warp editor::view::model::buffer::tests::test_anchors
+        PASS [   0.016s] ( 287/1512) warp editor::view::model::buffer::subword_boundaries::tests::test_subword_boundaries_forward_starts
+        PASS [   0.014s] ( 288/1512) warp editor::view::model::buffer::tests::test_change_selections
+        PASS [   0.016s] ( 289/1512) warp editor::view::model::buffer::tests::test_anchors_at_start_and_end
+        PASS [   0.015s] ( 290/1512) warp editor::view::model::buffer::tests::test_concurrent_deletions_with_undo
+        PASS [   0.019s] ( 291/1512) warp editor::view::model::buffer::tests::test_chars_at
+        PASS [   0.019s] ( 292/1512) warp editor::view::model::buffer::tests::test_concurrent_edit_with_conflicting_undo
+        PASS [   0.021s] ( 293/1512) warp editor::view::model::buffer::tests::test_concurrent_insertions
+        PASS [   0.023s] ( 294/1512) warp editor::view::model::buffer::tests::test_concurrent_edit_with_undo
+        PASS [   0.025s] ( 295/1512) warp editor::view::model::buffer::tests::test_concurrent_insertions_at_same_location
+        PASS [   0.023s] ( 296/1512) warp editor::view::model::buffer::tests::test_concurrent_non_overlapping_deletions
+        PASS [   0.022s] ( 297/1512) warp editor::view::model::buffer::tests::test_concurrent_replace
+        PASS [   0.023s] ( 298/1512) warp editor::view::model::buffer::tests::test_concurrent_overlapping_deletions
+        PASS [   0.021s] ( 299/1512) warp editor::view::model::buffer::tests::test_deferred_ops
+        PASS [   0.023s] ( 300/1512) warp editor::view::model::buffer::tests::test_deletions_with_undo
+        PASS [   0.020s] ( 301/1512) warp editor::view::model::buffer::tests::test_duplicate_ops
+        PASS [   0.017s] ( 302/1512) warp editor::view::model::buffer::tests::test_edit_events
+        PASS [   0.017s] ( 303/1512) warp editor::view::model::buffer::tests::test_edit_for_test
+        PASS [   0.015s] ( 304/1512) warp editor::view::model::buffer::tests::test_edit_multiple_ranges
+        PASS [   0.041s] ( 305/1512) warp editor::view::model::buffer::tests::test_change_selections_without_batching
+        PASS [   0.017s] ( 306/1512) warp editor::view::model::buffer::tests::test_edit_multiple_ranges_empty_string
+        PASS [   0.015s] ( 307/1512) warp editor::view::model::buffer::tests::test_edit_style_inheritable
+        PASS [   0.013s] ( 308/1512) warp editor::view::model::buffer::tests::test_get_word_near_point
+        PASS [   0.015s] ( 309/1512) warp editor::view::model::buffer::tests::test_edit_with_text_style
+        PASS [   0.013s] ( 310/1512) warp editor::view::model::buffer::tests::test_line_len
+        PASS [   0.014s] ( 311/1512) warp editor::view::model::buffer::tests::test_insertion_within_deletion
+        PASS [   0.014s] ( 312/1512) warp editor::view::model::buffer::tests::test_merge_local_selections
+        PASS [   0.164s] ( 313/1512) warp code_review::diff_state::local::tests::renamed_file_content_at_head_reads_old_path
+        PASS [   0.018s] ( 314/1512) warp editor::view::model::buffer::tests::test_fragment_ids
+        PASS [   0.015s] ( 315/1512) warp editor::view::model::buffer::tests::test_merging_selections_with_remote_edits
+        PASS [   0.012s] ( 316/1512) warp editor::view::model::buffer::tests::test_only_one_undo_record_per_batch
+        PASS [   0.016s] ( 317/1512) warp editor::view::model::buffer::tests::test_multiple_peers
+        PASS [   0.025s] ( 318/1512) warp editor::view::model::buffer::tests::test_edit_without_batching
+        PASS [   0.016s] ( 319/1512) warp editor::view::model::buffer::tests::test_out_of_order_undo
+        PASS [   0.014s] ( 320/1512) warp editor::view::model::buffer::tests::test_record_edits
+        PASS [   0.016s] ( 321/1512) warp editor::view::model::buffer::tests::test_receiving_out_of_date_selection_updates
+        PASS [   0.025s] ( 322/1512) warp editor::view::model::buffer::tests::test_nested_batches_are_not_allowed
+        PASS [   0.017s] ( 323/1512) warp editor::view::model::buffer::tests::test_receiving_selection_change_before_edit
+        PASS [   0.016s] ( 324/1512) warp editor::view::model::buffer::tests::test_remote_undo_redo
+        PASS [   0.016s] ( 325/1512) warp editor::view::model::buffer::tests::test_replace_selected_text
+        PASS [   0.015s] ( 326/1512) warp editor::view::model::buffer::tests::test_stable_selections
+        PASS [   0.015s] ( 327/1512) warp editor::view::model::buffer::tests::test_text_style_ranges
+        PASS [   0.016s] ( 328/1512) warp editor::view::model::buffer::tests::test_text_styles_back_to_back
+        PASS [   0.014s] ( 329/1512) warp editor::view::model::buffer::tests::test_text_styles_delete_and_replace_whole_fragment
+        PASS [   0.014s] ( 330/1512) warp editor::view::model::buffer::tests::test_text_styles_delete_last_word
+        PASS [   0.015s] ( 331/1512) warp editor::view::model::buffer::tests::test_text_styles_delete_until_end_of_highlight
+        PASS [   0.014s] ( 332/1512) warp editor::view::model::buffer::tests::test_text_styles_delete_until_highlight
+        PASS [   0.013s] ( 333/1512) warp editor::view::model::buffer::tests::test_update_text_style_backspace_splice_inheritance
+        PASS [   0.014s] ( 334/1512) warp editor::view::model::buffer::tests::test_undo_redo
+        PASS [   0.015s] ( 335/1512) warp editor::view::model::buffer::tests::test_text_summary_for_range
+        PASS [   0.016s] ( 336/1512) warp editor::view::model::buffer::tests::test_undo_should_restore_selection
+        PASS [   0.014s] ( 337/1512) warp editor::view::model::buffer::tests::test_update_text_style_clear_style
+        PASS [   0.016s] ( 338/1512) warp editor::view::model::buffer::tests::test_update_text_style_backspace
+        PASS [   0.015s] ( 339/1512) warp editor::view::model::buffer::tests::test_update_text_style_complex_multiple_ranges
+        PASS [   0.015s] ( 340/1512) warp editor::view::model::buffer::tests::test_update_text_style_entire_run
+        PASS [   0.013s] ( 341/1512) warp editor::view::model::buffer::tests::test_update_text_style_multiple_style_updates
+        PASS [   0.201s] ( 342/1512) warp code_review::diff_state::local::tests::staged_rename_and_modify_produces_non_empty_diff
+        PASS [   0.011s] ( 343/1512) warp editor::view::model::buffer::text::tests::test_basic
+        PASS [   0.014s] ( 344/1512) warp editor::view::model::buffer::tests::test_update_text_style_one_char
+        PASS [   0.011s] ( 345/1512) warp editor::view::model::buffer::undo::tests::test_undo_stack_capacity
+        PASS [   0.013s] ( 346/1512) warp editor::view::model::buffer::undo::tests::test_max_undo_ts
+        PASS [   0.015s] ( 347/1512) warp editor::view::model::buffer::undo::tests::test_is_edit_undone
+        PASS [   0.017s] ( 348/1512) warp editor::view::model::buffer::tests::test_update_text_style_partial_run
+        PASS [   0.013s] ( 349/1512) warp editor::view::model::buffer::undo::tests::test_undo_stack_coalescing
+        PASS [   0.012s] ( 350/1512) warp editor::view::model::buffer::undo::tests::test_undo_stack_selections_changed
+        PASS [   0.013s] ( 351/1512) warp editor::view::model::buffer::undo::tests::test_undo_stack_initialization
+        PASS [   0.022s] ( 352/1512) warp editor::view::model::buffer::undo::tests::test_undo_history_grow_only
+        PASS [   0.014s] ( 353/1512) warp editor::view::model::buffer::undo::tests::test_undo_stack_undo_fork
+        PASS [   0.011s] ( 354/1512) warp editor::view::model::buffer::undo::tests::test_undo_stack_undo_redo
+        PASS [   0.011s] ( 355/1512) warp editor::view::model::buffer::undo::tests::test_was_edit_undone
+        PASS [   0.012s] ( 356/1512) warp editor::view::model::display_map::fold_map::tests::test_desynced_buffer
+        PASS [   0.014s] ( 357/1512) warp editor::view::model::display_map::fold_map::tests::test_buffer_rows
+        PASS [   0.016s] ( 358/1512) warp editor::view::model::display_map::fold_map::tests::test_basic_folds
+        PASS [   0.013s] ( 359/1512) warp editor::view::model::display_map::fold_map::tests::test_merging_folds_via_edit
+        PASS [   0.011s] ( 360/1512) warp editor::view::model::display_map::tests::test_expand_tabs
+        PASS [   0.013s] ( 361/1512) warp editor::view::model::display_map::tests::test_max_point
+        PASS [   0.019s] ( 362/1512) warp editor::view::model::display_map::fold_map::tests::test_overlapping_folds
+        PASS [   0.015s] ( 363/1512) warp editor::view::model::display_map::tests::test_chars_at
+        PASS [   0.015s] ( 364/1512) warp editor::view::model::display_map::tests::test_collapse_tabs
+        PASS [   0.013s] ( 365/1512) warp editor::view::model::tests::test_edit_change_selections
+        PASS [   0.016s] ( 366/1512) warp editor::view::model::tests::test_edit_post_buffer_edit_change_selections
+        PASS [   0.019s] ( 367/1512) warp editor::view::model::tests::test_edit_merge_selections
+        PASS [   0.016s] ( 368/1512) warp editor::view::model::tests::test_edit_update_buffer
+        PASS [   0.014s] ( 369/1512) warp editor::view::model::tests::test_edit_when_only_selectable
+        PASS [   0.014s] ( 370/1512) warp editor::view::model::tests::test_edit_when_interaction_disabled
+        PASS [   0.015s] ( 371/1512) warp editor::view::model::tests::test_edit_update_buffer_ignoring_undo
+        PASS [   0.015s] ( 372/1512) warp editor::view::model::tests::test_ephemeral_edit
+        PASS [   0.026s] ( 373/1512) warp editor::view::model::tests::test_change_buffer_without_edit
+        PASS [   0.015s] ( 374/1512) warp editor::view::model::tests::test_materialize_ephemeral_edit
+        PASS [   0.059s] ( 375/1512) warp editor::view::model::buffer::text::tests::test_random
+        PASS [   0.017s] ( 376/1512) warp editor::view::model::tests::test_replace_ephemeral_edit_with_ephemeral
+        PASS [   0.014s] ( 377/1512) warp editor::view::model::tests::test_selection_change_doesnt_materialize_ephemeral_edit
+        PASS [   0.016s] ( 378/1512) warp editor::view::model::tests::test_restoring_invalid_selections
+        PASS [   0.017s] ( 379/1512) warp editor::view::model::tests::test_undo_redo
+        PASS [   0.017s] ( 380/1512) warp editor::view::tests::marked_text_tests::test_set_marked_text_multiple_nonempty_selections
+        PASS [   0.019s] ( 381/1512) warp editor::view::tests::marked_text_tests::test_set_marked_text
+        PASS [   0.019s] ( 382/1512) warp editor::view::tests::marked_text_tests::test_set_marked_text_multiple_empty_selections
+        PASS [   0.018s] ( 383/1512) warp editor::view::tests::marked_text_tests::test_set_marked_text_vim_insert_mode
+        PASS [   0.019s] ( 384/1512) warp editor::view::tests::marked_text_tests::test_set_marked_text_vim_normal_mode
+        PASS [   0.018s] ( 385/1512) warp editor::view::tests::test_add_non_expanding_space
+        PASS [   0.019s] ( 386/1512) warp editor::view::tests::test_autoscroll_vertical
+        PASS [   0.017s] ( 387/1512) warp editor::view::tests::test_buffer_points_to_cache
+        PASS [   0.018s] ( 388/1512) warp editor::view::tests::test_backspace
+        PASS [   0.026s] ( 389/1512) warp editor::view::tests::test_add_next_occurrence
+        PASS [   0.018s] ( 390/1512) warp editor::view::tests::test_clear_and_copy_lines
+        PASS [   0.022s] ( 391/1512) warp editor::view::tests::test_autosuggestions
+        PASS [   0.027s] ( 392/1512) warp editor::view::tests::test_autocomplete_symbols
+        PASS [   0.018s] ( 393/1512) warp editor::view::tests::test_clear_lines
+        PASS [   0.039s] ( 394/1512) warp editor::view::tests::test_add_cursor
+        PASS [   0.018s] ( 395/1512) warp editor::view::tests::test_clear_selections
+        PASS [   0.018s] ( 396/1512) warp editor::view::tests::test_clear_text_styles
+        PASS [   0.018s] ( 397/1512) warp editor::view::tests::test_cursor_blink
+        PASS [   0.018s] ( 398/1512) warp editor::view::tests::test_cut_word_right
+        PASS [   0.019s] ( 399/1512) warp editor::view::tests::test_cut_word_left
+        PASS [   0.021s] ( 400/1512) warp editor::view::tests::test_cursor_top_cursor_bottom
+        PASS [   0.018s] ( 401/1512) warp editor::view::tests::test_delete_all_on_ephemeral_edit
+        PASS [   0.022s] ( 402/1512) warp editor::view::tests::test_cursor_line_start
+        PASS [   0.024s] ( 403/1512) warp editor::view::tests::test_cursor_line_end
+        PASS [   0.094s] ( 404/1512) warp editor::view::model::display_map::fold_map::tests::test_random_folds
+        PASS [   0.017s] ( 405/1512) warp editor::view::tests::test_delete_and_cut_all_right
+        PASS [   0.016s] ( 406/1512) warp editor::view::tests::test_delete_basic
+        PASS [   0.016s] ( 407/1512) warp editor::view::tests::test_delete_end_of_buffer
+        PASS [   0.018s] ( 408/1512) warp editor::view::tests::test_delete_empty_buffer
+        PASS [   0.017s] ( 409/1512) warp editor::view::tests::test_delete_word_left
+        PASS [   0.016s] ( 410/1512) warp editor::view::tests::test_delete_word_right
+        PASS [   0.018s] ( 411/1512) warp editor::view::tests::test_drag_and_drop_files_applies_path_transformer
+        PASS [   0.020s] ( 412/1512) warp editor::view::tests::test_delete_newline_and_end_of_line
+        PASS [   0.016s] ( 413/1512) warp editor::view::tests::test_indent_empty_buffer
+        PASS [   0.019s] ( 414/1512) warp editor::view::tests::test_indent
+        PASS [   0.021s] ( 415/1512) warp editor::view::tests::test_fold
+        PASS [   0.018s] ( 416/1512) warp editor::view::tests::test_interaction_state
+        PASS [   0.023s] ( 417/1512) warp editor::view::tests::test_home_end_keybinding_resolution
+        PASS [   0.016s] ( 418/1512) warp editor::view::tests::test_last_buffer_text
+        PASS [   0.270s] ( 419/1512) warp completer::tests::test_session_context_top_level_commands_includes_external_commands
+        PASS [   0.018s] ( 420/1512) warp editor::view::tests::test_move_backward_one_subword
+        PASS [   0.018s] ( 421/1512) warp editor::view::tests::test_move_backward_one_word
+        PASS [   0.017s] ( 422/1512) warp editor::view::tests::test_move_forward_one_word
+        PASS [   0.018s] ( 423/1512) warp editor::view::tests::test_move_to_visual_line_start_and_end_on_soft_wrapped_row
+        PASS [   0.019s] ( 424/1512) warp editor::view::tests::test_move_forward_one_subword
+        PASS [   0.017s] ( 425/1512) warp editor::view::tests::test_move_to_visual_line_start_non_wrapped_unchanged
+        PASS [   0.019s] ( 426/1512) warp editor::view::tests::test_multi_line_unindent
+        PASS [   0.025s] ( 427/1512) warp editor::view::tests::test_move_cursor
+        PASS [   0.021s] ( 428/1512) warp editor::view::tests::test_page_up
+        PASS [   0.022s] ( 429/1512) warp editor::view::tests::test_page_down
+        PASS [   0.017s] ( 430/1512) warp editor::view::tests::test_paste_clipboard_with_bmp_and_text_pastes_text
+        PASS [   0.017s] ( 431/1512) warp editor::view::tests::test_paste_clipboard_with_image_only_keeps_text_empty
+        PASS [   0.017s] ( 432/1512) warp editor::view::tests::test_paste_clipboard_with_png_and_text_pastes_text
+        PASS [   0.025s] ( 433/1512) warp editor::view::tests::test_partial_autosuggestion
+        PASS [   0.017s] ( 434/1512) warp editor::view::tests::test_placeholder_text
+        PASS [   0.019s] ( 435/1512) warp editor::view::tests::test_paste_clipboard_with_text_only_should_paste_text_normally
+        PASS [   0.018s] ( 436/1512) warp editor::view::tests::test_select_left_by_word
+        PASS [   0.021s] ( 437/1512) warp editor::view::tests::test_pending_selection_always_one_selection
+        PASS [   0.018s] ( 438/1512) warp editor::view::tests::test_select_line
+        PASS [   0.016s] ( 439/1512) warp editor::view::tests::test_select_next_occurrence_multi_byte
+        PASS [   0.016s] ( 440/1512) warp editor::view::tests::test_select_next_occurrence
+        PASS [   0.027s] ( 441/1512) warp editor::view::tests::test_select_lines_above
+        PASS [   0.017s] ( 442/1512) warp editor::view::tests::test_select_word
+        PASS [   0.018s] ( 443/1512) warp editor::view::tests::test_select_right_by_word
+        PASS [   0.015s] ( 444/1512) warp editor::view::tests::test_select_word_with_custom_boundaries
+        PASS [   0.026s] ( 445/1512) warp editor::view::tests::test_select_lines_below
+        PASS [   0.015s] ( 446/1512) warp editor::view::tests::test_selected_text
+        PASS [   0.027s] ( 447/1512) warp editor::view::tests::test_select_linewise
+        PASS [   0.016s] ( 448/1512) warp editor::view::tests::test_single_line_multi_cursor_unindent
+        PASS [   0.023s] ( 449/1512) warp editor::view::tests::test_selection_mode_lines
+        PASS [   0.018s] ( 450/1512) warp editor::view::tests::test_system_delete_multibyte_characters_basic
+        PASS [   0.017s] ( 451/1512) warp editor::view::tests::test_system_delete_various_unicode_categories
+        PASS [   0.016s] ( 452/1512) warp editor::view::tests::test_undo_redo_text_styles
+        PASS [   0.019s] ( 453/1512) warp editor::view::tests::test_system_delete_multibyte_characters_edge_cases
+        PASS [   0.020s] ( 454/1512) warp editor::view::tests::test_system_delete_basic
+        PASS [   0.019s] ( 455/1512) warp editor::view::tests::test_undo_redo
+        PASS [   0.030s] ( 456/1512) warp editor::view::tests::test_selection_with_mouse
+        PASS [   0.020s] ( 457/1512) warp editor::view::tests::test_unindent
+        PASS [   0.019s] ( 458/1512) warp editor::view::tests::vim_handler_tests::test_vim_accept_full_autosuggestions_char
+        PASS [   0.049s] ( 459/1512) warp editor::view::tests::test_select_word_with_smart_select
+        PASS [   0.017s] ( 460/1512) warp editor::view::tests::vim_handler_tests::test_vim_begin_line_below
+        PASS [   0.019s] ( 461/1512) warp editor::view::tests::vim_handler_tests::test_vim_accept_full_autosuggestions_line_end
+        PASS [   0.020s] ( 462/1512) warp editor::view::tests::vim_handler_tests::test_vim_accept_partial_autosuggestions_word
+        PASS [   0.020s] ( 463/1512) warp editor::view::tests::vim_handler_tests::test_vim_begin_line_above
+        PASS [   0.021s] ( 464/1512) warp editor::view::tests::vim_handler_tests::test_vim_basic_dot_repeat
+        PASS [   0.053s] ( 465/1512) warp editor::view::tests::test_selection_mode_words
+        PASS [   0.019s] ( 466/1512) warp editor::view::tests::vim_handler_tests::test_vim_buffer_beginning_with_operator
+        PASS [   0.027s] ( 467/1512) warp editor::view::tests::vim_handler_tests::test_vim_block_text_objects
+        PASS [   0.020s] ( 468/1512) warp editor::view::tests::vim_handler_tests::test_vim_buffer_end_with_operator
+        PASS [   0.052s] ( 469/1512) warp editor::view::tests::test_smart_select_with_drag
+        PASS [   0.024s] ( 470/1512) warp editor::view::tests::vim_handler_tests::test_vim_change_char_backspace
+        PASS [   0.020s] ( 471/1512) warp editor::view::tests::vim_handler_tests::test_vim_change_char_motion_sideways
+        PASS [   0.019s] ( 472/1512) warp editor::view::tests::vim_handler_tests::test_vim_change_char_space
+        PASS [   0.018s] ( 473/1512) warp editor::view::tests::vim_handler_tests::test_vim_change_line_c0
+        PASS [   0.018s] ( 474/1512) warp editor::view::tests::vim_handler_tests::test_vim_change_line_c_caret
+        PASS [   0.277s] ( 475/1512) warp editor::view::model::buffer::tests::test_random_edits
+        PASS [   0.022s] ( 476/1512) warp editor::view::tests::vim_handler_tests::test_vim_change_line_cc
+        PASS [   0.019s] ( 477/1512) warp editor::view::tests::vim_handler_tests::test_vim_change_word_cb
+        PASS [   0.017s] ( 478/1512) warp editor::view::tests::vim_handler_tests::test_vim_change_word_cge
+        PASS [   0.018s] ( 479/1512) warp editor::view::tests::vim_handler_tests::test_vim_change_word_ce
+        PASS [   0.027s] ( 480/1512) warp editor::view::tests::vim_handler_tests::test_vim_change_line_c_dollar
+        PASS [   0.018s] ( 481/1512) warp editor::view::tests::vim_handler_tests::test_vim_change_word_cw
+        PASS [   0.038s] ( 482/1512) warp editor::view::tests::vim_handler_tests::test_vim_change_char_motion_up
+        PASS [   0.041s] ( 483/1512) warp editor::view::tests::vim_handler_tests::test_vim_change_char_motion_down
+        PASS [   0.020s] ( 484/1512) warp editor::view::tests::vim_handler_tests::test_vim_comma_backward_at_number_repeat
+        PASS [   0.022s] ( 485/1512) warp editor::view::tests::vim_handler_tests::test_vim_charwise_visual_mode
+        PASS [   0.022s] ( 486/1512) warp editor::view::tests::vim_handler_tests::test_vim_comma_backward_before_number_repeat
+        PASS [   0.023s] ( 487/1512) warp editor::view::tests::vim_handler_tests::test_vim_char_append
+        PASS [   0.015s] ( 488/1512) warp editor::view::tests::vim_handler_tests::test_vim_ctrl_c_normal
+        PASS [   0.022s] ( 489/1512) warp editor::view::tests::vim_handler_tests::test_vim_comma_forward_at_number_repeat
+        PASS [   0.016s] ( 490/1512) warp editor::view::tests::vim_handler_tests::test_vim_ctrl_c_insert
+        PASS [   0.020s] ( 491/1512) warp editor::view::tests::vim_handler_tests::test_vim_comma_forward_before_number_repeat
+        PASS [   0.018s] ( 492/1512) warp editor::view::tests::vim_handler_tests::test_vim_ctrl_c_replace
+        PASS [   0.017s] ( 493/1512) warp editor::view::tests::vim_handler_tests::test_vim_ctrl_c_visual
+        PASS [   0.020s] ( 494/1512) warp editor::view::tests::vim_handler_tests::test_vim_cursor_line_cap_on_forward_motion
+        PASS [   0.019s] ( 495/1512) warp editor::view::tests::vim_handler_tests::test_vim_delete_and_paste_charwise
+        PASS [   0.021s] ( 496/1512) warp editor::view::tests::vim_handler_tests::test_vim_db_newline_quirks
+        PASS [   0.020s] ( 497/1512) warp editor::view::tests::vim_handler_tests::test_vim_delete_char_backspace
+        PASS [   0.021s] ( 498/1512) warp editor::view::tests::vim_handler_tests::test_vim_delete_char_motion_down
+        PASS [   0.019s] ( 499/1512) warp editor::view::tests::vim_handler_tests::test_vim_delete_char_motion_sideways
+        PASS [   0.017s] ( 500/1512) warp editor::view::tests::vim_handler_tests::test_vim_delete_char_x
+        PASS [   0.019s] ( 501/1512) warp editor::view::tests::vim_handler_tests::test_vim_delete_char_space
+        PASS [   0.029s] ( 502/1512) warp editor::view::tests::vim_handler_tests::test_vim_cursor_line_cap_on_up_down_motion
+        PASS [   0.021s] ( 503/1512) warp editor::view::tests::vim_handler_tests::test_vim_delete_char_motion_up
+        PASS [   0.018s] ( 504/1512) warp editor::view::tests::vim_handler_tests::test_vim_delete_lines_d0
+        PASS [   0.028s] ( 505/1512) warp editor::view::tests::vim_handler_tests::test_vim_delete_and_paste_linewise
+        PASS [   0.023s] ( 506/1512) warp editor::view::tests::vim_handler_tests::test_vim_delete_lines
+        PASS [   0.017s] ( 507/1512) warp editor::view::tests::vim_handler_tests::test_vim_delete_lines_d_caret
+        PASS [   0.020s] ( 508/1512) warp editor::view::tests::vim_handler_tests::test_vim_delete_word_db
+        PASS [   0.020s] ( 509/1512) warp editor::view::tests::vim_handler_tests::test_vim_delete_lines_d_dollar
+        PASS [   0.018s] ( 510/1512) warp editor::view::tests::vim_handler_tests::test_vim_delete_word_dge
+        PASS [   0.017s] ( 511/1512) warp editor::view::tests::vim_handler_tests::test_vim_delete_word_empty
+        PASS [   0.020s] ( 512/1512) warp editor::view::tests::vim_handler_tests::test_vim_delete_word_de
+        PASS [   0.019s] ( 513/1512) warp editor::view::tests::vim_handler_tests::test_vim_delete_word_dw
+        PASS [   0.017s] ( 514/1512) warp editor::view::tests::vim_handler_tests::test_vim_dot_repeat_with_number_repeat
+        PASS [   0.019s] ( 515/1512) warp editor::view::tests::vim_handler_tests::test_vim_enter
+        PASS [   0.018s] ( 516/1512) warp editor::view::tests::vim_handler_tests::test_vim_find_char_motion
+        PASS [   0.023s] ( 517/1512) warp editor::view::tests::vim_handler_tests::test_vim_dw_newline_quirks
+        PASS [   0.026s] ( 518/1512) warp editor::view::tests::vim_handler_tests::test_vim_dot_repeat_into_insert_mode
+        PASS [   0.020s] ( 519/1512) warp editor::view::tests::vim_handler_tests::test_vim_join_line
+        PASS [   0.024s] ( 520/1512) warp editor::view::tests::vim_handler_tests::test_vim_general_registers
+        PASS [   0.017s] ( 521/1512) warp editor::view::tests::vim_handler_tests::test_vim_join_line_empty
+        PASS [   0.018s] ( 522/1512) warp editor::view::tests::vim_handler_tests::test_vim_jump_to_end_and_beginning
+        PASS [   0.017s] ( 523/1512) warp editor::view::tests::vim_handler_tests::test_vim_line_navigation
+        PASS [   0.017s] ( 524/1512) warp editor::view::tests::vim_handler_tests::test_vim_lowercase_normal
+        PASS [   0.024s] ( 525/1512) warp editor::view::tests::vim_handler_tests::test_vim_jump_to_unmatched_bracket
+        PASS [   0.017s] ( 526/1512) warp editor::view::tests::vim_handler_tests::test_vim_lowercase_visual
+        PASS [   0.021s] ( 527/1512) warp editor::view::tests::vim_handler_tests::test_vim_linewise_visual_mode
+        PASS [   0.025s] ( 528/1512) warp editor::view::tests::vim_handler_tests::test_vim_line_append
+        PASS [   0.025s] ( 529/1512) warp editor::view::tests::vim_handler_tests::test_vim_line_prepend
+        PASS [   0.016s] ( 530/1512) warp editor::view::tests::vim_handler_tests::test_vim_normal_mode_backspace
+        PASS [   0.028s] ( 531/1512) warp editor::view::tests::vim_handler_tests::test_vim_jump_to_matching_bracket
+        PASS [   0.019s] ( 532/1512) warp editor::view::tests::vim_handler_tests::test_vim_minus_motion
+        PASS [   0.017s] ( 533/1512) warp editor::view::tests::vim_handler_tests::test_vim_normal_mode_space
+        PASS [   0.017s] ( 534/1512) warp editor::view::tests::vim_handler_tests::test_vim_number_repeat_action
+        PASS [   0.020s] ( 535/1512) warp editor::view::tests::vim_handler_tests::test_vim_number_repeat_character_motions_down
+        PASS [   0.025s] ( 536/1512) warp editor::view::tests::vim_handler_tests::test_vim_number_repeat_character_motion
+        PASS [   0.022s] ( 537/1512) warp editor::view::tests::vim_handler_tests::test_vim_number_repeat_character_motions_left
+        PASS [   0.020s] ( 538/1512) warp editor::view::tests::vim_handler_tests::test_vim_number_repeat_join_line
+        PASS [   0.021s] ( 539/1512) warp editor::view::tests::vim_handler_tests::test_vim_number_repeat_character_motions_up
+        PASS [   0.023s] ( 540/1512) warp editor::view::tests::vim_handler_tests::test_vim_number_repeat_character_motions_right
+        PASS [   0.020s] ( 541/1512) warp editor::view::tests::vim_handler_tests::test_vim_number_repeat_op_combination
+        PASS [   0.023s] ( 542/1512) warp editor::view::tests::vim_handler_tests::test_vim_number_repeat_line_motion
+        PASS [   0.022s] ( 543/1512) warp editor::view::tests::vim_handler_tests::test_vim_number_repeat_op_line_object
+        PASS [   0.023s] ( 544/1512) warp editor::view::tests::vim_handler_tests::test_vim_number_repeat_op_line_motions
+        PASS [   0.029s] ( 545/1512) warp editor::view::tests::vim_handler_tests::test_vim_number_repeat_insert_mode
+        PASS [   0.016s] ( 546/1512) warp editor::view::tests::vim_handler_tests::test_vim_number_repeat_yank_paste_charwise
+        PASS [   0.024s] ( 547/1512) warp editor::view::tests::vim_handler_tests::test_vim_number_repeat_word_motion
+        PASS [   0.026s] ( 548/1512) warp editor::view::tests::vim_handler_tests::test_vim_number_repeat_op_word_motion
+        PASS [   0.021s] ( 549/1512) warp editor::view::tests::vim_handler_tests::test_vim_number_repeat_yank_paste_linewise
+        PASS [   0.017s] ( 550/1512) warp editor::view::tests::vim_handler_tests::test_vim_paragraph_change_inner_consecutive_blank_lines
+        PASS [   0.019s] ( 551/1512) warp editor::view::tests::vim_handler_tests::test_vim_operators_on_word_text_objects
+        PASS [   0.022s] ( 552/1512) warp editor::view::tests::vim_handler_tests::test_vim_operators_on_jump_to_matching_bracket
+        PASS [   0.020s] ( 553/1512) warp editor::view::tests::vim_handler_tests::test_vim_operators_with_find_char_motion
+        PASS [   0.021s] ( 554/1512) warp editor::view::tests::vim_handler_tests::test_vim_operators_on_quote_text_objects
+        PASS [   0.017s] ( 555/1512) warp editor::view::tests::vim_handler_tests::test_vim_paragraph_delete_a_paragraph_two_paragraphs
+        PASS [   0.018s] ( 556/1512) warp editor::view::tests::vim_handler_tests::test_vim_paragraph_delete_inner_consecutive_blank_lines
+        PASS [   0.019s] ( 557/1512) warp editor::view::tests::vim_handler_tests::test_vim_paragraph_visual_inner_single_paragraph
+        PASS [   0.017s] ( 558/1512) warp editor::view::tests::vim_handler_tests::test_vim_replace_number_repeat
+        PASS [   0.019s] ( 559/1512) warp editor::view::tests::vim_handler_tests::test_vim_paragraph_yank_inner_single_paragraph
+        PASS [   0.022s] ( 560/1512) warp editor::view::tests::vim_handler_tests::test_vim_registers_system_clipboard
+        PASS [   0.025s] ( 561/1512) warp editor::view::tests::vim_handler_tests::test_vim_plus_motion
+        PASS [   0.019s] ( 562/1512) warp editor::view::tests::vim_handler_tests::test_vim_replace_number_repeat_end_of_line
+        PASS [   0.017s] ( 563/1512) warp editor::view::tests::vim_handler_tests::test_vim_replace_simple
+        PASS [   0.019s] ( 564/1512) warp editor::view::tests::vim_handler_tests::test_vim_semicolon_and_comma
+        PASS [   0.020s] ( 565/1512) warp editor::view::tests::vim_handler_tests::test_vim_semicolon_backward_at_number_repeat
+        PASS [   0.020s] ( 566/1512) warp editor::view::tests::vim_handler_tests::test_vim_semicolon_forward_before_number_repeat
+        PASS [   0.021s] ( 567/1512) warp editor::view::tests::vim_handler_tests::test_vim_semicolon_backward_before_number_repeat
+        PASS [   0.020s] ( 568/1512) warp editor::view::tests::vim_handler_tests::test_vim_substitute_char
+        PASS [   0.022s] ( 569/1512) warp editor::view::tests::vim_handler_tests::test_vim_semicolon_forward_at_number_repeat
+        PASS [   0.022s] ( 570/1512) warp editor::view::tests::vim_handler_tests::test_vim_toggle_case_number_repeat
+        PASS [   0.018s] ( 571/1512) warp editor::view::tests::vim_handler_tests::test_vim_toggle_case_simple
+        PASS [   0.016s] ( 572/1512) warp editor::view::tests::vim_handler_tests::test_vim_toggle_case_visual
+        PASS [   0.023s] ( 573/1512) warp editor::view::tests::vim_handler_tests::test_vim_toggle_case_normal_operation
+        PASS [   0.028s] ( 574/1512) warp editor::view::tests::vim_handler_tests::test_vim_substitute_line
+        PASS [   0.018s] ( 575/1512) warp editor::view::tests::vim_handler_tests::test_vim_unnamed_system_clipboard
+        PASS [   0.019s] ( 576/1512) warp editor::view::tests::vim_handler_tests::test_vim_uppercase_normal
+        PASS [   0.018s] ( 577/1512) warp editor::view::tests::vim_handler_tests::test_vim_uppercase_visual
+        PASS [   0.017s] ( 578/1512) warp editor::view::tests::vim_handler_tests::test_vim_visual_mode_paste
+        PASS [   0.025s] ( 579/1512) warp editor::view::tests::vim_handler_tests::test_vim_underscore_motion
+        PASS [   0.019s] ( 580/1512) warp editor::view::tests::vim_handler_tests::test_vim_visual_mode_paste_after_history_recall
+        PASS [   0.010s] ( 581/1512) warp keyboard::tests::test_long_user_defined_keybinding_to_persisted_trigger
+        PASS [   0.012s] ( 582/1512) warp keyboard::tests::test_long_persisted_trigger_to_user_defined_keybinding
+        PASS [   0.022s] ( 583/1512) warp editor::view::tests::vim_handler_tests::test_vim_visual_mode_text_objects
+        PASS [   0.017s] ( 584/1512) warp editor::view::tests::vim_handler_tests::test_vim_yank_and_paste_charwise
+        PASS [   0.012s] ( 585/1512) warp keyboard::tests::test_persisted_trigger_to_removed_user_keybinding
+        PASS [   0.011s] ( 586/1512) warp keyboard::tests::test_removed_user_keybinding_to_persisted_trigger
+        PASS [   0.011s] ( 587/1512) warp keyboard::tests::test_short_persisted_trigger_to_user_defined_keybinding
+        PASS [   0.019s] ( 588/1512) warp editor::view::tests::vim_handler_tests::test_vim_yank_and_paste_space
+        PASS [   0.021s] ( 589/1512) warp editor::view::tests::vim_handler_tests::test_vim_yank_and_paste_backspace
+        PASS [   0.011s] ( 590/1512) warp keyboard::tests::test_short_user_defined_keybinding_to_persisted_trigger
+        PASS [   0.028s] ( 591/1512) warp editor::view::tests::vim_handler_tests::test_vim_visual_selection_with_newlines
+        PASS [   0.023s] ( 592/1512) warp editor::view::tests::vim_handler_tests::test_vim_yank_and_paste_linewise
+        PASS [   0.012s] ( 593/1512) warp keyboard::tests::test_unparsable_persisted_trigger
+        PASS [   0.010s] ( 594/1512) warp launch_configs::launch_config::tests::test_config_from_snapshot_filters_tabs
+        PASS [   0.011s] ( 595/1512) warp launch_configs::launch_config::tests::test_config_from_snapshot_filters_panes
+        PASS [   0.011s] ( 596/1512) warp launch_configs::launch_config::tests::test_config_from_snapshot_flattens_single_pane
+        PASS [   0.012s] ( 597/1512) warp launch_configs::launch_config::tests::test_config_with_active_tab_being_filtered
+        PASS [   0.531s] ( 598/1512) warp completer::wsl_guest_listing::tests::test_run_guest_listing_returns_none_on_timeout
+        PASS [   0.011s] ( 599/1512) warp launch_configs::launch_config::tests::test_tab_level_commands_are_applied_to_focused_pane_in_branch_layout
+        PASS [   0.012s] ( 600/1512) warp launch_configs::launch_config::tests::test_config_with_active_tab_index_and_filtered_tabs
+        PASS [   0.011s] ( 601/1512) warp launch_configs::launch_config::tests::test_tab_level_commands_are_applied_to_leaf_layout
+        PASS [   0.013s] ( 602/1512) warp launch_configs::launch_config::tests::test_config_with_active_tab_index
+        PASS [   0.013s] ( 603/1512) warp launch_configs::launch_config::tests::test_tab_level_commands_are_applied_to_first_pane_without_focused_pane
+        PASS [   0.011s] ( 604/1512) warp local_control::handlers::app_state::tests::file_open_resolves_relative_paths_against_the_session_working_directory
+        PASS [   0.013s] ( 605/1512) warp local_control::handlers::app_state::tests::staged_input_rejects_line_breaks_and_control_sequences
+        PASS [   0.013s] ( 606/1512) warp local_control::handlers::app_state::tests::unavailable_surface_open_returns_structured_error
+        PASS [   0.012s] ( 607/1512) warp local_control::tests::bridge_checks_grant_before_action_params
+        PASS [   0.012s] ( 608/1512) warp local_control::handlers::metadata::tests::vertical_tabs_surface_reports_feature_flag_unavailable
+        PASS [   0.012s] ( 609/1512) warp local_control::tests::capabilities_advertises_the_complete_catalog
+        PASS [   0.012s] ( 610/1512) warp local_control::tests::credential_broker_rejects_peer_from_different_user
+        PASS [   0.012s] ( 611/1512) warp local_control::tests::credential_broker_accepts_peer_from_same_user
+        PASS [   0.011s] ( 612/1512) warp local_control::tests::duplicate_server_start_is_rejected
+        PASS [   0.012s] ( 613/1512) warp local_control::tests::credential_insertion_prunes_expired_and_caps_active_grants
+        PASS [   0.011s] ( 614/1512) warp local_control::tests::feature_flag_disabled_denies_local_control
+        PASS [   0.013s] ( 615/1512) warp local_control::tests::expired_credential_is_rejected_and_pruned_before_request_decode
+        PASS [   0.013s] ( 616/1512) warp local_control::tests::loopback_headers_reject_origin_and_host_mismatch
+        PASS [   0.017s] ( 617/1512) warp local_control::tests::disabling_scripting_invalidates_existing_grant_and_prevents_new_grants
+        PASS [   0.011s] ( 618/1512) warp local_control::tests::protocol_version_helper_rejects_unsupported_versions
+        PASS [   0.013s] ( 619/1512) warp local_control::tests::metadata_actions_reject_malformed_params
+        PASS [   0.014s] ( 620/1512) warp local_control::tests::missing_window_index_returns_missing_target
+        PASS [   0.012s] ( 621/1512) warp local_control::tests::scripting_disabled_denies_action
+        PASS [   0.012s] ( 622/1512) warp local_control::tests::scripting_enabled_allows_action
+        PASS [   0.012s] ( 623/1512) warp local_control::tests::tab_create_accepts_default_and_window_targets
+        PASS [   0.013s] ( 624/1512) warp local_control::tests::scripting_mode_controls_local_control
+        PASS [   0.013s] ( 625/1512) warp local_control::tests::surface_list_rejects_target_selectors
+        PASS [   0.013s] ( 626/1512) warp local_control::tests::tab_create_rejects_lower_level_targets
+        PASS [   0.013s] ( 627/1512) warp local_control::tests::tab_create_rejects_malformed_params
+        PASS [   0.012s] ( 628/1512) warp local_control::tests::tab_create_requires_active_window
+        PASS [   0.013s] ( 629/1512) warp local_control::tests::tab_create_rejects_unsupported_selector_forms
+        PASS [   0.014s] ( 630/1512) warp local_control::tests::window_title_resolution_distinguishes_missing_and_ambiguous_targets
+        PASS [   0.016s] ( 631/1512) warp local_objects::notebook_store::tests::editing_local_notebook_keeps_unknown_json_fields
+        PASS [   0.041s] ( 632/1512) warp local_control::handlers::layout::tests::tab_create_rejects_shell_parameter
+        PASS [   0.014s] ( 633/1512) warp local_objects::notebook_store::tests::legacy_json_body_is_preserved_verbatim
+        PASS [   0.046s] ( 634/1512) warp local_control::handlers::layout::tests::tab_create_handler_adds_and_activates_terminal_tab
+        PASS [   0.017s] ( 635/1512) warp local_objects::notebook_store::tests::incomplete_legacy_notebook_does_not_block_valid_notebooks
+        PASS [   0.014s] ( 636/1512) warp menu::tests::test_menu_item_selectable
+        PASS [   0.016s] ( 637/1512) warp local_objects::notebook_store::tests::legacy_notebook_can_be_edited_and_reloaded
+        PASS [   0.015s] ( 638/1512) warp menu::tests::test_enter_uses_the_active_submenu_selection
+        PASS [   0.015s] ( 639/1512) warp menu::tests::test_next_and_previous_indexes
+        PASS [   0.014s] ( 640/1512) warp menu::tests::test_right_is_a_noop_for_leaf_items
+        PASS [   0.014s] ( 641/1512) warp menu::tests::test_right_opens_selected_submenu_and_selects_first_child
+        PASS [   0.014s] ( 642/1512) warp menu::tests::test_up_and_down_navigate_the_active_submenu
+        PASS [   0.025s] ( 643/1512) warp pane_group::pane::view::header::tests::test_handle_close
+        PASS [   0.030s] ( 644/1512) warp notebooks::notebook::tests::enter_in_notebook_body_inserts_and_persists_newline
+        PASS [   0.031s] ( 645/1512) warp pane_group::pane::view::header::tests::test_overflow_menu_items
+        PASS [   0.037s] ( 646/1512) warp pane_group::tests::restores_legacy_file_notebook_in_local_editor
+        PASS [   0.034s] ( 647/1512) warp pane_group::tests::test_group_without_terminals
+        PASS [   0.037s] ( 648/1512) warp pane_group::tests::test_active_session_id_reset_on_last_pane_close
+        PASS [   0.036s] ( 649/1512) warp pane_group::tests::test_focused_pane_is_synchronized_with_application_focus
+        PASS [   0.038s] ( 650/1512) warp pane_group::tests::test_add_pane_aborts_cleanly_when_pre_attach_returns_false
+        PASS [   0.038s] ( 651/1512) warp pane_group::tests::test_focus_notebook
+        PASS [   0.039s] ( 652/1512) warp pane_group::tests::test_close_active_session
+        PASS [   0.036s] ( 653/1512) warp pane_group::tests::test_initial_widths_are_computed_correctly
+        PASS [   0.036s] ( 654/1512) warp pane_group::tests::test_navigation_skips_hidden_closed_panes
+        PASS [   0.011s] ( 655/1512) warp pane_group::tree::tests::test_hide_and_show_child_agent_pane
+        PASS [   0.014s] ( 656/1512) warp pane_group::tree::tests::test_are_rects_overlapping_on_axis
+        PASS [   0.014s] ( 657/1512) warp pane_group::tree::tests::test_hide_child_agent_pane_is_idempotent
+        PASS [   0.013s] ( 658/1512) warp pane_group::tree::tests::test_hide_multiple_child_agent_panes
+        PASS [   0.012s] ( 659/1512) warp pane_group::tree::tests::test_move_pane_basic
+        PASS [   0.012s] ( 660/1512) warp pane_group::tree::tests::test_move_pane_multiple_splits
+        PASS [   0.014s] ( 661/1512) warp pane_group::tree::tests::test_left_pane_split
+        PASS [   0.013s] ( 662/1512) warp pane_group::tree::tests::test_move_pane_no_short_circuit
+        PASS [   0.040s] ( 663/1512) warp pane_group::tests::test_pane_focus_on_close
+        PASS [   0.526s] ( 664/1512) warp editor::view::model::buffer::undo::tests::test_undo_stack_expired_timer
+        PASS [   0.013s] ( 665/1512) warp pane_group::tree::tests::test_move_pane_no_short_circuit_2
+        PASS [   0.013s] ( 666/1512) warp pane_group::tree::tests::test_original_pane_for_replacement
+        PASS [   0.011s] ( 667/1512) warp pane_group::tree::tests::test_reset_pane_sizes_only_resets_containing_branch
+        PASS [   0.039s] ( 668/1512) warp pane_group::tests::test_terminal_pane_headers
+        PASS [   0.012s] ( 669/1512) warp pane_group::tree::tests::test_pane_by_direction_simple
+        PASS [   0.014s] ( 670/1512) warp pane_group::tree::tests::test_pane_by_direction_multi_level_split
+        PASS [   0.014s] ( 671/1512) warp pane_group::tree::tests::test_pane_by_direction_multi_split
+        PASS [   0.088s] ( 672/1512) warp local_objects::notebook_store::tests::historical_sqlite_notebook_body_survives_edit_and_reload
+        PASS [   0.039s] ( 673/1512) warp pane_group::tests::test_update_session_visibility
+        PASS [   0.013s] ( 674/1512) warp pane_group::tree::tests::test_root_split_different_axis
+        PASS [   0.013s] ( 675/1512) warp pane_group::tree::tests::test_root_split_leaf
+        PASS [   0.013s] ( 676/1512) warp pane_group::tree::tests::test_sibling_by_direction
+        PASS [   0.015s] ( 677/1512) warp pane_group::tree::tests::test_reset_pane_sizes_resets_containing_branch
+        PASS [   0.012s] ( 678/1512) warp pane_group::working_directories::tests::pane_group_repository_roots_insert_updates_both_maps
+        PASS [   0.014s] ( 679/1512) warp pane_group::tree::tests::test_split_pane_layout
+        PASS [   0.015s] ( 680/1512) warp pane_group::tree::tests::test_root_split_same_axis
+        PASS [   0.017s] ( 681/1512) warp pane_group::working_directories::tests::clear_selected_review_repo_removes_only_the_targeted_pane_group_entry
+        PASS [   0.016s] ( 682/1512) warp pane_group::working_directories::tests::pane_group_repository_roots_remove_pane_group_returns_orphans
+        PASS [   0.017s] ( 683/1512) warp pane_group::working_directories::tests::diff_state_model_is_dropped_when_no_pane_group_references_repo
+        PASS [   0.017s] ( 684/1512) warp pane_group::working_directories::tests::pane_group_repository_roots_remove_unknown_pane_group_is_noop
+        PASS [   0.014s] ( 685/1512) warp pane_group::working_directories::tests::pane_group_repository_roots_set_paths_preserves_insertion_order
+        PASS [   0.015s] ( 686/1512) warp pane_group::working_directories::tests::selected_review_repo_is_cleared_when_pane_group_is_removed
+        PASS [   0.017s] ( 687/1512) warp pane_group::working_directories::tests::pane_group_repository_roots_set_paths_returns_only_truly_orphaned_paths
+        PASS [   0.015s] ( 688/1512) warp pane_group::working_directories::tests::selected_review_repo_is_remembered_per_pane_group
+        PASS [   0.016s] ( 689/1512) warp pane_group::working_directories::tests::refresh_working_directories_preserves_non_repo_paths_and_dedupes
+        PASS [   0.017s] ( 690/1512) warp pane_group::working_directories::tests::refresh_working_directories_collapses_subroots_to_nearest_repo_root
+        PASS [   0.020s] ( 691/1512) warp pane_group::working_directories::tests::remove_pane_group_does_not_drop_diff_state_model_shared_with_other_pane_group
+        PASS [   0.019s] ( 692/1512) warp pane_group::working_directories::tests::shared_diff_state_model_survives_when_other_pane_group_still_references_repo
+        PASS [   0.064s] ( 693/1512) warp pane_group::tests::test_undo_close_keeps_a_code_pane_watching_its_markdown_file
+        PASS [   0.137s] ( 694/1512) warp pane_group::tests::restores_code_pane_without_source_metadata
+        PASS [   0.065s] ( 695/1512) warp persistence::block_list::tests::terminal_blocks_round_trip_in_chronological_order
+        PASS [   0.071s] ( 696/1512) warp persistence::block_list::tests::terminal_block_limit_retains_newest_commands
+        PASS [   0.076s] ( 697/1512) warp persistence::block_list::tests::restoring_blocks_does_not_rewrite_unknown_legacy_columns
+        PASS [   0.078s] ( 698/1512) warp persistence::block_list::tests::deleting_terminal_blocks_is_scoped_to_the_pane
+        PASS [   0.076s] ( 699/1512) warp persistence::block_list::tests::terminal_persistence_leaves_legacy_agent_queries_opaque
+        PASS [   0.014s] ( 700/1512) warp safe_triangle::tests::clearing_target_rect_clears_state
+        PASS [   0.011s] ( 701/1512) warp safe_triangle::tests::duplicate_event_at_same_position_preserves_existing_suppression
+        PASS [   0.011s] ( 702/1512) warp safe_triangle::tests::leaving_after_entering_target_is_not_suppressed
+        PASS [   0.010s] ( 703/1512) warp safe_triangle::tests::no_last_position_does_not_suppress
+        PASS [   0.011s] ( 704/1512) warp safe_triangle::tests::no_target_rect_does_not_suppress
+        PASS [   0.103s] ( 705/1512) warp persistence::legacy_snapshot::tests::legacy_workflow_pane_loads_the_local_workflow_body
+        PASS [   0.073s] ( 706/1512) warp persistence::local_snapshot::tests::malformed_snapshot_is_skipped_and_cannot_be_overwritten
+        PASS [   0.010s] ( 707/1512) warp safe_triangle::tests::point_inside_triangle_is_suppressed
+        PASS [   0.011s] ( 708/1512) warp safe_triangle::tests::point_outside_triangle_is_not_suppressed
+        PASS [   0.014s] ( 709/1512) warp safe_triangle::tests::same_position_not_suppressed
+        PASS [   0.011s] ( 710/1512) warp safe_triangle::tests::sidecar_to_the_left
+        PASS [   0.011s] ( 711/1512) warp safe_triangle::tests::vertical_movement_not_suppressed_with_tall_sidecar
+        PASS [   0.013s] ( 712/1512) warp search::command_palette::navigation::search::tests::ascii_only_is_identity
+        PASS [   0.018s] ( 713/1512) warp search::command_palette::files::data_source::tests::test_files_palette_excludes_directories
+        PASS [   0.077s] ( 714/1512) warp persistence::local_snapshot::tests::snapshot_round_trip_preserves_layout_and_arbitrary_terminal_bytes
+        PASS [   0.013s] ( 715/1512) warp search::command_palette::navigation::search::tests::empty_inputs
+        PASS [   0.014s] ( 716/1512) warp search::command_palette::navigation::search::tests::continuation_bytes_are_filtered_out
+        PASS [   0.012s] ( 717/1512) warp search::command_palette::navigation::search::tests::mixed_width_characters
+        PASS [   0.013s] ( 718/1512) warp search::command_palette::navigation::search::tests::highlight_indices_correct_after_byte_to_char_conversion
+        PASS [   0.152s] ( 719/1512) warp persistence::legacy_snapshot::tests::legacy_notebook_pane_uses_its_local_body_id
+        PASS [   0.012s] ( 720/1512) warp search::command_palette::navigation::search::tests::raw_byte_indices_produce_wrong_highlights
+        PASS [   0.014s] ( 721/1512) warp search::command_palette::navigation::search::tests::multi_byte_chars_shift_indices
+        PASS [   0.014s] ( 722/1512) warp search::command_palette::navigation::search::tests::out_of_bounds_byte_indices_are_dropped
+        PASS [   0.012s] ( 723/1512) warp search::command_palette::selected_items::tests::test_enqueue_existing_item
+        PASS [   0.012s] ( 724/1512) warp search::command_palette::selected_items::tests::test_enqueue_new_item
+        PASS [   0.013s] ( 725/1512) warp search::command_search::searcher::tests::test_add_source_to_mixer
+        PASS [   0.170s] ( 726/1512) warp persistence::legacy_snapshot::tests::malformed_new_snapshot_does_not_fall_back_to_stale_legacy_windows
+        PASS [   0.182s] ( 727/1512) warp persistence::legacy_snapshot::tests::legacy_terminal_tabs_and_active_tab_are_restored_without_rewriting_old_rows
+        PASS [   0.187s] ( 728/1512) warp persistence::legacy_snapshot::tests::damaged_legacy_pane_does_not_discard_other_tabs_or_shift_active_tab
+        PASS [   0.185s] ( 729/1512) warp persistence::legacy_snapshot::tests::newer_snapshot_wins_over_legacy_window_rows
+        PASS [   0.136s] ( 730/1512) warp persistence::sqlite::tests::notebooks_without_legacy_cloud_metadata_remain_readable
+        PASS [   0.133s] ( 731/1512) warp persistence::sqlite::tests::trashed_legacy_notebooks_are_hidden_without_deleting_their_body
+        PASS [   0.010s] ( 732/1512) warp search::files::model::tests::file_search_item_tests::test_file_search_item_clone
+        PASS [   0.222s] ( 733/1512) warp persistence::block_list::tests::old_terminal_fixture_remains_readable_after_migrations
+        PASS [   0.022s] ( 734/1512) warp search::command_search::view::tests::test_render_view
+        PASS [   0.010s] ( 735/1512) warp search::files::model::tests::file_search_item_tests::test_file_search_item_directory
+        PASS [   0.010s] ( 736/1512) warp search::files::model::tests::file_search_item_tests::test_file_search_item_from_result
+        PASS [   0.022s] ( 737/1512) warp search::command_search::workflows::workflows_data_source::tests::project_search_reloads_workflows_and_preserves_arguments
+        PASS [   0.223s] ( 738/1512) warp persistence::legacy_snapshot::tests::legacy_terminal_output_bytes_survive_import_and_new_snapshot
+        PASS [   0.010s] ( 739/1512) warp search::files::model::tests::file_search_item_tests::test_file_search_item_from_result_no_match
+        PASS [   0.010s] ( 740/1512) warp search::files::model::tests::file_search_model_tests::test_contents_args_excludes_folders_for_file_only_search
+        PASS [   0.009s] ( 741/1512) warp search::files::model::tests::file_search_model_tests::test_contents_args_keeps_folders_by_default
+        PASS [   0.010s] ( 742/1512) warp search::files::model::tests::file_search_model_tests::test_file_search_model_creation
+        PASS [   0.010s] ( 743/1512) warp search::files::model::tests::file_search_model_tests::test_filename_prioritization
+        PASS [   0.009s] ( 744/1512) warp search::files::model::tests::file_search_model_tests::test_fuzzy_match_path_case_insensitive
+        PASS [   0.010s] ( 745/1512) warp search::files::model::tests::file_search_model_tests::test_fuzzy_match_path_empty_query
+        PASS [   0.010s] ( 746/1512) warp search::files::model::tests::file_search_model_tests::test_fuzzy_match_path_exact_filename_match
+        PASS [   0.009s] ( 747/1512) warp search::files::model::tests::file_search_model_tests::test_fuzzy_match_path_multi_term_partial_match
+        PASS [   0.009s] ( 748/1512) warp search::files::model::tests::file_search_model_tests::test_fuzzy_match_path_multi_term_search
+        PASS [   0.010s] ( 749/1512) warp search::files::model::tests::file_search_model_tests::test_fuzzy_match_path_no_match
+        PASS [   0.010s] ( 750/1512) warp search::files::model::tests::file_search_model_tests::test_fuzzy_match_path_partial_match
+        PASS [   0.009s] ( 751/1512) warp search::files::model::tests::file_search_model_tests::test_fuzzy_match_path_simple_filename_match
+        PASS [   0.009s] ( 752/1512) warp search::files::model::tests::file_search_model_tests::test_fuzzy_match_path_whitespace_only_query
+        PASS [   0.009s] ( 753/1512) warp search::files::model::tests::file_search_model_tests::test_fuzzy_match_path_wildcard_patterns
+        PASS [   0.009s] ( 754/1512) warp search::files::model::tests::file_search_model_tests::test_path_with_extension_exact_match
+        PASS [   0.010s] ( 755/1512) warp search::files::model::tests::file_search_model_tests::test_should_skip_overly_broad_query
+        PASS [   0.009s] ( 756/1512) warp search::files::model::tests::integration_tests::test_typical_search_workflow
+        PASS [   0.010s] ( 757/1512) warp search::files::model::tests::integration_tests::test_multi_term_search_workflow
+        PASS [   0.009s] ( 758/1512) warp search::files::model::tests::strip_absolute_path_prefix_tests::test_falls_back_to_working_dir_when_repo_root_does_not_match
+        PASS [   0.009s] ( 759/1512) warp search::files::model::tests::strip_absolute_path_prefix_tests::test_no_roots_provided
+        PASS [   0.009s] ( 760/1512) warp search::files::model::tests::strip_absolute_path_prefix_tests::test_returns_none_when_path_equals_prefix
+        PASS [   0.010s] ( 761/1512) warp search::files::model::tests::strip_absolute_path_prefix_tests::test_relative_path_unchanged
+        PASS [   0.010s] ( 762/1512) warp search::files::model::tests::strip_absolute_path_prefix_tests::test_prefers_repo_root_over_working_dir
+        PASS [   0.010s] ( 763/1512) warp search::files::model::tests::strip_absolute_path_prefix_tests::test_returns_none_when_no_prefix_matches
+        PASS [   0.009s] ( 764/1512) warp search::files::model::tests::strip_absolute_path_prefix_tests::test_strips_repo_root
+        PASS [   0.010s] ( 765/1512) warp search::files::model::tests::strip_absolute_path_prefix_tests::test_working_dir_inside_repo_root_strips_repo_root
+        PASS [   0.010s] ( 766/1512) warp search::slash_command_menu::fuzzy_match_tests::test_case_insensitive_matching
+        PASS [   0.010s] ( 767/1512) warp search::slash_command_menu::fuzzy_match_tests::test_match_two_commands_with_different_name_and_same_description
+        PASS [   0.010s] ( 768/1512) warp search::files::model::tests::strip_absolute_path_prefix_tests::test_strips_working_dir_when_no_repo_root
+        PASS [   0.009s] ( 769/1512) warp search::slash_command_menu::fuzzy_match_tests::test_match_two_commands_with_same_name_but_different_description
+        PASS [   0.011s] ( 770/1512) warp search::slash_command_menu::fuzzy_match_tests::test_score_returns_no_match_when_both_none
+        PASS [   0.010s] ( 771/1512) warp search::slash_command_menu::fuzzy_match_tests::test_try_match_with_name_match
+        PASS [   0.010s] ( 772/1512) warp search::slash_command_menu::fuzzy_match_tests::test_try_match_with_description_match
+        PASS [   0.010s] ( 773/1512) warp search::slash_command_menu::static_commands::commands::tests::auto_approve_command_is_local_agent_action_without_arguments
+        PASS [   0.011s] ( 774/1512) warp search::slash_command_menu::static_commands::commands::tests::api_keys_command_is_tui_only_and_has_no_arguments
+        PASS [   0.011s] ( 775/1512) warp search::slash_command_menu::static_commands::commands::tests::clear_command_is_active_only_outside_cloud_mode
+        PASS [   0.011s] ( 776/1512) warp search::slash_command_menu::static_commands::commands::tests::clear_command_has_correct_registry_metadata
+        PASS [   0.011s] ( 777/1512) warp search::slash_command_menu::static_commands::commands::tests::clear_command_is_registered_only_for_tui_mode
+        PASS [   0.011s] ( 778/1512) warp search::slash_command_menu::static_commands::commands::tests::command_names_and_kinds_are_unique_per_surface
+        PASS [   0.011s] ( 779/1512) warp search::slash_command_menu::static_commands::commands::tests::command_registry_contains_commands_for_both_surfaces
+        PASS [   0.010s] ( 780/1512) warp search::slash_command_menu::static_commands::commands::tests::copy_debugging_id_command_is_registered_for_gui_and_tui
+        PASS [   0.010s] ( 781/1512) warp search::slash_command_menu::static_commands::commands::tests::copy_debugging_id_command_has_correct_registry_metadata
+        PASS [   0.011s] ( 782/1512) warp search::slash_command_menu::static_commands::commands::tests::connect_grok_command_is_tui_only_and_has_no_arguments
+        PASS [   0.011s] ( 783/1512) warp search::slash_command_menu::static_commands::commands::tests::command_registry_filters_explicit_surface_metadata
+        PASS [   0.011s] ( 784/1512) warp search::slash_command_menu::static_commands::commands::tests::continue_locally_command_is_registered
+        PASS [   0.011s] ( 785/1512) warp search::slash_command_menu::static_commands::commands::tests::natural_language_detection_command_is_ai_enabled_and_executes_immediately
+        PASS [   0.011s] ( 786/1512) warp search::slash_command_menu::static_commands::commands::tests::natural_language_detection_command_is_registered_only_for_tui_mode
+        PASS [   0.011s] ( 787/1512) warp search::slash_command_menu::static_commands::commands::tests::gui_icon_metadata_matches_surface_support
+        PASS [   0.011s] ( 788/1512) warp search::slash_command_menu::static_commands::commands::tests::logout_command_is_registered_only_for_tui_mode
+        PASS [   0.011s] ( 789/1512) warp search::slash_command_menu::static_commands::commands::tests::manage_billing_command_is_always_available_only_in_tui_mode
+        PASS [   0.397s] ( 790/1512) warp pane_group::tests::test_pane_focus_does_not_have_an_infinite_event_loop
+        PASS [   0.009s] ( 791/1512) warp search::slash_command_menu::static_commands::commands::tests::strip_command_prefix_empty
+        PASS [   0.011s] ( 792/1512) warp search::slash_command_menu::static_commands::commands::tests::reset_statusline_command_is_always_available_only_in_tui_mode
+        PASS [   0.011s] ( 793/1512) warp search::slash_command_menu::static_commands::commands::tests::statusline_command_is_always_available_only_in_tui_mode
+        PASS [   0.011s] ( 794/1512) warp search::slash_command_menu::static_commands::commands::tests::rename_conversation_command_is_active_conversation_scoped_and_requires_argument
+        PASS [   0.011s] ( 795/1512) warp search::slash_command_menu::static_commands::commands::tests::set_tab_color_command_requires_argument
+        PASS [   0.011s] ( 796/1512) warp search::slash_command_menu::static_commands::commands::tests::rename_tab_command_requires_argument
+        PASS [   0.010s] ( 797/1512) warp search::slash_command_menu::static_commands::commands::tests::strip_command_prefix_trailing_space_only
+        PASS [   0.010s] ( 798/1512) warp search::slash_command_menu::static_commands::commands::tests::strip_command_prefix_substring_not_matched
+        PASS [   0.010s] ( 799/1512) warp search::slash_command_menu::static_commands::commands::tests::strip_command_prefix_no_match
+        PASS [   0.010s] ( 800/1512) warp search::slash_command_menu::static_commands::commands::tests::strip_command_prefix_no_trailing_space
+        PASS [   0.011s] ( 801/1512) warp search::slash_command_menu::static_commands::commands::tests::strip_command_prefix_matches_orchestrate
+        PASS [   0.010s] ( 802/1512) warp search::slash_command_menu::static_commands::commands::tests::theme_command_is_registered_only_for_tui_mode
+        PASS [   0.010s] ( 803/1512) warp search::slash_command_menu::static_commands::tests::active_conversation_requirement_satisfied_when_conversation_active
+        PASS [   0.010s] ( 804/1512) warp search::slash_command_menu::static_commands::tests::active_conversation_requirement_not_satisfied_when_no_conversation
+        PASS [   0.010s] ( 805/1512) warp search::slash_command_menu::static_commands::commands::tests::view_logs_command_is_registered_only_for_tui_mode
+        PASS [   0.010s] ( 806/1512) warp search::slash_command_menu::static_commands::commands::tests::voice_command_is_registered_only_for_tui_mode
+        PASS [   0.010s] ( 807/1512) warp search::slash_command_menu::static_commands::commands::tests::version_command_is_not_registered
+        PASS [   0.011s] ( 808/1512) warp search::slash_command_menu::static_commands::commands::tests::upgrade_command_is_always_available_only_in_tui_mode
+        PASS [   0.010s] ( 809/1512) warp search::slash_command_menu::static_commands::tests::all_flags_required
+        PASS [   0.010s] ( 810/1512) warp search::slash_command_menu::static_commands::tests::agent_view_and_repository_both_required
+        PASS [   0.010s] ( 811/1512) warp search::slash_command_menu::static_commands::tests::ai_enabled_requirement_not_satisfied_when_ai_off
+        PASS [   0.010s] ( 812/1512) warp search::slash_command_menu::static_commands::tests::ai_enabled_requirement_satisfied_when_ai_on
+        PASS [   0.010s] ( 813/1512) warp search::slash_command_menu::static_commands::tests::agent_view_and_local_both_required
+        PASS [   0.010s] ( 814/1512) warp search::slash_command_menu::static_commands::tests::agent_view_requirement_only_in_agent_view
+        PASS [   0.010s] ( 815/1512) warp search::slash_command_menu::static_commands::tests::both_view_bits_satisfy_either_view_requirement
+        PASS [   0.011s] ( 816/1512) warp search::slash_command_menu::static_commands::tests::always_available_in_any_context
+        PASS [   0.011s] ( 817/1512) warp search::slash_command_menu::static_commands::tests::argument_hint_uses_shared_command_prefix_and_text
+        PASS [   0.011s] ( 818/1512) warp search::slash_command_menu::static_commands::tests::cloud_mode_v2_composer_required_command_not_satisfied_outside_v2_composer
+        PASS [   0.011s] ( 819/1512) warp search::slash_command_menu::static_commands::tests::cloud_agent_required_command_satisfied_in_cloud_agent_session
+        PASS [   0.011s] ( 820/1512) warp search::slash_command_menu::static_commands::tests::cloud_agent_required_command_not_satisfied_outside_cloud_agent_session
+        PASS [   0.213s] ( 821/1512) warp search::command_search::searcher::tests::test_exact_matches_rank_above_prefix_matches
+        PASS [   0.011s] ( 822/1512) warp search::slash_command_menu::static_commands::tests::index_command_requires_repo_and_codebase_context
+        PASS [   0.011s] ( 823/1512) warp search::slash_command_menu::static_commands::tests::commands_without_ai_enabled_remain_available_when_ai_off
+        PASS [   0.011s] ( 824/1512) warp search::slash_command_menu::static_commands::tests::cloud_mode_v2_composer_required_command_satisfied_in_v2_composer_session
+        PASS [   0.011s] ( 825/1512) warp search::slash_command_menu::static_commands::tests::fork_like_command_requires_agent_view_active_conversation_no_lrc
+        PASS [   0.011s] ( 826/1512) warp search::slash_command_menu::static_commands::tests::codebase_context_requirement_satisfied_when_enabled
+        PASS [   0.011s] ( 827/1512) warp search::slash_command_menu::static_commands::tests::codebase_context_requirement_not_satisfied_when_disabled
+        PASS [   0.212s] ( 828/1512) warp search::command_search::searcher::tests::test_no_query_filter_runs_all_data_sources
+        PASS [   0.009s] ( 829/1512) warp search::slash_command_menu::static_commands::tests::local_requirement_not_satisfied_in_remote_session
+        PASS [   0.011s] ( 830/1512) warp search::slash_command_menu::static_commands::tests::no_view_requirement_available_in_any_view
+        PASS [   0.011s] ( 831/1512) warp search::slash_command_menu::static_commands::tests::no_lrc_control_requirement_satisfied_when_not_in_control
+        PASS [   0.010s] ( 832/1512) warp search::slash_command_menu::static_commands::tests::repository_requirement_not_satisfied_when_not_in_repo
+        PASS [   0.011s] ( 833/1512) warp search::slash_command_menu::static_commands::tests::no_repository_requirement_available_regardless
+        PASS [   0.011s] ( 834/1512) warp search::slash_command_menu::static_commands::tests::no_local_requirement_available_in_any_session_type
+        PASS [   0.009s] ( 835/1512) warp search::slash_command_menu::static_commands::tests::repository_requirement_satisfied_when_in_repo
+        PASS [   0.011s] ( 836/1512) warp search::slash_command_menu::static_commands::tests::local_requirement_satisfied_in_local_session
+        PASS [   0.011s] ( 837/1512) warp search::slash_command_menu::static_commands::tests::no_lrc_control_requirement_not_satisfied_when_in_control
+        PASS [   0.011s] ( 838/1512) warp search::slash_command_menu::static_commands::tests::terminal_view_requirement_only_in_terminal_view
+        PASS [   0.011s] ( 839/1512) warp settings::import::alacritty_parser::tests::test_merge_left
+        PASS [   0.012s] ( 840/1512) warp search::workflows::fuzzy_match::tests::test_exact_command_before_exact_title
+        PASS [   0.012s] ( 841/1512) warp search::workflows::fuzzy_match::tests::test_exact_command_before_fuzzy_command
+        PASS [   0.012s] ( 842/1512) warp search::workflows::fuzzy_match::tests::test_title_tiebreak
+        PASS [   0.012s] ( 843/1512) warp settings::import::alacritty_parser::tests::test_parse_cobalt2_bad_terminal_color
+        PASS [   0.012s] ( 844/1512) warp settings::import::alacritty_parser::tests::test_parse_cobalt2
+        PASS [   0.013s] ( 845/1512) warp settings::import::alacritty_parser::tests::test_parse_cobalt2_from_import
+        PASS [   0.010s] ( 846/1512) warp settings::import::iterm_parser::tests::test_from_iterm_keystroke_non_ascii
+        PASS [   0.009s] ( 847/1512) warp settings::import::iterm_parser::tests::test_from_iterm_keystroke_with_modifiers
+        PASS [   0.010s] ( 848/1512) warp settings::import::iterm_parser::tests::test_from_iterm_keystroke_function_key
+        PASS [   0.010s] ( 849/1512) warp settings::import::iterm_parser::tests::test_color_dictionary_to_coloru
+        PASS [   0.010s] ( 850/1512) warp settings::import::iterm_parser::tests::test_color_dictionary_missing_alpha_to_coloru
+        PASS [   0.011s] ( 851/1512) warp settings::import::alacritty_parser::tests::test_parse_cobalt2_missing_color
+        PASS [   0.010s] ( 852/1512) warp settings::import::alacritty_parser::tests::test_parse_cobalt2_no_colors
+        PASS [   0.011s] ( 853/1512) warp settings::import::alacritty_parser::tests::test_parse_cobalt2_missing_section
+        PASS [   0.011s] ( 854/1512) warp settings::import::iterm_parser::tests::test_into_warp_theme_invalid
+        PASS [   0.011s] ( 855/1512) warp settings::import::iterm_parser::tests::test_into_warp_theme_valid
+        PASS [   0.011s] ( 856/1512) warp settings::import::iterm_parser::tests::test_parse_font_without_size
+        PASS [   0.011s] ( 857/1512) warp settings::import::iterm_parser::tests::test_parse_font
+        PASS [   0.011s] ( 858/1512) warp settings::import::iterm_parser::tests::test_parse_font_with_default_size
+        PASS [   0.011s] ( 859/1512) warp settings::import::iterm_parser::tests::test_parse_font_with_default_font
+        PASS [   0.013s] ( 860/1512) warp settings::import::iterm_parser::tests::test_not_import_from_file
+        PASS [   0.014s] ( 861/1512) warp settings::import::iterm_parser::tests::test_import_from_file
+        PASS [   0.011s] ( 862/1512) warp settings::import::iterm_parser::tests::test_remove_default_values_from_default
+        PASS [   0.011s] ( 863/1512) warp settings::import::iterm_parser::tests::test_remove_default_values_from_partial_profile
+        PASS [   0.011s] ( 864/1512) warp settings::import::iterm_parser::tests::test_parse_invalid_font
+        PASS [   0.011s] ( 865/1512) warp settings::import::iterm_parser::tests::test_remove_default_values_from_full_profile
+        PASS [   0.011s] ( 866/1512) warp settings::init::tests::test_migration_copies_public_settings_from_native_store
+        PASS [   0.012s] ( 867/1512) warp settings::import::iterm_parser::tests::test_read_activation_keystroke
+        PASS [   0.010s] ( 868/1512) warp settings::init::tests::test_migration_handles_string_setting
+        PASS [   0.011s] ( 869/1512) warp settings::init::tests::test_migration_does_not_rerun_when_marker_present
+        PASS [   0.009s] ( 870/1512) warp settings::init::tests::test_notifications_from_file_value_rejects_serde_format_duration
+        PASS [   0.009s] ( 871/1512) warp settings::init::tests::test_notifications_from_file_value_rejects_serde_format_enum
+        PASS [   0.012s] ( 872/1512) warp settings::init::tests::test_migration_skips_settings_absent_from_native_store
+        PASS [   0.013s] ( 873/1512) warp settings::init::tests::test_migration_preserves_notifications_mode
+        PASS [   0.013s] ( 874/1512) warp settings::init::tests::test_migration_preserves_custom_long_running_threshold
+        PASS [   0.012s] ( 875/1512) warp settings::init::tests::test_migration_writes_marker_to_native_store
+        PASS [   0.013s] ( 876/1512) warp settings::init::tests::test_migration_not_needed_when_settings_file_exists
+        PASS [   0.012s] ( 877/1512) warp settings::init::tests::test_migration_with_multiple_setting_types
+        PASS [   0.009s] ( 878/1512) warp settings::local_control::tests::default_mode_is_enabled_only_on_dogfood_channels
+        PASS [   0.011s] ( 879/1512) warp settings::local_control::tests::cloud_sync_cannot_disable_local_control
+        PASS [   0.010s] ( 880/1512) warp settings::local_control::tests::mode_is_private_and_never_cloud_synced
+        PASS [   0.010s] ( 881/1512) warp settings::local_control::tests::unset_mode_follows_channel_default
+        PASS [   0.011s] ( 882/1512) warp settings::local_control::tests::mode_does_not_migrate_from_private_preferences
+        PASS [   0.011s] ( 883/1512) warp settings::local_control::tests::mode_is_persisted_to_secure_storage
+        PASS [   0.014s] ( 884/1512) warp settings::schema_generation::tests::generates_a_settings_schema
+        PASS [   0.015s] ( 885/1512) warp settings::privacy::tests::privacy_settings_stay_disabled_in_gui_and_tui
+        PASS [   0.010s] ( 886/1512) warp settings::schema_generation::tests::strips_empty_enum_entries
+        PASS [   0.010s] ( 887/1512) warp settings::schema_generation::tests::strips_numeric_metadata_recursively
+        PASS [   0.010s] ( 888/1512) warp settings::schema_generation::tests::surface_annotation_matches_setting_schema_entry_metadata
+        PASS [   0.009s] ( 889/1512) warp settings::theme::tests::built_in_theme_settings_remain_syncable
+        PASS [   0.009s] ( 890/1512) warp settings::theme::tests::selected_system_themes_do_not_sync_when_any_custom_path_is_outside_theme_root
+        PASS [   0.010s] ( 891/1512) warp settings::theme::tests::selected_system_themes_sync_when_custom_paths_are_under_theme_root
+        PASS [   0.009s] ( 892/1512) warp settings::theme::tests::theme_kind_does_not_sync_custom_theme_outside_theme_root
+        PASS [   0.009s] ( 893/1512) warp settings::theme::tests::theme_kind_syncs_custom_base16_theme_under_theme_root
+        PASS [   0.009s] ( 894/1512) warp settings::theme::tests::theme_kind_syncs_custom_theme_under_theme_root
+        PASS [   0.009s] ( 895/1512) warp settings::tui_theme::tests::theme_setting_is_tui_local_and_defaults_to_automatic_detection
+        PASS [   0.009s] ( 896/1512) warp settings::tui_theme::tests::theme_schema_entry_is_tui_only
+        PASS [   0.010s] ( 897/1512) warp settings::tui_theme::tests::theme_names_parse_case_insensitively
+        PASS [   0.009s] ( 898/1512) warp settings::tui_voice::tests::tui_voice_setting_defaults_to_none_and_round_trips
+        PASS [   0.010s] ( 899/1512) warp settings::tui_theme::tests::theme_values_use_lowercase_file_representation
+        PASS [   0.024s] ( 900/1512) warp settings::schema_validation_tests::file_defaults_validate_against_schema
+        PASS [   0.010s] ( 901/1512) warp settings::tui_zero_state::tests::numeric_settings_accept_inclusive_bounds
+        PASS [   0.010s] ( 902/1512) warp settings::tui_voice::tests::tui_voice_setting_is_local_and_tui_only
+        PASS [   0.010s] ( 903/1512) warp settings::tui_zero_state::tests::numeric_settings_reject_out_of_range_values
+        PASS [   0.010s] ( 904/1512) warp settings::tui_zero_state::tests::object_source_uses_tagged_file_representation
+        PASS [   0.010s] ( 905/1512) warp settings::tui_zero_state::tests::zero_state_settings_are_tui_local_file_settings
+        PASS [   0.009s] ( 906/1512) warp settings_view::directory_color_add_picker::tests::test_empty_inputs_produce_empty_output
+        PASS [   0.010s] ( 907/1512) warp settings_view::directory_color_add_picker::tests::test_filters_out_existing_non_suppressed_entries
+        PASS [   0.009s] ( 908/1512) warp settings_view::directory_color_add_picker::tests::test_non_existent_paths_are_dropped
+        PASS [   0.010s] ( 909/1512) warp settings_view::directory_color_add_picker::tests::test_retains_suppressed_entries_as_candidates
+        PASS [   0.010s] ( 910/1512) warp settings_view::directory_color_add_picker::tests::test_results_are_sorted_alphabetically_by_canonical_key
+        PASS [   0.010s] ( 911/1512) warp settings_view::settings_file_footer::tests::error_alert_shown_only_when_error_and_banner_dismissed
+        PASS [   0.010s] ( 912/1512) warp settings_view::directory_color_add_picker::tests::test_union_dedupes_across_sources
+        PASS [   0.010s] ( 913/1512) warp settings_view::directory_color_add_picker::tests::test_worktree_paths_are_kept
+        PASS [   0.010s] ( 914/1512) warp settings_view::settings_file_footer::tests::feature_disabled_hides_footer_regardless_of_error_or_dismissal
+        PASS [   0.010s] ( 915/1512) warp settings_view::settings_file_footer::tests::no_error_and_banner_not_dismissed_shows_open_button
+        PASS [   0.010s] ( 916/1512) warp settings_view::settings_file_footer::tests::error_present_but_banner_not_dismissed_shows_open_button
+        PASS [   0.009s] ( 917/1512) warp settings_view::settings_file_footer::tests::no_error_but_banner_dismissed_shows_open_button
+        PASS [   0.010s] ( 918/1512) warp settings_view::tests::all_sections_list_is_exhaustive
+        PASS [   0.009s] ( 919/1512) warp settings_view::tests::arrow_down_across_adjacent_collapsed_umbrellas
+        PASS [   0.009s] ( 920/1512) warp settings_view::tests::arrow_down_from_appearance_with_collapsed_local_pages_lands_on_first_subpage
+        PASS [   0.009s] ( 921/1512) warp settings_view::tests::arrow_down_collapsed_umbrella_respects_search_filter
+        PASS [   0.009s] ( 922/1512) warp settings_view::tests::arrow_down_from_expanded_last_subpage_leaves_umbrella
+        PASS [   0.009s] ( 923/1512) warp settings_view::tests::arrow_up_into_collapsed_umbrella_respects_search_filter_for_last_subpage
+        PASS [   0.010s] ( 924/1512) warp settings_view::tests::arrow_up_from_privacy_with_collapsed_local_pages_lands_on_last_subpage
+        PASS [   0.011s] ( 925/1512) warp settings_view::tests::category_and_its_trailing_element_are_dropped_when_no_child_matches
+        PASS [   0.011s] ( 926/1512) warp settings_view::tests::category_header_with_trailing_element_and_no_subtitle_does_not_panic_flex_layout
+        PASS [   0.010s] ( 927/1512) warp settings_view::tests::category_whose_sole_widget_cannot_render_has_no_visible_content_after_an_empty_query
+        PASS [   0.010s] ( 928/1512) warp settings_view::tests::category_trailing_element_renders_alongside_a_matching_child
+        PASS [   0.010s] ( 929/1512) warp settings_view::tests::category_whose_sole_widget_cannot_render_has_no_visible_content_before_any_filter_pass
+        PASS [   0.010s] ( 930/1512) warp settings_view::tests::collapsed_umbrella_with_filtered_subpages_uses_first_visible_subpage
+        PASS [   0.010s] ( 931/1512) warp settings_view::tests::collapsed_umbrella_is_a_single_nav_stop
+        PASS [   0.011s] ( 932/1512) warp settings_view::tests::category_with_trailing_element_shows_everything_on_empty_query
+        PASS [   0.009s] ( 933/1512) warp settings_view::tests::every_section_round_trips_through_its_slug
+        PASS [   0.010s] ( 934/1512) warp settings_view::tests::current_stop_index_maps_subpage_to_collapsed_umbrella
+        PASS [   0.010s] ( 935/1512) warp settings_view::tests::current_stop_index_returns_none_when_section_is_not_present
+        PASS [   0.010s] ( 936/1512) warp settings_view::tests::current_stop_index_matches_section_stop
+        PASS [   0.011s] ( 937/1512) warp settings_view::tests::empty_query_after_reapply_shows_all_widgets
+        PASS [   0.010s] ( 938/1512) warp settings_view::tests::filtered_out_top_level_page_is_skipped
+        PASS [   0.009s] ( 939/1512) warp settings_view::tests::from_slug_accepts_legacy_spellings
+        PASS [   0.010s] ( 940/1512) warp settings_view::tests::expanded_umbrella_produces_section_stop_per_subpage
+        PASS [   0.010s] ( 941/1512) warp settings_view::tests::match_data_countable_nonzero_is_truthy
+        PASS [   0.010s] ( 942/1512) warp settings_view::tests::match_data_countable_zero_is_not_truthy
+        PASS [   0.010s] ( 943/1512) warp settings_view::tests::from_slug_maps_supported_superseded_page_names_to_the_page_that_replaced_them
+        PASS [   0.010s] ( 944/1512) warp settings_view::tests::from_slug_rejects_unknown_input
+        PASS [   0.009s] ( 945/1512) warp settings_view::tests::match_data_uncounted_false_is_not_truthy
+        PASS [   0.009s] ( 946/1512) warp settings_view::tests::next_stop_index_handles_single_stop
+        PASS [   0.009s] ( 947/1512) warp settings_view::tests::next_stop_index_wraps_at_ends
+        PASS [   0.009s] ( 948/1512) warp settings_view::tests::match_data_uncounted_true_is_truthy
+        PASS [   0.011s] ( 949/1512) warp settings_view::tests::search_terms_match_direct_unit_checks
+        PASS [   0.011s] ( 950/1512) warp settings_view::tests::slugs_are_unique_across_sections
+        PASS [   0.012s] ( 951/1512) warp settings_view::tests::reapply_handles_multi_word_and_case
+        PASS [   0.012s] ( 952/1512) warp settings_view::tests::rebuild_resets_filter_to_all_widgets
+        PASS [   0.012s] ( 953/1512) warp settings_view::tests::rebuild_with_reapply_keeps_only_matching_widgets
+        PASS [   0.010s] ( 954/1512) warp settings_view::tests::subpage_display_names_are_correct
+        PASS [   0.010s] ( 955/1512) warp settings_view::tests::slugs_were_seeded_from_the_display_labels_they_replaced
+        PASS [   0.011s] ( 956/1512) warp settings_view::tests::title_trailing_element_is_present_regardless_of_widget_filter
+        PASS [   0.010s] ( 957/1512) warp settings_view::tests::umbrella_with_no_visible_subpages_is_skipped_entirely
+        PASS [   0.009s] ( 958/1512) warp tab_configs::params_modal::tests::resolve_param_value_returns_none_for_blank_required_input
+        PASS [   0.009s] ( 959/1512) warp tab_configs::params_modal::tests::resolve_param_value_returns_default_for_blank_input
+        PASS [   0.010s] ( 960/1512) warp tab_configs::params_modal::tests::resolve_param_value_preserves_non_blank_input
+        PASS [   0.009s] ( 961/1512) warp tab_configs::session_config::tests::detects_git_repo_in_parent
+        PASS [   0.009s] ( 962/1512) warp tab_configs::session_config::tests::detects_git_repo_with_dot_git_dir
+        PASS [   0.009s] ( 963/1512) warp tab_configs::session_config::tests::directory_path_is_absolute_in_directory
+        PASS [   0.010s] ( 964/1512) warp tab_configs::session_config::tests::detects_non_git_directory
+        PASS [   0.010s] ( 965/1512) warp tab_configs::session_config::tests::root_directory_does_not_loop
+        PASS [   0.010s] ( 966/1512) warp tab_configs::session_config::tests::snapshot_2x2_grid
+        PASS [   0.010s] ( 967/1512) warp tab_configs::session_config::tests::render_terminal_produces_correct_pane_template
+        PASS [   0.010s] ( 968/1512) warp tab_configs::session_config::tests::render_worktree_substitutes_default_branch_name
+        PASS [   0.010s] ( 969/1512) warp tab_configs::session_config::tests::round_trip_terminal_no_worktree
+        PASS [   0.010s] ( 970/1512) warp tab_configs::session_config::tests::snapshot_3_deep_nesting
+        PASS [   0.009s] ( 971/1512) warp tab_configs::session_config::tests::snapshot_3_way_split
+        PASS [   0.009s] ( 972/1512) warp tab_configs::session_config::tests::snapshot_asymmetric_tree
+        PASS [   0.010s] ( 973/1512) warp tab_configs::session_config::tests::snapshot_single_terminal_pane
+        PASS [   0.010s] ( 974/1512) warp tab_configs::session_config::tests::snapshot_preserves_custom_title_and_color
+        PASS [   0.010s] ( 975/1512) warp tab_configs::session_config::tests::snapshot_non_terminal_leaf_replaced_with_terminal
+        PASS [   0.011s] ( 976/1512) warp tab_configs::session_config::tests::snapshot_round_trip_3_deep_nesting
+        PASS [   0.010s] ( 977/1512) warp tab_configs::session_config::tests::snapshot_round_trip_toml
+        PASS [   0.010s] ( 978/1512) warp tab_configs::session_config::tests::terminal_command_prefix_is_none
+        PASS [   0.010s] ( 979/1512) warp tab_configs::session_config::tests::snapshot_two_pane_horizontal_split
+        PASS [   0.009s] ( 980/1512) warp tab_configs::session_config::tests::terminal_no_worktree
+        PASS [   0.011s] ( 981/1512) warp tab_configs::session_config::tests::terminal_with_autogenerated_worktree
+        PASS [   0.011s] ( 982/1512) warp tab_configs::session_config::tests::terminal_with_worktree
+        PASS [   0.010s] ( 983/1512) warp tab_configs::tab_config::tests::test_flat_2x2_grid
+        PASS [   0.010s] ( 984/1512) warp tab_configs::tab_config::tests::test_default_param_values
+        PASS [   0.011s] ( 985/1512) warp tab_configs::session_config::tests::write_tab_config_custom_base_name
+        PASS [   0.011s] ( 986/1512) warp tab_configs::session_config::tests::write_tab_config_creates_directory_if_missing
+        PASS [   0.012s] ( 987/1512) warp tab_configs::session_config::tests::write_tab_config_content_is_valid_toml
+        PASS [   0.011s] ( 988/1512) warp tab_configs::session_config::tests::write_tab_config_creates_file_with_correct_naming
+        PASS [   0.414s] ( 989/1512) warp search::command_search::searcher::tests::test_query_filter_limits_data_sources
+        PASS [   0.012s] ( 990/1512) warp tab_configs::tab_config::tests::test_flat_color_deserialized
+        PASS [   0.012s] ( 991/1512) warp tab_configs::tab_config::tests::test_flat_auto_focus_first_leaf
+        PASS [   0.011s] ( 992/1512) warp tab_configs::tab_config::tests::test_flat_split_with_fewer_than_two_children_falls_back
+        PASS [   0.012s] ( 993/1512) warp tab_configs::tab_config::tests::test_flat_duplicate_ids_falls_back
+        PASS [   0.012s] ( 994/1512) warp tab_configs::tab_config::tests::test_flat_explicit_focus
+        PASS [   0.011s] ( 995/1512) warp tab_configs::tab_config::tests::test_flat_single_pane
+        PASS [   0.011s] ( 996/1512) warp tab_configs::tab_config::tests::test_flat_two_pane_split
+        PASS [   0.010s] ( 997/1512) warp tab_configs::tab_config::tests::test_flat_with_params
+        PASS [   0.011s] ( 998/1512) warp tab_configs::tab_config::tests::test_flat_missing_child_ref_falls_back
+        PASS [   0.011s] ( 999/1512) warp tab_configs::tab_config::tests::test_parse_minimal_toml
+        PASS [   0.011s] (1000/1512) warp tab_configs::tab_config::tests::test_generated_worktree_path_uses_repo_name_directory
+        PASS [   0.011s] (1001/1512) warp tab_configs::tab_config::tests::test_parse_toml_with_on_close_fails
+        PASS [   0.011s] (1002/1512) warp tab_configs::tab_config::tests::test_parse_worktree_toml
+        PASS [   0.011s] (1003/1512) warp tab_configs::tab_config::tests::test_render_tab_config_cwd_is_not_quoted
+        PASS [   0.011s] (1004/1512) warp tab_configs::tab_config::tests::test_render_tab_config_multi_pane
+        PASS [   0.011s] (1005/1512) warp tab_configs::tab_config::tests::test_render_tab_config_substitutes_values
+        PASS [   0.011s] (1006/1512) warp tab_configs::tab_config::tests::test_render_tab_config_shell_quotes_commands_with_spaces
+        PASS [   0.011s] (1007/1512) warp tab_configs::tab_config::tests::test_worktree_custom_commands_with_template
+        PASS [   0.011s] (1008/1512) warp terminal::available_shells::tests::test_command_name_matches_unix
+        PASS [   0.011s] (1009/1512) warp terminal::available_shells::tests::test_command_name_matches_windows
+        PASS [   0.011s] (1010/1512) warp terminal::available_shells::tests::test_find_by_command_name_returns_none_for_unknown_name
+        PASS [   0.011s] (1011/1512) warp terminal::available_shells::tests::test_find_by_command_name_matches_known_shell
+        PASS [   0.011s] (1012/1512) warp terminal::available_shells::tests::test_find_by_command_name_is_case_sensitive_on_unix
+        PASS [   0.011s] (1013/1512) warp terminal::available_shells::tests::test_find_by_command_name_skips_system_default
+        PASS [   0.011s] (1014/1512) warp terminal::available_shells::tests::test_find_by_command_name_matches_msys2_shell
+        PASS [   0.012s] (1015/1512) warp tab_configs::tab_config::tests::test_worktree_template_substitution
+        PASS [   0.014s] (1016/1512) warp terminal::available_shells::tests::test_dedupe_symlinks_when_discovering_paths
+        PASS [   0.011s] (1017/1512) warp terminal::event::tests::pluggable_notification_debug_redacts_content
+        PASS [   0.011s] (1018/1512) warp terminal::find::model::async_find::tests::test_absolute_match_is_truncated
+        PASS [   0.010s] (1019/1512) warp terminal::find::model::async_find::tests::test_async_find_config_from_options
+        PASS [   0.012s] (1020/1512) warp terminal::available_shells::tests::test_load_known_shells_with_empty_path_var
+        PASS [   0.013s] (1021/1512) warp terminal::find::model::alt_screen::tests::test_run_find_on_alt_screen
+        PASS [   0.013s] (1022/1512) warp terminal::find::model::alt_screen::tests::test_run_find_on_alt_screen_regex
+        PASS [   0.013s] (1023/1512) warp terminal::find::model::alt_screen::tests::test_run_find_on_alt_screen_case_sensitive
+        PASS [   0.015s] (1024/1512) warp terminal::find::model::async_find::tests::test_async_find_cancellation
+        PASS [   0.010s] (1025/1512) warp terminal::find::model::async_find::tests::test_async_find_status_display
+        PASS [   0.009s] (1026/1512) warp terminal::find::model::async_find::tests::test_block_find_results_remove_block
+        PASS [   0.010s] (1027/1512) warp terminal::find::model::async_find::tests::test_block_find_results_total_count
+        PASS [   0.010s] (1028/1512) warp terminal::find::model::async_find::tests::test_block_invalidation_with_dirty_range
+        PASS [   0.011s] (1029/1512) warp terminal::find::model::async_find::tests::test_focus_next_match_wraps_around
+        PASS [   0.011s] (1030/1512) warp terminal::find::model::async_find::tests::test_focused_ai_match_most_recent_first_preserves_storage_order
+        PASS [   0.025s] (1031/1512) warp terminal::find::model::async_find::tests::test_async_find_produces_same_results_as_sync_find
+        PASS [   0.009s] (1032/1512) warp terminal::find::model::async_find::tests::test_is_query_refinement
+        PASS [   0.009s] (1033/1512) warp terminal::find::model::async_find::tests::test_update_dirty_matches_append
+        PASS [   0.011s] (1034/1512) warp terminal::find::model::async_find::tests::test_focused_match_index_walks_across_terminal_and_ai_blocks
+        PASS [   0.012s] (1035/1512) warp terminal::find::model::async_find::tests::test_focused_ai_match_resolves_only_ai_block
+        PASS [   0.010s] (1036/1512) warp terminal::find::model::async_find::tests::test_update_dirty_matches_clear_range
+        PASS [   0.013s] (1037/1512) warp terminal::find::model::async_find::tests::test_message_processing_updates_state
+        PASS [   0.026s] (1038/1512) warp terminal::find::model::async_find::tests::test_async_focused_order_matches_sync_most_recent_last
+        PASS [   0.026s] (1039/1512) warp terminal::find::model::async_find::tests::test_async_focused_order_matches_sync_most_recent_first
+        PASS [   0.010s] (1040/1512) warp terminal::find::model::async_find::tests::test_update_dirty_matches_empty_existing
+        PASS [   0.514s] (1041/1512) warp search::command_search::searcher::tests::test_async_data_source_run_twice_without_debounce
+        PASS [   0.516s] (1042/1512) warp search::command_search::searcher::tests::test_async_data_source
+        PASS [   0.010s] (1043/1512) warp terminal::find::model::async_find::tests::test_update_dirty_matches_prepend
+        PASS [   0.010s] (1044/1512) warp terminal::find::model::async_find::tests::test_update_dirty_matches_replace_middle
+        PASS [   0.513s] (1045/1512) warp search::command_search::searcher::tests::test_async_source_without_include_in_unfiltered_skipped_on_empty_filters
+        PASS [   0.514s] (1046/1512) warp search::command_search::searcher::tests::test_async_source_with_include_in_unfiltered_runs_on_empty_filters
+        PASS [   0.012s] (1047/1512) warp terminal::find::model::block_list::tests::test_rerun_on_block_preserves_focused_match_in_older_block
+        PASS [   0.013s] (1048/1512) warp terminal::find::model::block_list::tests::test_rerun_on_block_preserves_focused_match_in_active_block
+        PASS [   0.013s] (1049/1512) warp terminal::find::model::block_list::tests::test_run_find_on_block_list
+        PASS [   0.012s] (1050/1512) warp terminal::grid_renderer::box_drawing::tests::cross_covers_all_edges
+        PASS [   0.014s] (1051/1512) warp terminal::find::model::block_list::tests::test_run_find_on_block_list_case_sensitive
+        PASS [   0.013s] (1052/1512) warp terminal::find::model::block_list::tests::test_run_find_on_block_list_pin_to_top
+        PASS [   0.013s] (1053/1512) warp terminal::find::model::block_list::tests::test_run_find_on_block_list_regex_enabled
+        PASS [   0.011s] (1054/1512) warp terminal::grid_renderer::box_drawing::tests::heavy_line_is_thicker_than_light
+        PASS [   0.011s] (1055/1512) warp terminal::grid_renderer::box_drawing::tests::horizontal_line_fills_cell_width
+        PASS [   0.015s] (1056/1512) warp terminal::find::model::block_list::tests::test_run_find_on_block_list_with_filtered_block
+        PASS [   0.011s] (1057/1512) warp terminal::grid_renderer::box_drawing::tests::mixed_weight_transitions_preserve_each_arm_weight
+        PASS [   0.012s] (1058/1512) warp terminal::grid_renderer::box_drawing::tests::junction_rects_do_not_overlap
+        PASS [   0.011s] (1059/1512) warp terminal::grid_renderer::box_drawing::tests::stroke_thickness_is_stable_across_snapped_cell_widths
+        PASS [   0.010s] (1060/1512) warp terminal::grid_renderer::box_drawing::tests::supported_glyphs_have_rects
+        PASS [   0.012s] (1061/1512) warp terminal::grid_renderer::box_drawing::tests::unsupported_glyphs_return_no_rects
+        PASS [   0.011s] (1062/1512) warp terminal::grid_renderer::tests::test_calculate_background_bounds
+        PASS [   0.013s] (1063/1512) warp terminal::grid_renderer::box_drawing::tests::vertical_line_fills_cell_height
+        PASS [   0.011s] (1064/1512) warp terminal::grid_renderer::tests::test_active_or_next_match_point_before_next_match
+        PASS [   0.011s] (1065/1512) warp terminal::grid_renderer::tests::test_calculate_selection_bounds
+        PASS [   0.011s] (1066/1512) warp terminal::grid_renderer::tests::test_calculate_grid_baseline_position
+        PASS [   0.011s] (1067/1512) warp terminal::grid_renderer::box_drawing::tests::vertical_line_has_no_stacked_seam
+        PASS [   0.011s] (1068/1512) warp terminal::grid_renderer::tests::test_next_match_multi_row_matches
+        PASS [   0.011s] (1069/1512) warp terminal::grid_renderer::tests::test_next_match_same_row_matches
+        PASS [   0.011s] (1070/1512) warp terminal::history::tests::append_restored_command_doesnt_overwrite_rich_history
+        PASS [   0.013s] (1071/1512) warp terminal::history::tests::append_command_with_rich_history_data
+        PASS [   0.012s] (1072/1512) warp terminal::history::tests::is_appendable_vs_is_queryable
+        PASS [   0.514s] (1073/1512) warp search::command_search::searcher::tests::test_sync_and_async_data_sources
+        PASS [   0.016s] (1074/1512) warp terminal::history::tests::test_append_commands
+        PASS [   0.011s] (1075/1512) warp terminal::local_shell::tests::empty_path_between_markers
+        PASS [   0.012s] (1076/1512) warp terminal::history::tests::test_sessions_no_dupes_new_session
+        PASS [   0.011s] (1077/1512) warp terminal::local_shell::tests::extracts_clean_path
+        PASS [   0.015s] (1078/1512) warp terminal::history::tests::test_sessions_same_shell_same_machine
+        PASS [   0.019s] (1079/1512) warp terminal::history::tests::test_append_multiple_sessions
+        PASS [   0.012s] (1080/1512) warp terminal::local_shell::tests::ignores_startup_banner_output
+        PASS [   0.016s] (1081/1512) warp terminal::history::tests::test_multiple_machines
+        PASS [   0.016s] (1082/1512) warp terminal::history::tests::test_len
+        PASS [   0.017s] (1083/1512) warp terminal::history::tests::test_multiple_shells
+        PASS [   0.012s] (1084/1512) warp terminal::local_shell::tests::missing_markers_returns_none
+        PASS [   0.012s] (1085/1512) warp terminal::local_shell::tests::preserves_colons_and_surrounding_noise
+        PASS [   0.013s] (1086/1512) warp terminal::local_shell::tests::missing_end_marker_returns_none
+        PASS [   0.010s] (1087/1512) warp terminal::meta_shortcuts::tests::test_handle_keystroke_despite_composing
+        PASS [   0.011s] (1088/1512) warp terminal::model::alt_screen::tests::test_accumulate_lines_to_scroll
+        PASS [   0.011s] (1089/1512) warp terminal::model::alt_screen::tests::test_alt_screen_single_cell_selection
+        PASS [   0.013s] (1090/1512) warp terminal::model::alt_screen::tests::test_alt_screen_resize_clears_selection
+        PASS [   0.010s] (1091/1512) warp terminal::model::block::serialized_block::tests::from_json_accepts_integer_array_bytes
+        PASS [   0.012s] (1092/1512) warp terminal::model::block::serialized_block::tests::from_json_accepts_base64_encoded_bytes
+        PASS [   0.565s] (1093/1512) warp search::command_search::searcher::tests::test_async_data_source_run_twice_with_debounce
+        PASS [   0.013s] (1094/1512) warp terminal::model::block::tests::test_background_block
+        PASS [   0.012s] (1095/1512) warp terminal::model::block::tests::test_block_duration_formatting
+        PASS [   0.011s] (1096/1512) warp terminal::model::block::tests::test_calculate_optimal_row_counts_narrow_terminal
+        PASS [   0.012s] (1097/1512) warp terminal::model::block::tests::test_block_height_non_bootstrapped_block
+        PASS [   0.013s] (1098/1512) warp terminal::model::block::tests::test_block_emits_block_completed_event_for_in_band_command
+        PASS [   0.012s] (1099/1512) warp terminal::model::block::tests::test_calculate_optimal_row_counts_very_narrow_terminal
+        PASS [   0.013s] (1100/1512) warp terminal::model::block::tests::test_calculate_optimal_row_counts_wide_terminal
+        PASS [   0.012s] (1101/1512) warp terminal::model::block::tests::test_clone_command_from_blockgrid_from_empty
+        PASS [   0.011s] (1102/1512) warp terminal::model::block::tests::test_clone_command_from_blockgrid_to_empty
+        PASS [   0.011s] (1103/1512) warp terminal::model::block::tests::test_command_and_output_to_string_excludes_warp_prompt
+        PASS [   0.013s] (1104/1512) warp terminal::model::block::tests::test_clone_command_from_blockgrid_long
+        PASS [   0.016s] (1105/1512) warp terminal::model::block::tests::test_clone_command_from_blockgrid
+        PASS [   0.013s] (1106/1512) warp terminal::model::block::tests::test_command_and_output_to_string_includes_ps1_prompt_command_rprompt_and_output
+        PASS [   0.012s] (1107/1512) warp terminal::model::block::tests::test_command_grid_bold
+        PASS [   0.012s] (1108/1512) warp terminal::model::block::tests::test_command_grid_bold_after_reset
+        PASS [   0.012s] (1109/1512) warp terminal::model::block::tests::test_command_is_empty_combined_grid
+        PASS [   0.012s] (1110/1512) warp terminal::model::block::tests::test_command_is_empty_combined_grid_prompt_and_command
+        PASS [   0.012s] (1111/1512) warp terminal::model::block::tests::test_command_is_empty_warp_prompt
+        PASS [   0.011s] (1112/1512) warp terminal::model::block::tests::test_command_is_not_empty_combined_grid
+        PASS [   0.012s] (1113/1512) warp terminal::model::block::tests::test_deserialize_legacy_agent_view_visibility_agent_variant
+        PASS [   0.011s] (1114/1512) warp terminal::model::block::tests::test_elapsed_duration_for_background_block_is_not_live
+        PASS [   0.012s] (1115/1512) warp terminal::model::block::tests::test_elapsed_duration_requires_executing_state
+        PASS [   0.012s] (1116/1512) warp terminal::model::block::tests::test_elapsed_duration_rounds_down_to_whole_seconds
+        PASS [   0.012s] (1117/1512) warp terminal::model::block::tests::test_empty_command
+        PASS [   0.014s] (1118/1512) warp terminal::model::block::tests::test_failed_block
+        PASS [   0.012s] (1119/1512) warp terminal::model::block::tests::test_non_error_exit_codes
+        PASS [   0.012s] (1120/1512) warp terminal::model::block::tests::test_mark_end_of_prompt_with_some_rows_in_flat_storage
+        PASS [   0.014s] (1121/1512) warp terminal::model::block::tests::test_find
+        PASS [   0.013s] (1122/1512) warp terminal::model::block::tests::test_image_completion_drops_in_warp_input_stage
+        PASS [   0.013s] (1123/1512) warp terminal::model::block::tests::test_image_completion_before_execution_routes_to_output_grid
+        PASS [   0.014s] (1124/1512) warp terminal::model::block::tests::test_precmd_no_preexec
+        PASS [   0.011s] (1125/1512) warp terminal::model::block::tests::test_restored_block_was_local
+        PASS [   0.011s] (1126/1512) warp terminal::model::block::tests::test_selection_bounds_all_grids_multiline_lprompt_no_command
+        PASS [   0.013s] (1127/1512) warp terminal::model::block::tests::test_selection_bounds_all_grids_multiline_lprompt_command
+        PASS [   0.012s] (1128/1512) warp terminal::model::block::tests::test_selection_bounds_all_grids_single_line_lprompt_command_starting_newline
+        PASS [   0.012s] (1129/1512) warp terminal::model::block::tests::test_selection_bounds_all_grids_single_line_lprompt_command
+        PASS [   0.012s] (1130/1512) warp terminal::model::block::tests::test_set_current_working_directory_updates_pwd_and_emits_cwd_event
+        PASS [   0.014s] (1131/1512) warp terminal::model::block::tests::test_selection_bounds_all_grids_single_line_lprompt_trailing_newline_command
+        PASS [   0.013s] (1132/1512) warp terminal::model::block::tests::test_top_level_command
+        PASS [   0.013s] (1133/1512) warp terminal::model::blocks::selection::tests::test_rect_selection_multi_block
+        PASS [   0.014s] (1134/1512) warp terminal::model::blocks::selection::tests::test_rect_selection_inverted_multi_block
+        PASS [   0.014s] (1135/1512) warp terminal::model::block::tests::test_top_level_command_with_aliases
+        PASS [   0.013s] (1136/1512) warp terminal::model::blocks::selection::tests::test_select_left_select_right
+        PASS [   0.014s] (1137/1512) warp terminal::model::blocks::selection::tests::test_rect_selection_single_block
+        PASS [   0.012s] (1138/1512) warp terminal::model::blocks::selection::tests::test_selection_changes_if_end_within_active_truncated_block
+        PASS [   0.012s] (1139/1512) warp terminal::model::blocks::selection::tests::test_selection_range_cleared_when_block_finishes
+        PASS [   0.013s] (1140/1512) warp terminal::model::blocks::selection::tests::test_selection_is_removed_if_contained_within_active_truncated_block
+        PASS [   0.014s] (1141/1512) warp terminal::model::blocks::selection::tests::test_selection_doesnt_change_if_not_within_active_truncated_block
+        PASS [   0.013s] (1142/1512) warp terminal::model::blocks::selection::tests::test_selection_ranges_single_command_grid
+        PASS [   0.015s] (1143/1512) warp terminal::model::blocks::selection::tests::test_selection_ranges_across_grids
+        PASS [   0.065s] (1144/1512) warp terminal::model::block::tests::non_empty_pre_bootstrap_block_can_be_long_running
+        PASS [   0.014s] (1145/1512) warp terminal::model::blocks::selection::tests::test_selection_ranges_single_output_grid
+        PASS [   0.013s] (1146/1512) warp terminal::model::blocks::selection::tests::test_selection_to_string
+        PASS [   0.013s] (1147/1512) warp terminal::model::blocks::selection::tests::test_selection_to_string_hidden_blocks
+        PASS [   0.067s] (1148/1512) warp terminal::model::block::tests::empty_pre_bootstrap_block_is_not_long_running
+        PASS [   0.013s] (1149/1512) warp terminal::model::blocks::selection::tests::test_selection_to_string_inverted_blocklist
+        PASS [   0.014s] (1150/1512) warp terminal::model::blocks::selection::tests::test_semantic_selection_with_custom_boundaries
+        PASS [   0.012s] (1151/1512) warp terminal::model::blocks::tests::classifies_next_block_ids_relative_to_the_active_block
+        PASS [   0.013s] (1152/1512) warp terminal::model::blocks::tests::clear_blocks_resets_index
+        PASS [   0.011s] (1153/1512) warp terminal::model::blocks::tests::test_block_heights_combined_prompt_command_grid_warp_prompt
+        PASS [   0.013s] (1154/1512) warp terminal::model::blocks::tests::test_block_height_update_shifts_indices
+        PASS [   0.013s] (1155/1512) warp terminal::model::blocks::tests::test_background_blocks_finished
+        PASS [   0.013s] (1156/1512) warp terminal::model::blocks::tests::test_basic_bootstrapping
+        PASS [   0.013s] (1157/1512) warp terminal::model::blocks::tests::test_cursor_seeking_in_sumtree_with_floating_point_inconsistency
+        PASS [   0.023s] (1158/1512) warp terminal::model::blocks::selection::tests::test_smart_selection_override
+        PASS [   0.016s] (1159/1512) warp terminal::model::blocks::tests::test_banner_insertion_and_removal
+        PASS [   0.016s] (1160/1512) warp terminal::model::blocks::tests::test_block_heights_combined_prompt_command_grid_ps1
+        PASS [   0.018s] (1161/1512) warp terminal::model::blocks::tests::deferred_fields_resolve_by_block_id_after_reindex
+        PASS [   0.015s] (1162/1512) warp terminal::model::blocks::tests::test_device_status_uses_active_block_if_no_typeahead
+        PASS [   0.013s] (1163/1512) warp terminal::model::blocks::tests::test_emits_after_block_completed_event
+        PASS [   0.011s] (1164/1512) warp terminal::model::blocks::tests::test_first_non_hidden_block_by_index_in_range
+        PASS [   0.011s] (1165/1512) warp terminal::model::blocks::tests::test_internal_consistency_of_block_height_summing
+        PASS [   0.012s] (1166/1512) warp terminal::model::blocks::tests::test_gap_after_banner
+        PASS [   0.065s] (1167/1512) warp terminal::model::block::tests::test_long_running_block_bottom_padding
+        PASS [   0.014s] (1168/1512) warp terminal::model::blocks::tests::test_interleaves_background_with_gaps
+        PASS [   0.015s] (1169/1512) warp terminal::model::blocks::tests::test_insert_non_block_item
+        PASS [   0.015s] (1170/1512) warp terminal::model::blocks::tests::test_invalid_iterm_image_does_not_render_in_script_execution_block
+        PASS [   0.015s] (1171/1512) warp terminal::model::blocks::tests::test_iterm_image_renders_in_script_execution_block
+        PASS [   0.015s] (1172/1512) warp terminal::model::blocks::tests::test_kitty_image_renders_in_script_execution_block
+        PASS [   0.015s] (1173/1512) warp terminal::model::blocks::tests::test_kitty_image_early_output_routes_to_background_block
+        PASS [   0.016s] (1174/1512) warp terminal::model::blocks::tests::test_kitty_store_only_does_not_render_in_script_execution_block
+        PASS [   0.018s] (1175/1512) warp terminal::model::blocks::tests::test_iterm_image_early_output_routes_to_background_block
+        PASS [   0.016s] (1176/1512) warp terminal::model::blocks::tests::test_matching_block_by_index
+        PASS [   0.016s] (1177/1512) warp terminal::model::blocks::tests::test_kitty_store_only_early_output_does_not_create_background_block
+        PASS [   0.015s] (1178/1512) warp terminal::model::blocks::tests::test_remove_background_block_with_active_gap
+        PASS [   0.015s] (1179/1512) warp terminal::model::blocks::tests::test_remove_rich_content_block
+        PASS [   0.014s] (1180/1512) warp terminal::model::blocks::tests::test_removed_gap_with_banner
+        PASS [   0.014s] (1181/1512) warp terminal::model::blocks::tests::test_restore_blocks_with_local_status
+        PASS [   0.051s] (1182/1512) warp terminal::model::blocks::selection::tests::test_smart_selection_in_single_block
+        PASS [   0.016s] (1183/1512) warp terminal::model::blocks::tests::test_restore_block_that_wasnt_completed
+        PASS [   0.017s] (1184/1512) warp terminal::model::blocks::tests::test_restore_block_that_wasnt_started
+        PASS [   0.056s] (1185/1512) warp terminal::model::blocks::selection::tests::test_smart_selection_in_multiple_blocks
+        PASS [   0.015s] (1186/1512) warp terminal::model::blocks::tests::test_seek_down_to_next_grid
+        PASS [   0.015s] (1187/1512) warp terminal::model::blocks::tests::test_script_execution_block
+        PASS [   0.014s] (1188/1512) warp terminal::model::blocks::tests::test_seek_up_to_next_grid
+        PASS [   0.014s] (1189/1512) warp terminal::model::blocks::tests::test_seek_down_to_next_grid_inverted_blocklist
+        PASS [   0.020s] (1190/1512) warp terminal::model::blocks::tests::test_restore_completed_blocks
+        PASS [   0.017s] (1191/1512) warp terminal::model::blocks::tests::test_seek_up_to_next_grid_inverted_blocklist
+        PASS [   0.013s] (1192/1512) warp terminal::model::blocks::tests::test_zero_sized_kitty_early_output_does_not_create_background_block
+        PASS [   0.014s] (1193/1512) warp terminal::model::blocks::tests::unfiltered_transcript_scope_shows_restored_blocks_with_legacy_visibility
+        PASS [   0.019s] (1194/1512) warp terminal::model::blocks::tests::test_session_restoration_separator
+        PASS [   0.017s] (1195/1512) warp terminal::model::blocks::tests::test_update_padding_block_heights
+        PASS [   0.015s] (1196/1512) warp terminal::model::blocks::tests::visible_bootstrap_block_event_fires_when_script_execution_becomes_visible
+        PASS [   0.015s] (1197/1512) warp terminal::model::early_output::tests::test_lazy_background_insertion
+        PASS [   0.016s] (1198/1512) warp terminal::model::early_output::tests::test_background_triggers_wakeup
+        PASS [   0.011s] (1199/1512) warp terminal::model::lifecycle::tests::lifecycle_coordinator_records_only_conservative_or_recovery_transitions
+        PASS [   0.013s] (1200/1512) warp terminal::model::lifecycle::tests::lifecycle_coordinator_accepts_novel_completion_recovery_when_enabled
+        PASS [   0.012s] (1201/1512) warp terminal::model::lifecycle::tests::lifecycle_phase_reconciliation_requires_compatible_live_evidence
+        PASS [   0.013s] (1202/1512) warp terminal::model::lifecycle::tests::lifecycle_coordinator_gates_novel_completion_recovery
+        PASS [   0.016s] (1203/1512) warp terminal::model::early_output::tests::test_queued_typeahead_input_matching
+        PASS [   0.011s] (1204/1512) warp terminal::model::lifecycle::tests::transition_matrix_preserves_normal_flow_and_plans_safe_completion_recovery
+        PASS [   0.012s] (1205/1512) warp terminal::model::lifecycle::tests::lifecycle_telemetry_is_rate_limited_per_transition_key
+        PASS [   0.020s] (1206/1512) warp terminal::model::early_output::tests::test_queued_typeahead_shell_reported
+        PASS [   0.016s] (1207/1512) warp terminal::model::session::command_executor::in_band_command_executor::tests::test_cancelling_command_queues_up_next_command_command
+        PASS [   0.014s] (1208/1512) warp terminal::model::session::command_executor::in_band_command_executor::tests::test_commands_are_cleared_if_execute_command_future_is_aborted
+        PASS [   0.017s] (1209/1512) warp terminal::model::session::command_executor::in_band_command_executor::tests::test_clears_running_and_pending_commands_on_cancellation
+        PASS [   0.017s] (1210/1512) warp terminal::model::session::command_executor::in_band_command_executor::tests::test_commands_are_cleared_if_controller_cancels_command
+        PASS [   0.014s] (1211/1512) warp terminal::model::session::command_executor::in_band_command_executor::tests::test_emits_error_command_output
+        PASS [   0.015s] (1212/1512) warp terminal::model::session::command_executor::in_band_command_executor::tests::test_commands_are_not_cleared_if_controller_cancels_different_command
+        PASS [   0.014s] (1213/1512) warp terminal::model::session::command_executor::in_band_command_executor::tests::test_runs_commands_serially_after_failed_command
+        PASS [   0.012s] (1214/1512) warp terminal::model::session::test::can_resolve_cwd_to_native_path_accepts_posix_path
+        PASS [   0.016s] (1215/1512) warp terminal::model::session::command_executor::in_band_command_executor::tests::test_emits_successful_command_output
+        PASS [   0.016s] (1216/1512) warp terminal::model::session::command_executor::in_band_command_executor::tests::test_runs_commands_serially
+        PASS [   0.015s] (1217/1512) warp terminal::model::session::test::test_set_env_var_emits_event
+        PASS [   0.020s] (1218/1512) warp terminal::model::session::test::test_malicious_histfile_path_does_not_execute_injected_commands
+        PASS [   0.013s] (1219/1512) warp terminal::model::terminal_model::tests::command_finished_recovers_unknown_started_block_with_real_exit_code
+        PASS [   0.013s] (1220/1512) warp terminal::model::terminal_model::tests::accepted_precmd_and_preexec_target_the_block_list_while_the_alt_screen_is_active
+        PASS [   0.014s] (1221/1512) warp terminal::model::terminal_model::tests::compare_within_block_points
+        PASS [   0.016s] (1222/1512) warp terminal::model::session::test::test_set_env_var_emits_no_event_when_no_change
+        PASS [   0.025s] (1223/1512) warp terminal::model::session::command_executor::local_command_executor::tests::unix::cancel_active_commands_kills_descendant_process
+        PASS [   0.013s] (1224/1512) warp terminal::model::terminal_model::tests::completions_are_emitted_in_the_order_the_shell_sent_them
+        PASS [   0.013s] (1225/1512) warp terminal::model::terminal_model::tests::duplicate_and_colliding_completion_evidence_is_ignored
+        PASS [   0.016s] (1226/1512) warp terminal::model::terminal_model::tests::completion_replacement_span_saturates_an_out_of_range_pair_rather_than_panicking
+        PASS [   0.013s] (1227/1512) warp terminal::model::terminal_model::tests::empty_and_syntax_error_commands_without_preexec_complete_as_execution
+        PASS [   0.014s] (1228/1512) warp terminal::model::terminal_model::tests::ignores_multipart_non_inline_iterm_file_payload_without_overwriting_cwd_file
+        PASS [   0.015s] (1229/1512) warp terminal::model::terminal_model::tests::ignores_non_inline_iterm_file_payload_without_overwriting_cwd_file
+        PASS [   0.035s] (1230/1512) warp terminal::model::session::command_executor::local_command_executor::tests::unix::dropping_command_future_kills_descendant_process
+        PASS [   0.012s] (1231/1512) warp terminal::model::terminal_model::tests::precmd_with_completion_metadata_completion_recovery_is_disabled_by_default
+        PASS [   0.014s] (1232/1512) warp terminal::model::terminal_model::tests::normal_lifecycle_pipeline_emits_completion_and_prompt_side_effects_once
+        PASS [   0.013s] (1233/1512) warp terminal::model::terminal_model::tests::precmd_with_completion_metadata_recovers_in_band_completion_and_reuses_cached_prompt
+        PASS [   0.013s] (1234/1512) warp terminal::model::terminal_model::tests::precmd_with_completion_metadata_recovers_missing_completion_with_exact_side_effects
+        PASS [   0.013s] (1235/1512) warp terminal::model::terminal_model::tests::precmd_with_completion_metadata_recovery_cleans_up_alt_screen_and_bracketed_paste
+        PASS [   0.014s] (1236/1512) warp terminal::model::terminal_model::tests::precmd_with_completion_metadata_records_completion_mismatch_without_overwriting_completed_block
+        PASS [   0.016s] (1237/1512) warp terminal::model::terminal_model::tests::local_terminal_rejects_dcs_hook_with_unregistered_session_id
+        PASS [   0.013s] (1238/1512) warp terminal::model::terminal_model::tests::recovery_advances_finished_active_block_without_republishing_completion
+        PASS [   0.012s] (1239/1512) warp terminal::model::terminal_model::tests::repeated_and_executing_command_starts_are_safely_gated
+        PASS [   0.012s] (1240/1512) warp terminal::model::terminal_model::tests::repeated_precmd_with_completion_metadata_and_prompt_only_precmd_are_ignored_when_recovery_is_disabled
+        PASS [   0.013s] (1241/1512) warp terminal::model::terminal_model::tests::repeated_precmd_with_completion_metadata_and_prompt_only_precmd_are_ignored
+        PASS [   0.043s] (1242/1512) warp terminal::model::session::command_executor::local_command_executor::tests::unix::completed_command_is_not_canceled_later
+        PASS [   0.015s] (1243/1512) warp terminal::model::terminal_model::tests::set_custom_title
+        PASS [   0.015s] (1244/1512) warp terminal::model::terminal_model::tests::ssh_bootstraps_if_blocklist_empty_and_reconciles_parent_return
+        PASS [   0.016s] (1245/1512) warp terminal::model::terminal_model::tests::take_typeahead_for_input_advances_incremental_typeahead
+        PASS [   0.013s] (1246/1512) warp terminal::model::terminal_model::tests::test_exit_alt_screen_on_command_finished
+        PASS [   0.014s] (1247/1512) warp terminal::model::terminal_model::tests::test_alt_screen_selection_tracks_scroll
+        PASS [   0.015s] (1248/1512) warp terminal::model::terminal_model::tests::terminal_exit_absorbs_later_lifecycle_inputs
+        PASS [   0.016s] (1249/1512) warp terminal::model::terminal_model::tests::take_typeahead_for_input_is_none_when_typeahead_is_empty
+        PASS [   0.015s] (1250/1512) warp terminal::model::terminal_model::tests::test_alt_screen_toggle
+        PASS [   0.014s] (1251/1512) warp terminal::model::terminal_model::tests::test_reset_state
+        PASS [   0.015s] (1252/1512) warp terminal::model::terminal_model::tests::test_rect_selection_in_alt_screen
+        PASS [   0.014s] (1253/1512) warp terminal::model::terminal_model::tests::test_restored_blocks_on_different_host
+        PASS [   0.014s] (1254/1512) warp terminal::model::terminal_model::tests::test_selected_block_range_contains
+        PASS [   0.013s] (1255/1512) warp terminal::model::terminal_model::tests::test_selected_blocks_is_selected
+        PASS [   0.015s] (1256/1512) warp terminal::model::terminal_model::tests::test_restored_empty_command_block
+        PASS [   0.012s] (1257/1512) warp terminal::model::terminal_model::tests::test_selected_blocks_range_select
+        PASS [   0.011s] (1258/1512) warp terminal::model::terminal_model::tests::test_selected_blocks_tail
+        PASS [   0.011s] (1259/1512) warp terminal::model::terminal_model::tests::test_selected_blocks_toggle_on
+        PASS [   0.013s] (1260/1512) warp terminal::model::terminal_model::tests::test_selected_blocks_sorted_ranges
+        PASS [   0.012s] (1261/1512) warp terminal::model::terminal_model::tests::test_selected_blocks_toggle_off
+        PASS [   0.015s] (1262/1512) warp terminal::model::terminal_model::tests::test_selected_blocks_reset
+        PASS [   0.013s] (1263/1512) warp terminal::model::terminal_model::tests::test_unset_bracketed_paste_mode_on_command_finished
+        PASS [   0.020s] (1264/1512) warp terminal::ref_tests::clear_underline
+        PASS [   0.020s] (1265/1512) warp terminal::ref_tests::decaln_reset
+        PASS [   0.023s] (1266/1512) warp terminal::ref_tests::alt_reset
+        PASS [   0.022s] (1267/1512) warp terminal::ref_tests::csi_rep
+        PASS [   0.022s] (1268/1512) warp terminal::ref_tests::deccolm_reset
+        PASS [   0.023s] (1269/1512) warp terminal::ref_tests::delete_chars_reset
+        PASS [   0.022s] (1270/1512) warp terminal::ref_tests::delete_lines
+        PASS [   0.019s] (1271/1512) warp terminal::ref_tests::fish_cc
+        PASS [   0.020s] (1272/1512) warp terminal::ref_tests::erase_chars_reset
+        PASS [   0.035s] (1273/1512) warp terminal::ref_tests::colored_reset
+        PASS [   0.024s] (1274/1512) warp terminal::ref_tests::insert_blank_reset
+        PASS [   0.027s] (1275/1512) warp terminal::ref_tests::indexed_256_colors
+        PASS [   0.021s] (1276/1512) warp terminal::ref_tests::issue_855
+        PASS [   0.014s] (1277/1512) warp terminal::ref_tests::selective_erasure
+        PASS [   0.021s] (1278/1512) warp terminal::ref_tests::newline_with_cursor_beyond_scroll_region
+        PASS [   0.024s] (1279/1512) warp terminal::ref_tests::ll
+        PASS [   0.021s] (1280/1512) warp terminal::ref_tests::scroll_up_reset
+        PASS [   0.027s] (1281/1512) warp terminal::ref_tests::saved_cursor
+        PASS [   0.027s] (1282/1512) warp terminal::ref_tests::saved_cursor_alt
+        PASS [   0.021s] (1283/1512) warp terminal::ref_tests::tmux_git_log
+        PASS [   0.028s] (1284/1512) warp terminal::ref_tests::sgr
+        PASS [   0.028s] (1285/1512) warp terminal::ref_tests::tab_rendering
+        PASS [   0.022s] (1286/1512) warp terminal::ref_tests::underline
+        PASS [   0.025s] (1287/1512) warp terminal::ref_tests::tmux_htop
+        PASS [   0.025s] (1288/1512) warp terminal::ref_tests::vim_simple_edit
+        PASS [   0.021s] (1289/1512) warp terminal::ref_tests::vttest_insert
+        PASS [   0.023s] (1290/1512) warp terminal::ref_tests::vttest_cursor_movement_1
+        PASS [   0.026s] (1291/1512) warp terminal::ref_tests::vttest_origin_mode_1
+        PASS [   0.023s] (1292/1512) warp terminal::ref_tests::vttest_origin_mode_2
+        PASS [   0.012s] (1293/1512) warp terminal::settings::tests::osc52_deny_blocks_read_and_write
+        PASS [   0.012s] (1294/1512) warp terminal::settings::tests::osc52_default_is_deny
+        PASS [   0.030s] (1295/1512) warp terminal::ref_tests::vttest_scroll
+        PASS [   0.025s] (1296/1512) warp terminal::ref_tests::wrapline_alt_toggle
+        PASS [   0.025s] (1297/1512) warp terminal::ref_tests::vttest_tab_clear_set
+        PASS [   0.026s] (1298/1512) warp terminal::ref_tests::zerowidth
+        PASS [   0.019s] (1299/1512) warp terminal::ref_tests::zsh_tab_completion
+        PASS [   0.012s] (1300/1512) warp terminal::settings::tests::osc52_deserializes_all_variants_from_settings_value
+        PASS [   0.012s] (1301/1512) warp terminal::settings::tests::osc52_read_write_allows_both
+        PASS [   0.011s] (1302/1512) warp terminal::settings::tests::osc52_write_only_allows_write_but_not_read
+        PASS [   0.013s] (1303/1512) warp terminal::settings::tests::osc52_rejects_unknown_variant
+        PASS [   0.012s] (1304/1512) warp terminal::size_update_tests::unchanged_headless_layout_has_no_dimension_change
+        PASS [   0.014s] (1305/1512) warp terminal::size_update_tests::headless_layout_update_uses_cell_dimensions
+        PASS [   0.014s] (1306/1512) warp terminal::ssh::util::tests::ssh_gcloud_ssh_parsing
+        PASS [   0.016s] (1307/1512) warp terminal::ssh::util::tests::ssh_alias_expanded_commands
+        PASS [   0.016s] (1308/1512) warp terminal::ssh::util::tests::ssh_digital_ocean_droplet_parsing
+        PASS [   0.015s] (1309/1512) warp terminal::ssh::util::tests::ssh_interactive_shell_parsing
+        PASS [   0.148s] (1310/1512) warp terminal::model::terminal_model::tests::handles_inline_iterm_image_payload
+        PASS [   0.014s] (1311/1512) warp terminal::writeable_pty::pty_controller::command_bytes_tests::bracketed_paste_command_execution_preserves_crlf_for_posix_shells_off_windows
+        PASS [   0.072s] (1312/1512) warp terminal::ref_tests::vim_large_window_scroll
+        PASS [   0.012s] (1313/1512) warp terminal::writeable_pty::pty_controller::command_bytes_tests::split_kill_buffer_write_handles_a_command_with_no_content_gracefully
+        PASS [   0.013s] (1314/1512) warp terminal::writeable_pty::pty_controller::command_bytes_tests::split_kill_buffer_write_returns_none_when_the_kill_buffer_is_not_the_prefix
+        PASS [   0.014s] (1315/1512) warp terminal::writeable_pty::pty_controller::command_bytes_tests::powershell_command_execution_normalizes_linefeeds_to_carriage_returns
+        PASS [   0.015s] (1316/1512) warp terminal::writeable_pty::pty_controller::command_bytes_tests::split_kill_buffer_write_does_not_split_the_other_three_shells
+        PASS [   0.077s] (1317/1512) warp terminal::ref_tests::vim_24bitcolors_bce
+        PASS [   0.030s] (1318/1512) warp terminal::view::tests::alt_screen_wheel_and_mouse_events_reach_pty_without_holding_model_lock
+        PASS [   0.014s] (1319/1512) warp terminal::writeable_pty::pty_controller::command_bytes_tests::split_kill_buffer_write_splits_powershell_off_from_the_rest
+        PASS [   0.029s] (1320/1512) warp terminal::view::tests::page_keys_scroll_transcript_while_input_editor_is_focused
+        PASS [   0.032s] (1321/1512) warp terminal::view::tests::commands_submitted_during_bootstrap_wait_for_the_shell
+        PASS [   0.017s] (1322/1512) warp terminal::writeable_pty::pty_controller::command_bytes_tests::unbracketed_paste_command_execution_preserves_lf_for_posix_shells
+        PASS [   0.017s] (1323/1512) warp terminal::writeable_pty::pty_controller::lifecycle_tests::native_shell_completions_queues_the_generator_command_for_the_active_sessions_shell
+        PASS [   0.015s] (1324/1512) warp terminal::writeable_pty::pty_controller::lifecycle_tests::rejected_and_coalesced_starts_do_not_mutate_controller_or_write_bytes
+        PASS [   0.014s] (1325/1512) warp tests::app_keeps_default_secure_storage_service_name
+        PASS [   0.013s] (1326/1512) warp tests::launch_modes_select_expected_logging_frontend
+        PASS [   0.017s] (1327/1512) warp terminal::writeable_pty::pty_controller::lifecycle_tests::native_shell_completions_reports_no_matches_without_an_active_session
+        PASS [   0.016s] (1328/1512) warp terminal::writeable_pty::pty_controller::lifecycle_tests::rejected_queued_in_band_start_is_cancelled_without_writing_bytes
+        PASS [   0.013s] (1329/1512) warp themes::theme::tests::custom_base16_theme_kind_uses_custom_theme_settings_value_path_rules
+        PASS [   0.015s] (1330/1512) warp tests::tui_uses_distinct_secure_storage_service_name
+        PASS [   0.012s] (1331/1512) warp themes::theme::tests::custom_theme_absolute_parent_dir_path_under_theme_root_storage_helper_preserves_path_and_rejects_portability
+        PASS [   0.041s] (1332/1512) warp terminal::view::tests::terminal_find_searches_output_scrolls_and_closes
+        PASS [   0.013s] (1333/1512) warp themes::theme::tests::custom_theme_legacy_linux_path_is_preserved_even_when_local_file_exists
+        PASS [   0.012s] (1334/1512) warp themes::theme::tests::custom_theme_legacy_parent_dir_path_is_preserved
+        PASS [   0.011s] (1335/1512) warp themes::theme::tests::custom_theme_relative_parent_dir_path_is_not_portable
+        PASS [   0.012s] (1336/1512) warp themes::theme::tests::custom_theme_relative_backslash_path_is_preserved
+        PASS [   0.013s] (1337/1512) warp themes::theme::tests::custom_theme_legacy_macos_path_is_preserved_even_when_local_file_exists
+        PASS [   0.014s] (1338/1512) warp themes::theme::tests::custom_theme_path_under_theme_root_storage_helper_returns_relative_path
+        PASS [   0.013s] (1339/1512) warp themes::theme::tests::custom_theme_relative_backslash_path_is_not_portable
+        PASS [   0.010s] (1340/1512) warp themes::theme::tests::custom_theme_relative_path_resolves_under_local_theme_root
+        PASS [   0.013s] (1341/1512) warp themes::theme::tests::custom_theme_relative_backslash_path_storage_helper_preserves_path
+        PASS [   0.012s] (1342/1512) warp themes::theme::tests::custom_theme_relative_parent_dir_path_is_preserved
+        PASS [   0.012s] (1343/1512) warp themes::theme::tests::custom_theme_serde_preserves_unportable_raw_paths
+        PASS [   0.014s] (1344/1512) warp themes::theme::tests::custom_theme_serde_writes_portable_path_for_theme_root_file
+        PASS [   0.014s] (1345/1512) warp themes::theme::tests::custom_theme_serde_reads_portable_raw_path_under_theme_root
+        PASS [   0.012s] (1346/1512) warp themes::theme::tests::custom_theme_settings_value_writes_portable_path_for_theme_root_file
+        PASS [   0.011s] (1347/1512) warp themes::theme::tests::custom_theme_windows_absolute_path_string_is_preserved
+        PASS [   0.012s] (1348/1512) warp themes::theme::tests::custom_theme_settings_value_reads_portable_raw_path_under_theme_root
+        PASS [   0.013s] (1349/1512) warp themes::theme::tests::custom_theme_settings_value_preserves_unportable_raw_paths
+        PASS [   0.011s] (1350/1512) warp themes::theme::tests::custom_theme_windows_unc_path_string_is_preserved
+        PASS [   0.013s] (1351/1512) warp themes::theme::tests::custom_theme_windows_absolute_path_string_is_not_portable
+        PASS [   0.013s] (1352/1512) warp themes::theme::tests::custom_theme_windows_absolute_path_string_storage_helper_preserves_path
+        PASS [   0.017s] (1353/1512) warp themes::theme::tests::custom_theme_unmatched_legacy_absolute_path_is_preserved
+        PASS [   0.014s] (1354/1512) warp themes::theme_creator::tests::accent_colors_contrast_test
+        PASS [   0.012s] (1355/1512) warp themes::theme_creator::tests::top_colors_invalid_image_test
+        PASS [   0.012s] (1356/1512) warp user_config::tests::test_is_tab_config_toml_rejects_tomls_outside_tab_config_dirs
+        PASS [   0.012s] (1357/1512) warp user_config::tests::test_is_tab_config_toml_matches_user_tab_configs
+        PASS [   0.013s] (1358/1512) warp user_config::tests::test_default_tab_configs_dir_uses_underscores
+        PASS [   0.013s] (1359/1512) warp user_config::tests::test_is_tab_config_toml_rejects_non_toml_paths
+        PASS [   0.012s] (1360/1512) warp user_config::tests::test_load_tab_configs_empty_directory
+        PASS [   0.016s] (1361/1512) warp user_config::tests::test_is_tab_config_toml_matches_default_tab_configs
+        PASS [   0.016s] (1362/1512) warp user_config::tests::test_load_tab_configs_deterministic_tie_breaking
+        PASS [   0.013s] (1363/1512) warp user_config::tests::test_load_tab_configs_skips_non_toml_files
+        PASS [   0.014s] (1364/1512) warp user_config::tests::test_load_tab_configs_sorts_case_insensitive
+        PASS [   0.013s] (1365/1512) warp user_config::util::tests::file_name_to_human_readable_name_test
+        PASS [   0.012s] (1366/1512) warp user_config::util::tests::title_case_test
+        PASS [   0.011s] (1367/1512) warp util::file::external_editor::mac::tests::product_bundle_rejects_other_apps
+        PASS [   0.019s] (1368/1512) warp util::bindings::tests::test_keybinding_name_to_display_string
+        PASS [   0.014s] (1369/1512) warp util::file::external_editor::tests::test_case_insensitive_editor_matching
+        PASS [   0.017s] (1370/1512) warp util::file::external_editor::mac::tests::product_bundle_recognizes_term4u
+        PASS [   0.013s] (1371/1512) warp util::file::external_editor::tests::test_editor_missing_no_line_col
+        PASS [   0.011s] (1372/1512) warp util::file::external_editor::tests::test_editor_missing_with_line_col
+        PASS [   0.022s] (1373/1512) warp util::bindings::tests::test_terminal_page_scroll_bindings_are_editable
+        PASS [   0.011s] (1374/1512) warp util::file::external_editor::tests::test_editor_present_line_missing
+        PASS [   0.021s] (1375/1512) warp util::bindings::tests::test_toggle_maximize_pane_binding_is_editable
+        PASS [   0.012s] (1376/1512) warp util::file::external_editor::tests::test_editor_try_from_supported_editors
+        PASS [   0.016s] (1377/1512) warp util::file::external_editor::tests::test_editor_present_no_line_col
+        PASS [   0.012s] (1378/1512) warp util::file::external_editor::tests::test_editor_with_path
+        PASS [   0.011s] (1379/1512) warp util::file::external_editor::tests::test_helix_with_line_and_column
+        PASS [   0.014s] (1380/1512) warp util::file::external_editor::tests::test_emacs_with_line_and_column
+        PASS [   0.015s] (1381/1512) warp util::file::external_editor::tests::test_editor_try_from_unsupported_editors
+        PASS [   0.012s] (1382/1512) warp util::file::external_editor::tests::test_micro_with_line_only
+        PASS [   0.015s] (1383/1512) warp util::file::external_editor::tests::test_emacs_with_line_only
+        PASS [   0.013s] (1384/1512) warp util::file::external_editor::tests::test_micro_with_line_and_column
+        PASS [   0.014s] (1385/1512) warp util::file::external_editor::tests::test_helix_with_line_only
+        PASS [   0.011s] (1386/1512) warp util::file::external_editor::tests::test_nano_with_line_only
+        PASS [   0.013s] (1387/1512) warp util::file::external_editor::tests::test_nano_with_line_and_column
+        PASS [   0.011s] (1388/1512) warp util::file::external_editor::tests::test_neovim_with_line_and_column
+        PASS [   0.013s] (1389/1512) warp util::file::external_editor::tests::test_neovim_with_line_only
+        PASS [   0.012s] (1390/1512) warp util::file::external_editor::tests::test_vim_with_line_and_column
+        PASS [   0.015s] (1391/1512) warp util::file::external_editor::tests::test_path_with_spaces
+        PASS [   0.015s] (1392/1512) warp util::file::external_editor::tests::test_path_with_special_characters
+        PASS [   0.014s] (1393/1512) warp util::file::external_editor::tests::test_pico_with_line_only
+        PASS [   0.014s] (1394/1512) warp util::file::external_editor::tests::test_unknown_editor_with_line_col
+        PASS [   0.071s] (1395/1512) warp themes::theme::tests::in_memory_theme_generation_test
+        PASS [   0.012s] (1396/1512) warp util::file::external_editor::tests::test_vim_with_line_only
+        PASS [   0.015s] (1397/1512) warp util::file::external_editor::tests::test_pico_with_line_and_column
+        PASS [   0.013s] (1398/1512) warp util::file::external_editor::tests::test_vscode_with_line_and_column
+        PASS [   0.015s] (1399/1512) warp util::file::external_editor::tests::test_vscode_with_line_only
+        PASS [   0.010s] (1400/1512) warp util::git::tests::detects_gh_auth_errors
+        PASS [   0.012s] (1401/1512) warp util::git::tests::detects_no_pr_for_branch_errors
+        PASS [   0.222s] (1402/1512) warp terminal::ref_tests::grid_reset
+        PASS [   0.014s] (1403/1512) warp util::git::tests::detects_repository_lookup_not_applicable_errors
+        PASS [   0.016s] (1404/1512) warp util::git::tests::detects_missing_gh_errors
+        PASS [   0.233s] (1405/1512) warp terminal::ref_tests::history
+        PASS [   0.011s] (1406/1512) warp util::git::tests::repository_info_from_gh_output_parses_host_from_url
+        PASS [   0.011s] (1407/1512) warp util::git::tests::repository_info_from_gh_output_parses_name_and_owner
+        PASS [   0.238s] (1408/1512) warp terminal::ref_tests::region_scroll_down
+        PASS [   0.015s] (1409/1512) warp util::git::tests::repository_info_from_gh_output_rejects_empty_fields
+        PASS [   0.011s] (1410/1512) warp util::git::tests::repository_info_from_gh_output_rejects_malformed_json
+        PASS [   0.013s] (1411/1512) warp util::git::tests::repository_info_from_gh_output_rejects_missing_name
+        PASS [   0.013s] (1412/1512) warp util::git::tests::repository_info_from_gh_output_rejects_missing_owner_login
+        PASS [   0.015s] (1413/1512) warp util::image::tests::test_is_supported_image_mime_type
+        PASS [   0.011s] (1414/1512) warp util::image::tests::test_process_image_for_agent_invalid_data
+        PASS [   0.010s] (1415/1512) warp util::image::tests::test_process_image_for_agent_small_image
+        PASS [   0.012s] (1416/1512) warp util::image::tests::test_resize_image_small_image_unchanged
+        PASS [   0.011s] (1417/1512) warp util::openable_file_type::tests::test_binary_files_not_openable
+        PASS [   0.077s] (1418/1512) warp util::image::tests::test_resize_image_respects_max_dimension
+        PASS [   0.013s] (1419/1512) warp util::openable_file_type::tests::test_is_runnable_shell_script_executable_sh
+        PASS [   0.100s] (1420/1512) warp util::image::tests::test_resize_image_large_image_gets_resized
+        PASS [   0.011s] (1421/1512) warp util::openable_file_type::tests::test_is_runnable_shell_script_group_only_executable_rejected
+        PASS [   0.011s] (1422/1512) warp util::openable_file_type::tests::test_is_runnable_shell_script_non_executable_sh
+        PASS [   0.013s] (1423/1512) warp util::openable_file_type::tests::test_is_runnable_shell_script_other_shell_extensions
+        PASS [   0.014s] (1424/1512) warp util::openable_file_type::tests::test_is_runnable_shell_script_plain_text_rejected
+        PASS [   0.011s] (1425/1512) warp util::openable_file_type::tests::test_is_runnable_shell_script_shebang_no_extension
+        PASS [   0.012s] (1426/1512) warp util::openable_file_type::tests::test_is_runnable_shell_script_shebang_no_extension_no_x_bit
+        PASS [   0.011s] (1427/1512) warp util::openable_file_type::tests::test_is_runnable_shell_script_symlink_to_executable
+        PASS [   0.208s] (1428/1512) warp util::git::tests::detached_head_raw_returns_head
+        PASS [   0.011s] (1429/1512) warp util::openable_file_type::tests::test_markdown_files
+        PASS [   0.010s] (1430/1512) warp util::openable_file_type::tests::test_open_code_panels_file_editor_default_is_warp
+        PASS [   0.220s] (1431/1512) warp util::git::tests::get_pr_for_branch_returns_none_for_detached_head
+        PASS [   0.212s] (1432/1512) warp util::git::tests::on_normal_branch_returns_branch_name
+        PASS [   0.011s] (1433/1512) warp util::openable_file_type::tests::test_renders_in_warp_notebook_viewer
+        PASS [   0.010s] (1434/1512) warp util::openable_file_type::tests::test_resolve_file_target_binary_is_system_generic
+        PASS [   0.230s] (1435/1512) warp util::git::tests::detached_head_display_returns_short_sha
+        PASS [   0.010s] (1436/1512) warp util::openable_file_type::tests::test_resolve_file_target_binary_uses_env_editor
+        PASS [   0.010s] (1437/1512) warp util::openable_file_type::tests::test_resolve_file_target_jupyter_notebook_flag_off
+        PASS [   0.010s] (1438/1512) warp util::openable_file_type::tests::test_resolve_file_target_jupyter_notebook_flag_on
+        PASS [   0.009s] (1439/1512) warp util::openable_file_type::tests::test_resolve_file_target_markdown_viewer_precedence
+        PASS [   0.009s] (1440/1512) warp util::openable_file_type::tests::test_resolve_file_target_warp_uses_default_layout
+        PASS [   0.151s] (1441/1512) warp util::openable_file_type::tests::test_code_files
+        PASS [   0.010s] (1442/1512) warp util::openable_file_type::tests::test_starts_with_shebang_absent
+        PASS [   0.010s] (1443/1512) warp util::openable_file_type::tests::test_starts_with_shebang_missing_path
+        PASS [   0.010s] (1444/1512) warp util::openable_file_type::tests::test_starts_with_shebang_one_byte_file
+        PASS [   0.010s] (1445/1512) warp util::openable_file_type::tests::test_text_files
+        PASS [   0.011s] (1446/1512) warp util::openable_file_type::tests::test_starts_with_shebang_present
+        PASS [   0.009s] (1447/1512) warp util::test_dedupe
+        PASS [   0.009s] (1448/1512) warp util::test_parse_ascii_u32
+        PASS [   0.009s] (1449/1512) warp util::time_format::tests::default_message_timestamp_is_not_trustworthy
+        PASS [   0.259s] (1450/1512) warp util::git::tests::detached_tag_display_returns_short_sha
+        PASS [   0.009s] (1451/1512) warp util::time_format::tests::format_elapsed_seconds_pluralizes_and_truncates
+        PASS [   0.010s] (1452/1512) warp util::time_format::tests::format_message_timestamp_uses_friendly_local_time
+        PASS [   0.010s] (1453/1512) warp util::time_format::tests::test_format_sigfigs
+        PASS [   0.010s] (1454/1512) warp util::time_format::tests::test_human_readable_approx_duration
+        PASS [   0.010s] (1455/1512) warp util::time_format::tests::test_human_readable_precise_duration
+        PASS [   0.011s] (1456/1512) warp view_components::dismissible_toast::tests::add_ephemeral_toasts_caps_at_three_newest
+        PASS [   0.011s] (1457/1512) warp view_components::dismissible_toast::tests::add_persistent_toasts_caps_at_three_newest
+        PASS [   0.011s] (1458/1512) warp view_components::dismissible_toast::tests::evicted_ephemeral_toast_aborts_timer
+        PASS [   0.011s] (1459/1512) warp view_components::dismissible_toast::tests::expand_state_is_per_toast
+        PASS [   0.010s] (1460/1512) warp view_components::dismissible_toast::tests::expand_toggle_accepts_enter_and_space_without_modifiers
+        PASS [   0.011s] (1461/1512) warp view_components::dismissible_toast::tests::manual_dismiss_and_clear_paths_unchanged
+        PASS [   0.010s] (1462/1512) warp view_components::dismissible_toast::tests::newline_heavy_message_is_truncated_to_collapsed_lines
+        PASS [   0.012s] (1463/1512) warp view_components::dismissible_toast::tests::object_id_dedup_then_cap
+        PASS [   0.012s] (1464/1512) warp view_components::dismissible_toast::tests::toggle_message_expanded_flips_per_toast_state
+        PASS [   0.010s] (1465/1512) warp view_components::dismissible_toast::tests::truncation_predicate_is_correct
+        PASS [   0.011s] (1466/1512) warp workflows::command_parser::tests::test_compute_workflow_display_data_for_linked_history_command
+        PASS [   0.011s] (1467/1512) warp workflows::command_parser::tests::test_compute_workflow_display_data_for_linked_history_command_with_escaped_args
+        PASS [   0.016s] (1468/1512) warp view_components::find::tests::test_set_query_text_replaces_existing_text
+        PASS [   0.012s] (1469/1512) warp workflows::command_parser::tests::test_compute_workflow_display_data_for_linked_history_command_with_multiple_instances_same_parameter
+        PASS [   0.012s] (1470/1512) warp workflows::command_parser::tests::test_compute_workflow_display_data_for_linked_history_command_with_multibyte_chars
+        PASS [   0.011s] (1471/1512) warp workflows::command_parser::tests::test_compute_workflow_display_data_for_linked_history_command_with_no_parameters
+        PASS [   0.012s] (1472/1512) warp workflows::command_parser::tests::test_compute_workflow_display_data_for_similar_but_unlinked_history_command
+        PASS [   0.011s] (1473/1512) warp workflows::command_parser::tests::test_compute_workflow_display_data_for_unlinked_history_command
+        PASS [   0.011s] (1474/1512) warp workflows::command_parser::tests::test_compute_workflow_display_data_for_unlinked_history_command_with_no_parameters
+        PASS [   0.011s] (1475/1512) warp workflows::command_parser::tests::test_compute_workflow_display_data_with_escaped_arguments
+        PASS [   0.011s] (1476/1512) warp workflows::command_parser::tests::test_compute_workflow_display_data_with_duplicates_and_escaped_arguments
+        PASS [   0.010s] (1477/1512) warp workflows::command_parser::tests::test_compute_workflow_display_data_with_multibyte_chars
+        PASS [   0.313s] (1478/1512) warp util::git::tests::committed_branch_files_excludes_uncommitted_and_untracked
+        PASS [   0.013s] (1479/1512) warp workflows::local_workflows::tests::test_filter_global_workflows_for_session
+        PASS [   0.012s] (1480/1512) warp workflows::local_workflows::tests::test_workflow_by_command_name
+        PASS [   0.010s] (1481/1512) warp workflows::model::tests::legacy_workflow_json_preserves_local_command_fields
+        PASS [   0.010s] (1482/1512) warp workflows::model::tests::missing_legacy_optional_fields_have_stable_defaults
+        PASS [   0.010s] (1483/1512) warp workspace::tab_settings::tests::header_toolbar_chip_selection_custom_empty_reports_all_absent
+        PASS [   0.011s] (1484/1512) warp workspace::tab_settings::tests::header_toolbar_chip_selection_custom_with_code_review_on_left_reports_present
+        PASS [   0.010s] (1485/1512) warp workspace::tab_settings::tests::header_toolbar_chip_selection_default_contains_code_review
+        PASS [   0.010s] (1486/1512) warp workspace::tab_settings::tests::header_toolbar_chip_selection_custom_without_code_review_reports_absent
+        PASS [   0.018s] (1487/1512) warp workflows::workflow_view::tests::loading_workflow_preserves_parameters_and_metadata
+        PASS [   0.009s] (1488/1512) warp workspace::tab_settings::tests::hide_title_bar_search_bar_in_vertical_tabs_uses_vertical_tabs_path
+        PASS [   0.014s] (1489/1512) warp workspace::tab_settings::tests::hide_title_bar_search_bar_in_vertical_tabs_defaults_to_false
+        PASS [   0.012s] (1490/1512) warp workspace::tab_settings::tests::show_vertical_tab_panel_in_restored_windows_defaults_to_false
+        PASS [   0.011s] (1491/1512) warp workspace::tab_settings::tests::show_vertical_tab_panel_in_restored_windows_uses_vertical_tabs_path
+        PASS [   0.011s] (1492/1512) warp workspace::tab_settings::tests::use_latest_user_prompt_as_conversation_title_in_tab_names_uses_vertical_tabs_path
+        PASS [   0.014s] (1493/1512) warp workspace::tab_settings::tests::use_latest_user_prompt_as_conversation_title_in_tab_names_defaults_to_false
+        PASS [   0.143s] (1494/1512) warp util::openable_file_type::tests::test_is_supported_code_file
+        PASS [   0.123s] (1495/1512) warp util::openable_file_type::tests::test_resolve_file_target_to_open_in_warp_never_leaves_warp
+        PASS [   0.034s] (1496/1512) warp workspace::view::tests::code_review_snapshot_restores_repository_and_terminal_link
+        PASS [   0.036s] (1497/1512) warp workspace::view::tests::closed_tab_reopens_in_original_position
+        PASS [   0.035s] (1498/1512) warp workspace::view::tests::exiting_split_terminal_preserves_sibling_and_tab
+        PASS [   0.355s] (1499/1512) warp util::git::tests::get_repository_info_returns_none_when_gh_cannot_resolve_github_repo
+        PASS [   0.043s] (1500/1512) warp workspace::view::tests::command_palette_opens_with_local_bindings_and_closes
+        PASS [   0.035s] (1501/1512) warp workspace::view::tests::selecting_workflow_populates_terminal_input_without_executing
+        PASS [   0.046s] (1502/1512) warp workspace::view::tests::restoring_tabs_keeps_each_left_panel_mode_and_width
+        PASS [   0.040s] (1503/1512) warp workspace::view::tests::toast_events_reach_only_the_target_window_and_can_be_dismissed
+        PASS [   0.033s] (1504/1512) warp workspace::view::tests::workflow_run_waits_for_missing_argument
+        PASS [   0.148s] (1505/1512) warp workspace::view::tests::global_search_result_opens_local_file
+        PASS [   0.146s] (1506/1512) warp workspace::view::tests::project_explorer_result_opens_local_file
+        PASS [   0.508s] (1507/1512) warp util::git::tests::get_repository_info_reads_gh_repo_view
+        PASS [   0.658s] (1508/1512) warp util::git::tests::get_pr_for_branch_returns_none_when_gh_finds_no_pr
+        PASS [   0.806s] (1509/1512) warp util::git::tests::get_pr_for_branch_returns_none_when_gh_cannot_resolve_github_repo
+        PASS [   0.964s] (1510/1512) warp util::git::tests::get_pr_for_branch_does_not_require_origin_remote
+        PASS [   2.416s] (1511/1512) warp themes::theme_creator::tests::top_colors_jellyfish_test
+        PASS [   7.149s] (1512/1512) warp editor::view::model::buffer::tests::test_random_concurrent_operations
+────────────
+     Summary [   7.742s] 1512 tests run: 1512 passed, 3 skipped

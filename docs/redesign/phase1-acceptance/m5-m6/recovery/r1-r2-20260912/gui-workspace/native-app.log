@@ -1,0 +1,544 @@
+2026-09-12T16:58:41Z [INFO] [warp::resource_limits] Initial open file descriptor limit is 256, with a hard limit of 9223372036854775807
+2026-09-12T16:58:41Z [INFO] [warp::resource_limits] Increased open file descriptor limit to 2560
+2026-09-12T16:58:41Z [INFO] [warp_terminal::local_tty::server] Spawning terminal server process...
+2026-09-12T16:58:41Z [INFO] [warp_terminal::local_tty::server::event_loop] Running terminal server...
+2026-09-12T16:58:41Z [INFO] [warpui::platform::mac::app] application will finish launching
+2026-09-12T16:58:41Z [INFO] [warp::app_services] Initializing app services
+2026-09-12T16:58:41Z [INFO] [warpui_core::core::app] dispatching global action for root_view:open_from_restored
+2026-09-12T16:58:41Z [INFO] [warpui::platform::mac::window] Opening window with id 0
+2026-09-12T16:58:41Z [INFO] [warpui::platform::mac::window] Using discrete GPU for rendering new window.
+2026-09-12T16:58:41Z [INFO] [warpui_core::fonts] Computing available system fonts
+2026-09-12T16:58:41Z [INFO] [warp::terminal::local_tty::terminal_manager] Creating terminal model with 0 restored blocks
+2026-09-12T16:58:41Z [INFO] [warp::terminal::local_tty::terminal_manager] Creating terminal model with 0 restored blocks
+2026-09-12T16:58:41Z [INFO] [warp::code_review::code_review_view] Code Review Panel: Setting state to loading after receiving 'loading' message.
+2026-09-12T16:58:41Z [WARN] [warp::code_review::code_review_view] CodeReviewView git status subscribe failed: No watched repository found for path: /private/tmp/term4u-r1r2-20260912/workspace-gui/project
+2026-09-12T16:58:41Z [WARN] [warp::code_review::code_review_view] CodeReviewView github repo subscribe failed: No watched repository found for path: /private/tmp/term4u-r1r2-20260912/workspace-gui/project
+2026-09-12T16:58:41Z [INFO] [warpui_core::platform::app] application did become active
+2026-09-12T16:58:41Z [INFO] [warp_terminal::local_tty::unix] Starting shell /bin/zsh
+2026-09-12T16:58:41Z [INFO] [warp_terminal::local_tty::server::event_loop] Successfully spawned tty with pid: 34513
+2026-09-12T16:58:41Z [INFO] [warp_terminal::local_tty::unix] Successfully spawned child zsh process with pid 34513
+2026-09-12T16:58:41Z [INFO] [warp_terminal::local_tty::unix] Starting shell /bin/zsh
+2026-09-12T16:58:41Z [INFO] [warp_terminal::local_tty::unix] Successfully spawned child zsh process with pid 34514
+2026-09-12T16:58:41Z [INFO] [warp_terminal::local_tty::server::event_loop] Successfully spawned tty with pid: 34514
+2026-09-12T16:58:41Z [INFO] [repo_metadata::local_model] Upgrading pending lazy-loaded path to fully indexed directory: /private/tmp/term4u-r1r2-20260912/workspace-gui/project
+2026-09-12T16:58:41Z [INFO] [warpui_core::platform::app] window resized
+2026-09-12T16:58:41Z [INFO] [warpui_core::core::app] dispatching global action for workspace:save_app
+2026-09-12T16:58:41Z [INFO] [warpui_core::platform::app] window resized
+2026-09-12T16:58:41Z [INFO] [warpui_core::core::app] dispatching global action for workspace:save_app
+2026-09-12T16:58:41Z [INFO] [warpui_core::platform::app] window resized
+2026-09-12T16:58:41Z [INFO] [warpui_core::core::app] dispatching global action for workspace:save_app
+2026-09-12T16:58:41Z [INFO] [warpui_core::platform::app] window resized
+2026-09-12T16:58:41Z [INFO] [warpui_core::core::app] dispatching global action for workspace:save_app
+2026-09-12T16:58:41Z [INFO] [warpui_core::platform::app] active window changed: Some(WindowId(0))
+2026-09-12T16:58:41Z [INFO] [warpui_core::core::app] dispatching global action for workspace:save_app
+2026-09-12T16:58:41Z [INFO] [warpui_core::platform::app] window resized
+2026-09-12T16:58:41Z [INFO] [warpui_core::core::app] dispatching global action for workspace:save_app
+2026-09-12T16:58:41Z [INFO] [repo_metadata::local_model] Successfully indexed repository: /private/tmp/term4u-r1r2-20260912/workspace-gui/project with 3 files
+2026-09-12T16:58:41Z [WARN] [lsp::manager] No server registered for startup at path: /private/tmp/term4u-r1r2-20260912/workspace-gui/project
+2026-09-12T16:58:41Z [INFO] [warp_terminal::model::ansi] Received InitShell hook
+2026-09-12T16:58:41Z [INFO] [warp_terminal::model::ansi] Received InitShell hook
+2026-09-12T16:58:41Z [INFO] [warp_terminal::model::ansi] Received CommandFinished hook
+2026-09-12T16:58:41Z [INFO] [warp_terminal::model::ansi] Received CommandFinished hook
+2026-09-12T16:58:41Z [INFO] [warp::terminal::model::terminal_model] Tried to exit the alternate screen, but it was already inactive
+2026-09-12T16:58:41Z [INFO] [warp::terminal::model::terminal_model] Tried to exit the alternate screen, but it was already inactive
+2026-09-12T16:58:41Z [INFO] [warp::terminal::model::block] Block finished with new state DoneWithExecution
+2026-09-12T16:58:41Z [INFO] [warp::terminal::model::block] Block finished with new state DoneWithExecution
+2026-09-12T16:58:41Z [INFO] [warp::terminal::model::blocks] Incrementing stage from WarpInput to ScriptExecution
+2026-09-12T16:58:41Z [INFO] [warp::terminal::model::blocks] Incrementing stage from WarpInput to ScriptExecution
+2026-09-12T16:58:41Z [INFO] [warp_terminal::model::ansi] Received Precmd hook
+2026-09-12T16:58:41Z [INFO] [warp_terminal::model::ansi] Received Precmd hook
+2026-09-12T16:58:41Z [INFO] [warp_terminal::model::ansi] Received Bootstrapped hook
+2026-09-12T16:58:41Z [INFO] [warp_terminal::model::ansi] Received Bootstrapped hook
+2026-09-12T16:58:41Z [INFO] [warp::terminal::model::early_output] Configured typeahead mode as ShellReported
+2026-09-12T16:58:41Z [INFO] [warp::terminal::model::early_output] Configured typeahead mode as ShellReported
+2026-09-12T16:58:41Z [INFO] [warp::terminal::model::session::command_executor] creating a local executor!
+2026-09-12T16:58:41Z [INFO] [warp::terminal::model::session] Parsed shell version string: Some([Number(5), Number(9)])
+2026-09-12T16:58:41Z [INFO] [warp::terminal::model::session] Shell is bootstrapped with session_id SessionId(12835199121358084234)
+2026-09-12T16:58:41Z [INFO] [warp::terminal::model::session] No history file found for shell zsh, starting with empty history
+2026-09-12T16:58:41Z [INFO] [warp::terminal::model::session::command_executor] creating a local executor!
+2026-09-12T16:58:41Z [INFO] [warp::terminal::model::session] Parsed shell version string: Some([Number(5), Number(9)])
+2026-09-12T16:58:41Z [INFO] [warp::terminal::model::session] Shell is bootstrapped with session_id SessionId(9507716317104017256)
+2026-09-12T16:58:41Z [INFO] [warp_terminal::model::ansi] Received CommandFinished hook
+2026-09-12T16:58:41Z [INFO] [warp_terminal::model::ansi] Received CommandFinished hook
+2026-09-12T16:58:41Z [INFO] [warp::terminal::model::terminal_model] Tried to exit the alternate screen, but it was already inactive
+2026-09-12T16:58:41Z [INFO] [warp::terminal::model::terminal_model] Tried to exit the alternate screen, but it was already inactive
+2026-09-12T16:58:41Z [INFO] [warp::terminal::model::block] Block finished with new state DoneWithExecution
+2026-09-12T16:58:41Z [INFO] [warp::terminal::model::block] Block finished with new state DoneWithExecution
+2026-09-12T16:58:41Z [INFO] [warp::terminal::model::blocks] Incrementing stage from Bootstrapped to PostBootstrapPrecmd
+2026-09-12T16:58:41Z [INFO] [warp::terminal::model::blocks] Incrementing stage from Bootstrapped to PostBootstrapPrecmd
+2026-09-12T16:58:41Z [INFO] [warp_terminal::model::ansi] Received Precmd hook
+2026-09-12T16:58:41Z [INFO] [warp_terminal::model::ansi] Received Precmd hook
+2026-09-12T16:58:41Z [INFO] [warp::code_review::code_review_view] Code Review: Set available_branches with 1 branches
+2026-09-12T16:58:41Z [INFO] [warp_files] FileModel subscribed to repository: /private/tmp/term4u-r1r2-20260912/workspace-gui/project
+2026-09-12T16:58:41Z [WARN] [lsp::manager] No server registered for startup at path: /private/tmp/term4u-r1r2-20260912/workspace-gui/project
+2026-09-12T16:58:41Z [ERROR] [errors::report_error] Failed to relocate PR comments: CodeReviewView diff state not loaded
+2026-09-12T16:58:41Z [WARN] [lsp::manager] No server registered for startup at path: /private/tmp/term4u-r1r2-20260912/workspace-gui/project
+2026-09-12T16:58:41Z [INFO] [warp_terminal::model::ansi] Received InputBuffer hook
+2026-09-12T16:58:41Z [INFO] [warp_terminal::model::ansi] Received InputBuffer hook
+2026-09-12T16:58:44Z [INFO] [warpui_core::core::app] dispatching global action for workspace:save_app
+2026-09-12T16:58:51Z [INFO] [warpui_core::core::app] Dispatching custom action Workflows
+2026-09-12T16:58:51Z [INFO] [warpui_core::core::app] dispatching typed action: warp::workspace::action::WorkspaceAction::ShowCommandSearch(CommandSearchOptions { filter: Some(Workflows), init_content: FromInputBuffer })
+2026-09-12T16:58:51Z [ERROR] [errors::report_error] Couldn't retrieve universal search resizable state handle.
+2026-09-12T16:58:53Z [INFO] [warpui_core::core::app] dispatching global action for workspace:save_app
+2026-09-12T16:59:04Z [INFO] [warpui_core::core::app] dispatching typed action: warp::search::command_search::view::CommandSearchAction::ResultClicked { result_index: 1, result_action: AcceptWorkflow(Local { workflow: Local(Workflow { name: "R1R2 Local Workflow", command: "printf '{{message}}' > /tmp/term4u-r1r2-20260912/workspace-gui/local-workflow.out", tags: [], description: None, arguments: [Argument { name: "message", arg_type: Text, description: None, default_value: Some("R1R2_LOCAL") }], source_url: None, author: None, author_url: None, shells: [], environment_variables: None }), source: Local }) }
+2026-09-12T16:59:04Z [INFO] [warp::terminal::local_tty::terminal_manager] Creating terminal model with 0 restored blocks
+2026-09-12T16:59:04Z [INFO] [warp_terminal::local_tty::unix] Starting shell /bin/zsh
+2026-09-12T16:59:04Z [INFO] [warp_terminal::local_tty::unix] Successfully spawned child zsh process with pid 35040
+2026-09-12T16:59:04Z [INFO] [warp_terminal::local_tty::server::event_loop] Successfully spawned tty with pid: 35040
+2026-09-12T16:59:04Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T16:59:04Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T16:59:04Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T16:59:04Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T16:59:04Z [INFO] [warp_terminal::model::ansi] Received InitShell hook
+2026-09-12T16:59:04Z [INFO] [warp_terminal::model::ansi] Received CommandFinished hook
+2026-09-12T16:59:04Z [INFO] [warp::terminal::model::terminal_model] Tried to exit the alternate screen, but it was already inactive
+2026-09-12T16:59:04Z [INFO] [warp::terminal::model::block] Block finished with new state DoneWithExecution
+2026-09-12T16:59:04Z [INFO] [warp::terminal::model::blocks] Incrementing stage from WarpInput to ScriptExecution
+2026-09-12T16:59:04Z [INFO] [warp_terminal::model::ansi] Received Precmd hook
+2026-09-12T16:59:04Z [INFO] [warp_terminal::model::ansi] Received Bootstrapped hook
+2026-09-12T16:59:04Z [INFO] [warp::terminal::model::early_output] Configured typeahead mode as ShellReported
+2026-09-12T16:59:04Z [INFO] [warp::terminal::model::session::command_executor] creating a local executor!
+2026-09-12T16:59:04Z [INFO] [warp::terminal::model::session] Parsed shell version string: Some([Number(5), Number(9)])
+2026-09-12T16:59:04Z [INFO] [warp::terminal::model::session] Shell is bootstrapped with session_id SessionId(6169577883808992102)
+2026-09-12T16:59:04Z [INFO] [warp_terminal::model::ansi] Received CommandFinished hook
+2026-09-12T16:59:04Z [INFO] [warp::terminal::model::terminal_model] Tried to exit the alternate screen, but it was already inactive
+2026-09-12T16:59:04Z [INFO] [warp::terminal::model::block] Block finished with new state DoneWithExecution
+2026-09-12T16:59:04Z [INFO] [warp::terminal::model::blocks] Incrementing stage from Bootstrapped to PostBootstrapPrecmd
+2026-09-12T16:59:04Z [INFO] [warp_terminal::model::ansi] Received Precmd hook
+2026-09-12T16:59:04Z [INFO] [warp_terminal::model::ansi] Received InputBuffer hook
+2026-09-12T16:59:04Z [INFO] [warpui_core::core::app] dispatching global action for workspace:save_app
+2026-09-12T16:59:07Z [INFO] [warpui_core::core::app] dispatching global action for workspace:save_app
+2026-09-12T16:59:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::Enter
+2026-09-12T16:59:12Z [WARN] [warp::terminal::model::terminal_model] Received 'end_in_band_command_output' while not expecting to read in-band command output.
+2026-09-12T16:59:12Z [INFO] [warp_terminal::model::ansi] Received Preexec hook
+2026-09-12T16:59:12Z [INFO] [warp_terminal::model::ansi] Received CommandFinished hook
+2026-09-12T16:59:12Z [INFO] [warp::terminal::model::terminal_model] Tried to exit the alternate screen, but it was already inactive
+2026-09-12T16:59:12Z [INFO] [warp::terminal::model::block] Block finished with new state DoneWithExecution
+2026-09-12T16:59:12Z [INFO] [warp_terminal::model::ansi] Received Precmd hook
+2026-09-12T16:59:12Z [INFO] [warp_terminal::model::ansi] Received InputBuffer hook
+2026-09-12T16:59:14Z [INFO] [warpui_core::core::app] dispatching global action for workspace:save_app
+2026-09-12T16:59:34Z [INFO] [warpui_core::core::app] Dispatching custom action Workflows
+2026-09-12T16:59:34Z [INFO] [warpui_core::core::app] dispatching typed action: warp::workspace::action::WorkspaceAction::ShowCommandSearch(CommandSearchOptions { filter: Some(Workflows), init_content: FromInputBuffer })
+2026-09-12T16:59:35Z [ERROR] [errors::report_error] Couldn't retrieve universal search resizable state handle.
+2026-09-12T16:59:35Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T16:59:35Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T16:59:35Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T16:59:37Z [INFO] [warpui_core::core::app] dispatching global action for workspace:save_app
+2026-09-12T16:59:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("R"))
+2026-09-12T16:59:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T16:59:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("1"))
+2026-09-12T16:59:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T16:59:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("R"))
+2026-09-12T16:59:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T16:59:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("2"))
+2026-09-12T16:59:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T16:59:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput(" "))
+2026-09-12T16:59:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T16:59:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("P"))
+2026-09-12T16:59:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T16:59:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("r"))
+2026-09-12T16:59:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T16:59:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("o"))
+2026-09-12T16:59:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T16:59:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("j"))
+2026-09-12T16:59:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T16:59:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("e"))
+2026-09-12T16:59:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T16:59:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("c"))
+2026-09-12T16:59:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T16:59:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("t"))
+2026-09-12T16:59:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T16:59:49Z [INFO] [warpui_core::core::app] dispatching global action for workspace:save_app
+2026-09-12T16:59:55Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::Enter
+2026-09-12T16:59:55Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T16:59:55Z [WARN] [warpui_core::core::app] Action ClearMarkedText was dispatched, but no view handled it
+2026-09-12T16:59:55Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T16:59:55Z [WARN] [warpui_core::core::app] Action ClearMarkedText was dispatched, but no view handled it
+2026-09-12T16:59:55Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T16:59:55Z [WARN] [warpui_core::core::app] Action ClearMarkedText was dispatched, but no view handled it
+2026-09-12T16:59:55Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T16:59:55Z [WARN] [warpui_core::core::app] Action ClearMarkedText was dispatched, but no view handled it
+2026-09-12T16:59:57Z [INFO] [warpui_core::core::app] dispatching global action for workspace:save_app
+2026-09-12T17:00:01Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::Enter
+2026-09-12T17:00:01Z [WARN] [warp::terminal::model::terminal_model] Received 'end_in_band_command_output' while not expecting to read in-band command output.
+2026-09-12T17:00:01Z [INFO] [warp_terminal::model::ansi] Received Preexec hook
+2026-09-12T17:00:01Z [INFO] [warp_terminal::model::ansi] Received CommandFinished hook
+2026-09-12T17:00:01Z [INFO] [warp::terminal::model::terminal_model] Tried to exit the alternate screen, but it was already inactive
+2026-09-12T17:00:01Z [INFO] [warp::terminal::model::block] Block finished with new state DoneWithExecution
+2026-09-12T17:00:01Z [INFO] [warp_terminal::model::ansi] Received Precmd hook
+2026-09-12T17:00:01Z [INFO] [warp_terminal::model::ansi] Received InputBuffer hook
+2026-09-12T17:00:03Z [INFO] [warpui_core::core::app] dispatching global action for workspace:save_app
+2026-09-12T17:00:17Z [INFO] [warpui_core::core::app] Dispatching custom action FilesPalette
+2026-09-12T17:00:17Z [INFO] [warpui_core::core::app] dispatching typed action: warp::workspace::action::WorkspaceAction::TogglePalette { mode: Files, source: Keybinding }
+2026-09-12T17:00:17Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:00:17Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:00:17Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:00:57Z [INFO] [warpui_core::core::app] Dispatching custom action FilesPalette
+2026-09-12T17:00:57Z [INFO] [warpui_core::core::app] dispatching typed action: warp::workspace::action::WorkspaceAction::TogglePalette { mode: Files, source: Keybinding }
+2026-09-12T17:00:57Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:00:57Z [WARN] [warpui_core::core::app] Action ClearMarkedText was dispatched, but no view handled it
+2026-09-12T17:00:57Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:00:57Z [WARN] [warpui_core::core::app] Action ClearMarkedText was dispatched, but no view handled it
+2026-09-12T17:00:57Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:00:57Z [WARN] [warpui_core::core::app] Action ClearMarkedText was dispatched, but no view handled it
+2026-09-12T17:00:57Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:00:57Z [WARN] [warpui_core::core::app] Action ClearMarkedText was dispatched, but no view handled it
+2026-09-12T17:01:06Z [INFO] [warpui_core::core::app] dispatching typed action: warp::workspace::action::WorkspaceAction::ActivateTab(1)
+2026-09-12T17:01:39Z [INFO] [warpui_core::core::app] dispatching typed action: warp::workspace::action::WorkspaceAction::ActivateTab(3)
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("p"))
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("r"))
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("i"))
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("n"))
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("t"))
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("f"))
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput(" "))
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("'"))
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("R"))
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("1"))
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("R"))
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("2"))
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("_"))
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("G"))
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("U"))
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("I"))
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("_"))
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("P"))
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("T"))
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("Y"))
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("\\"))
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("n"))
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("'"))
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput(";"))
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput(" "))
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("s"))
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("l"))
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("e"))
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("e"))
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("p"))
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput(" "))
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("2"))
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("0"))
+2026-09-12T17:01:47Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:01:53Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::Enter
+2026-09-12T17:01:53Z [WARN] [warp::terminal::model::terminal_model] Received 'end_in_band_command_output' while not expecting to read in-band command output.
+2026-09-12T17:01:53Z [INFO] [warp_terminal::model::ansi] Received Preexec hook
+2026-09-12T17:02:02Z [INFO] [warpui_core::core::app] dispatching typed action: warp::terminal::view::action::TerminalAction::CtrlC
+2026-09-12T17:02:02Z [INFO] [warp_terminal::model::ansi] Received CommandFinished hook
+2026-09-12T17:02:02Z [INFO] [warp::terminal::model::terminal_model] Tried to exit the alternate screen, but it was already inactive
+2026-09-12T17:02:02Z [INFO] [warp::terminal::model::block] Block finished with new state DoneWithExecution
+2026-09-12T17:02:02Z [INFO] [warp_terminal::model::ansi] Received Precmd hook
+2026-09-12T17:02:02Z [INFO] [warp_terminal::model::ansi] Received InputBuffer hook
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("p"))
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("r"))
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("i"))
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("n"))
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("t"))
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("f"))
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput(" "))
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("'"))
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("R"))
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("1"))
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("R"))
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("2"))
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("_"))
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("A"))
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("F"))
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("T"))
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("E"))
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("R"))
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("_"))
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("I"))
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("N"))
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("T"))
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("E"))
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("R"))
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("R"))
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("U"))
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("P"))
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("T"))
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("\\"))
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("n"))
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("'"))
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput(";"))
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput(" "))
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("/"))
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("b"))
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("i"))
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("n"))
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("/"))
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("s"))
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("h"))
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput(" "))
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("-"))
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("c"))
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput(" "))
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("'"))
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("p"))
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("r"))
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("i"))
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("n"))
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("t"))
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("f"))
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput(" "))
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("R"))
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("1"))
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("R"))
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("2"))
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("_"))
+2026-09-12T17:02:12Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("G"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("U"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("I"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("_"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("E"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("X"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("T"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("E"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("R"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("N"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("A"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("L"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput(" "))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput(">"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput(" "))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("/"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("t"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("m"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("p"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("/"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("t"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("e"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("r"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("m"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("4"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("u"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("-"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("r"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("1"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("r"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("2"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("-"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("2"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("0"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("2"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("6"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("0"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("9"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("1"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("2"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("/"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("w"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("o"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("r"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("k"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("s"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("p"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("a"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("c"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("e"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("-"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("g"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("u"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("i"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("/"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("e"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("x"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("t"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("e"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("r"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("n"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("a"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("l"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("-"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("c"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("l"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("i"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("."))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("o"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("u"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("t"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("'"))
+2026-09-12T17:02:13Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+2026-09-12T17:02:19Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::Enter
+2026-09-12T17:02:19Z [WARN] [warp::terminal::model::terminal_model] Received 'end_in_band_command_output' while not expecting to read in-band command output.
+2026-09-12T17:02:19Z [INFO] [warp_terminal::model::ansi] Received Preexec hook
+2026-09-12T17:02:19Z [INFO] [warp_terminal::model::ansi] Received CommandFinished hook
+2026-09-12T17:02:19Z [INFO] [warp::terminal::model::terminal_model] Tried to exit the alternate screen, but it was already inactive
+2026-09-12T17:02:19Z [INFO] [warp::terminal::model::block] Block finished with new state DoneWithExecution
+2026-09-12T17:02:19Z [INFO] [warp_terminal::model::ansi] Received Precmd hook
+2026-09-12T17:02:19Z [INFO] [warp_terminal::model::ansi] Received InputBuffer hook
+2026-09-12T17:02:31Z [INFO] [warpui_core::platform::app] application will terminate
+2026-09-12T17:02:31Z [INFO] [warp::persistence] Shut down SQLite writer in 10.513208ms
+2026-09-12T17:02:31Z [INFO] [lsp::manager] Terminating all LSP servers for 0 workspaces
+2026-09-12T17:02:31Z [INFO] [warp_terminal::local_tty::spawner] Tearing down terminal server...
+2026-09-12T17:02:31Z [INFO] [warp_terminal::local_tty::server::protocol] Received empty message; assuming the connection has been closed.
+2026-09-12T17:02:31Z [INFO] [warp::app_services] Tearing down app services...
+2026-09-12T17:02:31Z [INFO] [warpui_core::platform::app] WindowId(0) will close
+2026-09-12T17:02:31Z [WARN] [warp_terminal::local_tty::server::client] Received EPIPE when trying to kill child shell process; assuming the terminal server has terminated.
+2026-09-12T17:02:31Z [INFO] [warp::terminal::model::terminal_model] Tried to exit the alternate screen, but it was already inactive
+2026-09-12T17:02:31Z [INFO] [warp::terminal::model::block] Block finished with new state DoneWithNoExecution
+2026-09-12T17:02:31Z [WARN] [warp_terminal::local_tty::server::client] Received EPIPE when trying to kill child shell process; assuming the terminal server has terminated.
+2026-09-12T17:02:31Z [INFO] [warp::terminal::model::terminal_model] Tried to exit the alternate screen, but it was already inactive
+2026-09-12T17:02:31Z [INFO] [warp::terminal::model::block] Block finished with new state DoneWithNoExecution
+2026-09-12T17:02:31Z [WARN] [warp_terminal::local_tty::server::client] Received EPIPE when trying to kill child shell process; assuming the terminal server has terminated.
+2026-09-12T17:02:31Z [INFO] [warp::terminal::model::terminal_model] Tried to exit the alternate screen, but it was already inactive
+2026-09-12T17:02:31Z [INFO] [warp::terminal::model::block] Block finished with new state DoneWithNoExecution

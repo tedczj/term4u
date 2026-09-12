@@ -4,7 +4,7 @@ use about_page::AboutPageView;
 use appearance_page::{AppearancePageAction, AppearanceSettingsPageView};
 use code_editor_review_page::{EditorAndCodeReviewPageAction, EditorAndCodeReviewPageView};
 use code_indexing_page::{CodeIndexingPageAction, CodeIndexingPageEvent};
-use features_page::{FeaturesPageView, FeaturesSettingsPageEvent};
+use features_page::FeaturesPageView;
 use itertools::Itertools as _;
 use keybindings::KeybindingsView;
 use nav::{SettingsNavItem, SettingsUmbrella};
@@ -27,7 +27,7 @@ use warpui::elements::{
     ConstrainedBox, Container, CornerRadius, CrossAxisAlignment, DispatchEventResult, Empty,
     EventHandler, Expanded, Fill, Flex, MainAxisSize, OffsetPositioning, ParentAnchor,
     ParentElement, ParentOffsetBounds, Radius, SavePosition, ScrollbarWidth, Shrinkable, Stack,
-    Text, Wrap,
+    Text,
 };
 use warpui::fonts::{Properties, Weight};
 use warpui::keymap::{ContextPredicate, EnabledPredicate, FixedBinding};
@@ -39,7 +39,7 @@ use warpui::{
 use crate::appearance::Appearance;
 use crate::editor::{
     EditorView, Event as EditorEvent, PropagateAndNoOpNavigationKeys, SingleLineEditorOptions,
-    TextColors, TextOptions,
+    TextOptions,
 };
 use crate::menu::{self, Menu, MenuItem, MenuItemFields};
 use crate::pane_group::focus_state::PaneFocusHandle;
@@ -61,12 +61,10 @@ mod features_page;
 pub mod keybindings;
 mod nav;
 pub mod pane_manager;
-mod privacy;
 mod privacy_page;
 mod scripting_page;
 mod settings_file_footer;
 pub(crate) mod settings_page;
-mod telemetry;
 
 pub use code_indexing_page::CodeIndexingPageView;
 pub use features_page::FeaturesPageAction;
@@ -130,64 +128,6 @@ pub fn nav_umbrella_position_id(label: &str) -> String {
 /// Saved-position id for a subpage row nested under an umbrella.
 pub fn nav_subpage_position_id(section: SettingsSection) -> String {
     format!("settings_nav_subpage:{section:?}")
-}
-
-pub(super) fn editor_text_colors(appearance: &Appearance) -> TextColors {
-    let theme = appearance.theme();
-    TextColors {
-        default_color: theme.active_ui_text_color(),
-        disabled_color: theme.disabled_ui_text_color(),
-        hint_color: theme.disabled_ui_text_color(),
-    }
-}
-
-/// Small inline pill rendered next to a settings label to mark a feature as beta.
-/// Used for experimental features (i.e. AsyncFind) that are enabled for Friends of Warp (i.e. Dogfood/Preview) and toggleable by others.
-pub(super) fn render_beta_chip(appearance: &Appearance) -> Box<dyn Element> {
-    let theme = appearance.theme();
-    let chip_color = theme.sub_text_color(theme.surface_3()).into_solid();
-    Container::new(
-        Text::new_inline("BETA", appearance.ui_font_family(), 10.)
-            .with_color(chip_color)
-            .finish(),
-    )
-    .with_background(theme.surface_3())
-    .with_corner_radius(CornerRadius::with_all(Radius::Pixels(3.)))
-    .with_horizontal_padding(4.)
-    .with_vertical_padding(1.)
-    .with_margin_left(8.)
-    .finish()
-}
-
-/// Renders a wrapping row of pill-shaped chips for model labels, which flow
-/// onto additional lines instead of overflowing the container horizontally.
-/// Used by custom inference endpoint cards and the remove confirmation dialog.
-pub(super) fn render_model_chips(
-    labels: impl IntoIterator<Item = String>,
-    appearance: &Appearance,
-    text_color: warp_core::ui::theme::Fill,
-) -> Box<dyn Element> {
-    use warpui::ui_components::chip::Chip;
-    use warpui::ui_components::components::{UiComponent, UiComponentStyles};
-
-    let theme = appearance.theme();
-    let chip_border = internal_colors::neutral_4(theme).into();
-    let chip_style = UiComponentStyles {
-        background: None,
-        border_color: Some(chip_border),
-        border_width: Some(1.),
-        border_radius: Some(CornerRadius::with_all(Radius::Pixels(5.))),
-        font_family_id: Some(appearance.ui_font_family()),
-        font_size: Some(appearance.ui_font_size()),
-        font_color: Some(text_color.into_solid()),
-        ..Default::default()
-    };
-
-    let mut chips = Wrap::row().with_spacing(8.).with_run_spacing(8.);
-    for label in labels {
-        chips.add_child(Chip::new(label, chip_style).build().finish());
-    }
-    chips.finish()
 }
 
 #[derive(PartialEq)]
@@ -259,12 +199,6 @@ impl SettingsSection {
             "Editor and Code Review" | "EditorAndCodeReview" => Some(Self::EditorAndCodeReview),
             _ => None,
         }
-    }
-}
-
-pub fn settings_widget_deeplink_target(slug: &str) -> Option<(SettingsSection, &'static str)> {
-    match slug {
-        _ => None,
     }
 }
 
@@ -530,12 +464,6 @@ pub fn init_actions_from_parent_view<T: Action + Clone>(
                     WorkspaceAction::ToggleInBandGenerators,
                     &id!("Workspace"),
                     flags::IN_BAND_GENERATORS_FLAG,
-                ),
-                ToggleSettingActionPair::new(
-                    "debug network status",
-                    WorkspaceAction::ToggleDebugNetworkStatus,
-                    &id!("Workspace"),
-                    flags::DEBUG_NETWORK_ONLINE_FLAG,
                 ),
                 ToggleSettingActionPair::new(
                     "memory statistics",
@@ -968,9 +896,6 @@ impl SettingsView {
             view.handle_appearance_page_event(event, ctx);
         });
         let features_page = ctx.add_typed_action_view(FeaturesPageView::new);
-        ctx.subscribe_to_view(&features_page, |view, _, event, ctx| {
-            view.handle_features_page_event(event, ctx);
-        });
         let keybindings_page = ctx.add_typed_action_view(KeybindingsView::new);
         let code_indexing_page = ctx.add_typed_action_view(CodeIndexingPageView::new);
         ctx.subscribe_to_view(&code_indexing_page, |view, _, event, ctx| {
@@ -1317,18 +1242,6 @@ impl SettingsView {
     ) {
         match event {
             SettingsPageEvent::FocusModal => ctx.focus(&self.search_editor),
-            SettingsPageEvent::Pane(_) => {}
-        }
-    }
-
-    fn handle_features_page_event(
-        &mut self,
-        event: &FeaturesSettingsPageEvent,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        match event {
-            FeaturesSettingsPageEvent::SearchForKeybinding(_) => {}
-            FeaturesSettingsPageEvent::FocusModal => ctx.focus(&self.search_editor),
         }
     }
 
@@ -1542,10 +1455,10 @@ impl SettingsView {
     }
 
     fn input_tab(&mut self, ctx: &mut ViewContext<Self>) {
-        if let Some(current_page) = self.current_settings_page() {
-            if let SettingsPageViewHandle::Keybindings(view_handle) = &current_page.view_handle {
-                view_handle.update(ctx, |view, ctx| view.on_tab_pressed(ctx));
-            }
+        if let Some(current_page) = self.current_settings_page()
+            && let SettingsPageViewHandle::Keybindings(view_handle) = &current_page.view_handle
+        {
+            view_handle.update(ctx, |view, ctx| view.on_tab_pressed(ctx));
         }
     }
 
@@ -1678,22 +1591,6 @@ impl SettingsView {
         .with_corner_radius(CornerRadius::with_all(Radius::Pixels(4.)))
         .with_background(internal_colors::fg_overlay_1(appearance.theme()))
         .finish()
-    }
-}
-
-#[cfg(feature = "integration_tests")]
-impl SettingsView {
-    pub fn is_umbrella_expanded(&self, label: &str) -> Option<bool> {
-        self.nav_items.iter().find_map(|nav_item| match nav_item {
-            SettingsNavItem::Umbrella(umbrella) if umbrella.label == label => {
-                Some(umbrella.expanded)
-            }
-            SettingsNavItem::Umbrella(_) | SettingsNavItem::Page(_) => None,
-        })
-    }
-
-    pub fn search_query(&self, app: &AppContext) -> String {
-        self.search_editor.as_ref(app).buffer_text(app)
     }
 }
 

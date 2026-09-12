@@ -805,11 +805,6 @@ impl HeaderGrid {
         self.ignore_next_prompt_preview
     }
 
-    #[cfg(feature = "integration_tests")]
-    pub fn prompt_to_string(&self) -> String {
-        self.prompt_to_string_internal(false, RespectObfuscatedSecrets::Yes, false)
-    }
-
     pub(super) fn disable_reset_grid_checks(&mut self) {
         self.prompt_grid.disable_reset_grid_checks();
         self.prompt_and_command_grid.disable_reset_grid_checks();

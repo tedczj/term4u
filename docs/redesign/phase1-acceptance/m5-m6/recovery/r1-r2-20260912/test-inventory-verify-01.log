@@ -1,0 +1,5 @@
+    Finished `test` profile [unoptimized] target(s) in 0.88s
+OK: every disappeared test is explicitly listed in deleted-test-ids.txt
+Baseline tests: 9777
+Current tests: 4772
+Deleted tests: 5089

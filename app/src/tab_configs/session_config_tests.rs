@@ -255,7 +255,7 @@ use crate::app_state::{
 use crate::tab_configs::tab_config::TabConfigPaneType;
 
 fn make_terminal_leaf(cwd: Option<&str>, is_focused: bool) -> PaneNodeSnapshot {
-    PaneNodeSnapshot::Leaf(LeafSnapshot {
+    PaneNodeSnapshot::Leaf(Box::new(LeafSnapshot {
         is_focused,
         custom_vertical_tabs_title: None,
         contents: LeafContents::Terminal(TerminalPaneSnapshot {
@@ -264,7 +264,7 @@ fn make_terminal_leaf(cwd: Option<&str>, is_focused: bool) -> PaneNodeSnapshot {
             shell_launch_data: None,
             is_active: false,
         }),
-    })
+    }))
 }
 
 #[test]
@@ -373,11 +373,11 @@ fn snapshot_2x2_grid() {
 fn snapshot_non_terminal_leaf_replaced_with_terminal() {
     use crate::app_state::NotebookPaneSnapshot;
 
-    let notebook_leaf = PaneNodeSnapshot::Leaf(LeafSnapshot {
+    let notebook_leaf = PaneNodeSnapshot::Leaf(Box::new(LeafSnapshot {
         is_focused: false,
         custom_vertical_tabs_title: None,
         contents: LeafContents::Notebook(NotebookPaneSnapshot::LocalNotebook { notebook_id: None }),
-    });
+    }));
     let snapshot = PaneNodeSnapshot::Branch(BranchSnapshot {
         direction: crate::app_state::SplitDirection::Horizontal,
         children: vec![

@@ -765,9 +765,5 @@ impl PromptRenderHelper {
         }
     }
 
-    #[cfg(feature = "integration_tests")]
-    pub fn git_branch(&self, ctx: &AppContext) -> Option<String> {
-        self.prompt_view
-            .read(ctx, |prompt_display, ctx| prompt_display.git_branch(ctx))
-    }
+
 }

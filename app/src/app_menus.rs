@@ -20,6 +20,8 @@ use warpui::{AppContext, SingletonEntity};
 use crate::ai::persisted_workspace::PersistedWorkspace;
 use crate::default_terminal::DefaultTerminal;
 use crate::features::{FeatureFlag, runtime_flags_menu_items};
+use crate::local_objects::notebook_store::NotebookStore;
+use crate::notebooks::manager::NotebookSource;
 use crate::root_view::OpenLaunchConfigArg;
 use crate::server::telemetry::LaunchConfigUiLocation;
 use crate::settings::{BlockVisibilitySettings, DebugSettings, SelectionSettings};
@@ -64,6 +66,15 @@ pub fn menu_bar(ctx: &mut AppContext) -> MenuBar {
         make_new_tab_menu(ctx),
         make_new_blocks_menu(ctx),
         make_new_window_menu(),
+        Menu::new(
+            "Help",
+            vec![MenuItem::Custom(CustomMenuItem::new(
+                "Export Logs…",
+                |ctx| ctx.dispatch_global_action("root_view:export_logs", &()),
+                no_updates,
+                None,
+            ))],
+        ),
     ];
     for menu in &mut menus {
         compact_menu_items(&mut menu.menu_items);
@@ -241,6 +252,53 @@ fn make_new_app_menu(ctx: &AppContext) -> Menu {
 fn make_new_file_menu(ctx: &AppContext) -> Menu {
     let mut file_menu_options = make_new_elements_menu_items(ctx);
     file_menu_options.extend([
+        MenuItem::Custom(CustomMenuItem::new(
+            "New Notebook",
+            |ctx| {
+                ctx.dispatch_global_action(
+                    "workspace:open_notebook",
+                    &NotebookSource::New { title: None },
+                )
+            },
+            no_updates,
+            None,
+        )),
+        MenuItem::Custom(CustomMenuItem::new_with_submenu(
+            "Open Notebook",
+            |_| (),
+            |_, ctx| {
+                let items = NotebookStore::as_ref(ctx)
+                    .all()
+                    .sorted_by(|a, b| {
+                        a.title
+                            .cmp(&b.title)
+                            .then_with(|| a.id.as_str().cmp(b.id.as_str()))
+                    })
+                    .map(|notebook| {
+                        let source = NotebookSource::Existing(notebook.id.clone());
+                        MenuItem::Custom(CustomMenuItem::new(
+                            if notebook.title.is_empty() {
+                                "Untitled"
+                            } else {
+                                &notebook.title
+                            },
+                            move |ctx| {
+                                ctx.dispatch_global_action("workspace:open_notebook", &source)
+                            },
+                            no_updates,
+                            None,
+                        ))
+                    })
+                    .collect::<Vec<_>>();
+                MenuItemPropertyChanges {
+                    disabled: Some(items.is_empty()),
+                    submenu: Some(Some(items)),
+                    ..Default::default()
+                }
+            },
+            None,
+            Vec::new(),
+        )),
         MenuItem::Separator,
         updateable_custom_item_without_checkmark(CustomAction::OpenRepository, ctx),
         MenuItem::Custom(CustomMenuItem::new_with_submenu(
@@ -664,6 +722,14 @@ fn make_new_window_menu() -> Menu {
 
 fn debug_menu_items() -> Vec<MenuItem> {
     let mut debug_menu_items = vec![];
+
+    #[cfg(debug_assertions)]
+    debug_menu_items.push(MenuItem::Custom(CustomMenuItem::new(
+        "Test Panic Logging",
+        |_| panic!("Term4u debug panic logging test"),
+        no_updates,
+        None,
+    )));
 
     if FeatureFlag::DebugMode.is_enabled() {
         debug_menu_items.push(MenuItem::Custom(CustomMenuItem::new(

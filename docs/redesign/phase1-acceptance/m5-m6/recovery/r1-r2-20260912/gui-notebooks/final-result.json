@@ -1,0 +1,15 @@
+{
+  "status": "passed",
+  "candidate": "final-run-02.json",
+  "before_restart": "final-after-quit.json",
+  "after_restart_sha256": "80dc2550747123969ae240a0990b2ae83e172d5111a12e9cd2e92658f00280e7",
+  "observed_body_suffix": "\nFINAL_NOTEBOOK_LINE",
+  "checks": [
+    "old SQLite-derived notebook opened",
+    "physical Enter added newline",
+    "edit persisted in local JSON",
+    "quit and restart preserved exact content",
+    "new local content was not overwritten by old SQLite row"
+  ],
+  "capture_note": "Body visible after focusing restored tab; prior user confirmed actual physical-window text is complete."
+}

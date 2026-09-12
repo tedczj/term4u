@@ -296,29 +296,6 @@ impl View {
         }
     }
 
-    #[cfg(feature = "integration_tests")]
-    /// Returns the current search results within the command palette. Used within integration tests
-    /// to verify the command palette returns the correct results when launch configurations or the
-    /// current session changes.
-    pub fn search_results<'a>(
-        &'a self,
-        app: &'a AppContext,
-    ) -> impl Iterator<Item = &'a QueryResult<CommandPaletteItemAction>> + 'a {
-        let query_results = self.search_bar_state.as_ref(app).query_result_renderers();
-        query_results
-            .into_iter()
-            .flat_map(|results| results.iter())
-            .map(|item| &item.search_result)
-    }
-
-    #[cfg(feature = "integration_tests")]
-    pub fn selected_search_result<'a>(
-        &'a self,
-        app: &'a AppContext,
-    ) -> Option<&'a QueryResult<CommandPaletteItemAction>> {
-        self.search_bar_state.as_ref(app).selected_result()
-    }
-
     /// Set the active query filter in the search bar to be `filter`.
     pub fn set_active_query_filter(&mut self, filter: QueryFilter, ctx: &mut ViewContext<Self>) {
         self.search_bar.update(ctx, |view, ctx| {
@@ -425,8 +402,14 @@ impl View {
         format!("command_palette:query_result:{index}")
     }
 
-    /// Sets the set the binding source to produce the list of command bindings in the current
-    /// context.
+    pub fn source_view(&self, app: &AppContext) -> Option<EntityId> {
+        match self.binding_source.as_ref(app) {
+            BindingSource::None => None,
+            BindingSource::View { view_id, .. } => Some(*view_id),
+        }
+    }
+
+    /// Sets the binding source to produce commands available in the given view's context.
     pub fn set_binding_source(
         &mut self,
         window_id: WindowId,

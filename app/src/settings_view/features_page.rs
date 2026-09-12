@@ -1,6 +1,6 @@
-use settings::{Setting as _, ToggleableSetting as _};
+use settings::ToggleableSetting as _;
 use warp_errors::report_if_error;
-use warpui::elements::{Element, Flex, ParentElement};
+use warpui::elements::Element;
 use warpui::ui_components::components::UiComponent;
 use warpui::ui_components::switch::SwitchStateHandle;
 use warpui::{AppContext, Entity, SingletonEntity, TypedActionView, View, ViewContext, ViewHandle};
@@ -23,11 +23,6 @@ pub enum FeaturesPageAction {
     ToggleConfirmCloseSession,
     ToggleAudibleBell,
     ToggleNativeShellCompletions,
-}
-
-pub enum FeaturesSettingsPageEvent {
-    SearchForKeybinding(String),
-    FocusModal,
 }
 
 pub struct FeaturesPageView {
@@ -58,7 +53,7 @@ impl FeaturesPageView {
 }
 
 impl Entity for FeaturesPageView {
-    type Event = FeaturesSettingsPageEvent;
+    type Event = ();
 }
 
 impl TypedActionView for FeaturesPageView {
@@ -142,13 +137,6 @@ impl From<ViewHandle<FeaturesPageView>> for SettingsPageViewHandle {
     fn from(view: ViewHandle<FeaturesPageView>) -> Self {
         SettingsPageViewHandle::Features(view)
     }
-}
-
-pub(super) fn render_group(
-    children: impl IntoIterator<Item = Box<dyn Element>>,
-    _: &Appearance,
-) -> Box<dyn Element> {
-    Flex::column().with_children(children).finish()
 }
 
 fn render_switch(

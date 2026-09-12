@@ -12,8 +12,6 @@ use crate::code::editor_management::{CodeEditorStatus, CodeEditorSummary};
 use crate::code::view::CodeView;
 use crate::code_review::code_review_view::CodeReviewView;
 use crate::pane_group::{CodePane, PaneGroup, PaneId, TerminalPane};
-use crate::send_telemetry_from_app_ctx;
-use crate::server::telemetry::CloseTarget;
 use crate::session_management::{RunningSessionSummary, SessionNavigationData};
 use crate::settings::CodeSettings;
 use crate::terminal::general_settings::GeneralSettings;
@@ -49,7 +47,6 @@ pub struct UnsavedStateSummary<'a> {
     tabs_with_long_running_commands: usize,
 
     /// All terminal sessions in this scope.
-    terminal_sessions: Vec<SessionNavigationData>,
 
     /// The number of live shared sessions.
     pub shared_sessions: usize,
@@ -240,16 +237,6 @@ impl QuitScope<'_> {
     fn shared_sessions(&self) -> usize {
         0
     }
-
-    fn close_target(&self) -> CloseTarget {
-        match self {
-            Self::Pane { .. } => CloseTarget::Pane,
-            Self::Tabs(_) => CloseTarget::Tab,
-            Self::Window(_) => CloseTarget::Window,
-            Self::App => CloseTarget::App,
-            Self::EditorTab { .. } => CloseTarget::EditorTab,
-        }
-    }
 }
 
 impl UnsavedStateSummary<'static> {
@@ -315,7 +302,6 @@ impl<'a> UnsavedStateSummary<'a> {
             total_long_running_commands: sessions_summary.long_running_cmds.len(),
             windows_with_long_running_commands: sessions_summary.windows_running().len(),
             tabs_with_long_running_commands: sessions_summary.tabs_running().len(),
-            terminal_sessions: sessions,
             shared_sessions: num_shared_sessions,
             unsaved_code_changes: !code_editor_summary.unsaved_changes.is_empty()
                 || !code_review_summary.unsaved_changes.is_empty(),
@@ -355,10 +341,6 @@ impl<'a> UnsavedStateSummary<'a> {
             && (self.total_long_running_commands > 0
                 || self.shared_sessions > 0
                 || unsaveable_changes_remain)
-    }
-
-    pub fn running_sessions(&self) -> RunningSessionSummary<'_> {
-        RunningSessionSummary::new(&self.terminal_sessions)
     }
 
     /// Initializes a [`QuitWarningDialog`] with this summary of unsaved state.
@@ -528,15 +510,6 @@ impl<'a> QuitWarningDialog<'a> {
     /// Show the quit warning dialog. This returns `true` if the dialog was shown, and `false` if
     /// the current platform doesn't support showing a modal.
     pub fn show(self, ctx: &mut AppContext) -> bool {
-        send_telemetry_from_app_ctx!(
-            TelemetryEvent::QuitModalShown {
-                running_processes: self.state.total_long_running_commands as u32,
-                shared_sessions: self.state.shared_sessions as u32,
-                modal_for: self.state.scope.close_target()
-            },
-            ctx
-        );
-
         #[cfg(not(target_family = "wasm"))]
         {
             ctx.show_native_platform_modal(self.build());
@@ -560,5 +533,4 @@ fn on_disable_warning_modal(ctx: &mut AppContext) {
                 .toggle_and_save_value(ctx)
         );
     });
-    send_telemetry_from_app_ctx!(TelemetryEvent::QuitModalDisabled, ctx);
 }

@@ -14,10 +14,10 @@ use repo_metadata::file_tree_store::{
 use repo_metadata::local_model::IndexedRepoState;
 use repo_metadata::repositories::DetectedRepositories;
 use repo_metadata::{FileTreeEntry, RepoMetadataModel};
+use warp_core::HostId;
 use warp_core::features::FeatureFlag;
 use warp_core::ui::theme::Fill;
 use warp_core::ui::theme::color::internal_colors;
-use warp_core::{HostId, send_telemetry_from_ctx};
 use warp_util::path::LineAndColumnArg;
 use warp_util::standardized_path::StandardizedPath;
 use warpui::clipboard::ClipboardContent;
@@ -61,7 +61,6 @@ mod render;
 use crate::settings::{CodeSettings, CodeSettingsChangedEvent};
 
 const REMOTE_TEXT: &str = "The Project Explorer requires access to your local workspace, which isn’t supported in remote sessions.";
-const DISABLED_TEXT: &str = "The Project Explorer requires access to your local workspace. Open a new session or navigate to an active session to view.";
 const WSL_TEXT: &str = "The Project Explorer doesn't currently work in WSL.";
 
 /// Stable identifier for an item in the file tree.
@@ -877,19 +876,6 @@ impl FileTreeView {
         // `UniformListState::add_scroll_top` clamps against zero; the
         // layout-time `autoscroll` will also clamp against `scroll_max`.
         self.list_state.add_scroll_top(delta_lines as f32);
-    }
-
-    #[cfg(feature = "local_fs")]
-    pub(crate) fn set_enablement_state(
-        &mut self,
-        enablement: CodingPanelEnablementState,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        if self.enablement == enablement {
-            return;
-        }
-        self.enablement = enablement;
-        ctx.notify();
     }
 
     /// Sets the remote root directories to display in the file tree.
@@ -2144,14 +2130,6 @@ impl FileTreeView {
             )
         };
 
-        send_telemetry_from_ctx!(
-            TelemetryEvent::CodePanelsFileOpened {
-                entrypoint: CodePanelsFileOpenEntrypoint::ProjectExplorer,
-                target: target.clone(),
-            },
-            ctx
-        );
-
         ctx.emit(FileTreeEvent::OpenFile {
             path: LocalOrRemotePath::Local(path.to_path_buf()),
             target,
@@ -2402,19 +2380,13 @@ impl FileTreeView {
         let Some(root_dir) = self.root_directories.get(&id.root) else {
             return;
         };
-        let Some(item) = root_dir.items.get(id.index) else {
+        let Some(_) = root_dir.items.get(id.index) else {
             return;
         };
 
         let Some(relative_path) = self.relative_path_for_item(id) else {
             return;
         };
-
-        let is_directory = matches!(item, FileTreeItem::DirectoryHeader { .. });
-        send_telemetry_from_ctx!(
-            TelemetryEvent::FileTreeItemAttachedAsContext { is_directory },
-            ctx
-        );
 
         ctx.emit(FileTreeEvent::AttachAsContext {
             path: relative_path,
@@ -2868,17 +2840,6 @@ impl View for FileTreeView {
 
     #[cfg(feature = "local_fs")]
     fn render(&self, app: &AppContext) -> Box<dyn Element> {
-        if matches!(self.enablement, CodingPanelEnablementState::Disabled) {
-            return self.render_error_state(DISABLED_TEXT.to_string(), app);
-        }
-
-        if matches!(
-            self.enablement,
-            CodingPanelEnablementState::PendingRemoteSession
-        ) {
-            return self.render_loading_state(app);
-        }
-
         if self.displayed_directories.is_empty() {
             if let CodingPanelEnablementState::RemoteSession { has_remote_server } = self.enablement
             {

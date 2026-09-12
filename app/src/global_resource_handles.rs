@@ -14,7 +14,7 @@ pub struct GlobalResourceHandles {
 }
 
 impl GlobalResourceHandles {
-    #[cfg(any(test, feature = "integration_tests", feature = "test-util"))]
+    #[cfg(any(test, feature = "test-util"))]
     pub fn mock(app: &mut warpui::App) -> Self {
         Self {
             model_event_sender: None,

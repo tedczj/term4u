@@ -1,0 +1,2 @@
+Adding @executable_path/../Frameworks rpath to /Users/tedczj/workspace/term4u/target/debug/bundle/osx/WarpOss.app/Contents/MacOS/warp-oss to support mac frameworks (e.g. Sentry)
+error: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/install_name_tool: input file: /Users/tedczj/workspace/term4u/target/debug/bundle/osx/WarpOss.app/Contents/MacOS/warp-oss is not a Mach-O file

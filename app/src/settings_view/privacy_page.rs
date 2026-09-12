@@ -21,13 +21,6 @@ impl PrivacyPageView {
     }
 }
 
-#[derive(Clone, Copy)]
-pub enum PrivacyPageViewEvent {
-    LaunchNetworkLogging,
-    ShowAddRegexModal,
-    HideAddRegexModal,
-}
-
 #[derive(Clone, Debug)]
 pub enum PrivacyPageAction {
     NoOp,

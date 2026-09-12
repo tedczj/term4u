@@ -2,7 +2,7 @@ use super::*;
 
 #[test]
 fn test_has_horizontal_split() {
-    let single_leaf = PaneNodeSnapshot::Leaf(LeafSnapshot {
+    let single_leaf = PaneNodeSnapshot::Leaf(Box::new(LeafSnapshot {
         is_focused: false,
         custom_vertical_tabs_title: None,
         contents: LeafContents::Code(CodePaneSnapShot::Local {
@@ -12,7 +12,7 @@ fn test_has_horizontal_split() {
             active_tab_index: 0,
             source: None,
         }),
-    });
+    }));
     assert!(!single_leaf.has_horizontal_split());
 
     let horizontal_split = PaneNodeSnapshot::Branch(BranchSnapshot {
@@ -20,7 +20,7 @@ fn test_has_horizontal_split() {
         children: vec![
             (
                 PaneFlex(1.),
-                PaneNodeSnapshot::Leaf(LeafSnapshot {
+                PaneNodeSnapshot::Leaf(Box::new(LeafSnapshot {
                     is_focused: false,
                     custom_vertical_tabs_title: None,
                     contents: LeafContents::Code(CodePaneSnapShot::Local {
@@ -30,11 +30,11 @@ fn test_has_horizontal_split() {
                         active_tab_index: 0,
                         source: None,
                     }),
-                }),
+                })),
             ),
             (
                 PaneFlex(1.),
-                PaneNodeSnapshot::Leaf(LeafSnapshot {
+                PaneNodeSnapshot::Leaf(Box::new(LeafSnapshot {
                     is_focused: false,
                     custom_vertical_tabs_title: None,
                     contents: LeafContents::Code(CodePaneSnapShot::Local {
@@ -44,7 +44,7 @@ fn test_has_horizontal_split() {
                         active_tab_index: 0,
                         source: None,
                     }),
-                }),
+                })),
             ),
         ],
     });

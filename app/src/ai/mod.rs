@@ -2,5 +2,3 @@
 
 pub(crate) mod persisted_workspace;
 pub(crate) mod skills;
-
-pub fn init(_app: &mut warpui::AppContext) {}

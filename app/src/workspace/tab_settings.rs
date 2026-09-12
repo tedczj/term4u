@@ -158,14 +158,7 @@ pub enum DirectoryTabColor {
     Color(AnsiColorIdentifier),
 }
 
-impl DirectoryTabColor {
-    pub(crate) fn ansi_color(self) -> Option<AnsiColorIdentifier> {
-        match self {
-            DirectoryTabColor::Color(c) => Some(c),
-            DirectoryTabColor::Suppressed | DirectoryTabColor::Unassigned => None,
-        }
-    }
-}
+impl DirectoryTabColor {}
 
 /// User-configured directory→color mappings for tab coloring.
 ///

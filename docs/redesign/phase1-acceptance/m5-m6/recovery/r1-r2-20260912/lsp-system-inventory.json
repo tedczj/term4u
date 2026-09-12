@@ -1,0 +1,29 @@
+{
+  "path": "/Users/tedczj/.codex/packages/standalone/releases/0.153.4-aarch64-apple-darwin/codex-path:/opt/homebrew/opt/node@24/bin:/Users/tedczj/.local/bin:/Library/Frameworks/Python.framework/Versions/3.10/bin:/Library/Frameworks/Python.framework/Versions/3.8/bin:/Library/Frameworks/Python.framework/Versions/3.11/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/opt/pmk/env/global/bin:/Library/Apple/usr/bin:/Applications/VMware Fusion.app/Contents/Public:/Users/tedczj/.codex/tmp/arg0/codex-arg0w6fF6w:/Users/tedczj/.codex/packages/standalone/releases/0.153.4-aarch64-apple-darwin/codex-path:/opt/homebrew/opt/node@24/bin:/Users/tedczj/.local/bin:/Library/Frameworks/Python.framework/Versions/3.10/bin:/Library/Frameworks/Python.framework/Versions/3.8/bin:/Library/Frameworks/Python.framework/Versions/3.11/bin:/Applications/apache-maven-3.9.6/bin:/Library/Frameworks/Python.framework/Versions/3.8/bin/:/Applications/ffmpeg-5.1.2:/Library/Java/JavaVirtualMachines/jdk-1.8.jdk/Contents/Home/bin:/Applications/apache-maven-3.9.6/bin:/Library/Frameworks/Python.framework/Versions/3.8/bin/:/Applications/ffmpeg-5.1.2:/opt/homebrew/bin:/Library/Java/JavaVirtualMachines/jdk-1.8.jdk/Contents/Home/bin",
+  "servers": [
+    {
+      "binary": "rust-analyzer",
+      "resolved_path": null
+    },
+    {
+      "binary": "gopls",
+      "resolved_path": null
+    },
+    {
+      "binary": "pyright-langserver",
+      "resolved_path": null
+    },
+    {
+      "binary": "typescript-language-server",
+      "resolved_path": null
+    },
+    {
+      "binary": "clangd",
+      "resolved_path": "/usr/bin/clangd",
+      "exit_code": 0,
+      "stdout": "Apple clangd version 21.0.0 (clang-2100.1.1.101)\nFeatures: mac+xpc\nPlatform: arm64-apple-darwin25.2.0\n",
+      "stderr": ""
+    }
+  ],
+  "scope": "Read-only local binary availability and local help/version smoke; no installation or remote version lookup"
+}

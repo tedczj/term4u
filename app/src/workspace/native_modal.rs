@@ -91,7 +91,7 @@ impl NativeModal {
         self.modal_button_mouse_states = Default::default();
     }
 
-    #[cfg(any(test, feature = "integration_tests"))]
+    #[cfg(test)]
     pub(super) fn has_alert_dialog(&self) -> bool {
         self.alert_dialog.is_some()
     }

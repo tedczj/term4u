@@ -5,21 +5,15 @@ cfg_if::cfg_if! {
         mod block_list;
         mod sqlite;
         mod local_snapshot;
-        pub mod commands;
+        #[cfg(target_os = "macos")]
+        mod legacy_snapshot;
     }
 }
 
-pub use persistence::model;
-#[cfg_attr(not(feature = "local_fs"), expect(unused_imports))]
-pub use persistence::schema;
-
-#[cfg(feature = "integration_tests")]
-pub mod testing;
-
 use std::collections::HashMap;
 use std::path::PathBuf;
+use std::sync::Arc;
 use std::sync::mpsc::SyncSender;
-use std::sync::{Arc, OnceLock};
 use std::thread::JoinHandle;
 
 use ai::project_context::model::ProjectRulePath;
@@ -27,19 +21,15 @@ use ai::workspace::WorkspaceMetadata as CodeWorkspaceMetadata;
 use chrono::{DateTime, Local};
 use instant::Instant;
 use lsp::supported_servers::LSPServerType;
-// Only re-exported for integration tests (via `integration_testing::persistence`);
-// in-crate code should resolve paths through `database_file_path_for_current_scope`.
-#[cfg(any(feature = "local_fs", feature = "integration_tests"))]
-#[cfg_attr(not(feature = "integration_tests"), expect(unused_imports))]
-pub use sqlite::database_file_path_for_scope;
+pub use persistence::model;
+#[cfg_attr(not(feature = "local_fs"), expect(unused_imports))]
+pub use persistence::schema;
 use warp_core::command::ExitCode;
 use warp_errors::report_error;
 use warpui::{AppContext, Entity, SingletonEntity};
 
-use self::model::Project;
 use crate::ai::persisted_workspace::EnablementState;
 use crate::app_state::AppState;
-use crate::suggestions::ignored_suggestions_model::SuggestionType;
 use crate::terminal::history::PersistedCommand;
 use crate::terminal::model::block::SerializedBlock;
 use crate::terminal::model::session::SessionId;
@@ -50,27 +40,8 @@ pub enum PersistenceScope {
     App,
     /// The `warp-tui` front-end, which keeps its own database so GUI/TUI
     /// version skew can never migrate a shared database out from under the
-    /// older binary. Cloud sync is the cross-front-end sharing mechanism.
+    /// older binary. Each front-end restores only its own local state.
     Tui,
-}
-
-/// The [`PersistenceScope`] this process's persistence was initialized with.
-///
-/// Set once by [`initialize`]. Code that opens ad-hoc read-only connections
-/// should resolve the database path through [`current_scope`] (or
-/// `database_file_path_for_current_scope`) rather than hardcoding a scope, so
-/// it reads the same database as the writer regardless of which front-end
-/// this process is running.
-static CURRENT_SCOPE: OnceLock<PersistenceScope> = OnceLock::new();
-
-/// Returns the scope [`initialize`] was called with, defaulting to
-/// [`PersistenceScope::App`] when persistence has not been initialized (e.g.
-/// tests that construct models directly).
-pub fn current_scope() -> PersistenceScope {
-    CURRENT_SCOPE
-        .get()
-        .cloned()
-        .unwrap_or(PersistenceScope::App)
 }
 
 /// Which subsets of [`PersistedData`] a launch mode actually consumes.
@@ -83,35 +54,13 @@ pub enum PersistedDataScope {
     /// The GUI app: everything, including window/tab/block session
     /// restoration and command history.
     Full,
-    /// The `warp-tui` front-end: command history, cloud objects, user profiles,
-    /// and agent/conversation state, but no GUI session restoration or pending
-    /// object actions.
+    /// The headless front-end, without GUI session restoration.
     TuiFrontend,
-    /// The remote server daemon: only codebase index metadata.
-    CodebaseIndicesOnly,
 }
 
 impl PersistedDataScope {
     /// Window/tab/pane snapshots and restored blocks.
     fn session_restoration(self) -> bool {
-        matches!(self, PersistedDataScope::Full)
-    }
-
-    /// Shell-command history consumed by both interactive front-ends.
-    fn command_history(self) -> bool {
-        matches!(
-            self,
-            PersistedDataScope::Full | PersistedDataScope::TuiFrontend
-        )
-    }
-
-    /// User profiles used to identify cloud-object creators in both interactive frontends.
-    fn user_profiles(self) -> bool {
-        self != PersistedDataScope::CodebaseIndicesOnly
-    }
-
-    /// Pending object actions, which only the GUI consumes.
-    fn gui_only_data(self) -> bool {
         matches!(self, PersistedDataScope::Full)
     }
 }
@@ -130,7 +79,6 @@ pub fn initialize(
 ) -> (Option<Box<PersistedData>>, Option<WriterHandles>) {
     // Record the scope for ad-hoc read-only connections; keep the first value
     // if this is ever called more than once in a process (e.g. tests).
-    let _ = CURRENT_SCOPE.set(scope.clone());
     cfg_if::cfg_if! {
         if #[cfg(feature = "local_fs")] {
             sqlite::initialize(ctx, scope, data_scope)
@@ -210,9 +158,7 @@ pub struct PersistedData {
     pub legacy_notebooks: Vec<(i32, Option<String>, Option<String>)>,
     pub codebase_indices: Vec<CodeWorkspaceMetadata>,
     pub workspace_language_servers: HashMap<PathBuf, HashMap<LSPServerType, EnablementState>>,
-    pub projects: Vec<Project>,
     pub project_rules: Vec<ProjectRulePath>,
-    pub ignored_suggestions: Vec<(String, SuggestionType)>,
 }
 
 #[derive(Clone, Debug)]
@@ -262,25 +208,11 @@ pub enum ModelEvent {
     DeleteCodebaseIndexMetadata {
         repo_path: PathBuf,
     },
-    UpsertProject {
-        project: Project,
-    },
-    DeleteProject {
-        path: String,
-    },
     UpsertProjectRules {
         project_rule_paths: Vec<ProjectRulePath>,
     },
     DeleteProjectRules {
         path: Vec<PathBuf>,
-    },
-    AddIgnoredSuggestion {
-        suggestion: String,
-        suggestion_type: SuggestionType,
-    },
-    RemoveIgnoredSuggestion {
-        suggestion: String,
-        suggestion_type: SuggestionType,
     },
     UpsertWorkspaceLanguageServer {
         workspace_path: PathBuf,

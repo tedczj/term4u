@@ -153,15 +153,6 @@ impl AltScreenElement {
         }
     }
 
-    pub fn with_ligature_rendering(mut self) -> Self {
-        self.grid_render_params.use_ligature_rendering = true;
-        self
-    }
-
-    pub fn with_hide_cursor_cell(mut self) -> Self {
-        self.grid_render_params.hide_cursor_cell = true;
-        self
-    }
     /// Sets the voice input toggle key code for CLI agent footer integration.
     #[cfg(feature = "voice_input")]
     pub fn with_voice_input_toggle_key(mut self, key_code: Option<KeyCode>) -> Self {
@@ -185,12 +176,7 @@ impl AltScreenElement {
         true
     }
 
-    fn set_marked_text(
-        &mut self,
-        marked_text: &str,
-        selected_range: &Range<usize>,
-        ctx: &mut EventContext,
-    ) -> bool {
+    fn set_marked_text(&mut self, marked_text: &str, ctx: &mut EventContext) -> bool {
         if self.is_terminal_focused {
             ctx.dispatch_typed_action(TerminalAction::SetMarkedText(marked_text.to_owned()));
         }
@@ -300,7 +286,7 @@ impl AltScreenElement {
         &self,
         local_position: Vector2F,
         is_synthetic: bool,
-        app: &AppContext,
+
         ctx: &mut EventContext,
     ) -> bool {
         if self.active_session_state != ActiveSessionState::Active {
@@ -821,7 +807,7 @@ impl Element for AltScreenElement {
                 ..
             } => {
                 if in_bounds {
-                    self.mouse_moved(to_local(*position), *is_synthetic, app, ctx)
+                    self.mouse_moved(to_local(*position), *is_synthetic, ctx)
                 } else {
                     self.mouse_out(ctx)
                 }
@@ -835,8 +821,8 @@ impl Element for AltScreenElement {
             }
             Event::SetMarkedText {
                 marked_text,
-                selected_range,
-            } => self.set_marked_text(marked_text, selected_range, ctx),
+                selected_range: _,
+            } => self.set_marked_text(marked_text, ctx),
             Event::ClearMarkedText => self.clear_marked_text(ctx),
             Event::ModifierKeyChanged { key_code, state } => {
                 if self.is_terminal_focused {
@@ -903,7 +889,7 @@ impl ScrollableElement for AltScreenElement {
         })
     }
 
-    fn scroll(&mut self, delta: Pixels, ctx: &mut EventContext) {
+    fn scroll(&mut self, delta: Pixels, _: &mut EventContext) {
         self.scroll_top = (self.scroll_top - delta.to_lines(self.line_height()))
             .max(Lines::zero())
             .min(self.max_scroll_top.unwrap());

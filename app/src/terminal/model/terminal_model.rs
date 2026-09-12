@@ -17,7 +17,6 @@ pub use warp_terminal::event::ExitReason;
 use warp_terminal::event::validate_and_decode_in_band_command_output_to_bytes;
 pub use warp_terminal::model::{BlockIndex, RangeInModel};
 use warp_terminal::model::{KeyboardModes, KeyboardModesApplyBehavior};
-use warpui::AppContext;
 use warpui::assets::asset_cache::Asset;
 use warpui::r#async::executor::Background;
 use warpui::image_cache::ImageType;
@@ -1071,45 +1070,6 @@ impl TerminalModel {
         )
     }
 
-    /// Creates a terminal model for a cloud mode pane before it has connected to a shared session.
-    #[allow(clippy::too_many_arguments)]
-    #[allow(clippy::too_many_arguments)]
-
-    /// Creates a terminal model for a terminal session that is being viewed.
-    #[allow(clippy::too_many_arguments)]
-
-    /// Sends an Agent ResponseEvent to viewers if this session is shared.
-    /// The participant_id should be the ID of the participant who initiated the query.
-    /// The forked_from_conversation_token is used for forked conversations to help viewers
-    /// link the new server-assigned token to an existing conversation from historical replay.
-
-    /// Signal to viewers that the Cloud Mode Setup V2 phase is complete and no
-    /// follow-up `AppendedExchange` is coming (e.g. because the AgentDriver is
-    /// short-circuiting an empty-prompt handoff via `skip_initial_turn`).
-    /// Viewers use this to clear `BlockList::is_executing_oz_environment_startup_commands`
-    /// and tear down the "Running setup commands…" chip.
-
-    /// Whether the session sharing server is currently replaying
-    /// conversation events (for conversation reconstruction).
-
-    #[cfg(test)]
-
-    /// Model-only portion of the "is this a cloud agent conversation?" check used for display
-    /// purposes (e.g. the cloud agent icon). Callers holding a [`TerminalView`] should use
-    /// [`TerminalView::is_cloud_agent_session`], which also accounts for the ambient agent view
-    /// model.
-    ///
-    /// This intentionally keys off cloud-execution (ambient agent) semantics — a shared
-    /// *ambient* session or viewing an ambient conversation — NOT the mere presence of an
-    /// orchestrator task id. A manually shared *local* (`User`) session carries a
-    /// `source_task_id` sidecar but is not a cloud agent conversation, so it must fall through
-    /// here (see QUALITY-726).
-
-    /// Loads the provided scrollback into the model.
-    // TODO: we should be doing this in the constructor of the
-    // terminal model for the viewers so that we're guaranteed that
-    // loading scrollback is the first thing that we do.
-
     pub fn obfuscate_secrets(&self) -> ObfuscateSecrets {
         self.obfuscate_secrets
     }
@@ -1122,7 +1082,7 @@ impl TerminalModel {
         self.block_list_mut().update_max_grid_size(new_size);
     }
 
-    #[cfg(any(test, feature = "integration_tests"))]
+    #[cfg(test)]
     pub fn are_any_events_pending(&self) -> bool {
         self.event_proxy.are_any_events_pending()
     }
@@ -1314,11 +1274,6 @@ impl TerminalModel {
         outcome
     }
 
-    /// Starts the execution for a command in a shared session (sharer or viewer).
-
-    /// Starts the command execution (per `Self::start_command_execution`) and additionally sets
-    /// the given `ai_metadata` on the active block.
-
     pub(in crate::terminal) fn start_in_band_command_execution(&mut self) -> StartCommandOutcome {
         self.start_command_execution_for_kind(CommandStartKind::InBand)
     }
@@ -1329,9 +1284,7 @@ impl TerminalModel {
         let outcome = match transition.action {
             LifecycleAction::StartActiveBlock => {
                 match kind {
-                    CommandStartKind::UserOrQueued | CommandStartKind::SharedSession => {
-                        self.block_list.start_active_block()
-                    }
+                    CommandStartKind::UserOrQueued => self.block_list.start_active_block(),
                     CommandStartKind::InBand => {
                         self.block_list.start_active_block_for_in_band_command()
                     }
@@ -1442,13 +1395,12 @@ impl TerminalModel {
         &self,
         semantic_selection: &SemanticSelection,
         inverted_blocklist: bool,
-        app: &AppContext,
     ) -> Option<String> {
         if self.alt_screen_active {
             self.alt_screen.selection_to_string(semantic_selection)
         } else {
             self.block_list
-                .selection_to_string(semantic_selection, inverted_blocklist, app)
+                .selection_to_string(semantic_selection, inverted_blocklist)
         }
     }
 
@@ -1620,8 +1572,6 @@ impl TerminalModel {
         }
     }
 
-    /// Returns whether this terminal is viewing a shared session.
-
     /// Resize terminal to new dimensions.
     /// The block sort direction is needed to update the state of the find dialog.
     pub fn resize(&mut self, size_update: SizeUpdate) {
@@ -1732,11 +1682,6 @@ impl TerminalModel {
         self.block_list.set_obfuscate_secrets(obfuscate_secrets);
     }
 
-    /// Disables secret obfuscation for shared session creators only.
-    ///
-    /// Specifically, secret obfuscation is disabled starting
-    /// from the `first_scrollback_block_index` onwards.
-
     fn restored_block_commands(&self) -> Vec<HistoryEntry> {
         let mut commands = Vec::new();
         for block in self.block_list.blocks() {
@@ -1829,7 +1774,6 @@ impl TerminalModel {
         // the blocklist (for the local shell).
         self.exit_alt_screen(true);
 
-        let block_id = data.next_block_id.to_string();
         self.block_list
             .ensure_active_block_executing_for_completion();
         let is_for_in_band_command = self.block_list().active_block().is_in_band_command_block();

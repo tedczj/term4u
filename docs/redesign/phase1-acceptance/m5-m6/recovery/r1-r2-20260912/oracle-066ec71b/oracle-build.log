@@ -1,0 +1,220 @@
+   Compiling typenum v1.20.0
+   Compiling subtle v2.6.1
+   Compiling const-oid v0.9.6
+   Compiling rustls-native-certs v0.8.2
+   Compiling rustls v0.23.39
+   Compiling futures-executor v0.3.31
+   Compiling cynic v3.8.0
+   Compiling generic-array v0.14.7
+   Compiling futures v0.3.31
+   Compiling schemars v1.0.4
+   Compiling crypto-common v0.1.6
+   Compiling block-buffer v0.10.4
+   Compiling markdown_parser v0.1.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/markdown_parser)
+   Compiling digest v0.10.7
+   Compiling sha1 v0.10.6
+   Compiling sha2 v0.10.9
+   Compiling settings_value v0.1.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/settings_value)
+   Compiling string-offset v0.0.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/string-offset)
+   Compiling warp_features v0.0.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/warp_features)
+   Compiling num-integer v0.1.46
+   Compiling prost v0.14.3
+   Compiling hmac v0.12.1
+   Compiling inout v0.1.4
+   Compiling cipher v0.4.4
+   Compiling hkdf v0.12.4
+   Compiling aes v0.8.4
+   Compiling opentelemetry v0.32.0
+   Compiling base64ct v1.8.0
+   Compiling universal-hash v0.5.1
+   Compiling tokio-rustls v0.26.4
+   Compiling rustls-platform-verifier v0.6.2
+   Compiling hyper-rustls v0.27.7
+   Compiling tungstenite v0.24.0
+   Compiling reqwest v0.13.3
+   Compiling pem-rfc7468 v0.7.0
+   Compiling graphql-ws-client v0.11.1
+   Compiling async-tungstenite v0.28.2
+   Compiling websocket v0.1.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/websocket)
+   Compiling der v0.7.10
+   Compiling http v0.2.12
+   Compiling base16ct v0.2.0
+   Compiling opaque-debug v0.3.1
+   Compiling base64-simd v0.8.0
+   Compiling warp_errors v0.0.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/warp_errors)
+   Compiling http-body v0.4.6
+   Compiling spki v0.7.3
+   Compiling command v0.1.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/command)
+   Compiling sum_tree v0.1.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/sum_tree)
+   Compiling aead v0.5.2
+   Compiling bytes-utils v0.1.4
+   Compiling warp_util v0.1.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/warp_util)
+   Compiling pkcs8 v0.10.2
+   Compiling aws-smithy-types v1.4.7
+   Compiling oauth2 v5.0.0
+   Compiling warpui_core v0.1.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/warpui_core)
+   Compiling ctr v0.9.2
+   Compiling prost-types v0.14.3
+   Compiling dbl v0.3.2
+   Compiling ff v0.13.1
+   Compiling aha-reqwest-eventsource v0.1.0
+   Compiling group v0.13.0
+   Compiling cmac v0.7.2
+   Compiling sec1 v0.7.3
+   Compiling tink-proto v0.3.0 (https://github.com/warpdotdev/tink-rust?rev=54b9ac9af93b0c08b446a7bc0582836c9403a71b#54b9ac9a)
+   Compiling prost-reflect v0.16.3
+   Compiling prevent_sleep v0.0.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/prevent_sleep)
+   Compiling tracing-opentelemetry v0.33.0
+   Compiling polyval v0.6.2
+   Compiling num-bigint v0.4.6
+   Compiling sha-1 v0.10.1
+   Compiling crypto-bigint v0.5.5
+   Compiling jaq-json v2.0.0
+   Compiling elliptic-curve v0.13.8
+   Compiling tink-core v0.3.0 (https://github.com/warpdotdev/tink-rust?rev=54b9ac9af93b0c08b446a7bc0582836c9403a71b#54b9ac9a)
+   Compiling aws-smithy-async v1.2.14
+   Compiling jaq-fmts v0.1.0
+   Compiling warp_multi_agent_api v0.0.0 (https://github.com/warpdotdev/warp-proto-apis.git?rev=0ca49ce589580a211e4bdf84c1b1721424fabdc8#0ca49ce5)
+   Compiling aws-smithy-runtime-api v1.12.0
+   Compiling warpui_extras v0.0.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/warpui_extras)
+   Compiling ghash v0.5.1
+   Compiling poly1305 v0.8.0
+   Compiling chacha20 v0.9.1
+   Compiling settings v0.0.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/settings)
+   Compiling rfc6979 v0.4.0
+   Compiling signature v2.2.0
+   Compiling ai_types v0.1.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/ai_types)
+   Compiling warp_core v0.0.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/warp_core)
+   Compiling jaq-all v0.1.0
+   Compiling http_client v0.0.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/http_client)
+   Compiling warp_isolation_platform v0.1.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/isolation_platform)
+   Compiling persistence v0.0.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/persistence)
+   Compiling ecdsa v0.16.9
+   Compiling chacha20poly1305 v0.10.1
+   Compiling aes-gcm v0.10.3
+   Compiling warp_graphql_schema v0.0.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/warp_graphql_schema)
+   Compiling tink-prf v0.3.0
+   Compiling primeorder v0.13.6
+   Compiling local_control v0.0.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/local_control)
+   Compiling rust-embed-utils v7.8.1
+   Compiling rust-embed-utils v8.7.2
+   Compiling hybrid-array v0.4.11
+   Compiling rust-embed v8.7.2
+   Compiling rust-embed v6.8.1
+   Compiling p256 v0.13.2
+   Compiling tink-mac v0.3.0
+   Compiling byte-unit v5.2.0
+   Compiling curve25519-dalek v4.1.3
+   Compiling watcher v0.1.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/watcher)
+   Compiling warp_cli v0.0.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/warp_cli)
+   Compiling aes-gcm-siv v0.11.1
+   Compiling aes-siv v0.7.0
+   Compiling cmov v0.5.4
+   Compiling vim v0.1.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/vim)
+   Compiling ctutils v0.4.2
+   Compiling tink-daead v0.3.0
+   Compiling tink-aead v0.3.0
+   Compiling repo_metadata v0.1.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/repo_metadata)
+   Compiling x25519-dalek v2.0.1
+   Compiling session-sharing-protocol v0.0.0 (https://github.com/warpdotdev/session-sharing-protocol.git?rev=fcd0fea35ab9f782043c8ec74fd81bce187ded9f#fcd0fea3)
+   Compiling warp_graphql v0.1.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/graphql)
+   Compiling warp-command-signatures v0.0.0 (https://github.com/warpdotdev/command-signatures.git?rev=d3725aa42375cc229699c87be2b38f9d9f07080f#d3725aa4)
+   Compiling crypto-common v0.2.1
+   Compiling block-buffer v0.12.0
+   Compiling objc2-core-graphics v0.3.2
+   Compiling fuzzy_match v0.1.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/fuzzy_match)
+   Compiling asset_cache v0.0.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/asset_cache)
+   Compiling ipynb_parser v0.1.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/ipynb_parser)
+   Compiling const-oid v0.10.2
+   Compiling digest v0.11.3
+   Compiling warp_editor v0.1.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/editor)
+   Compiling objc2-app-kit v0.3.2
+   Compiling warp_completer v0.1.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/warp_completer)
+   Compiling hpke v0.13.0
+   Compiling tink-hybrid v0.3.0 (https://github.com/warpdotdev/tink-rust?rev=54b9ac9af93b0c08b446a7bc0582836c9403a71b#54b9ac9a)
+   Compiling nix v0.31.2
+   Compiling regex_dfas v0.0.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/regex_dfas)
+   Compiling secret_redaction v0.0.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/secret_redaction)
+   Compiling languages v0.0.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/languages)
+   Compiling channel_versions v0.1.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/channel_versions)
+   Compiling process-wrap v9.1.0
+   Compiling warp_assets v0.0.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/warp_assets)
+   Compiling aws-smithy-http v0.63.6
+   Compiling aws-credential-types v1.2.14
+   Compiling sse-stream v0.2.1
+   Compiling tokio-stream v0.1.17
+   Compiling cpufeatures v0.3.0
+   Compiling sha2 v0.11.0
+   Compiling rmcp v1.6.0
+   Compiling syntax_tree v0.1.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/syntax_tree)
+   Compiling computer_use v0.0.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/computer_use)
+   Compiling warp_terminal v0.0.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/warp_terminal)
+   Compiling hmac v0.13.0
+   Compiling aws-smithy-observability v0.2.6
+   Compiling aws-smithy-http-client v1.1.12
+   Compiling warp_managed_secrets v0.1.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/managed_secrets)
+   Compiling warp_server_auth v0.1.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/warp_server_auth)
+   Compiling ai v0.1.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/ai)
+   Compiling cloud_objects v0.1.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/cloud_objects)
+   Compiling aws-smithy-runtime v1.11.1
+   Compiling aws-sigv4 v1.4.3
+   Compiling aws-types v1.3.15
+   Compiling warp-workflows v0.1.0 (https://github.com/warpdotdev/workflows?rev=793a98ddda6ef19682aed66364faebd2829f0e01#793a98dd)
+   Compiling aws-runtime v1.7.3
+   Compiling cloud_object_persistence v0.1.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/cloud_object_persistence)
+   Compiling aws-smithy-json v0.62.5
+   Compiling pbkdf2 v0.12.2
+   Compiling handlebars v0.0.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/handlebars)
+   Compiling regex-lite v0.1.6
+   Compiling cloud_object_models v0.1.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/cloud_object_models)
+   Compiling zip v2.4.2
+   Compiling warpui v0.0.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/warpui)
+   Compiling opentelemetry_sdk v0.32.1
+   Compiling cloud_object_client v0.1.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/cloud_object_client)
+   Compiling simple_logger v0.1.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/simple_logger)
+   Compiling aws-smithy-query v0.60.15
+   Compiling aws-smithy-xml v0.60.15
+   Compiling firebase v0.1.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/firebase)
+   Compiling aws-sdk-sts v1.103.0
+   Compiling opentelemetry-proto v0.32.0
+   Compiling warp_server_client v0.1.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/warp_server_client)
+   Compiling warp_logging v0.0.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/warp_logging)
+   Compiling remote_server v0.1.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/remote_server)
+   Compiling node_runtime v0.1.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/node_runtime)
+   Compiling natural_language_detection v0.1.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/natural_language_detection)
+   Compiling aws-sdk-sso v1.98.0
+   Compiling aws-sdk-signin v1.9.0
+   Compiling aws-sdk-ssooidc v1.100.0
+   Compiling ui_components v0.0.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/ui_components)
+   Compiling jsonrpc v0.1.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/jsonrpc)
+   Compiling opentelemetry-http v0.32.0
+   Compiling tracing-futures v0.2.5
+   Compiling warp_multi_agent_client v0.1.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/warp_multi_agent_client)
+   Compiling lsp v0.1.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/lsp)
+   Compiling aws-config v1.8.16
+   Compiling opentelemetry-otlp v0.32.0
+   Compiling onboarding v0.1.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/onboarding)
+   Compiling warp_files v0.1.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/warp_files)
+   Compiling input_classifier v0.0.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/input_classifier)
+   Compiling app-installation-detection v0.1.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/app-installation-detection)
+   Compiling warp_search_core v0.1.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/warp_search_core)
+   Compiling warp_ripgrep v0.1.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/warp_ripgrep)
+   Compiling ipc v0.1.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/ipc)
+   Compiling mcp v0.1.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/mcp)
+   Compiling http_server v0.0.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/http_server)
+   Compiling warp_channel_config v0.0.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/warp_channel_config)
+   Compiling build_cache v0.1.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/build_cache)
+   Compiling field_mask v0.0.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/crates/field_mask)
+   Compiling email_address v0.2.3 (https://github.com/warpdotdev/rust-email_address?branch=main#b3e5205b)
+   Compiling warp v0.1.0 (/private/tmp/term4u-r1r2-oracle-066ec71b/app)
+error: linking with `cc` failed: exit status: 1
+  |
+  = note:  "cc" "/var/folders/zv/ygy2m9w10px2n7mbdfgcnw2m0000gp/T/rustcBnIm00/symbols.o" "<2 object files omitted>" "/Users/tedczj/workspace/term4u/target/debug/deps/{libwarp-462d4c6395f98db2,libhttp_server-318cc548981c271d,libapp_installation_detection-3fca1ea823ed818e,liblz4_flex-736642b337157270,libtwox_hash-de3e63a1097498a5,libserde_bytes-1b3936e524a3cdf6,libos_info-951e1bab28008f52,libaddr-953b5705fa1d4367,libpsl-b3020ae9fdd2af00,libpsl_types-100638b22180b00b,libbytecount-2b6ee93447814c0c,libalphanumeric_sort-5f9f02a3b3a1c981,libinfer-5622775b3eeb0b82,libcfb-fdb57cc0dda453a9,libcounter-5c2718a5d17e9359,libdifflib-600e47e21a595964,librustc_hash-7af4ee5358393803,libaws_config-b63d7581a09f5550,libaws_sdk_ssooidc-2bb4e79f40fb59a4,libaws_sdk_sso-bd820e18d6fea7f0,libaws_sdk_signin-cdf51d745f2513fb,libaws_sdk_sts-c859aceff06fe27f,libaws_smithy_query-e27dc40daba65bd4,libaws_runtime-a0df18beb04f8d2f,libaws_sigv4-9b484dc11af5ddcd,libsha2-d1039a64ddab6d37,libcpufeatures-6745c25377ce9011,libhmac-cb456f521b7d57b4,libdigest-0952ff4fef9ea033,libctutils-a92bf8ea274b7c3e,libcmov-5f16ede8375ba347,libconst_oid-cf6bd63e470187f4,libcrypto_common-4774d17dd56bb5ff,libblock_buffer-9475b883d0349cb6,libhybrid_array-38e6ccc8e8ad6ded,libaws_smithy_xml-7308000fb1363462,libregex_lite-1ed56e7368b20218,libaws_smithy_json-b85bbf10b24f0cc4,libaws_smithy_http-a49a8f7a31c636c6,libaws_types-11c2c984502111a9,libaws_smithy_runtime-ed02466561810c6a,libaws_smithy_observability-dfd082f7e096d7fd,libaws_smithy_http_client-d3031ea8f252cb53,libwarp_multi_agent_client-e06218e5223b3fee,libtracing_futures-baaa6c480501e0fe,libpermissions-ab71acf244cba952,libmach2-ebce1436c1fd7f54,libwarp_ripgrep-276940e1fde70838,libgrep-9a70ddf6ce8a4267,libgrep_regex-18a33b6bf7885c2c,libgrep_printer-540b970235804a68,libgrep_searcher-df718e75460738a6,libencoding_rs_io-6f1e155a4ca3eaf3,libgrep_matcher-237606641360dfb7,libgrep_cli-d988e3df838c065e,libkmeans_colors-f14d07e7926db527,libdeltae-ba448eb7bdbc958e,libserde_bytes_repr-0277690dd97cb9be,libtoml-138dc3e3994cbdd6,libtoml_edit-3d833f010bcd87b5,libserde_spanned-24024de7065f884f,libtoml_write-92ed0625808eb46c,libtoml_datetime-cee16f4233a5afb1,libvalidator-692a76479252d4c7,libgit2-f34521c2a7d9ef24,liblibgit2_sys-dcd61eaf0144363e,liblibz_sys-c2b78b436669694f,libpalette-5399164ea128e075,libapprox-c427b81de8427893,libwarp_search_core-fa848615e45bda82,libtantivy-39d7c14821ff049a,libsketches_ddsketch-becb20058a61d6b7,liboneshot-957af1f64d177c1a,libtypetag-4d838808791ff396,liberased_serde-a072bf21b4a0c642,libtypeid-34e0ae3c0e3c7194,libbon-3eba2313d6909548,libcensus-4a5c0181960eeb7b,libhtmlescape-983618fdabd05c75,libarc_swap-9f2728e1a372d03f,liblz4_flex-2e560838d2d9ab3e,liblru-c717273c7d3837b5,liblevenshtein_automata-ebf593c89d87f74f,libfs4-31376f10b658c008,libdatasketches-fe86ce4a57071c07,libcrossbeam_channel-1bd00859ad724c2c,libtantivy_tokenizer_api-7d90743e3dce6ce5,libmeasure_time-8bb3cbf80bac40d4,libtantivy_query_grammar-4e81877ac05071cf,libordered_float-cf4f7d5653570257,libtantivy_columnar-b7e7cf745cd3fb6e,libtantivy_stacker-17a7325680394d27,libmurmurhash32-49974121f5dd40cb,libfastdivide-a60b8f8264fb30f4,libtantivy_sstable-55eb660f0c8b8c11,libtantivy_bitpacker-2a6dd714d846ede9,libbitpacking-90a387b4ac8b4a76,libtantivy_common-11da1c1130a049fb,libownedbytes-b8fc2b4fe3219274,libtantivy_fst-bafb233c8397da3b,libutf8_ranges-0051877241eb8fd1,libopentelemetry_otlp-aa4d94b22bd7c097,libopentelemetry_proto-d5dc645f951af6fa,libopentelemetry_sdk-7bdfd27d8844acca,libopentelemetry_http-ce8d69b2c20532d7,libsyntect-7834a3e97c8ecd26,libonig-0f4e5e101d093a42,libonig_sys-24dd4ae2af93c2b8,libaxum-260a56887b75dcc0,libmatchit-57edc389ba4f4ba8,libaxum_core-55bc50354e716720,libqrcode-7081159d338005f8,libemail_address-9a5c241a262271c0,libcloud_object_client-018bb1fda22901b8,libenclose-46f95f1f050bfa6f,libcsv-dfd0c8a83794f4b3,libcsv_core-56aa09afaac5cb9a,libtabwriter-059f75d72da679ea,libshell_words-739917fe18ac2e95,libbuild_cache-12b41f8ada306f37,libinquire-91a4012857902535,libcomfy_table-45a8fabd677841a8,libunicode_width-1f2573f046683b11,libcrossterm-2803bfd4258e1628,libderive_more-2bbcc73617bcd076,libwarp_server_client-ac27c5129512e0a1,libfirebase-de55c90884b6e3de,libwarp_logging-daef898321a08040,liblog_panics-fd9031df69ec7950,libbacktrace-c43e63b131f524f4,libobject-a51851a3d20c3fa9,libaddr2line-55e7f46a84b3a711,libgimli-225a7871c8f14113,librustc_demangle-0bd7467c3f3ec63f,libenv_logger-401a84dce6729af4,libtermcolor-80a75b49f79a22fa,libis_terminal-a772c2e5dbc34781,liblsp-ca223274769c77da,libnode_runtime-64d5c13d116c0db1,libzip-8709726c8353a60c,libxz2-59f7405974014efd,liblzma_sys-8da74c6ab8697819,libdeflate64-971cea99a54dea7d,libpbkdf2-d17bbcb9caafd207,libzstd-9a163e9bd57c6ea4,libzstd_safe-b6cbeb1c4c7b8bd8,libzstd_sys-ab5edcb496435967,libzopfli-29c61de15e2dc0b2,libbumpalo-4e07813445b52d4d,libbzip2-55d94d81e29c7b31,libbzip2_sys-d6afdaaebcb50b9e,liblzma_rs-3a9e616fbc70f50f,libcrc-56befc6bf00d1bad,libcrc_catalog-40e700e222ec3f3d,libconstant_time_eq-fb89c4fc9504773c,libsemver-b0d82494beacdcc0,libtar-eade7df198285f90,libxattr-b8801ed28c526145,libjsonrpc-832a47355ac0993f,liblsp_types-dff03c778788c727,libfluent_uri-b9d23245c6654d7a,libonboarding-42a7b5d12a76ea13,libthousands-078a0f515d5e13f7,libinput_classifier-63d005f798f34ccd,libnatural_language_detection-df4de3826710a18c,librust_stemmers-02bc86dc59f4451f,libsimilar-846410853371074c,libwarp_files-90010a4e24344f15,libremote_server-94ad640506bd8d26,libaws_credential_types-d1be921747b15734,libaws_smithy_runtime_api-09b87c8c78d1c06d,libaws_smithy_async-113589305205d3f4,libaws_smithy_types-e5db02201eea4e10,libbytes_utils-efed2c62d6129ad2,libhttp_body-f5b4e164a397247b,libhttp-3a88faeb04dd66b2,libbase64_simd-c79ce80d1c402dc1,liboutref-ebf1dad710355cba,libvsimd-42d219ddf3c0645e,libui_components-366a999cb9a0c8d7,libiso8601_duration-9172349dd515475a,libsiphasher-9d8e7afd1c0062bd,libhashbrown-458469ab0a80d9cc,libfield_mask-2ad75855d2418bc1,libmcp-ceabc286fe39aa99,libsimple_logger-cab42976509c50f9,libcloud_object_models-874b7d65a1ad69ed,libwarp_workflows-a7f5deb43e4cfbba,libwarp_workflows_types-60bcab3e6554a0c1,libserde_regex-217f50864910fb5c,libhandlebars-9ad98866a1cf47c1,libcloud_object_persistence-66fb9e7af1138bd2,libcloud_objects-6d869246faa83442,libwarp_server_auth-19852a7ea9968a4f,liblasso-9246d7f33848a527,libwarp_managed_secrets-ea52a5e71b91c098,libwarp_isolation_platform-df3527159e891c7c,libtink_hybrid-a1f4fae7d7f713f4,libtink_daead-4c762fa8d40a1247,libaes_siv-bf558671d3a078a4,libtink_aead-5cdcf3c3f102d2c6,libtink_mac-b3714fc4dfaff437,libtink_prf-35fad744ebbaf1a1,libcmac-e9df38516e7ac3ef,libdbl-8265738e9052833d,libaes_gcm_siv-ea5185022ef3834c,libp256-859fc1451ffc8a0e,libecdsa-c65db29ed6c6af36,librfc6979-694f6f2fbd080d58,libsignature-c0cddf628ff67eed,libprimeorder-aaca5f26d95d5281,libelliptic_curve-936422579bb7a59d,libsec1-04c1d9b418e07ea8,libpkcs8-005678b0f4166aa0,libspki-0e805843441034fa,libder-774c1d4973864cc9,libpem_rfc7468-7b50955fe7528ecd,libbase64ct-ad5b057b0285a0ac,libcrypto_bigint-3b4ecc7ff0f98643,libgroup-8f126566188c7415,libff-086b691b39c4061b,libtink_core-6c1a18a8ba8ac7d2,libsha1-8a32779c3bdc38fc,libtink_proto-3d95a361bc5f233c,librand-62a9c06e90afcc9e,librand_chacha-eabffb2634fd938f,libhpke-e4bb79c30eba69e8,libhkdf-0afff5e48e7f5c28,libx25519_dalek-09b97ec43195d297,libcurve25519_dalek-9af625ea2f9216a2,libchacha20poly1305-86649da26902fc9c,libchacha20-d46215cd8fa310c2,libpoly1305-91d88e6c5b1c5df5,libaes_gcm-bb1389da77fd74fe,libctr-a7e226af6c4eaf32,libghash-8d7015e76008a91e,libpolyval-18c9619b77bad821,libopaque_debug-317fe16cf9a40e68,libuniversal_hash-d34ae0e42b9a25a2,libaes-3d3608067d0cdf65,libcipher-67901b8ae53dbde2,libinout-f60d6b147e25c701,libhmac-3758c2d334aeec76,libaead-8d44839bdb9ef71e,librand_core-bf03e997a1289c6d,libai-1ffdcfc22b313cd7,libbase16ct-698f909481ededae,libcomputer_use-103eb3a4e295cc65,libsyntax_tree-fe164507a2d432ac,liblanguages-95d3efc6d4d3ba6d,libwarp_editor-491d7ed47f892646,libunicode_linebreak-50d7f7426302bbde,libmermaid_to_svg-4f966608086b4940,libserde_yaml-d0a81e332c229fb4,libunsafe_libyaml-55d49113d4895296,libdagre_rust-06182cf4f29a98f1,libgraphlib_rust-aefa8479842bf13f,libordered_hashmap-927a9d05f3aee13b,libasset_cache-1cd14d5018baa17f,libipynb_parser-d1630592b47ca881,libunicode_segmentation-7e4d3a7371a94d76,libvim-3053a436de9d8b1a,libimara_diff-f1dca643f3dfc0c8,libhashbrown-ef1515e54142efbb,libwarp_graphql-527ad5ea5be9b57c,libhttp_client-393f580cca54d188,libprevent_sleep-c24a11e4fb2f474b,libtracing_opentelemetry-472b61f55526ed81,libtracing_subscriber-efcfb69b031e77a7,libsharded_slab-5ba5e4a91637eefc,libmatchers-682e927b5408e186,libnu_ansi_term-bc5c1fe48d818fef,libtracing_log-c36af14946d46d9c,libopentelemetry-fea2a3fbd6abec8a,libaha_reqwest_eventsource-f50ac501cc7ab22a,libeventsource_stream-8cf5cf15cbc45c69,libasync_stream-c1188de319d4d025,libasync_compat-fa4b6e6f1a2d0045,libpersistence-d9d4be39d225ec30,libai_types-547f2c8e6c6e3982,libdiesel_migrations-f1e2a352eda15360,libmigrations_internals-e6ba5a823eec5a0d,libtoml-8ac2053e4ede1e5b,libwinnow-e664b64348ba0bcb,libserde_spanned-45c1b9c474d56f8c,libtoml_datetime-f65fec404c4cb105,libdiesel-179b63c85151c18f,libdowncast_rs-9b9b2c296ea5e9e1,liblibsqlite3_sys-0e12eac162492bae,libwarp_graphql_schema-633a95bfe1de1714,libpriority_queue-babcabf1f9711eee,librepo_metadata-21555e0a453291a8,libwatcher-e20b8ea3251b78f0,libnotify_debouncer_full-3d2ae213660708b3,libnotify-bf3ee0961788942b,libfiletime-86a56bb593b0e902,libfsevent_sys-77d0d30f2bf152a8,libnotify_types-772ed7d1e4aad90b,libfile_id-af51b2384ce0ca3b,libarborium-fc4db002cdca5463,libarborium_yaml-9d2788a37d34c4a5,libarborium_xml-60f50f67a0e05e48,libarborium_vue-c71b20604aa4c24f,libarborium_typescript-f563be261cd2c778,libarborium_tsx-df474caf2df7ada4,libarborium_toml-e31835d58a1476ef,libarborium_swift-5a7a1329185f1067,libarborium_starlark-62acd6af9a16f213,libarborium_sql-c3945665c34908bf,libarborium_scala-b22ea6d915c2f843,libarborium_rust-367d00ac962141bc,libarborium_ruby-26adb78386f5bcca,libarborium_python-5f3103c992222396,libarborium_powershell-f6798cd611a5c2b3,libarborium_php-ed85f01748bf0790,libarborium_objc-ff87f52846eb724f,libarborium_nix-f99a90ef8eb9300f,libarborium_markdown-beda6b096e6133e2,libarborium_lua-c8efaf2febbc3f8c,libarborium_kotlin-661bfb70c5bea807,libarborium_json-006461c573f4fc4e,libarborium_jq-0aa86fa7df2f9c81,libarborium_javascript-7d676adb7dde9c31,libarborium_java-1d4b05ec87e1c30f,libarborium_html-3d98be04e265fd80,libarborium_hcl-d7efd41f499d3ff1,libarborium_go-0bdf4a8329222fa1,libarborium_elixir-5ec0263963f890ba,libarborium_dockerfile-64fe4871fb5b5078,libarborium_css-e51692490e1e029c,libarborium_cpp-7aad4d613921a443,libarborium_c_sharp-f20d7b28e3957939,libarborium_c-0c5d3493299b6ff6,libarborium_bash-2e00df9f754a184d,libarborium_highlight-3cf645c27fbf87fa,libarborium_tree_sitter-9f3a18dceebdf077,libtree_sitter_language-cac27c8712890700,libstreaming_iterator-87e5c6aa0bd7506f,libarborium_theme-9890de528737b8ee,libline_span-a0f5a24f814364ba,libignore-f2f50e28397beef9,librmcp-10bbd8dffa017aa8,libsse_stream-e178c502abab863b,liboauth2-2ba9cd7ff964b859,libserde_path_to_error-82fd5a7740f74299,libprocess_wrap-28d9a25195cded68,libnix-7312e04c39ec679b,libtokio_stream-a95db23f906720bc,libwarp_terminal-d51fb55b70328133,libwarp_assets-37cf1b53fbe91d9c,librust_embed-ca968bfb57eb018e,librust_embed_utils-00caf650733358bf,libbitflags_serde_legacy-100bcd9e5d1f0fb4,libshellexpand-f7aac8c68b623053,libsession_sharing_protocol-ca1cc2e17c162e04,libbincode-ea5751544e3b99e2,libgethostname-cd9f622bebd087ef,libchannel_versions-768e825bfe3785d6,libsecret_redaction-72be083bc251dd3d,liburlocator-735231bce21ae702,libunicode_general_category-33e9c15a80afebfd,libbimap-72a44526c65396e1,libregex_dfas-911e5708d8f271c0,libwarp_completer-60709b0a92cdf798,libfuzzy_match-c890166cd5bc9110,libfuzzy_matcher-5e5424817dfd0887,libthread_local-893f51f9731ce00a,libwarp_command_signatures-145f185c02856cdd,librust_embed-aad06d576e980089,librust_embed_utils-003cb9b519f89e4e,libglobset-e0430b5082b66aa5,libwarp_completion_metadata-b06d0f5983dcc248,libhtml_escape-9fe1e0f013be9b2d,libsmol_str-c3a4fd637070c834,libbyte_unit-66bee0786a0b9be2,libutf8_width-e6e5c5cd73dbe9c9,librust_decimal-478dd8407e43196d,libvte-bca7b8456a6f041d,libutf8parse-edfcc14521ab009f,libcvt-54c6fe48b72fa71c,libnix-03d81d533c7c855f,libmemoffset-1617cb00711af443,libwarp_cli-6c53b7a7f343363e,libhumantime-43ea51a648cb5b59,libcolor_print-ba45872cb0b37001,liblocal_control-80945c2150883ffc,libjaq_all-9fc01521320bf65d,libunicode_width-4a97dbca3ce35ee0,libcodesnake-e0a64ee1ed4dfd04,libjaq_fmts-eaf3f0364866c445,libsaphyr_parser-bebdf74478e6ec98,libarraydeque-67cca740e8007592,libxmlparser-fb8fd4755c8bee6e,libtoml_span-9cd304107bb3724e,libjaq_json-644afa035f2d6a4a,libfoldhash-e878e5fb608daa9c,libself_cell-0dae0ca21dd09b53,libhifijson-01a3f90df5aefce6,libnum_bigint-d5e96b2cb83dd4a1,libnum_integer-92d5a8043d66cecd,libjaq_std-6799aa5f719c4771,liblibm-3f615cf12f7c8a3c,liburlencoding-53eef5d0175e21ea,libjiff-fe989dd6af123fef,libregex_bites-8b4d7a992cf54ca0,libbstr-c8e10bbb947028fc,libciborium_ll-a0f45e29e279983d,libhalf-f0ee0bf22d5792c2,libciborium_io-02f640c798990dc3,libjaq_core-a9b001201cb30dbb,libtyped_arena-31891546f9678d84,libclap_complete-8e7d9868cf0f51ad,libclap-d84fbc49313e7e57,libclap_builder-e0d7c93fb06d6931,libstrsim-e5ec569769de66ae,libanstream-4a3ebf75d604e224,libanstyle_query-e99f195efba90996,libis_terminal_polyfill-c42d3f116f3e299b,libcolorchoice-bd901f37103adf92,libanstyle_parse-cfe5c8652ed9b71d,libutf8parse-71f08fab0655e2c4,libclap_lex-c83c91c2390fbf43,libanstyle-9c2053dcb4d420f6,libsignal_hook_mio-910806d2f93aae3a,libsignal_hook-089b6b5286f840df,libmemo_map-af5af245d81ad882,libwarp_multi_agent_api-76d79b8edfd27f2d,libprost_reflect-d5d14d0b0a9fb1f3,libprost_types-21257dad17c1e26e,libprost-8f6500fd10821688,libwarpui-25a52d50f6ee2727,libdispatch-26b4ac8a22abf474,libobjc2_av_foundation-d5c2ea47a2d7fc97,libcocoa-78fca9255888e617,libcocoa_foundation-805eb1d377c771a8,libcore_graphics-a9a065f96701e2c2,libcore_graphics_types-cc5bd45d561180d1,libobjc-9775955f04a203c7,libmalloc_buf-5a506017d53fc8a2,libblock-87184f72cb1eef63,libobjc2_app_kit-1952e346c8b91172,libobjc2_quartz_core-30ff43d9dc2eeedb,libobjc2_core_graphics-f8fbd0fdd2d4b86f,libobjc2_metal-9e9040fdc160113a,libplist-332658f9f5751db2,libline_wrap-d35f2df04033913e,libsafemem-e879991e042f1507,libtime-4bb3f07bdc31ba69,libtime_core-f8431be68a3c995d,libnum_conv-68a3fde61d0ddec0,libderanged-efb3084b19d5c6da,libpowerfmt-1c51a91d0819588b,libquick_xml-41c87c3e4cfb55ea,libbase64-834d14def81fe7de,libembed_plist-5bcef923f5f86131,libwarp_channel_config-d75fdf2f29784b44,libwarp_core-24e4b683aa0a74df,libsysinfo-cd5e9e9d79bd85b7,libobjc2_io_kit-8dd634d2a81e110a,libasync_broadcast-d51bfcd72ccc2dd5,libsettings-1f34ce732a5b5314,libwarpui_extras-18e42a0ce0bd9527,libtoml_edit-e565a3054bc51b83,libtoml_parser-f06f7926474a1705,libwinnow-49906b893ffe4bed,libtoml_writer-221578622beb5dd8,libtoml_datetime-e6c42335502d1eeb,libsha2-5048e007ba540c15,libsecurity_framework-68732a34d157867c,libbitflags-ec78f11a4ab81a5c,libline_ending-00c3dee8b241364d,libdirectories-34d80031e7264992,libwarp_features-920e87b751ebcddb,libcommand_corrections-33baf16b0097feb1,libshlex-ae03d2149a440ee5,libversion_compare-57a260b2f1ada22e,libdifflib-ef52d37e9f8fd940,libitertools-f6d6b08cab46f422,libserde_with-faa90ff1f6c98852,libobjc2_foundation-c29a16e73fb2a593,libobjc2_core_foundation-f79a202913cd8853,libdispatch2-5e65c0f2188dac1f,libblock2-65ec9c5f2f90a05c,libobjc2-6db28fbc6e421952,libobjc2_encode-b9edba3e0dcfdcae,libwarpui_core-c717b44fec2e0519,libctrlc-6b3e66e5d7ece486,libnix-c21654b601491b2e,libtempfile-4382a3ed611437a0,libfont_kit-17ec2085625381c2,libfloat_ord-142b6f5ce0e20ff1,libdirs_next-f47f6ce7306297e4,libdirs_sys_next-85d3ce1f8abd1716,libwalkdir-f45d65f0d50c22c6,libsame_file-f399cbf5ff99d5a9,libcore_text-5aaca77edf537e60,libcore_graphics-a41b2a5ce062de1f,libforeign_types-7a0962bbde68df10,libforeign_types_shared-4191a572abc12f43,libcore_graphics_types-32ebed18d605c310,libstrum-9899c5358c9e98cb,libasync_fs-2bb567d0cb778ce9,libblocking-6f60a0251592ecdf,libpiper-a9c272dd719093c1,libasync_executor-e3b4eee0f8f9b2d3,libsettings_value-14ecb8c93764a569,libschemars-a670b9bd882e3dfc,libdyn_clone-2c530601536760c3,libuuid-8f7ab5c8c63b2b2f,libgetrandom-e2051e6404e416b7,libsha1_smol-2b5fc9f1b706a2e7,libraw_window_handle-18846ab364f6fdab,libbounded_vec_deque-acfe50823568efc9,librstar-91fe557bebd13fe3,libheapless-d88f8ffaf02b3ab7,libhash32-362610473905298e,libwarp_util-076907c1a48a5117,libdunce-2752a3c3680ff3b0,libpathdiff-53c6a60b3bfa0fb4,libdirs-ae83101e2899821e,libdirs_sys-311915dd9ccb0d5b,liboption_ext-4c2fe13cf623509b,libhex-993da28eb9e33bdc,libis_executable-d4e472ee579be778,libtyped_path-937107ba81d56dd2,libcommand-088bce599f9ef0aa,libasync_process-95c5a856306e9545,libasync_signal-1eeda1ecb36e5df2,libasync_lock-4899e977a2f1364e,libasync_io-ba7b3c3da10dbe8f,libpolling-01c11947c9581dd2,librustix-1bba574a10067c67,liberrno-439292ff47f9315a,libcontent_inspector-34c4ef11bab7f35f,libasync_task-48740b0dcf1f0ba0,libtitlecase-50c8206966a289c3,libregex-3a51d7bc995073cd,libregex_automata-8891bc8068ca0638,libaho_corasick-90414b9aade4f494,libregex_syntax-e77e3e0688435455,libresvg-df3a49bee2911f6f,librgb-8b0aa65bdd4bcce7,libusvg-ffd93481627de8f7,libunicode_bidi-5e75727e7cf2e609,libunicode_vo-198ab053318d9d1d,libimagesize-c2884ed9ba670862,libdata_url-47daa30b0d9741e9,libxmlwriter-c5a9ce324034ac86,libsimplecss-f7e92344e212c94e,libroxmltree-e813b90673e0d79b,libsvgtypes-579e0388f2a2287d,libkurbo-7dbfdf97b626e14c,librustybuzz-acde2a86f56ead0e,libunicode_bidi_mirroring-93e6d449564d02bc,libunicode_script-59120c5fe4982506,libunicode_properties-843f0480eb72f921,libunicode_ccc-e22680ae01bad2bb,libfontdb-0bc2478538931e31,libmemmap2-fb7f50538c64f88b,libtinyvec-db655f8eda8c028d,libtinyvec_macros-0e1e042e33812ef8,libslotmap-3e1b52d96249e60a,libttf_parser-c254d41c5a134950,libtiny_skia-ceca553d134da43f,libtiny_skia_path-b63d4639ec9357ad,libstrict_num-be8e4e60d9fee26a,libfloat_cmp-13806eb3f9737102,libarrayref-9b0b61a77fe82eda,libimage-3cabac2c76946386,libbytemuck-06207030711137ac,libimage_webp-1a8214d8279b67f2,libquick_error-061283faf1631978,libmoxcms-1be63a1baa430644,libpxfm-59c6fd2277c8ae5f,librayon-10c6e88613e35961,librayon_core-03d0411638045e6e,libcrossbeam_deque-a0f220cc248d53ec,libcrossbeam_epoch-125499741d74b4d8,libmemoffset-1d192cb6e4436115,libbyteorder_lite-f15b72bf14f3db0c,libpng-68de910ebb0f4b82,libfdeflate-db593cf4120cea99,libzune_jpeg-092b482e236d3e80,libzune_core-aa40cc8c83dabc92,libgif-5f6509e3fe7a92e5,libcolor_quant-a478ae324148390b,libweezl-25602a03652b758c,libdashmap-f0e59d9a0834cfab,libhashbrown-d6a30f14bfe7b534,libahash-595ac58bb35c0ede,libzerocopy-105b8cc979073a07,libsum_tree-240d020fb15b0cb8,libarrayvec-6c182ff24e5a8a4e,librangemap-1144cc197d1abe73,libvec1-156f03c8f61a1b4e,libstring_offset-94a1ae6a16ab0bf2,libget_size-a29f0c47741e99ef,libmarkdown_parser-59d15db7cc7ac1d3,libenum_iterator-e7571650e67d3b6d,libnom-0b77325394672050,libserde_yaml-0856067353cd0464,libindexmap-d3dc1ef866dcb17d,libhashbrown-f529257055e35bae,libyaml_rust-49ae31ab24a9c5a4,liblinked_hash_map-6891d589de032816,libmarkup5ever_rcdom-24bcad8fb17f6e45,libhtml5ever-c34176e480e685fc,libmarkup5ever-a93b6e7b18291bdd,libtendril-7a753cc5efbf8f26,libfutf-77d86e0b462432d6,libmac-d309dc23bc65f5e1,libweb_atoms-1309c4a743addf99,libstring_cache-7890717869a84a46,libprecomputed_hash-4b2fcaa2abedc25c,libdebug_unreachable-9401f29b49b55822,libphf-7c0e2c7c85c5268e,libphf_shared-cff48681f60a89db,libsiphasher-c227775bf3dc564f,libordered_float-689c5ab7d70ec12b,libpathfinder_color-7a53b5c82ff8cf13,librustc_hash-427345f1ee71fd3f,liblazy_static-089e995ad1426804,libinstant-58e622a78cca86fb,libwarp_errors-17fd984cc55bab87,libwebsocket-4925056b7dbd2007,libgraphql_ws_client-6e3956ec807181cf,libfutures_timer-6911158b44011819,libcynic-f9f4f109f3bf8dbe,libref_cast-ba483d9995fa8857,libstatic_assertions-2b574d8dedd8bb4d,libfutures_lite-10c769aaeb1566a3,libfastrand-37a5a44b55905389,libthiserror-cb7c495cd0944e20,libasync_tungstenite-5a37265007e2977a,libtungstenite-a41978fbb49e6676,libdata_encoding-6bcc4a807ec5ff93,librand-6a8e57c2fbe5a717,librand_chacha-833bb3287ab568e2,libppv_lite86-50ce217243770d08,libutf8-6c77c055b0b6d8f4,libbyteorder-9267270157d2d792,libsha1-e98e3eba3463190f,libdigest-0045ce09cf946d88,libconst_oid-56fc1f8cca3ce7fe,libblock_buffer-234bd2e9ab822f8b,libcrypto_common-1514c4eff9c3cb44,libgeneric_array-5fedaa784382e693,libtypenum-71d561fb888ce465,librand_core-1111f460714f844e,libgetrandom-866a24a47eb6ad57,libthiserror-1fb4f4f117d44b78,libreqwest-ea158f3662526b43,libserde_urlencoded-3074c9efc54651e5,libryu-1164329a9a86e6f2,librustls_platform_verifier-c635f6ad873c7b05,libhyper_rustls-fa19b7c7aa7ee238,librustls_native_certs-1c55950b8e3ca5e8,libsecurity_framework-9a65118b45202ad2,libcore_foundation-f8dc52a792396870,libsecurity_framework_sys-5182c4f09ef3f55f,libtokio_rustls-4b1eb841e38f0de1,librustls-328f91ca162603f5,libsubtle-4745e460941403c1,libwebpki-36e024c49223a952,libuntrusted-a6c8cf779d060de1,libaws_lc_rs-f5bbf875baf9559e,libaws_lc_sys-e8edcb7c3e5f4138,librustls_pki_types-526cd7385d20d2da,libzeroize-58ba4812f3290e3f,libencoding_rs-ff27bc7d29f62156,libmime_guess-d8cb1c7854652bcf,libunicase-f4c12c9677ce9740,libmime-ff619c905cd7ed0e,libtower_http-89324daa1ac6d5e3,libiri_string-d6726f83f0dd8c8d,libasync_compression-ca45ffa177b56a56,libflate2-e27b17c4de4fb95d,libminiz_oxide-c094f6d440d97dd8,libsimd_adler32-493f9300ffd67536,libcrc32fast-d50b47447573a64d,libbrotli-366c9ce94793a8d1,libbrotli_decompressor-8c3e820c59f8d0c7,liballoc_stdlib-abebc81f3014d05e,liballoc_no_stdlib-4eee9ab72f661faa,libtower-ff3c01c333a2eea3,libtower_layer-f394f76ddf4a902a,libhyper_util-83e9bc43a8ac5a26,libsystem_configuration-203186a5af8bf0f1,libbitflags-a6bbb10d81eea438,libsystem_configuration_sys-37b30bc21f57b83b,libcore_foundation-1bc7022f225aa03f,libbase64-81807d00926f9ce5,libipnet-643558c4f0e2cd32,libtower_service-1bda970b7506b1e9,libhyper-b8a1028732510994,libwant-67dc2786d8a4e073,libtry_lock-912226ad5227553b,libhttparse-4bb477e4da78beee,libh2-669f47bbca3c3912,libtracing-22213faaa25441fa,libtracing_core-a0e982195cfdecfe,libonce_cell-0133ff934548604c,libindexmap-2176b73d76fef1ac,libhashbrown-7c49379743a9d9c8,libequivalent-1b64b9639f69795e,liballocator_api2-920556a46363c55f,libfoldhash-41a2a546633d5b37,libfnv-8b0dfc052bd67b97,libatomic_waker-ce82905f91b2e94b,libhttpdate-e6ed8cc771ea2298,libtokio_util-930aad0ca70199e9,libtokio-e425c72ddd881949,libsignal_hook_registry-6fb5a2f1562b03cd,libsocket2-74fb212614f786f8,libmio-84ccae1b46850450,libparking_lot-c1a6e602e959f068,libparking_lot_core-71a872efcc321703,libcfg_if-f5dc7c26f09b9f53,liblock_api-46e5cb9b68bccc1b,libscopeguard-1fe3ad39f6144b87,libhttp_body_util-d867180e4b22a4a8,libhttp_body-453ee9b9a7597620,liblog-8562f5f79c8ae8fb,liburl-c4d11a131e625d9b,libidna-b06a6ef86e6b54f6,libidna_adapter-7e360795f56afff8,libicu_normalizer-c8f2ea9e149b1f55,libicu_normalizer_data-956e70cf288c5fb1,libwrite16-a90373e45a2bf1b8,libutf8_iter-060508f75f14d1d6,libutf16_iter-30301b3d7af0dd9b,libsmallvec-b68b41a415a96e3d,libicu_properties-688499514d6f4a8b,libicu_properties_data-812beda7dc2b21f6,libicu_locid_transform-0a263339f96173b3,libicu_locid_transform_data-054f5fc29a1650b1,libicu_collections-5969c9928cf45756,libicu_provider-44d9104333bc03d4,libicu_locid-33e711e1ae160db8,liblitemap-2938e4beee64161e,libtinystr-c755b188c31d492c,libzerovec-1862c28a46d5f42b,libwriteable-a3353e8fef31a785,libyoke-336b42f09dc35f39,libzerofrom-ecbf5e125ece4ed0,libstable_deref_trait-a192d8085b7c2723,libform_urlencoded-96d466f02282ddfd,libpercent_encoding-a0630a66b7469746,libsync_wrapper-500ae8064374a1fe,libinventory-9e87558a2a7291ab,libhttp-7717b0a3e410f082,libfutures-aa1ef090c3c9a96b,libfutures_executor-5bd6822005bcd289,libnum_cpus-4c0a1c96faef0e1a,liblibc-a78269f31594666b,libfutures_util-6f30d2a7b7bbb3f4,libslab-5cf0d660f0716b3a,libfutures_channel-84e88d7a47c1ff42,libfutures_sink-2a63882e13110ef3,libfutures_task-8466242724dd19a6,libpin_utils-3b8210b97fabb15d,libbytes-f6ab868ae691d9ea,libasync_channel-e760d8bf50bd010f,libevent_listener_strategy-9d630359a73f91d4,libevent_listener-f6ee765ce840c513,libconcurrent_queue-0df7ffce0e8a97c8,libcrossbeam_utils-841cceb0f0d573f1,libserde_json-1c5f812d6dfb6f0b,libitoa-0fbf5d16509aba1c,libzmij-66cbb81d4cdae478,libchrono-a85ae48882fef0ce,libnum_traits-7f4cedf98832f1bc,libiana_time_zone-fa30426982c48a01,libcore_foundation_sys-3c3c91529a376908,libpathfinder_geometry-cab3c41db7d9c34e,libpathfinder_simd-64add28103070197,libpin_project-6e26f0f107a7dac4,libfutures_lite-22974a27c6932720,libmemchr-01fbedc07c649d52,libfastrand-f0da4d563cd65128,libfutures_io-80a3cc1e34bce13d,libfutures_core-da189de34d9142ca,libwaker_fn-635acec2037aa6fe,libparking-4e750ec37feb51fc,libpin_project_lite-05a2c1432417f56e,libserde-255f4ef39400381f,libserde_core-93999795ee009b4d,libitertools-d69bf8d4cc4ed98a,libeither-63456cc20c0ce583,libanyhow-f554641352673c28}.rlib" "<sysroot>/lib/rustlib/aarch64-apple-darwin/lib/{libstd-*,libpanic_unwind-*,libobject-*,libmemchr-*,libaddr2line-*,libgimli-*,libcfg_if-*,librustc_demangle-*,libstd_detect-*,libhashbrown-*,librustc_std_workspace_alloc-*,libminiz_oxide-*,libadler2-*,libunwind-*,liblibc-*,librustc_std_workspace_core-*,liballoc-*,libcore-*,libcompiler_builtins-*}.rlib" "-framework" "MetalKit" "-framework" "UserNotifications" "-liconv" "-framework" "Security" "-framework" "CoreFoundation" "-lz" "-llzma" "-lbz2" "-framework" "Carbon" "-framework" "CoreFoundation" "-framework" "CoreServices" "-framework" "UserNotifications" "-framework" "Carbon" "-framework" "SystemConfiguration" "-framework" "UniformTypeIdentifiers" "-framework" "AVFoundation" "-framework" "ServiceManagement" "-lclang_rt.osx" "-lSystem" "-framework" "AVFoundation" "-framework" "AppKit" "-framework" "QuartzCore" "-framework" "Foundation" "-framework" "CoreGraphics" "-framework" "CoreGraphics" "-lobjc" "-lSystem" "-framework" "AppKit" "-framework" "QuartzCore" "-framework" "CoreGraphics" "-framework" "Metal" "-framework" "IOKit" "-framework" "Foundation" "-framework" "CoreFoundation" "-lSystem" "-lSystem" "-lobjc" "-framework" "Foundation" "-framework" "CoreText" "-framework" "CoreGraphics" "-framework" "CoreGraphics" "-framework" "Security" "-framework" "SystemConfiguration" "-liconv" "-framework" "CoreFoundation" "-lSystem" "-lc" "-lm" "-arch" "arm64" "-mmacosx-version-min=11.0.0" "-L" "/Users/tedczj/workspace/term4u/target/debug/build/warp-26e4dc56a1b4aebb/out" "-L" "/Users/tedczj/workspace/term4u/target/debug/build/aws-lc-sys-b8f178113cd099b0/out" "-L" "/Users/tedczj/workspace/term4u/target/debug/build/arborium-bash-2ddd4f585eb762fc/out" "-L" "/Users/tedczj/workspace/term4u/target/debug/build/arborium-c-382a39a81bf82ff4/out" "-L" "/Users/tedczj/workspace/term4u/target/debug/build/arborium-c-sharp-8a87d964fe598f84/out" "-L" "/Users/tedczj/workspace/term4u/target/debug/build/arborium-cpp-5ca8faf7fd332e61/out" "-L" "/Users/tedczj/workspace/term4u/target/debug/build/arborium-css-c3d31250b8e31c79/out" "-L" "/Users/tedczj/workspace/term4u/target/debug/build/arborium-dockerfile-57e3705359e55968/out" "-L" "/Users/tedczj/workspace/term4u/target/debug/build/arborium-elixir-255b288a133b964d/out" "-L" "/Users/tedczj/workspace/term4u/target/debug/build/arborium-go-f3d2cd596bb6b2e6/out" "-L" "/Users/tedczj/workspace/term4u/target/debug/build/arborium-hcl-6613d2607568fb33/out" "-L" "/Users/tedczj/workspace/term4u/target/debug/build/arborium-tree-sitter-724c34dd1fdfcc11/out" "-L" "/Users/tedczj/workspace/term4u/target/debug/build/arborium-html-74ea26724eea2fcd/out" "-L" "/Users/tedczj/workspace/term4u/target/debug/build/arborium-javascript-c0e2660fdc005b74/out" "-L" "/Users/tedczj/workspace/term4u/target/debug/build/arborium-java-c7e74d9a6a07502a/out" "-L" "/Users/tedczj/workspace/term4u/target/debug/build/arborium-jq-132ffb9b69dae5ee/out" "-L" "/Users/tedczj/workspace/term4u/target/debug/build/arborium-json-1806c66c7297934e/out" "-L" "/Users/tedczj/workspace/term4u/target/debug/build/arborium-kotlin-e19dcb906bf37d44/out" "-L" "/Users/tedczj/workspace/term4u/target/debug/build/arborium-lua-7cab58de3444e631/out" "-L" "/Users/tedczj/workspace/term4u/target/debug/build/arborium-markdown-13a6f9b245bc3a00/out" "-L" "/Users/tedczj/workspace/term4u/target/debug/build/arborium-toml-1276c56bdfd5add7/out" "-L" "/Users/tedczj/workspace/term4u/target/debug/build/arborium-yaml-4f83e47ca62c731f/out" "-L" "/Users/tedczj/workspace/term4u/target/debug/build/arborium-nix-782528546f313e3c/out" "-L" "/Users/tedczj/workspace/term4u/target/debug/build/arborium-objc-6d611e5cc86de536/out" "-L" "/Users/tedczj/workspace/term4u/target/debug/build/arborium-php-f44b9766ab219d86/out" "-L" "/Users/tedczj/workspace/term4u/target/debug/build/arborium-powershell-539a552856d8e4d8/out" "-L" "/Users/tedczj/workspace/term4u/target/debug/build/arborium-python-21bd78c1a8801af3/out" "-L" "/Users/tedczj/workspace/term4u/target/debug/build/arborium-ruby-ee77485b066d9a24/out" "-L" "/Users/tedczj/workspace/term4u/target/debug/build/arborium-rust-5889aac09c32bb61/out" "-L" "/Users/tedczj/workspace/term4u/target/debug/build/arborium-scala-43ecea2ed934e168/out" "-L" "/Users/tedczj/workspace/term4u/target/debug/build/arborium-sql-00f384e1a4ca5438/out" "-L" "/Users/tedczj/workspace/term4u/target/debug/build/arborium-starlark-8b3340e364e23829/out" "-L" "/Users/tedczj/workspace/term4u/target/debug/build/arborium-swift-017868c701892fc3/out" "-L" "/Users/tedczj/workspace/term4u/target/debug/build/arborium-tsx-fe37ee5bb4f5e6da/out" "-L" "/Users/tedczj/workspace/term4u/target/debug/build/arborium-typescript-090dabc3b585435a/out" "-L" "/Users/tedczj/workspace/term4u/target/debug/build/arborium-vue-01eb2bec3d0b8304/out" "-L" "/Users/tedczj/workspace/term4u/target/debug/build/arborium-scss-12a5d64889ed7795/out" "-L" "/Users/tedczj/workspace/term4u/target/debug/build/arborium-xml-fc8b9698b2888396/out" "-L" "/Users/tedczj/workspace/term4u/target/debug/build/libsqlite3-sys-ce63fb9fb9207000/out" "-L" "/Users/tedczj/workspace/term4u/target/debug/build/libgit2-sys-3208f415ff43726a/out/build" "-L" "/Users/tedczj/workspace/term4u/target/debug/build/zstd-sys-db15b8140cff66fe/out" "-L" "/Users/tedczj/workspace/term4u/target/debug/build/warpui-1a762e88dc1be742/out" "-L" "/Users/tedczj/workspace/term4u/target/debug/build/onig_sys-270ebf6c8193621b/out" "-L" "/usr/lib" "-L" "/opt/homebrew/Cellar/xz/5.8.3/lib" "-L" "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/lib/darwin" "-o" "/Users/tedczj/workspace/term4u/target/debug/deps/warp-86b8f589821a2870" "-Wl,-dead_strip" "-nodefaultlibs" "-Wl,-headerpad_max_install_names"
+  = note: some arguments are omitted. use `--verbose` to show all linker arguments
+  = note: ld: warning: ignoring duplicate libraries: '-lSystem', '-liconv', '-lobjc'
+          ld: warning: __eh_frame section too large (max 16MB) to encode dwarf unwind offsets in compact unwind table, performance of exception handling might be affected
+          ld: write() failed, errno=28 (No space left on device)
+          clang: error: linker command failed with exit code 1 (use -v to see invocation)
+          
+
+error: could not compile `warp` (bin "warp") due to 1 previous error

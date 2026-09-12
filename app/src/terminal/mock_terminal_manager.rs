@@ -10,14 +10,13 @@ use super::model::session::Sessions;
 use super::model_events::ModelEventDispatcher;
 use super::terminal_manager::BlockSpacing;
 use super::{ShellLaunchState, TerminalManager, TerminalModel, TerminalView};
-use crate::pane_group::TerminalViewResources;
 use crate::terminal::model::SerializedBlockListItem;
 
 pub struct MockTerminalManager {
     model: Arc<FairMutex<TerminalModel>>,
-    view: ViewHandle<TerminalView>,
 }
 pub struct MockTerminalManagerInit {
+    #[cfg(not(feature = "local_tty"))]
     pub(crate) manager: ModelHandle<Box<dyn TerminalManager>>,
     pub(crate) view: ViewHandle<TerminalView>,
 }
@@ -25,7 +24,6 @@ pub struct MockTerminalManagerInit {
 impl MockTerminalManager {
     pub fn create_model(
         shell_state: ShellLaunchState,
-        resources: TerminalViewResources,
         restored_blocks: Option<&Vec<SerializedBlockListItem>>,
         initial_size: Vector2F,
         window_id: WindowId,
@@ -48,7 +46,6 @@ impl MockTerminalManager {
             BlockSpacing::for_gui(ctx),
             ctx,
         );
-        let colors = model.colors();
         let model = Arc::new(FairMutex::new(model));
 
         let sessions: ModelHandle<Sessions> =
@@ -60,14 +57,11 @@ impl MockTerminalManager {
         let view = ctx.add_typed_action_view(window_id, |ctx| {
             let size_info = cloned_model.lock().block_list().size().to_owned();
             TerminalView::new(
-                resources,
                 wakeups_rx,
                 model_events_dispatcher.clone(),
                 cloned_model,
                 sessions.clone(),
                 size_info,
-                colors,
-                None,
                 ctx,
             )
         });
@@ -83,15 +77,15 @@ impl MockTerminalManager {
             });
         });
 
-        let terminal_view = view.clone();
-        let terminal_manager = Self { model, view };
+        #[cfg(not(feature = "local_tty"))]
         let manager_model = ctx.add_model(|_ctx| {
-            let manager: Box<dyn TerminalManager> = Box::new(terminal_manager);
+            let manager: Box<dyn TerminalManager> = Box::new(Self { model });
             manager
         });
         MockTerminalManagerInit {
+            #[cfg(not(feature = "local_tty"))]
             manager: manager_model,
-            view: terminal_view,
+            view,
         }
     }
 }
@@ -113,7 +107,7 @@ impl TerminalManager for MockTerminalManager {
 #[cfg(test)]
 mod testing {
     use warpui::platform::WindowStyle;
-    use warpui::{App, Element, SingletonEntity};
+    use warpui::{App, Element};
 
     use super::*;
     use crate::terminal::ShellLaunchState;
@@ -146,20 +140,13 @@ mod testing {
             app: &mut App,
             restored_blocks: Option<&[SerializedBlockListItem]>,
         ) -> ViewHandle<TerminalView> {
-            let tips_model = app.add_model(|_| Default::default());
-
             let (window_id, _) = app.add_window(WindowStyle::NotStealFocus, |ctx| {
-                let resources = TerminalViewResources {
-                    tips_completed: tips_model,
-                    model_event_sender: None,
-                };
                 let terminal_init = MockTerminalManager::create_model(
                     ShellLaunchState::ShellSpawned {
                         available_shell: None,
                         display_name: ShellName::blank(),
                         shell_type: ShellType::Zsh,
                     },
-                    resources,
                     restored_blocks.map(|blocks| blocks.to_vec()).as_ref(),
                     Vector2F::new(7., 10.5),
                     ctx.window_id(),

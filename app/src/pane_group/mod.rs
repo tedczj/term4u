@@ -14,7 +14,6 @@ use pathfinder_geometry::vector::{Vector2F, vec2f};
 use serde::{Deserialize, Serialize};
 use settings::Setting as _;
 use typed_path::TypedPath;
-use url::Url;
 use uuid::Uuid;
 use warp_core::context_flag::ContextFlag;
 use warp_errors::report_if_error;
@@ -48,8 +47,6 @@ use crate::code::buffer_location::LocalOrRemotePath;
 #[cfg(feature = "local_fs")]
 use crate::code::editor_management::CodeSource;
 use crate::code::view::{CodeView, CodeViewAction};
-use crate::code_review::comments::{AttachedReviewComment, PendingImportedReviewComment};
-use crate::code_review::diff_state::DiffMode;
 use crate::features::FeatureFlag;
 use crate::launch_configs::launch_config::{self, PaneTemplateType};
 use crate::palette::PaletteMode;
@@ -101,6 +98,7 @@ use focus_state::PaneGroupFocusState;
 mod tests;
 
 pub use pane::code_pane::CodePane;
+pub use pane::code_review_pane::CodeReviewPane;
 pub use pane::notebook_pane::NotebookPane;
 pub use pane::settings_pane::SettingsPane;
 pub use pane::terminal_pane::TerminalPane;
@@ -165,8 +163,7 @@ fn resolve_tab_config_shell(name: &str, ctx: &AppContext) -> Option<AvailableShe
 
     AvailableShell::try_from(name).ok()
 }
-const WARP_SHELL_COMPATIBILITY_DOCS: &str =
-    "https://docs.warp.dev/getting-started/supported-shells";
+
 #[derive(Debug, Clone, Copy)]
 pub enum ActivationReason {
     Click,
@@ -498,22 +495,6 @@ pub enum Event {
     OpenDirectoryInNewTab {
         path: PathBuf,
     },
-    InsertCodeReviewComments {
-        repo_path: LocalOrRemotePath,
-        comments: Vec<PendingImportedReviewComment>,
-        diff_mode: DiffMode,
-        open_code_review: Option<CodeReviewPanelArg>,
-    },
-    OpenCodeReviewPaneAndScrollToComment {
-        open_code_review: CodeReviewPanelArg,
-        comment: AttachedReviewComment,
-        diff_mode: DiffMode,
-    },
-    ImportAllCodeReviewComments {
-        open_code_review: CodeReviewPanelArg,
-        comments: Vec<AttachedReviewComment>,
-        diff_mode: DiffMode,
-    },
     OpenLspLogs {
         log_path: PathBuf,
     },
@@ -651,13 +632,6 @@ pub enum SplitPaneState {
     NotInSplitPane,
 }
 
-// Helper to group together certain structs necessary to instantiate a new terminal view.
-#[derive(Clone)]
-pub struct TerminalViewResources {
-    pub tips_completed: ModelHandle<TipsCompleted>,
-    pub model_event_sender: Option<SyncSender<ModelEvent>>,
-}
-
 impl SplitPaneState {
     pub fn is_in_split_pane(&self) -> bool {
         match self {
@@ -730,7 +704,6 @@ struct LeftmostPaneId {
 
 /// The [`InitialLayoutCallback`] provides state to pane group constructors
 /// to build the initial layout of the pane group. Specifically, it provides
-/// - resources ([`TerminalViewResources`]) to help construct terminal views,
 /// - a mutable mapping from [`PaneId`] to [`AnyPaneContent`],
 /// - a mutable list of [`PaneId`]s representing the pane history,
 /// - the view bounds, and
@@ -738,7 +711,6 @@ struct LeftmostPaneId {
 /// It expects a return type of [`(PaneData, InitialFocus)`].
 type InitialLayoutCallback = Box<
     dyn FnOnce(
-        TerminalViewResources,
         &mut HashMap<PaneId, Box<dyn AnyPaneContent>>,
         &mut Vec<PaneId>,
         RectF,
@@ -747,6 +719,39 @@ type InitialLayoutCallback = Box<
 >;
 
 impl PaneGroup {
+    pub fn open_code_review(
+        &mut self,
+        repo_path: PathBuf,
+        terminal_view_id: Option<EntityId>,
+        toggle: bool,
+        focus: bool,
+        ctx: &mut ViewContext<Self>,
+    ) {
+        let existing = self.pane_ids().find(|id| {
+            self.downcast_pane_by_id::<CodeReviewPane>(*id)
+                .is_some_and(|pane| pane.repo_path() == repo_path)
+        });
+        if let Some(id) = existing {
+            if toggle {
+                self.downcast_pane_by_id::<CodeReviewPane>(id)
+                    .unwrap()
+                    .close(ctx);
+            } else if focus {
+                self.reveal_and_focus_pane(id, ctx);
+            }
+            return;
+        }
+        let terminal_id = terminal_view_id
+            .and_then(|id| self.find_pane_id_for_terminal_view(id, ctx))
+            .or_else(|| self.active_session_id(ctx).map(Into::into));
+        let terminal_uuid = terminal_id
+            .and_then(|id| self.terminal_session_by_id(id))
+            .map(TerminalPane::session_uuid)
+            .unwrap_or_default();
+        let pane = CodeReviewPane::new(repo_path, terminal_uuid, ctx);
+        self.add_pane_with_direction(Direction::Right, pane, focus, ctx);
+    }
+
     /// Executes the provided callback for each TerminalView contained within
     /// this pane group.
     pub fn for_all_terminal_panes(
@@ -802,8 +807,6 @@ impl PaneGroup {
     pub fn active_file_model(&self) -> &ModelHandle<ActiveFileModel> {
         &self.active_file_model
     }
-
-    /// Returns true iff one of the terminal panes in this group is being shared.
 
     pub fn smart_split_direction(
         &self,
@@ -939,7 +942,7 @@ impl PaneGroup {
     #[allow(clippy::too_many_arguments)]
     fn pane_tree_from_template(
         root: PaneTemplateType,
-        resources: TerminalViewResources,
+
         ctx: &mut ViewContext<PaneGroup>,
         pane_contents: &mut HashMap<PaneId, Box<dyn AnyPaneContent>>,
         is_left_pane: bool,
@@ -950,7 +953,6 @@ impl PaneGroup {
         let (leftmost_pane_id, pane_data, initial_focus) =
             PaneGroup::pane_tree_from_template_recursive(
                 root,
-                resources,
                 ctx,
                 pane_contents,
                 is_left_pane,
@@ -976,7 +978,7 @@ impl PaneGroup {
     #[allow(clippy::too_many_arguments)]
     fn pane_tree_from_template_recursive(
         root: PaneTemplateType,
-        resources: TerminalViewResources,
+
         ctx: &mut ViewContext<PaneGroup>,
         pane_contents: &mut HashMap<PaneId, Box<dyn AnyPaneContent>>,
         is_left_pane: bool,
@@ -1006,7 +1008,6 @@ impl PaneGroup {
                     Some(cwd).filter(|path| path.exists()),
                     HashMap::new(),
                     uuid.as_bytes(),
-                    resources,
                     None,
                     banner,
                     view_size,
@@ -1065,7 +1066,6 @@ impl PaneGroup {
                     let (child_leftmost, child, child_focus) =
                         Self::pane_tree_from_template_recursive(
                             node,
-                            resources.clone(),
                             ctx,
                             pane_contents,
                             is_left_pane && index == 0,
@@ -1094,7 +1094,7 @@ impl PaneGroup {
     fn restore_pane_tree(
         root: PaneNodeSnapshot,
         block_lists: Arc<HashMap<PaneUuid, Vec<SerializedBlockListItem>>>,
-        resources: TerminalViewResources,
+
         ctx: &mut ViewContext<PaneGroup>,
         pane_contents: &mut HashMap<PaneId, Box<dyn AnyPaneContent>>,
         banner: ModelHandle<BannerState>,
@@ -1103,9 +1103,8 @@ impl PaneGroup {
     ) -> anyhow::Result<(PaneData, InitialFocus)> {
         match root {
             PaneNodeSnapshot::Leaf(leaf) => Self::restore_pane_leaf(
-                leaf,
+                *leaf,
                 block_lists,
-                resources,
                 ctx,
                 pane_contents,
                 banner,
@@ -1120,7 +1119,6 @@ impl PaneGroup {
                     match Self::restore_pane_tree(
                         child,
                         block_lists.clone(),
-                        resources.clone(),
                         ctx,
                         pane_contents,
                         banner.clone(),
@@ -1152,7 +1150,7 @@ impl PaneGroup {
     fn restore_pane_leaf(
         leaf: LeafSnapshot,
         block_lists: Arc<HashMap<PaneUuid, Vec<SerializedBlockListItem>>>,
-        resources: TerminalViewResources,
+
         ctx: &mut ViewContext<PaneGroup>,
         pane_contents: &mut HashMap<PaneId, Box<dyn AnyPaneContent>>,
         banner: ModelHandle<BannerState>,
@@ -1176,7 +1174,6 @@ impl PaneGroup {
                     directory,
                     HashMap::new(),
                     &uuid.0,
-                    resources,
                     block_lists.get(&uuid),
                     banner,
                     view_size,
@@ -1192,8 +1189,20 @@ impl PaneGroup {
             LeafContents::Notebook(NotebookPaneSnapshot::LocalNotebook { notebook_id }) => {
                 (Box::new(NotebookPane::restore(notebook_id, ctx)), None)
             }
+            #[cfg(feature = "local_fs")]
+            LeafContents::Notebook(NotebookPaneSnapshot::LocalFileNotebook { path }) => {
+                let path =
+                    path.ok_or_else(|| anyhow::anyhow!("Legacy file notebook has no path"))?;
+                let source = CodeSource::Link {
+                    path,
+                    range_start: None,
+                    range_end: None,
+                };
+                (Box::new(CodePane::new(source, None, ctx)), None)
+            }
+            #[cfg(not(feature = "local_fs"))]
             LeafContents::Notebook(NotebookPaneSnapshot::LocalFileNotebook { .. }) => {
-                anyhow::bail!("Legacy file notebook panes are opened as code files")
+                anyhow::bail!("File notebooks require local filesystem support")
             }
             #[cfg(feature = "local_fs")]
             LeafContents::Code(CodePaneSnapShot::Local {
@@ -1201,9 +1210,22 @@ impl PaneGroup {
                 active_tab_index,
                 source,
             }) => {
-                let source = source
-                    .filter(CodeSource::is_restorable)
-                    .ok_or_else(|| anyhow::anyhow!("Code pane has no restorable source"))?;
+                let source = match source {
+                    Some(source) if source.is_restorable() => source,
+                    Some(_) => anyhow::bail!("Remote code panes cannot be restored locally"),
+                    None => tabs
+                        .get(active_tab_index)
+                        .or_else(|| tabs.first())
+                        .and_then(|tab| tab.path.clone())
+                        .map(|path| CodeSource::Link {
+                            path,
+                            range_start: None,
+                            range_end: None,
+                        })
+                        .unwrap_or(CodeSource::New {
+                            default_directory: None,
+                        }),
+                };
                 let view = ctx.add_typed_action_view(move |ctx| {
                     CodeView::restore(&tabs, active_tab_index, source, ctx)
                 });
@@ -1230,7 +1252,13 @@ impl PaneGroup {
                 )),
                 None,
             ),
-            LeafContents::CodeReview(_) => anyhow::bail!("Code review pane will reopen on demand"),
+            LeafContents::CodeReview(crate::app_state::CodeReviewPaneSnapshot::Local {
+                repo_path,
+                terminal_uuid,
+            }) => (
+                Box::new(CodeReviewPane::new(repo_path, terminal_uuid, ctx)),
+                None,
+            ),
             LeafContents::GetStarted => (Box::new(GetStartedPane::new(ctx)), None),
         };
         let pane_id = pane.as_pane().id();
@@ -1282,11 +1310,11 @@ impl PaneGroup {
                         .custom_vertical_tabs_title()
                         .map(str::to_owned)
                 });
-                PaneNodeSnapshot::Leaf(LeafSnapshot {
+                PaneNodeSnapshot::Leaf(Box::new(LeafSnapshot {
                     is_focused: *pane_id == self.focused_pane_id(app),
                     custom_vertical_tabs_title,
                     contents,
-                })
+                }))
             }
         }
     }
@@ -1353,22 +1381,6 @@ impl PaneGroup {
         self.panes_of::<CodePane>()
             .map(move |pane| (pane.id(), pane.file_view(app)))
     }
-    /// Iterate over the file notebook panes in this pane group.
-
-    fn close_panes(&mut self, pane_ids: Vec<PaneId>, ctx: &mut ViewContext<Self>) {
-        for pane_id in pane_ids {
-            self.close_pane(pane_id, ctx);
-        }
-    }
-
-    /// Checks if this pane group contains a visible AI document pane with the given document ID.
-
-    /// Closes all visible AI document panes that are *not* for `document_id`, then applies the
-    /// requested `action` to the pane for `document_id`.
-    ///
-    /// This enforces the UI invariant that only one AI document pane should be visible at a time.
-
-    /// Closes any other ai document panes, and opens the specified document_id.
 
     /// Whether the focused pane is a code pane whose active tab should show
     /// the unsaved-changes indicator. Auto-save-aware: changes auto-save can
@@ -1474,7 +1486,7 @@ impl PaneGroup {
                 #[cfg(feature = "local_tty")]
                 {
                     session_data
-                        .terminal_manager(app)
+                        .terminal_manager()
                         .update(app, |terminal_manager, ctx| {
                             if let Some(manager) = terminal_manager
                                 .as_any()
@@ -1504,13 +1516,6 @@ impl PaneGroup {
         }
     }
 
-    /// Closes the share session modal if it is open. Does nothing otherwise. Does not change
-    /// which element is focused.
-
-    /// If modal is already open, we update it with the new role request
-
-    /// Closes the parent shared session role change modal if it is open. Does nothing otherwise.
-
     fn new_internal(
         tips_completed: ModelHandle<TipsCompleted>,
         user_default_shell_unsupported_banner_model_handle: ModelHandle<BannerState>,
@@ -1521,19 +1526,11 @@ impl PaneGroup {
         let windowing_state = WindowManager::handle(ctx);
         ctx.observe(&windowing_state, Self::handle_windowing_state_update);
         let mut pane_contents = HashMap::new();
-        let resources = TerminalViewResources {
-            tips_completed: tips_completed.clone(),
-            model_event_sender: model_event_sender.clone(),
-        };
+
         let view_bounds = Self::estimated_view_bounds(ctx);
         let mut pane_history = Vec::new();
-        let (panes, initial_focus) = initial_layout_callback(
-            resources,
-            &mut pane_contents,
-            &mut pane_history,
-            view_bounds,
-            ctx,
-        );
+        let (panes, initial_focus) =
+            initial_layout_callback(&mut pane_contents, &mut pane_history, view_bounds, ctx);
         let focused_pane = initial_focus
             .focused_pane
             .or_else(|| pane_contents.keys().min().copied())
@@ -1593,9 +1590,6 @@ impl PaneGroup {
         view
     }
 
-    /// Returns the terminal view currently owning `conversation_id`, even if
-    /// that owner lives outside this pane group.
-
     /// Helper that creates the initial [`PaneData`] and [`InitialFocus`] given a terminal view.
     /// This is a common case in creating a new pane group with a single terminal session.
     fn terminal_pane_data(
@@ -1619,23 +1613,11 @@ impl PaneGroup {
         (PaneData::new(pane_id), focus)
     }
 
-    /// Helper to create the terminal manager and view for an ambient agent pane.
-
-    /// Installs the long-lived AgentConversationsModel subscription used by
-    /// `pending_ambient_agent_conversation_restorations`,
-    /// `pending_remote_child_hydrations`, and `pending_child_hydrations` if
-    /// it has not been installed yet. Idempotent across multiple callers.
-
-    /// Subscription handler that processes pending ambient agent pane restorations
-    /// whenever task data is updated or conversations finish loading.
-
-    /// Initial layout for a [`PaneGroup`] with a single ambient agent pane.
-
     /// Initial layout for a [`PaneGroup`] with a single terminal pane.
     #[allow(clippy::too_many_arguments)]
     fn initial_single_terminal_pane(
         options: NewTerminalOptions,
-        resources: TerminalViewResources,
+
         unsupported_banner_model_handle: ModelHandle<BannerState>,
         view_bounds: RectF,
         model_event_sender: Option<SyncSender<ModelEvent>>,
@@ -1648,7 +1630,6 @@ impl PaneGroup {
             options.initial_directory,
             options.env_vars,
             uuid.as_bytes(),
-            resources,
             None,
             unsupported_banner_model_handle,
             view_bounds.size(),
@@ -1680,15 +1661,13 @@ impl PaneGroup {
     ) -> Self {
         let banner = user_default_shell_unsupported_banner_model_handle.clone();
         let sender = model_event_sender.clone();
-        let initial_layout = move |resources,
-                                   pane_contents: &mut HashMap<PaneId, Box<dyn AnyPaneContent>>,
+        let initial_layout = move |pane_contents: &mut HashMap<PaneId, Box<dyn AnyPaneContent>>,
                                    pane_history: &mut Vec<PaneId>,
                                    view_bounds: RectF,
                                    ctx: &mut ViewContext<Self>| {
             match panes_layout {
                 PanesLayout::Template(template) => Self::pane_tree_from_template(
                     template,
-                    resources,
                     ctx,
                     pane_contents,
                     true,
@@ -1699,7 +1678,6 @@ impl PaneGroup {
                 PanesLayout::Snapshot(snapshot) => Self::restore_pane_tree(
                     *snapshot,
                     block_lists,
-                    resources.clone(),
                     ctx,
                     pane_contents,
                     banner.clone(),
@@ -1710,7 +1688,6 @@ impl PaneGroup {
                     log::warn!("Error restoring pane tree: {error:#}");
                     Self::initial_single_terminal_pane(
                         NewTerminalOptions::default(),
-                        resources,
                         banner,
                         view_bounds,
                         sender,
@@ -1721,7 +1698,6 @@ impl PaneGroup {
                 }),
                 PanesLayout::SingleTerminal(options) => Self::initial_single_terminal_pane(
                     *options,
-                    resources,
                     banner,
                     view_bounds,
                     sender,
@@ -1748,8 +1724,7 @@ impl PaneGroup {
         ctx: &mut ViewContext<Self>,
     ) -> Self {
         let pane_id = pane.as_pane().id();
-        let initial_layout = move |_,
-                                   pane_contents: &mut HashMap<PaneId, Box<dyn AnyPaneContent>>,
+        let initial_layout = move |pane_contents: &mut HashMap<PaneId, Box<dyn AnyPaneContent>>,
                                    pane_history: &mut Vec<PaneId>,
                                    _: RectF,
 
@@ -1770,16 +1745,6 @@ impl PaneGroup {
             ctx,
         )
     }
-
-    /// Create a new pane group for a view-only cloud conversation.
-
-    /// Create a new pane group with a loading state for a conversation viewer.
-    /// The actual conversation data will be loaded asynchronously.
-
-    /// Load conversation data into a conversation viewer that was created with a loading state.
-    /// Uses the active session view as the target.
-
-    /// Load conversation data into a specific transcript viewer terminal view.
 
     fn handle_windowing_state_update(
         &mut self,
@@ -1863,45 +1828,10 @@ impl PaneGroup {
         new_pane_id
     }
 
-    /// Creates a terminal pane that lives off-tree as a child agent pane.
-    /// Unlike `insert_terminal_pane`, the new pane is never inserted into the
-    /// layout tree at creation time — it lives only in `pane_contents` and
-    /// `child_agent_panes`. The orchestration pill bar later inserts it into
-    /// the tree on demand via `replace_pane` (in-place swap) or `panes.split`
-    /// ("Open in new pane").
-    ///
-    /// When `is_shared_session_creator` is `Yes`, the new pane is recorded
-    /// in `transitively_shared_child_panes` keyed by `base_pane_id` so the
-    /// host's `StopSharingCurrentSession` cleans it up.
-
-    /// Dispatches a share on every direct child agent pane in this group
-    /// that isn't already sharing, mirroring
-    /// `terminal_pane::inherit_share_for_local_child` for children that
-    /// existed before the host started sharing.
-    #[cfg(not(target_family = "wasm"))]
-
-    /// Stop the shared session on every child pane that was transitively
-    /// shared from `host_pane_id`. Only called from a non-wasm dispatch arm
-    /// (`Event::StopSharingCurrentSession`), so the definition mirrors that
-    /// cfg gate to keep wasm builds warning-clean.
-    #[cfg(not(target_family = "wasm"))]
-
-    /// Removes `pane_id` from the transitive-share tracking map.
-
-    /// Creates a cloud-mode pane that lives off-tree as a child agent pane.
-    /// Unlike `create_ambient_agent_pane`, this leaves the new terminal view
-    /// uninitialized so callers can create and select the child conversation
-    /// explicitly before the deferred shared-session viewer binds to it.
-
-    /// Inserts `pane` into `pane_contents` and attaches it (so subscriptions,
-    /// focus handle, etc. are wired up) without adding it to the layout tree.
-    /// Used for child agent panes which only enter the tree later via the
-    /// pill bar's swap or split-off paths.
-
     /// Get the [`PaneView<TerminalView>`] for the pane at `pane_index`, if that pane is:
     /// 1. In bounds
     /// 2. A terminal pane
-    #[cfg(any(test, feature = "integration_tests"))]
+    #[cfg(test)]
     pub fn terminal_pane_view_at_pane_index(
         &self,
         pane_index: usize,
@@ -1913,7 +1843,7 @@ impl PaneGroup {
     /// Get the [`TerminalView`] within the pane at `pane_index`, if that pane is:
     /// 1. In bounds
     /// 2. A terminal pane
-    #[cfg(any(test, feature = "integration_tests"))]
+    #[cfg(test)]
     pub fn terminal_view_at_pane_index(
         &self,
         pane_index: usize,
@@ -1947,7 +1877,7 @@ impl PaneGroup {
     }
 
     /// Get the notebook view within the pane at `pane_index`.
-    #[cfg(any(test, feature = "integration_tests"))]
+    #[cfg(test)]
     pub fn notebook_view_at_pane_index(
         &self,
         pane_index: usize,
@@ -1959,7 +1889,7 @@ impl PaneGroup {
     }
 
     /// Get the notebook view within the pane at `pane_index`.
-    #[cfg(any(test, feature = "integration_tests"))]
+    #[cfg(test)]
     pub fn workflow_view_at_pane_index(
         &self,
         pane_index: usize,
@@ -2171,11 +2101,6 @@ impl PaneGroup {
         self.cleanup_closed_pane(pane_id, ctx);
     }
 
-    /// Best-effort: re-bind each live child agent conversation on the
-    /// closing view to the pane that owns its parent. Defensive plumbing
-    /// for paths where the parent's view actually contains the child;
-    /// no-ops otherwise.
-
     /// If this pane was the active session and or focused pane, focuses the previous session and pane.
     ///
     /// Called before removing a pane from a pane group (either because the pane is being closed or because it is being moved
@@ -2212,18 +2137,6 @@ impl PaneGroup {
 
         self.remove_from_pane_history(pane_id_to_remove);
     }
-
-    /// Returns true if the given pane is a child agent pane tracked in `child_agent_panes`.
-
-    /// Collects the child agent pane IDs whose conversations are parented by
-    /// a conversation on the given terminal view.
-
-    /// Removes and discards all child agent panes whose parent conversation
-    /// lives on the given terminal view.  Used by both `close_pane` and
-    /// `discard_pane` to ensure children are cleaned up regardless of which
-    /// path removes the parent.
-
-    /// Permanently discards the pane backing a child agent conversation.
 
     pub fn close_pane(&mut self, pane_id: PaneId, ctx: &mut ViewContext<Self>) {
         if !self.pane_contents.contains_key(&pane_id) {
@@ -2262,6 +2175,21 @@ impl PaneGroup {
         ctx.emit(Event::AppStateChanged);
     }
 
+    fn terminal_exited(&mut self, pane_id: PaneId, ctx: &mut ViewContext<Self>) {
+        if !self.pane_contents.contains_key(&pane_id) {
+            return;
+        }
+        if self.panes.visible_pane_count() == 1 && !self.is_pane_hidden_for_close(pane_id) {
+            ctx.emit(Event::Exited {
+                add_to_undo_stack: false,
+            });
+            return;
+        }
+        self.focus_next_terminal_pane_and_activate_session(pane_id, PaneRemovalReason::Close, ctx);
+        self.cleanup_closed_pane(pane_id, ctx);
+        self.handle_pane_count_change(ctx);
+    }
+
     pub fn close_pane_and_focus(
         &mut self,
         pane_id: PaneId,
@@ -2270,22 +2198,6 @@ impl PaneGroup {
     ) {
         self.close_pane(pane_id, ctx);
         ctx.emit(Event::FocusPane { pane_to_focus });
-    }
-
-    /// Revert a temporary-replacement swap and clear the orchestration
-    /// split-off marker on the replacement's view, so a later reveal
-    /// renders pills rather than breadcrumbs.
-    fn revert_swap_clearing_split_off(
-        &mut self,
-        replacement_id: PaneId,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        if let Some(terminal_view) = self.terminal_view_from_pane_id(replacement_id, ctx) {
-            terminal_view.update(ctx, |view, ctx| {
-                view.clear_orchestration_split_off(ctx);
-            });
-        }
-        self.panes.revert_temporary_replacement(replacement_id);
     }
 
     /// Reveal `pane_id` if it's currently the original of an active swap,
@@ -2353,26 +2265,6 @@ impl PaneGroup {
         ctx.emit(Event::AppStateChanged);
         success
     }
-
-    fn close_temporary_replacement_pane(
-        &mut self,
-        replacement_pane_id: PaneId,
-        ctx: &mut ViewContext<Self>,
-    ) -> Option<PaneId> {
-        let original_pane_id = self.panes.revert_temporary_replacement(replacement_pane_id);
-        self.clean_up_pane(replacement_pane_id, ctx);
-        self.pane_contents.remove(&replacement_pane_id);
-
-        if let Some(original_id) = original_pane_id {
-            // Focus the original pane to ensure proper user interaction
-            self.focus_pane_by_id(original_id, ctx);
-        }
-
-        original_pane_id
-    }
-
-    #[cfg(feature = "local_fs")]
-    #[cfg(feature = "local_fs")]
 
     /// Handle a common pane event, such as splitting off another pane.
     pub(crate) fn handle_pane_event(
@@ -2575,10 +2467,6 @@ impl PaneGroup {
 
         success
     }
-
-    /// Restores a cloud agent parent into a cloud-mode pane, returning the
-    /// parent's local conversation id when one was restored. Callers with
-    /// `&mut self` use it to seed the parent's children from server data.
 
     /// Clear all panes that were hidden due to being closed (for undo functionality)
     /// This is typically called when starting pane rearrangement operations
@@ -3045,7 +2933,7 @@ impl PaneGroup {
 
     fn handle_user_default_shell_changed_banner_event(
         &mut self,
-        event: &BannerEvent<PaneGroupAction>,
+        event: &BannerEvent,
         ctx: &mut ViewContext<Self>,
     ) {
         match event {
@@ -3071,10 +2959,6 @@ impl PaneGroup {
                     );
                 });
             }
-            BannerEvent::Action(_) => {
-                #[cfg(debug_assertions)]
-                unimplemented!("User default shell change banner doesn't support actions");
-            }
         }
         ctx.notify();
     }
@@ -3096,7 +2980,7 @@ impl PaneGroup {
         startup_directory: Option<PathBuf>,
         mut env_vars: HashMap<OsString, OsString>,
         terminal_session_uuid: &[u8],
-        resources: TerminalViewResources,
+
         restored_blocks: Option<&Vec<SerializedBlockListItem>>,
         user_default_shell_unsupported_banner_model_handle: ModelHandle<BannerState>,
         initial_size: Vector2F,
@@ -3113,7 +2997,6 @@ impl PaneGroup {
             let restored = terminal_view_restored_blocks(restored_blocks);
             let has_restored_command_blocks =
                 restored.as_ref().is_some_and(|blocks| !blocks.is_empty());
-            let sender_for_surface = model_event_sender.clone();
             let window_id = ctx.window_id();
             let terminal_init = LocalTtyTerminalManager::<TerminalView>::create_model(
                 startup_directory,
@@ -3127,8 +3010,6 @@ impl PaneGroup {
                 |surface_init, ctx| {
                     create_terminal_view_surface(
                         TerminalViewSurfaceConfig {
-                            resources,
-                            model_event_sender: sender_for_surface,
                             window_id,
                             is_historical: false,
                             should_use_live_appearance: false,
@@ -3149,7 +3030,6 @@ impl PaneGroup {
                     display_name: ShellName::blank(),
                     shell_type: ShellType::Zsh,
                 },
-                resources,
                 restored_blocks,
                 initial_size,
                 ctx.window_id(),
@@ -3158,24 +3038,6 @@ impl PaneGroup {
             (terminal_init.view, terminal_init.manager)
         }
     }
-
-    /// `is_ambient_agent` controls whether the resulting [`TerminalView`] is
-    /// constructed with an `ambient_agent_view_model` up front. Pass `true` when
-    /// the pane is known to be an ambient (cloud) run at construction time (the
-    /// attach-to-running and restore paths), so the snapshot path in
-    /// `TerminalPane::snapshot` emits `LeafContents::AmbientAgent` rather than
-    /// falling through to an empty `LeafContents::Terminal`. Pass `false` for
-    /// generic shared-session joins: if such a session turns out to be ambient,
-    /// the model is created lazily at `SessionJoined` via
-    /// `TerminalView::begin_viewing_ambient_session`.
-    #[allow(clippy::too_many_arguments)]
-
-    /// Builds a live-session pane for an orchestration child with its ambient
-    /// model wired up, so the pane gets ambient controls and `FailedToJoin`
-    /// recovery whether the child is owned or observed.
-
-    /// Creates a loading terminal view with MockTerminalManager in loading state.
-    /// This is used by both `new_for_conversation_transcript_viewer_loading` and `create_loading_terminal_pane`.
 
     /// Whether to use the user-specified startup directory when starting
     /// a new session. On Windows, we ignore this custom directory setting in
@@ -3204,12 +3066,6 @@ impl PaneGroup {
     ) -> bool {
         false
     }
-
-    /// Creates a loading terminal pane that shows a spinner while conversation data is being fetched.
-    /// Returns the pane ID so it can be replaced later with the real terminal pane.
-
-    /// Replaces a loading pane with a real terminal pane that has a conversation restored.
-    /// Returns true if replacement was successful.
 
     #[allow(clippy::too_many_arguments)]
     pub fn add_session(
@@ -3241,8 +3097,6 @@ impl PaneGroup {
         )
     }
 
-    #[allow(clippy::too_many_arguments)]
-
     /// Creates a new terminal session and wraps it in a `TerminalPane`.
     /// This is the shared session-creation boilerplate used by both
     /// `add_session_in_directory` and `insert_terminal_pane_hidden_for_child_agent`.
@@ -3255,15 +3109,11 @@ impl PaneGroup {
         ctx: &mut ViewContext<Self>,
     ) -> (TerminalPane, ViewHandle<TerminalView>) {
         let uuid = Uuid::new_v4();
-        let resources = TerminalViewResources {
-            tips_completed: self.tips_completed.clone(),
-            model_event_sender: self.model_event_sender.clone(),
-        };
+
         let (view, manager) = Self::create_session(
             startup_directory,
             env_vars,
             uuid.as_bytes(),
-            resources,
             None,
             self.user_default_shell_unsupported_banner_model_handle
                 .clone(),
@@ -3479,7 +3329,7 @@ impl PaneGroup {
     }
 
     /// Returns the count of visible panes (excluding hidden panes).
-    #[cfg(any(test, feature = "integration_tests"))]
+    #[cfg(test)]
     pub fn visible_pane_count(&self) -> usize {
         self.panes.visible_pane_count()
     }
@@ -3578,16 +3428,6 @@ impl PaneGroup {
         }
     }
 
-    fn handle_pane_link_updated(&self, pane_id: PaneId, url: Option<Url>, ctx: &AppContext) {
-        log::debug!("Url for pane should be updated pane_id: {pane_id:?}, url: {url:?}");
-        #[cfg(target_family = "wasm")]
-        if pane_id == self.focused_pane_id(ctx) {
-            update_browser_url(url, false);
-        }
-
-        let _ = ctx;
-    }
-
     #[cfg(target_family = "wasm")]
 
     /// Focus the active terminal session, if there is one.
@@ -3607,7 +3447,7 @@ impl PaneGroup {
     ) -> Option<Arc<FairMutex<TerminalModel>>> {
         self.active_session_id(app)
             .and_then(|id| self.terminal_session_by_id(id))
-            .map(|session| session.terminal_manager(app).as_ref(app).model())
+            .map(|session| session.terminal_manager().as_ref(app).model())
     }
 
     fn focused_pane_content(&self, app: &AppContext) -> Option<&dyn PaneContent> {
@@ -3657,63 +3497,6 @@ impl PaneGroup {
         self.terminal_session_by_id(pane_id)
             .map(|session| session.terminal_view(ctx))
     }
-
-    /// Connects an existing ambient pane to `session_id` so the user lands on a live, writable
-    /// terminal rather than a stale read-only view of the run.
-    ///
-    /// Returns `false` when this pane cannot host a live session — a read-only conversation
-    /// transcript viewer, or any pane whose terminal manager is not a shared-session viewer.
-    /// Callers **must** treat `false` as "reuse is not possible" and open a fresh pane instead;
-    /// reporting success leaves the user focused on a pane with no input box.
-
-    /// Resolve the pane id that owns a given conversation's `TerminalView`,
-    /// without applying any visibility filtering. Used by the pill-bar swap
-    /// path to find the orchestrator pane (or any non-child conversation's
-    /// owner) regardless of whether it's currently visible. Walks the pane
-    /// contents and returns the first terminal pane whose terminal view id
-    /// matches the history model's owner for `conversation_id`.
-
-    /// Make the pane that owns `conversation_id` the visible one in the
-    /// focused pane's slot via temporary replacement. The previous occupant
-    /// is restored on revert (back-button, ESC, pill-click, close, split-off).
-
-    /// Reveal the child agent pane for `conversation_id` as a visible
-    /// sibling of its orchestrator ("Open in new pane"). Reuses the
-    /// existing view to avoid cancelling in-flight commands. Reverts any
-    /// swap on the target's orchestrator first; swaps belonging to other
-    /// orchestrators in the same group are left alone.
-
-    /// Detach the child agent pane for `conversation_id` so it can be
-    /// re-parented into a new tab ("Open in new tab"). Reuses the
-    /// existing view to avoid cancelling in-flight commands.
-
-    /// Stamp this pane group as the destination of a split-off child
-    /// agent pane, so closing the tab re-adopts the live view back to
-    /// the source group.
-
-    /// Returns the origin metadata if this group is hosting a split-off
-    /// child agent tab.
-
-    /// Re-adopt a previously detached child agent pane back into this
-    /// group as off-tree, and clear its split-off marker so the next
-    /// reveal renders pills instead of breadcrumbs.
-
-    /// Diagnostic logging for [`swap_active_pane_to_conversation`] when none of
-    /// the three resolvers (`child_agent_panes`, visible-pane lookup, history
-    /// model owner lookup) finds a pane in this group for the target
-    /// conversation. Dumps enough state to identify which step is wrong.
-
-    /// Walk the visible terminal panes in this group looking for one whose
-    /// terminal view has the given AI conversation as its active agent-view
-    /// conversation. Used by the orchestration pill bar to focus an
-    /// already-visible pane (e.g. "Open in new pane" was already used and the
-    /// user is now clicking the pinned pill in the orchestrator's view).
-    ///
-    /// "Visible" here strictly means "present as a leaf in the layout tree
-    /// AND not hidden". Iterating over `terminal_pane_ids()` (which reads
-    /// from `pane_contents`) would erroneously include off-tree child
-    /// agent panes, since under the orchestration model those panes
-    /// remain in `pane_contents` even when they are not in the tree.
 
     /// Given a pane ID, retrieve its backing code view, if the pane is a code pane.
     pub fn code_view_from_pane_id(
@@ -3794,21 +3577,6 @@ impl PaneGroup {
         true
     }
 
-    fn focus_pane_preserving_maximized_state(
-        &mut self,
-        id: PaneId,
-        focus_pane_contents: bool,
-        ctx: &mut ViewContext<Self>,
-    ) -> bool {
-        let was_maximized = self.is_focused_pane_maximized(ctx);
-        let focused = self.focus_pane(id, focus_pane_contents, ctx);
-        if focused && was_maximized {
-            self.focus_state.update(ctx, |focus_state, ctx| {
-                focus_state.set_focused_pane_maximized(true, ctx);
-            });
-        }
-        focused
-    }
     fn focus_pane_and_record_in_history(
         &mut self,
         id: PaneId,
@@ -3824,10 +3592,9 @@ impl PaneGroup {
     pub fn terminal_manager(
         &self,
         pane_index: usize,
-        app: &AppContext,
     ) -> Option<ModelHandle<Box<dyn TerminalManager>>> {
         self.terminal_session_by_pane_index(pane_index)
-            .map(|session| session.terminal_manager(app))
+            .map(|session| session.terminal_manager())
     }
 
     // When user clicked on the close tab button, we should wind down the existing panes
@@ -3958,13 +3725,13 @@ impl PaneGroup {
             .map(|pane| {
                 let view = pane.terminal_view(app);
                 let model = view.as_ref(app).model.lock();
-                let scope = model.block_list().transcript_scope();
+
                 let mut blocks = model
                     .block_list()
                     .blocks()
                     .iter()
                     .rev()
-                    .filter(|block| block.is_visible(scope))
+                    .filter(|block| block.is_visible())
                     .take(100)
                     .map(|block| crate::terminal::model::block::SerializedBlock::from(block).into())
                     .collect::<Vec<_>>();

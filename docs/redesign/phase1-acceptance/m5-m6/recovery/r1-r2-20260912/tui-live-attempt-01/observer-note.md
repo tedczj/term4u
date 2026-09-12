@@ -1,0 +1,1 @@
+Exit observation failed because the PTY reader returned at EOF before polling waitpid. The child was confirmed absent after the attempt. Other captures show command output, Ctrl-C and tab actions. This attempt remains failed; attempt 02 fixes EOF polling and waits for synchronized frame completion.

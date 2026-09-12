@@ -58,6 +58,9 @@ pub(super) fn load(connection: &mut SqliteConnection) -> QueryResult<Option<AppS
         .get_result::<SnapshotRow>(connection)
         .optional()?
     else {
+        #[cfg(target_os = "macos")]
+        return super::legacy_snapshot::load(connection);
+        #[cfg(not(target_os = "macos"))]
         return Ok(None);
     };
     match decode(&row.snapshot) {

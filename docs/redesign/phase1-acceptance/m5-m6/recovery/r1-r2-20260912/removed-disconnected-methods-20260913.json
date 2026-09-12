@@ -1,0 +1,62 @@
+[
+  {
+    "path": "app/src/banner/view.rs",
+    "function": "set_content"
+  },
+  {
+    "path": "app/src/banner/view.rs",
+    "function": "set_action_button_label"
+  },
+  {
+    "path": "app/src/banner/view.rs",
+    "function": "with_icon"
+  },
+  {
+    "path": "app/src/code/editor/view.rs",
+    "function": "set_nav_bar_behavior"
+  },
+  {
+    "path": "app/src/code/editor/view.rs",
+    "function": "set_scroll_wheel_behavior"
+  },
+  {
+    "path": "app/src/code/editor/view.rs",
+    "function": "set_horizontal_scrollbar_appearance"
+  },
+  {
+    "path": "app/src/code/editor/view.rs",
+    "function": "set_vertical_expansion_behavior"
+  },
+  {
+    "path": "app/src/code/editor/nav_bar.rs",
+    "function": "set_behavior"
+  },
+  {
+    "path": "app/src/system.rs",
+    "function": "long_os_version"
+  },
+  {
+    "path": "app/src/system.rs",
+    "function": "long_os_version"
+  },
+  {
+    "path": "app/src/system/info.rs",
+    "function": "used_memory"
+  },
+  {
+    "path": "app/src/system/info.rs",
+    "function": "cpu_usage"
+  },
+  {
+    "path": "app/src/system/info.rs",
+    "function": "long_os_version"
+  },
+  {
+    "path": "app/src/settings_view/settings_page.rs",
+    "function": "static_widget_id"
+  },
+  {
+    "path": "app/src/settings_view/mod.rs",
+    "function": "handle_features_page_event"
+  }
+]

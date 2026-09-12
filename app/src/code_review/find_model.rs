@@ -98,12 +98,6 @@ impl CodeReviewFindModel {
         self.results = None;
     }
 
-    fn repo_is_local(&self, ctx: &AppContext) -> Option<bool> {
-        self.weak_view_handle
-            .upgrade(ctx)
-            .and_then(|view| view.as_ref(ctx).repo_is_local())
-    }
-
     pub fn update_query(
         &mut self,
         query: Option<String>,

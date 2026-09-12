@@ -641,10 +641,6 @@ pub enum CodeEditorViewAction {
         line_range: Range<LineCount>,
         expansion_type: ExpansionType,
     },
-    /// Add diff hunk content as context (when clicking plus icon)
-    AddDiffHunkContext {
-        line_range: Range<LineCount>,
-    },
     /// Revert diff hunk changes (when clicking revert icon)
     RevertDiffHunk {
         line_range: Range<LineCount>,
@@ -796,7 +792,6 @@ impl CodeEditorViewAction {
             | Self::ShowGoToLine
             | Self::Escape
             | Self::HiddenSectionExpansion { .. }
-            | Self::AddDiffHunkContext { .. }
             | Self::RevertDiffHunk { .. }
             | Self::NewCommentOnLine { .. }
             | Self::RequestOpenSavedComment { .. }
@@ -1048,20 +1043,7 @@ impl TypedActionView for CodeEditorView {
             } => {
                 self.expand_hidden_section(line_range.clone(), expansion_type, ctx);
             }
-            AddDiffHunkContext { line_range } => {
-                // Record this range as clicked so the button disappears
-                self.display_states
-                    .wrapper_state_handle
-                    .record_clicked_range(line_range.clone());
 
-                // Emit event for parent to handle adding context
-                ctx.emit(CodeEditorEvent::DiffHunkContextAdded {
-                    line_range: line_range.clone(),
-                });
-
-                // Notify to re-render and hide the button
-                ctx.notify();
-            }
             RevertDiffHunk { line_range } => {
                 if FeatureFlag::RevertDiffHunk.is_enabled() {
                     // Convert line range to diff hunk index and revert it

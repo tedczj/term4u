@@ -23,16 +23,11 @@ impl CommandExecutionSource {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
 pub enum MenuPositioning {
     AboveInputBox,
+    #[default]
     BelowInputBox,
-}
-
-impl Default for MenuPositioning {
-    fn default() -> Self {
-        Self::BelowInputBox
-    }
 }
 
 pub trait MenuPositioningProvider: Send + Sync {

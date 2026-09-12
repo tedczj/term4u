@@ -31,10 +31,6 @@ impl LanguageServerShutdownManager {
         }
     }
 
-    pub fn has_in_progress_scan(&self) -> bool {
-        self.in_progress_scan.is_some()
-    }
-
     pub fn schedule_next_scan(&mut self, ctx: &mut ModelContext<Self>) {
         if let Some(scan) = self.in_progress_scan.take() {
             scan.abort();

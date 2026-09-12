@@ -1,0 +1,357 @@
+{
+  "windows": [
+    {
+      "tabs": [
+        {
+          "custom_title": null,
+          "root": {
+            "Leaf": {
+              "is_focused": true,
+              "custom_vertical_tabs_title": null,
+              "contents": {
+                "Terminal": {
+                  "uuid": [
+                    237,
+                    137,
+                    220,
+                    133,
+                    74,
+                    186,
+                    75,
+                    81,
+                    161,
+                    82,
+                    157,
+                    251,
+                    221,
+                    176,
+                    217,
+                    247
+                  ],
+                  "cwd": "/tmp/term4u-r1r2-20260912/oracle-work",
+                  "shell_launch_data": {
+                    "Executable": {
+                      "executable_path": "/bin/zsh",
+                      "shell_type": "Zsh"
+                    }
+                  },
+                  "is_active": false
+                }
+              }
+            }
+          },
+          "default_directory_color": null,
+          "selected_color": "Unset",
+          "left_panel": null,
+          "group_id": null,
+          "pinned": false
+        },
+        {
+          "custom_title": null,
+          "root": {
+            "Branch": {
+              "direction": "Horizontal",
+              "children": [
+                [
+                  1.0,
+                  {
+                    "Leaf": {
+                      "is_focused": false,
+                      "custom_vertical_tabs_title": null,
+                      "contents": {
+                        "Terminal": {
+                          "uuid": [
+                            204,
+                            250,
+                            216,
+                            86,
+                            215,
+                            138,
+                            77,
+                            144,
+                            158,
+                            133,
+                            196,
+                            34,
+                            144,
+                            243,
+                            223,
+                            6
+                          ],
+                          "cwd": "/tmp/term4u-r1r2-20260912/oracle-work",
+                          "shell_launch_data": {
+                            "Executable": {
+                              "executable_path": "/bin/zsh",
+                              "shell_type": "Zsh"
+                            }
+                          },
+                          "is_active": false
+                        }
+                      }
+                    }
+                  }
+                ],
+                [
+                  1.0,
+                  {
+                    "Leaf": {
+                      "is_focused": true,
+                      "custom_vertical_tabs_title": null,
+                      "contents": {
+                        "Terminal": {
+                          "uuid": [
+                            160,
+                            27,
+                            1,
+                            78,
+                            3,
+                            255,
+                            77,
+                            115,
+                            144,
+                            181,
+                            2,
+                            36,
+                            137,
+                            41,
+                            220,
+                            85
+                          ],
+                          "cwd": "/tmp/term4u-r1r2-20260912/oracle-work",
+                          "shell_launch_data": {
+                            "Executable": {
+                              "executable_path": "/bin/zsh",
+                              "shell_type": "Zsh"
+                            }
+                          },
+                          "is_active": false
+                        }
+                      }
+                    }
+                  }
+                ]
+              ]
+            }
+          },
+          "default_directory_color": null,
+          "selected_color": "Unset",
+          "left_panel": null,
+          "group_id": null,
+          "pinned": false
+        }
+      ],
+      "active_tab_index": 1,
+      "bounds": [
+        384.0,
+        -1064.0,
+        1280.0,
+        800.0
+      ],
+      "fullscreen_state": "Normal",
+      "quake_mode": false,
+      "universal_search_width": null,
+      "voltron_width": null,
+      "left_panel_open": false,
+      "vertical_tabs_panel_open": true,
+      "left_panel_width": null,
+      "tab_groups": []
+    }
+  ],
+  "active_window_index": 0,
+  "block_lists": [
+    [
+      [
+        237,
+        137,
+        220,
+        133,
+        74,
+        186,
+        75,
+        81,
+        161,
+        82,
+        157,
+        251,
+        221,
+        176,
+        217,
+        247
+      ],
+      [
+        {
+          "Command": {
+            "block": {
+              "id": "precmd-4692905877175406731-1",
+              "stylized_command": "G1sxbWMbWzBtG1sxbWQbWzBtG1sxbSAbWzBtG1sxbS8bWzBtG1sxbXQbWzBtG1sxbW0bWzBtG1sxbXAbWzBtG1sxbS8bWzBtG1sxbXQbWzBtG1sxbWUbWzBtG1sxbXIbWzBtG1sxbW0bWzBtG1sxbTQbWzBtG1sxbXUbWzBtG1sxbS0bWzBtG1sxbXIbWzBtG1sxbTEbWzBtG1sxbXIbWzBtG1sxbTIbWzBtG1sxbS0bWzBtG1sxbTIbWzBtG1sxbTAbWzBtG1sxbTIbWzBtG1sxbTYbWzBtG1sxbTAbWzBtG1sxbTkbWzBtG1sxbTEbWzBtG1sxbTIbWzBtG1sxbS8bWzBtG1sxbW8bWzBtG1sxbXIbWzBtG1sxbWEbWzBtG1sxbWMbWzBtG1sxbWwbWzBtG1sxbWUbWzBtG1sxbS0bWzBtG1sxbXcbWzBtG1sxbW8bWzBtG1sxbXIbWzBtG1sxbWsbWzBtG1sxbTsbWzBtG1sxbSAbWzBtG1sxbXAbWzBtG1sxbXIbWzBtG1sxbWkbWzBtG1sxbW4bWzBtG1sxbXQbWzBtG1sxbWYbWzBtG1sxbSAbWzBtG1sxbScbWzBtG1sxbU8bWzBtG1sxbVIbWzBtG1sxbUEbWzBtG1sxbUMbWzBtG1sxbUwbWzBtG1sxbUUbWzBtG1sxbV8bWzBtG1sxbTAbWzBtG1sxbTYbWzBtG1sxbTYbWzBtG1sxbUUbWzBtG1sxbUMbWzBtG1sxbTcbWzBtG1sxbTEbWzBtG1sxbUIbWzBtG1sxbV8bWzBtG1sxbUYbWzBtG1sxbUkbWzBtG1sxbVIbWzBtG1sxbVMbWzBtG1sxbVQbWzBtG1sxbVwbWzBtG1sxbW4bWzBtG1sxbScbWzBtG1sxbTsbWzBtG1sxbSAbWzBtG1sxbXAbWzBtG1sxbXIbWzBtG1sxbWkbWzBtG1sxbW4bWzBtG1sxbXQbWzBtG1sxbWYbWzBtG1sxbSAbWzBtG1sxbU8bWzBtG1sxbVIbWzBtG1sxbUEbWzBtG1sxbUMbWzBtG1sxbUwbWzBtG1sxbUUbWzBtG1sxbV8bWzBtG1sxbUQbWzBtG1sxbUkbWzBtG1sxbVMbWzBtG1sxbUsbWzBtG1sxbSAbWzBtG1sxbT4bWzBtG1sxbSAbWzBtG1sxbW8bWzBtG1sxbXIbWzBtG1sxbWkbWzBtG1sxbWcbWzBtG1sxbWkbWzBtG1sxbW4bWzBtG1sxbWEbWzBtG1sxbWwbWzBtG1sxbS4bWzBtG1sxbXQbWzBtG1sxbXgbWzBtG1sxbXQbWzBtDQo=",
+              "stylized_output": "T1JBQ0xFXzA2NkVDNzFCX0ZJUlNUDQo=",
+              "pwd": "/Users/tedczj",
+              "git_head": null,
+              "git_branch_name": null,
+              "virtual_env": null,
+              "conda_env": null,
+              "node_version": null,
+              "exit_code": 0,
+              "did_execute": true,
+              "completed_ts": "2026-09-13T01:54:34.803769+08:00",
+              "start_ts": "2026-09-13T01:54:34.762159+08:00",
+              "ps1": null,
+              "rprompt": null,
+              "honor_ps1": false,
+              "is_background": false,
+              "session_id": null,
+              "shell_host": {
+                "shell_type": "Zsh",
+                "user": "tedczj",
+                "hostname": "czj-MBP"
+              },
+              "prompt_snapshot": null,
+              "ai_metadata": null,
+              "is_local": null,
+              "agent_view_visibility": null
+            }
+          }
+        }
+      ]
+    ],
+    [
+      [
+        160,
+        27,
+        1,
+        78,
+        3,
+        255,
+        77,
+        115,
+        144,
+        181,
+        2,
+        36,
+        137,
+        41,
+        220,
+        85
+      ],
+      [
+        {
+          "Command": {
+            "block": {
+              "id": "precmd-15707254740233409965-1",
+              "stylized_command": "G1sxbXAbWzBtG1sxbXIbWzBtG1sxbWkbWzBtG1sxbW4bWzBtG1sxbXQbWzBtG1sxbWYbWzBtG1sxbSAbWzBtG1sxbScbWzBtG1sxbU8bWzBtG1sxbVIbWzBtG1sxbUEbWzBtG1sxbUMbWzBtG1sxbUwbWzBtG1sxbUUbWzBtG1sxbV8bWzBtG1sxbTAbWzBtG1sxbTYbWzBtG1sxbTYbWzBtG1sxbUUbWzBtG1sxbUMbWzBtG1sxbTcbWzBtG1sxbTEbWzBtG1sxbUIbWzBtG1sxbV8bWzBtG1sxbVMbWzBtG1sxbVAbWzBtG1sxbUwbWzBtG1sxbUkbWzBtG1sxbVQbWzBtG1sxbVwbWzBtG1sxbW4bWzBtG1sxbScbWzBtDQo=",
+              "stylized_output": "T1JBQ0xFXzA2NkVDNzFCX1NQTElUDQo=",
+              "pwd": "/tmp/term4u-r1r2-20260912/oracle-work",
+              "git_head": null,
+              "git_branch_name": null,
+              "virtual_env": null,
+              "conda_env": null,
+              "node_version": null,
+              "exit_code": 0,
+              "did_execute": true,
+              "completed_ts": "2026-09-13T01:55:59.696669+08:00",
+              "start_ts": "2026-09-13T01:55:59.654986+08:00",
+              "ps1": null,
+              "rprompt": null,
+              "honor_ps1": false,
+              "is_background": false,
+              "session_id": null,
+              "shell_host": {
+                "shell_type": "Zsh",
+                "user": "tedczj",
+                "hostname": "czj-MBP"
+              },
+              "prompt_snapshot": null,
+              "ai_metadata": null,
+              "is_local": null,
+              "agent_view_visibility": null
+            }
+          }
+        },
+        {
+          "Command": {
+            "block": {
+              "id": "precmd-3263550762582816589-1",
+              "stylized_command": "G1sxbXAbWzBtG1sxbXIbWzBtG1sxbWkbWzBtG1sxbW4bWzBtG1sxbXQbWzBtG1sxbWYbWzBtG1sxbSAbWzBtG1sxbScbWzBtG1sxbU0bWzBtG1sxbUkbWzBtG1sxbUcbWzBtG1sxbVIbWzBtG1sxbUEbWzBtG1sxbVQbWzBtG1sxbUUbWzBtG1sxbUQbWzBtG1sxbV8bWzBtG1sxbVcbWzBtG1sxbVIbWzBtG1sxbUkbWzBtG1sxbVQbWzBtG1sxbUUbWzBtG1sxbV8bWzBtG1sxbU8bWzBtG1sxbUsbWzBtG1sxbVwbWzBtG1sxbW4bWzBtG1sxbScbWzBtG1sxbTsbWzBtG1sxbSAbWzBtG1sxbXAbWzBtG1sxbXIbWzBtG1sxbWkbWzBtG1sxbW4bWzBtG1sxbXQbWzBtG1sxbWYbWzBtG1sxbSAbWzBtG1sxbU0bWzBtG1sxbUkbWzBtG1sxbUcbWzBtG1sxbVIbWzBtG1sxbUEbWzBtG1sxbVQbWzBtG1sxbUUbWzBtG1sxbUQbWzBtG1sxbV8bWzBtG1sxbUQbWzBtG1sxbUkbWzBtG1sxbVMbWzBtG1sxbUsbWzBtG1sxbSAbWzBtG1sxbT4bWzBtG1sxbSAbWzBtG1sxbWMbWzBtG1sxbXUbWzBtG1sxbXIbWzBtG1sxbXIbWzBtG1sxbWUbWzBtG1sxbW4bWzBtG1sxbXQbWzBtG1sxbS4bWzBtG1sxbXQbWzBtG1sxbXgbWzBtG1sxbXQbWzBtDQo=",
+              "stylized_output": "TUlHUkFURURfV1JJVEVfT0sNCg==",
+              "pwd": "/tmp/term4u-r1r2-20260912/oracle-work",
+              "git_head": null,
+              "git_branch_name": null,
+              "virtual_env": null,
+              "conda_env": null,
+              "node_version": null,
+              "exit_code": 0,
+              "did_execute": true,
+              "completed_ts": "2026-09-13T02:10:10.729798+08:00",
+              "start_ts": "2026-09-13T02:10:10.701396+08:00",
+              "ps1": null,
+              "rprompt": null,
+              "honor_ps1": false,
+              "is_background": false,
+              "session_id": 3263550762582816589,
+              "shell_host": null,
+              "prompt_snapshot": null,
+              "ai_metadata": null,
+              "is_local": null,
+              "agent_view_visibility": null
+            }
+          }
+        }
+      ]
+    ],
+    [
+      [
+        204,
+        250,
+        216,
+        86,
+        215,
+        138,
+        77,
+        144,
+        158,
+        133,
+        196,
+        34,
+        144,
+        243,
+        223,
+        6
+      ],
+      [
+        {
+          "Command": {
+            "block": {
+              "id": "precmd-658765613799131443-1",
+              "stylized_command": "G1sxbXAbWzBtG1sxbXIbWzBtG1sxbWkbWzBtG1sxbW4bWzBtG1sxbXQbWzBtG1sxbWYbWzBtG1sxbSAbWzBtG1sxbScbWzBtG1sxbU8bWzBtG1sxbVIbWzBtG1sxbUEbWzBtG1sxbUMbWzBtG1sxbUwbWzBtG1sxbUUbWzBtG1sxbV8bWzBtG1sxbTAbWzBtG1sxbTYbWzBtG1sxbTYbWzBtG1sxbUUbWzBtG1sxbUMbWzBtG1sxbTcbWzBtG1sxbTEbWzBtG1sxbUIbWzBtG1sxbV8bWzBtG1sxbVMbWzBtG1sxbUUbWzBtG1sxbUMbWzBtG1sxbU8bWzBtG1sxbU4bWzBtG1sxbUQbWzBtG1sxbVwbWzBtG1sxbW4bWzBtG1sxbScbWzBtG1sxbTsbWzBtG1sxbSAbWzBtG1sxbWYbWzBtG1sxbWEbWzBtG1sxbWwbWzBtG1sxbXMbWzBtG1sxbWUbWzBtDQo=",
+              "stylized_output": "T1JBQ0xFXzA2NkVDNzFCX1NFQ09ORA0K",
+              "pwd": "/tmp/term4u-r1r2-20260912/oracle-work",
+              "git_head": null,
+              "git_branch_name": null,
+              "virtual_env": null,
+              "conda_env": null,
+              "node_version": null,
+              "exit_code": 1,
+              "did_execute": true,
+              "completed_ts": "2026-09-13T01:55:11.530074+08:00",
+              "start_ts": "2026-09-13T01:55:11.490350+08:00",
+              "ps1": null,
+              "rprompt": null,
+              "honor_ps1": false,
+              "is_background": false,
+              "session_id": null,
+              "shell_host": {
+                "shell_type": "Zsh",
+                "user": "tedczj",
+                "hostname": "czj-MBP"
+              },
+              "prompt_snapshot": null,
+              "ai_metadata": null,
+              "is_local": null,
+              "agent_view_visibility": null
+            }
+          }
+        }
+      ]
+    ]
+  ]
+}

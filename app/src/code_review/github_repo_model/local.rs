@@ -161,11 +161,6 @@ impl LocalGitHubRepoModel {
         self.pr_info.as_ref()
     }
 
-    /// Repository info (name/owner) returned by `gh repo view`.
-    pub fn repository_info(&self) -> Option<&RepositoryInfo> {
-        self.repository_info.as_ref()
-    }
-
     /// Whether a `gh pr view` fetch is currently in flight.
     pub fn is_refreshing_pr_info(&self) -> bool {
         self.refreshing_pr_info_abort_handle.is_some()
@@ -371,6 +366,13 @@ impl LocalGitHubRepoModel {
     ) {
         self.repository_info = repository_info;
         ctx.emit(GitHubRepoEvent::RepositoryInfoChanged);
+    }
+}
+
+#[cfg(test)]
+impl LocalGitHubRepoModel {
+    pub fn repository_info(&self) -> Option<&RepositoryInfo> {
+        self.repository_info.as_ref()
     }
 }
 

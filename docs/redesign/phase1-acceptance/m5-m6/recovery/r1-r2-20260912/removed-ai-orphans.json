@@ -1,0 +1,9 @@
+{
+  "files": [
+    "crates/ai/src/gfm_table.rs",
+    "crates/ai/src/gfm_table_tests.rs",
+    "crates/ai/src/paths.rs",
+    "crates/ai/src/paths_tests.rs"
+  ],
+  "reason": "No local production consumers remain; Markdown rendering uses crates/editor and crates/markdown_parser, not the removed Agent-tool table formatter."
+}

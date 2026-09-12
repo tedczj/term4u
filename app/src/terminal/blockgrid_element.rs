@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+use std::ops::RangeInclusive;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 
@@ -8,6 +10,7 @@ use warpui::elements::{
     SizeConstraint,
 };
 use warpui::event::DispatchedEvent;
+use warpui::fonts::Properties;
 use warpui::geometry::rect::RectF;
 use warpui::text::SelectionType;
 use warpui::units::{IntoLines, Lines};
@@ -16,11 +19,12 @@ use super::blockgrid_renderer::{BlockGridRenderer, GridRenderParams};
 use crate::appearance::Appearance;
 use crate::settings::EnforceMinimumContrast;
 use crate::terminal::blockgrid_renderer::BlockGridParams;
+use crate::terminal::grid_renderer::CellGlyphCache;
 use crate::terminal::model::ObfuscateSecrets;
 use crate::terminal::model::blockgrid::BlockGrid;
 use crate::terminal::model::blocks::{BlockListPoint, SelectionRange};
 use crate::terminal::model::grid::Dimensions;
-use crate::terminal::model::index::Side;
+use crate::terminal::model::index::{Point as GridPoint, Side};
 use crate::terminal::model::selection::{SelectAction, SelectionPoint};
 use crate::terminal::view::TerminalAction;
 use crate::terminal::{SizeInfo, color, grid_renderer};
@@ -39,6 +43,8 @@ pub struct BlockGridElement {
     origin: Option<Point>,
     bounds: Option<RectF>,
     selection: Option<GridSelection>,
+    find_matches: Vec<RangeInclusive<GridPoint>>,
+    focused_find_match: Option<RangeInclusive<GridPoint>>,
 }
 
 impl BlockGridElement {
@@ -82,7 +88,19 @@ impl BlockGridElement {
             origin: None,
             bounds: None,
             selection: None,
+            find_matches: Vec::new(),
+            focused_find_match: None,
         }
+    }
+
+    pub fn with_find_matches(
+        mut self,
+        matches: Vec<RangeInclusive<GridPoint>>,
+        focused: Option<RangeInclusive<GridPoint>>,
+    ) -> Self {
+        self.find_matches = matches;
+        self.focused_find_match = focused;
+        self
     }
 
     pub fn with_selection(
@@ -183,8 +201,23 @@ impl Element for BlockGridElement {
 
         self.block_grid_params.bounds = bounds;
         self.bounds = Some(bounds);
-        self.block_grid
-            .draw_with_default_params(origin, origin, &self.block_grid_params, ctx, app);
+        self.block_grid.draw(
+            origin,
+            origin,
+            &mut CellGlyphCache::default(),
+            255,
+            None,
+            None,
+            None,
+            Some(self.find_matches.iter()),
+            self.focused_find_match.as_ref(),
+            Properties::default(),
+            &self.block_grid_params,
+            None,
+            &HashMap::new(),
+            ctx,
+            app,
+        );
         if let Some(selection) = &self.selection {
             for (start, end) in &selection.ranges {
                 grid_renderer::render_selection(

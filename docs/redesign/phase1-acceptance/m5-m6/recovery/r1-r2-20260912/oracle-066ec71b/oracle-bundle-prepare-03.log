@@ -1,0 +1,10 @@
+Adding @executable_path/../Frameworks rpath to /Users/tedczj/workspace/term4u/target/debug/bundle/osx/WarpOss.app/Contents/MacOS/warp-oss to support mac frameworks (e.g. Sentry)
+Updating plist to support a custom url scheme
+Updating plist with supported file types
+Updating plist with permissions descriptions
+Disabling use of Liquid Glass on macOS Tahoe
+Copying bundled resources to /Users/tedczj/workspace/term4u/target/debug/bundle/osx/WarpOss.app/Contents/Resources/bundled
+Copying channel-gated skills for channel 'oss'...
+  Channel 'oss' has no gated skills, skipping
+Successfully prepared bundled resources in /Users/tedczj/workspace/term4u/target/debug/bundle/osx/WarpOss.app/Contents/Resources
+/Users/tedczj/workspace/term4u/target/debug/bundle/osx/WarpOss.app: replacing existing signature

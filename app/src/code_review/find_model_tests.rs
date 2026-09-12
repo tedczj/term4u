@@ -7,10 +7,9 @@ use warp_editor::content::buffer::InitialBufferState;
 use warp_editor::render::element::VerticalExpansionBehavior;
 use warpui::elements::Empty;
 use warpui::platform::WindowStyle;
-use warpui::{App, Element as _, ModelHandle, SingletonEntity, ViewHandle};
+use warpui::{App, Element as _, ModelHandle, ViewHandle};
 
 use super::*;
-use crate::auth::AuthStateProvider;
 use crate::code::buffer_location::LocalOrRemotePath;
 use crate::code::editor::view::{CodeEditorRenderOptions, CodeEditorView};
 use crate::code::local_code_editor::LocalCodeEditorView;
@@ -142,7 +141,7 @@ fn test_regex_search() {
 /// Initialize required singletons for testing LocalCodeEditorView
 fn initialize_test_app(app: &mut App) {
     initialize_settings_for_tests(app);
-    app.add_singleton_model(|_| AuthStateProvider::new_for_test());
+
     app.add_singleton_model(|_| Appearance::mock());
     app.add_singleton_model(|_| SyncedInputState::mock());
     app.add_singleton_model(|_| VimRegisters::new());
@@ -208,7 +207,7 @@ fn create_editor_with_content(app: &mut App, content: &str) -> ViewHandle<LocalC
             editor.reset(InitialBufferState::plain_text(&content), ctx);
         });
 
-        LocalCodeEditorView::new(code_editor_view, None, false, None, ctx)
+        LocalCodeEditorView::new(code_editor_view, None, false, ctx)
     });
 
     local_editor

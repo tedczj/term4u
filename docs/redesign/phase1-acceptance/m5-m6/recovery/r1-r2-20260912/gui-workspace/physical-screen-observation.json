@@ -1,0 +1,7 @@
+{
+  "recorded_at_utc": "2026-09-12T17:24:43.189255+00:00",
+  "source": "user response in this conversation",
+  "question_scope": "current isolated Term4u window searching R1R2; whether text disappears on the physical screen",
+  "response": "实际窗口文字完整",
+  "conclusion": "The user reports complete physical-window text; CUA screenshots show missing text. Retain screenshots with this capture limitation. This observation does not certify every prior screenshot."
+}

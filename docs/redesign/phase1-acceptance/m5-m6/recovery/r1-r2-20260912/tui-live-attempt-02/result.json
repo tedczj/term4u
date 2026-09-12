@@ -1,0 +1,61 @@
+{
+  "start_utc": "2026-09-12T13:02:19.778176+00:00",
+  "binary": "/Users/tedczj/workspace/term4u/target/debug/term4u-tui",
+  "binary_sha256": "3f9c5bbd95c6b698636430c00f8723e2cb30ff0fb508c9a48981c26546e41409",
+  "data_profile": "r1r2-tui-live-20260912-02",
+  "cwd": "/tmp/term4u-r1r2-20260912/tui-work",
+  "checks": [
+    {
+      "name": "startup",
+      "status": "passed",
+      "elapsed": 2.8173115828540176
+    },
+    {
+      "name": "command-output",
+      "status": "passed",
+      "elapsed": 3.2932067909277976
+    },
+    {
+      "name": "ctrl-c",
+      "status": "passed",
+      "elapsed": 4.776245499961078
+    },
+    {
+      "name": "new-tab",
+      "status": "passed",
+      "elapsed": 5.239985666004941
+    },
+    {
+      "name": "external-cli",
+      "status": "passed",
+      "elapsed": 5.715905499877408
+    },
+    {
+      "name": "switch-tab",
+      "status": "passed",
+      "elapsed": 6.18968562502414
+    },
+    {
+      "name": "close-tab",
+      "status": "passed",
+      "elapsed": 6.661701999837533
+    },
+    {
+      "name": "exit",
+      "status": "passed"
+    }
+  ],
+  "status": "passed",
+  "pid": 5097,
+  "exit_code": 0,
+  "end_utc": "2026-09-12T13:02:26.453910+00:00",
+  "captures": [
+    "startup",
+    "command-output",
+    "ctrl-c",
+    "new-tab",
+    "external-cli",
+    "switch-tab",
+    "close-tab"
+  ]
+}

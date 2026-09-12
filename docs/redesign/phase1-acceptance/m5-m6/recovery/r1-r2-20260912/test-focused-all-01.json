@@ -1,0 +1,19 @@
+{
+  "command": [
+    "cargo",
+    "nextest",
+    "run",
+    "-p",
+    "warp_tui",
+    "-p",
+    "ai",
+    "-p",
+    "persistence",
+    "-p",
+    "warp_terminal",
+    "-p",
+    "lsp"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 40.823
+}

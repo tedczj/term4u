@@ -3,41 +3,9 @@ use warp_util::path::ShellFamily;
 
 pub mod model;
 
-pub use model::{EnvVar, EnvVarCollection, EnvVarValue};
+pub use model::EnvVarValue;
 
 use crate::terminal::shell::ShellType;
-
-pub trait EnvVarExt {
-    fn get_initialization_string(&self, shell_type: ShellType) -> String;
-}
-
-impl EnvVarExt for EnvVar {
-    fn get_initialization_string(&self, shell_type: ShellType) -> String {
-        let shell_family = ShellFamily::from(shell_type);
-        let name = shell_family.escape(&self.name);
-        let value = initialization_value(&self.value, shell_family);
-        match shell_type {
-            ShellType::Bash | ShellType::Zsh => format!("export {name}={value};"),
-            ShellType::Fish => format!("set -x {name} {value};"),
-            ShellType::PowerShell => format!("$env:{name} = {value};"),
-        }
-    }
-}
-
-pub trait EnvVarCollectionExt {
-    fn export_variables_for_shell(&self, shell_type: ShellType) -> String;
-}
-
-impl EnvVarCollectionExt for EnvVarCollection {
-    fn export_variables_for_shell(&self, shell_type: ShellType) -> String {
-        serialize_variables_for_shell(
-            self.vars
-                .iter()
-                .map(|variable| (variable.name.as_str(), &variable.value)),
-            shell_type,
-        )
-    }
-}
 
 pub fn serialize_variables_for_shell<'a>(
     pairs: impl IntoIterator<Item = (&'a str, &'a EnvVarValue)>,

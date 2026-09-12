@@ -1,0 +1,427 @@
+[
+  {
+    "path": "app/src/code/local_code_editor.rs",
+    "function": "scroll_fraction",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/code/local_code_editor.rs",
+    "function": "render_selection_tooltip",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/code/local_code_editor.rs",
+    "function": "accept_diff",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/code/editor/comment_editor.rs",
+    "function": "set_laid_out_size",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/code/editor/comment_editor.rs",
+    "function": "new_embedded",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/code/editor/view.rs",
+    "function": "changed_lines",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/code/editor/view.rs",
+    "function": "scroll_fraction",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/code/editor/view.rs",
+    "function": "retrieve_unified_diff",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/code/editor/view.rs",
+    "function": "is_selecting",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/code/editor/view.rs",
+    "function": "navigate_next_diff_hunk",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/code/editor/view.rs",
+    "function": "with_add_context_button",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/code/editor/view.rs",
+    "function": "truncate",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/code/editor/view.rs",
+    "function": "starting_line_number",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/code/editor/view.rs",
+    "function": "diff_hunks_changed_lines",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/code/editor/view.rs",
+    "function": "append_at_end",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/code/editor/view.rs",
+    "function": "navigate_previous_diff_hunk",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/code/editor/view.rs",
+    "function": "system_append_autoscroll_vertical_only",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/code/editor/view.rs",
+    "function": "set_starting_line_number",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/code/global_buffer_model.rs",
+    "function": "remove",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/code/language_server_shutdown_manager.rs",
+    "function": "has_in_progress_scan",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/code/file_tree/view.rs",
+    "function": "set_enablement_state",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/code/opened_files.rs",
+    "function": "iter",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/code/view.rs",
+    "function": "scroll_fraction",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/code/view.rs",
+    "function": "set_pending_scroll_fraction",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/code_review/code_review_view.rs",
+    "function": "navigate_to_imported_comment",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/code_review/code_review_view.rs",
+    "function": "render_file_navigation_button",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/code_review/code_review_view.rs",
+    "function": "attach_context_not_allowed_toast_id",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/code_review/code_review_view.rs",
+    "function": "format_diff_hunk_content",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/code_review/code_review_view.rs",
+    "function": "set_diff_base",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/code_review/code_review_view.rs",
+    "function": "extract_diff_hunk_data",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/code_review/code_review_view.rs",
+    "function": "repo_is_local",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/code_review/code_review_view.rs",
+    "function": "expand_comment_list_and_scroll_to_comment",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/code_review/code_review_view.rs",
+    "function": "expand_comment_list",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/code_review/code_review_view.rs",
+    "function": "attach_diff_not_allowed_toast_id",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/code_review/comment_list_view.rs",
+    "function": "repo_is_local",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/code_review/comment_list_view.rs",
+    "function": "has_non_outdated_comments",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/code_review/find_model.rs",
+    "function": "repo_is_local",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/code_review/git_repo_model/local.rs",
+    "function": "repo_path",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/code_review/git_repo_model/local.rs",
+    "function": "set_metadata_for_test",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/code_review/github_repo_model/local.rs",
+    "function": "repository_info",
+    "status": "retained_as_test_helper"
+  },
+  {
+    "path": "app/src/code_review/code_review_header/mod.rs",
+    "function": "render_header_dropdown_button",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/code_review/comment_rendering.rs",
+    "function": "is_collapsed",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/code_review/comment_rendering.rs",
+    "function": "toggle_collapsed",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/code_review/comments/pending_imported.rs",
+    "function": "file_path",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/menu.rs",
+    "function": "with_tooltip_position",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/session_management.rs",
+    "function": "num_shared_sessions",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/ui_components/buttons.rs",
+    "function": "highlight",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/ui_components/buttons.rs",
+    "function": "combo_inner_button_styles",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/ui_components/buttons.rs",
+    "function": "accent_icon_button",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/ui_components/buttons.rs",
+    "function": "combo_inner_button",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/view_components/find.rs",
+    "function": "editor",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/view_components/find.rs",
+    "function": "is_editor_focused",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/editor/view/mod.rs",
+    "function": "render_menu_button_tooltip",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/pane_group/mod.rs",
+    "function": "close_temporary_replacement_pane",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/pane_group/mod.rs",
+    "function": "focus_pane_preserving_maximized_state",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/pane_group/mod.rs",
+    "function": "handle_pane_link_updated",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/pane_group/mod.rs",
+    "function": "close_panes",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/pane_group/mod.rs",
+    "function": "revert_swap_clearing_split_off",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/pane_group/pane/mod.rs",
+    "function": "pane_type",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/pane_group/pane/mod.rs",
+    "function": "deferred_placeholder_pane_id",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/pane_group/pane/mod.rs",
+    "function": "creation_order_id",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/pane_group/pane/terminal_pane.rs",
+    "function": "delete_blocks",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/pane_group/tree.rs",
+    "function": "pane_flex_sum_along_axis",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/search/command_search/view.rs",
+    "function": "active_query_filter",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/settings/import/view.rs",
+    "function": "interrupt_block",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/settings_view/features_page.rs",
+    "function": "render_group",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/terminal/mod.rs",
+    "function": "element_size_at_last_frame",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/terminal/alt_screen/alt_screen_element.rs",
+    "function": "with_ligature_rendering",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/terminal/alt_screen/alt_screen_element.rs",
+    "function": "with_hide_cursor_cell",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/terminal/model/block.rs",
+    "function": "enable_full_grid_clear_behavior",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/terminal/model/blocks.rs",
+    "function": "load_shared_session_scrollback",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/terminal/model/blocks.rs",
+    "function": "finish_active_block_before_followup_append",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/terminal/model/blocks.rs",
+    "function": "remove_block_at_index",
+    "status": "retained_as_test_helper"
+  },
+  {
+    "path": "app/src/terminal/model/blocks.rs",
+    "function": "remove_command_blocks_at_indices",
+    "status": "retained_as_test_helper"
+  },
+  {
+    "path": "app/src/terminal/model/blocks.rs",
+    "function": "insert_rich_content_after_item",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/terminal/model/blocks.rs",
+    "function": "set_obfuscate_secrets_for_subsequent_blocks",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/terminal/model/blocks.rs",
+    "function": "removable_blocklist_item_position",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/terminal/model/blocks.rs",
+    "function": "append_followup_shared_session_scrollback",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/terminal/model/blocks.rs",
+    "function": "ensure_active_block_after_shared_session_scrollback",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/terminal/model/lifecycle/mod.rs",
+    "function": "reset_unknown",
+    "status": "retained_as_test_helper"
+  },
+  {
+    "path": "app/src/workflows/mod.rs",
+    "function": "should_show_env_var_selection",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/workflows/categories.rs",
+    "function": "editor_down",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/workflows/categories.rs",
+    "function": "editor_enter",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/workflows/categories.rs",
+    "function": "editor_up",
+    "status": "removed"
+  },
+  {
+    "path": "app/src/workspace/tab_settings.rs",
+    "function": "ansi_color",
+    "status": "removed"
+  }
+]

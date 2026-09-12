@@ -5,7 +5,7 @@ use std::sync::Arc;
 
 use parking_lot::FairMutex;
 use warp::tui_export::{
-    Block, BlockGrid, BlockId, BlockList, GridHandler, TermMode, TerminalColorList, TerminalModel,
+    Block, BlockGrid, BlockId, GridHandler, TermMode, TerminalColorList, TerminalModel,
 };
 use warp_terminal::model::ansi::{Color, NamedColor};
 use warp_terminal::model::grid::Dimensions as _;
@@ -384,8 +384,8 @@ pub(super) fn render_grid_handler(
 }
 
 /// Returns whether the TUI transcript should include this terminal block.
-pub(super) fn should_render_terminal_block(block: &Block, block_list: &BlockList) -> bool {
-    block.is_visible(block_list.transcript_scope()) && (block.started() || block.finished())
+pub(super) fn should_render_terminal_block(block: &Block) -> bool {
+    block.is_visible() && (block.started() || block.finished())
 }
 
 /// Paints consecutive displayed rows of one grid starting at `*y`, advancing

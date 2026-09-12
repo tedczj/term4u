@@ -367,9 +367,9 @@ pub struct BlockFilter {
 
 impl BlockFilter {
     /// Tests if a block matches this filter.
-    pub fn matches(self, block: &Block, transcript_scope: &TranscriptScope) -> bool {
+    pub fn matches(self, block: &Block) -> bool {
         (self.include_background || !block.is_background())
-            && (self.include_hidden || !block.is_empty(transcript_scope))
+            && (self.include_hidden || !block.is_empty())
     }
 
     /// Block filter for visible command blocks. This excludes background output
@@ -537,26 +537,6 @@ enum BlockHeightUpdate {
     Removal(TotalIndex),
 }
 
-struct SharedSessionScrollbackBlocks<'a> {
-    completed_blocks: &'a [SerializedBlock],
-    active_block: Option<&'a SerializedBlock>,
-}
-
-impl<'a> SharedSessionScrollbackBlocks<'a> {
-    fn new(scrollback: &'a [SerializedBlock]) -> Self {
-        match scrollback.split_last() {
-            Some((active_block, completed_blocks)) if active_block.completed_ts.is_none() => Self {
-                completed_blocks,
-                active_block: Some(active_block),
-            },
-            _ => Self {
-                completed_blocks: scrollback,
-                active_block: None,
-            },
-        }
-    }
-}
-
 impl BlockList {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
@@ -698,92 +678,6 @@ impl BlockList {
         self.create_warp_input_block();
     }
 
-    pub(super) fn load_shared_session_scrollback(&mut self, scrollback: &[SerializedBlock]) {
-        let scrollback_blocks = SharedSessionScrollbackBlocks::new(scrollback);
-        // If the snapshot will restore any blocks, finish the placeholder active block first.
-        // For an empty snapshot, keep the existing placeholder active block instead of replacing
-        // it with another hidden block.
-        if !scrollback.is_empty() && !self.active_block().finished() {
-            self.active_block_mut().finish(0);
-        }
-
-        // Simulate finishing bootstrapping once we get the scrollback.
-        self.set_bootstrapped();
-        let mut processor: Processor = Processor::new();
-
-        for block in scrollback_blocks.completed_blocks {
-            if block.start_ts.is_some() && block.completed_ts.is_some() {
-                self.restore_block(block, BootstrapStage::PostBootstrapPrecmd, &mut processor);
-            } else {
-                log::warn!("A non-active scrollback block was either not started or not completed");
-            }
-        }
-        if let Some(active_block) = scrollback_blocks.active_block {
-            self.restore_block(
-                active_block,
-                BootstrapStage::PostBootstrapPrecmd,
-                &mut processor,
-            );
-        } else {
-            self.ensure_active_block_after_shared_session_scrollback();
-        }
-    }
-
-    pub(super) fn append_followup_shared_session_scrollback(
-        &mut self,
-        scrollback: &[SerializedBlock],
-    ) {
-        self.set_bootstrapped();
-        let mut processor = Processor::new();
-        let scrollback_blocks = SharedSessionScrollbackBlocks::new(scrollback);
-
-        for block in scrollback_blocks.completed_blocks {
-            if self.block_index_for_id(&block.id).is_some() {
-                continue;
-            }
-            if block.start_ts.is_some() && block.completed_ts.is_some() {
-                self.finish_active_block_before_followup_append();
-                self.restore_block(block, BootstrapStage::PostBootstrapPrecmd, &mut processor);
-            } else {
-                log::warn!(
-                    "A non-active follow-up scrollback block was either not started or not completed"
-                );
-            }
-        }
-
-        match scrollback_blocks.active_block {
-            Some(active_block) if self.block_index_for_id(&active_block.id).is_none() => {
-                self.finish_active_block_before_followup_append();
-                self.restore_block(
-                    active_block,
-                    BootstrapStage::PostBootstrapPrecmd,
-                    &mut processor,
-                );
-            }
-            Some(_) | None => {
-                self.ensure_active_block_after_shared_session_scrollback();
-            }
-        }
-    }
-
-    fn finish_active_block_before_followup_append(&mut self) {
-        if !self.active_block().finished() {
-            self.active_block_mut().finish(0);
-            self.update_active_block_height();
-        }
-    }
-
-    fn ensure_active_block_after_shared_session_scrollback(&mut self) {
-        if self.active_block().finished() {
-            self.create_new_block(
-                BlockId::new(),
-                BootstrapStage::PostBootstrapPrecmd,
-                None,
-                None,
-            );
-        }
-    }
-
     /// This is an important function in the block list lifecycle. After this
     /// is called, there's an invariant where we always have an active block.
     fn create_warp_input_block(&mut self) {
@@ -919,8 +813,8 @@ impl BlockList {
         };
 
         let gap = BlockHeightItem::Gap(gap_height.into());
-        let transcript_scope = self.transcript_scope;
-        let active_block_height = self.active_block_mut().height(&transcript_scope).into();
+
+        let active_block_height = self.active_block_mut().height().into();
 
         if active_block_height > BlockHeight::zero() {
             self.block_heights
@@ -1385,55 +1279,6 @@ impl BlockList {
         Some(block)
     }
 
-    fn remove_block_at_index(&mut self, block_index: BlockIndex) -> Option<Block> {
-        debug_assert!(block_index != self.active_block_index());
-
-        let block = self.blocks.remove(block_index.0);
-        self.block_id_to_block_index.remove(block.id());
-
-        // Shift down the index of any blocks after the removed one.
-        for index in BlockIndex::range_as_iter(block_index..BlockIndex(self.blocks.len())) {
-            self.reset_internal_block_index(index);
-        }
-
-        let (new_heights, removed_index) = {
-            let mut cursor = self.block_heights.cursor::<BlockIndex, TotalIndex>();
-            let mut tree_before_block =
-                cursor.slice(&(block_index + BlockIndex(1)), SeekBias::Left);
-            let removed_index = *cursor.start();
-            // Skip past the block being removed.
-            cursor.next();
-            tree_before_block.push_tree(cursor.suffix());
-            (tree_before_block, removed_index)
-        };
-        self.block_heights = new_heights;
-
-        // It's unlikely that they exist, but if there are any non-block items
-        // after the removed block, we must update tracking information for them.
-        self.update_block_height_indices(BlockHeightUpdate::Removal(removed_index), true);
-
-        Some(block)
-    }
-
-    /// Removes command blocks at stable pre-removal indices.
-    fn remove_command_blocks_at_indices(&mut self, indices_to_remove: Vec<BlockIndex>) {
-        if indices_to_remove.is_empty() {
-            return;
-        }
-
-        self.clear_selection();
-        self.clear_smart_select_override();
-        self.clear_scroll_position_before_filter();
-
-        // Remove in reverse order so indices remain valid.
-        for index in indices_to_remove.into_iter().rev() {
-            self.remove_block_at_index(index);
-        }
-
-        // Force a re-draw since the blocklist has changed.
-        self.event_proxy.send_wakeup_event();
-    }
-
     /// Gets the active background block, if one exists.
     pub(super) fn background_block_mut(&mut self) -> Option<&mut Block> {
         // The active background block will be the one immediately before
@@ -1488,10 +1333,6 @@ impl BlockList {
         &self.transcript_scope
     }
 
-    /// Returns the conversation associated with newly created command blocks.
-
-    /// Returns whether the active conversation executes in a cloud context.
-
     /// Updates the transcript membership used by the cached block-height layout.
     pub fn set_transcript_scope(&mut self, scope: TranscriptScope) {
         if self.transcript_scope == scope {
@@ -1500,17 +1341,6 @@ impl BlockList {
         self.transcript_scope = scope;
         self.update_blocks_and_sumtree(None, None, |_| {}, |_| {});
     }
-
-    /// Associates subsequent command blocks with an active conversation.
-
-    /// Clears the active conversation association without changing transcript scope.
-
-    /// Associates command blocks with a GUI conversation and updates its transcript scope.
-
-    /// Clears the active conversation association and returns to terminal scope.
-
-    /// Marks AI / agent-view rich content as dirty so heights get re-laid out. Call this after
-    /// any change that affects which rich content is visible for the current agent view state.
 
     pub fn refresh_heights_for_loaded_passive_code_diff(
         &mut self,
@@ -1521,19 +1351,6 @@ impl BlockList {
     }
 
     pub fn refresh_block_heights_for_passive_code_diff(&mut self) {}
-
-    /// Associates the given blocks with a conversation, making them visible in that conversation's agent view.
-    /// Returns a Vec of (block_id, visibility) for blocks that were found.
-
-    /// Attaches every non-oz-startup block in the list to `conversation_id` so each block is
-    /// visible while that conversation is the active one in agent view. Skips blocks flagged
-    /// as `is_oz_environment_startup_command` since those are hidden by their own mechanism.
-
-    /// Removes the conversation association from the given blocks, making them disappear from that conversation's agent view.
-    /// Returns a Vec of (block_id, visibility) for blocks that were modified.
-
-    /// Promotes all blocks that are pending for the given conversation to attached.
-    /// Returns a Vec of (block_id, visibility) for blocks that were modified.
 
     /// Update the height of an active block in the block heights SumTree. In general,
     /// blocks are immutable once finished. Only the active block and the most
@@ -1571,7 +1388,7 @@ impl BlockList {
         };
         let mut previous_block_height = BlockHeight::zero();
         let block_height = if let Some(block) = self.block_at(block_index) {
-            block.height(&self.transcript_scope).into()
+            block.height().into()
         } else {
             report_error!(
                 "Tried to update height of block, but no such block exists",
@@ -1710,7 +1527,7 @@ impl BlockList {
     {
         block_indices.into_iter().find(|index| {
             self.block_at(*index)
-                .is_some_and(|block| filter.matches(block, &self.transcript_scope))
+                .is_some_and(|block| filter.matches(block))
         })
     }
 
@@ -1782,16 +1599,6 @@ impl BlockList {
 
         None
     }
-
-    /// Chronological navigable targets for Cmd-Up/Cmd-Down in the active agent view.
-    ///
-    /// Includes mounted AI blocks that represent user prompts/queries and eligible
-    /// user-executed shell command blocks. Skips agent-reply AI segments, tool-call
-    /// results mounted as AI blocks, agent-requested/monitored shell commands, hidden
-    /// items, gaps, banners, and other non-navigable rich content.
-
-    /// Updates whether an AI rich-content item is a navigable user-query segment.
-    /// Used when streaming exchange inputs become renderable after initial mount.
 
     /// Return the height of the last non hidden rich content block after a block index. If there is no non hidden rich content block, return None.
     pub fn last_non_hidden_rich_content_block_after_block(
@@ -1901,9 +1708,7 @@ impl BlockList {
                         let block_index = block_heights_cursor.start().block_count;
                         if let Some(block) = self.blocks.get_mut(block_index) {
                             block_update_fn(block);
-                            new_sum_tree.push(BlockHeightItem::Block(
-                                block.height(transcript_scope).into(),
-                            ));
+                            new_sum_tree.push(BlockHeightItem::Block(block.height().into()));
                         } else {
                             report_error!("invalid block index in block heights");
                         }
@@ -2405,9 +2210,8 @@ impl BlockList {
             block.hide();
         }
 
-        self.block_heights.push(BlockHeightItem::Block(
-            block.height(&self.transcript_scope).into(),
-        ));
+        self.block_heights
+            .push(BlockHeightItem::Block(block.height().into()));
         self.block_id_to_block_index
             .insert(block.id().clone(), block.index());
         self.blocks.push(block);
@@ -2446,16 +2250,6 @@ impl BlockList {
         for block in self.blocks.iter_mut() {
             block.set_obfuscate_secrets(obfuscate_secrets);
         }
-    }
-
-    /// Sets whether subsequent blocks (including the active block) have their grids obfuscated.
-    pub(super) fn set_obfuscate_secrets_for_subsequent_blocks(
-        &mut self,
-        obfuscate_secrets: ObfuscateSecrets,
-    ) {
-        self.obfuscate_secrets = obfuscate_secrets;
-        self.active_block_mut()
-            .set_obfuscate_secrets(obfuscate_secrets);
     }
 
     /// Sets whether the grids of the specified block should be obfuscated.
@@ -2903,14 +2697,14 @@ impl BlockList {
         let num_secrets_obfuscated = self
             .background_block_mut()
             .map(|block| block.num_secrets_obfuscated());
-        let transcript_scope = self.transcript_scope;
+
         if let Some(background_block) = self.background_block_mut() {
             background_block.finish(0);
             let block_index = background_block.index();
 
             // It's common to have empty background blocks (because they only contained
             // typeahead), so we skip serializing them.
-            if !background_block.is_empty(&transcript_scope) {
+            if !background_block.is_empty() {
                 // This is similar to send_after_block_completed_event, but we can't
                 // call it because background_block mutably borrows self.
                 let block_type = background_block.into();
@@ -2959,7 +2753,7 @@ impl BlockList {
     /// Updates the sumtree with the block's new height.
     fn update_block_height_at_idx(&mut self, block_index: BlockIndex) {
         if let Some(block) = self.block_at(block_index) {
-            let new_block_height = block.height(&self.transcript_scope).into();
+            let new_block_height = block.height().into();
 
             self.block_heights = {
                 let mut cursor = self.block_heights.cursor::<BlockIndex, ()>();
@@ -2995,7 +2789,7 @@ impl BlockList {
         let block_to_filter = self
             .blocks
             .get_mut(block_index.0)
-            .filter(|block| !block.is_empty(&self.transcript_scope));
+            .filter(|block| !block.is_empty());
         if let Some(block) = block_to_filter {
             block.filter_output(filter_query);
             self.update_block_height_at_idx(block_index);
@@ -3014,7 +2808,7 @@ impl BlockList {
         let block_to_clear = self
             .blocks
             .get_mut(block_index.0)
-            .filter(|block| !block.is_empty(&self.transcript_scope));
+            .filter(|block| !block.is_empty());
         if let Some(block) = block_to_clear {
             block.clear_filter();
             self.update_block_height_at_idx(block_index);
@@ -3043,14 +2837,14 @@ impl BlockList {
     pub fn filter_for_block(&self, block_index: BlockIndex) -> Option<&BlockFilterQuery> {
         self.blocks
             .get(block_index.0)
-            .filter(|block| !block.is_empty(&self.transcript_scope))
+            .filter(|block| !block.is_empty())
             .and_then(|block| block.current_filter())
     }
 
     pub fn num_matched_lines_in_filter_for_block(&self, block_index: BlockIndex) -> Option<usize> {
         self.blocks
             .get(block_index.0)
-            .filter(|block| !block.is_empty(&self.transcript_scope))
+            .filter(|block| !block.is_empty())
             .and_then(|block| {
                 block
                     .output_grid()
@@ -3078,53 +2872,6 @@ impl BlockList {
             .insert(RemovableBlocklistItem::RichContent(view_id), inserted_index);
         self.mark_rich_content_dirty(view_id);
         self.maintain_pinned_to_bottom();
-    }
-
-    /// Insert a rich content item immediately after the given removable item.
-    /// Returns true if insertion succeeded.
-    pub(in crate::terminal) fn insert_rich_content_after_item(
-        &mut self,
-        after_item: RemovableBlocklistItem,
-        item: RichContentItem,
-    ) -> bool {
-        let Some(current_index) = self
-            .removable_blocklist_item_positions
-            .get(&after_item)
-            .copied()
-        else {
-            return false;
-        };
-
-        let view_id = item.view_id;
-
-        // Recreate block heights tree with new item inserted.
-        let (new_tree, inserted_index) = {
-            let mut cursor = self.block_heights.cursor::<TotalIndex, ()>();
-            let mut prefix = cursor.slice(&(current_index + 1), SeekBias::Right);
-            let inserted_index = TotalIndex(prefix.summary().total_count);
-            prefix.push(BlockHeightItem::RichContent(item));
-            prefix.push_tree(cursor.suffix());
-            (prefix, inserted_index)
-        };
-
-        self.block_heights = new_tree;
-        self.update_block_height_indices(BlockHeightUpdate::Insertion(inserted_index), true);
-
-        // If there is an item at the index that we are inserting into,
-        // we should shift that item forward by one.
-        self.removable_blocklist_item_positions
-            .values_mut()
-            .for_each(|pos| {
-                if *pos == inserted_index {
-                    pos.0 += 1;
-                }
-            });
-
-        self.removable_blocklist_item_positions
-            .insert(RemovableBlocklistItem::RichContent(view_id), inserted_index);
-        self.event_proxy.send_wakeup_event();
-
-        true
     }
 
     pub(in crate::terminal) fn set_marked_text(
@@ -3165,13 +2912,6 @@ impl BlockList {
         }
 
         contents.trim().to_string()
-    }
-
-    pub(crate) fn removable_blocklist_item_position(
-        &self,
-        item: &RemovableBlocklistItem,
-    ) -> Option<&TotalIndex> {
-        self.removable_blocklist_item_positions.get(item)
     }
 
     /// Returns the current absolute row range for one rich-content view.
@@ -3390,9 +3130,8 @@ impl ansi::Handler for BlockList {
                 self.reset_internal_block_index(BlockIndex::zero());
 
                 if let Some(block) = self.blocks.last() {
-                    self.block_heights = SumTree::from_item(BlockHeightItem::Block(
-                        block.height(&self.transcript_scope).into(),
-                    ));
+                    self.block_heights =
+                        SumTree::from_item(BlockHeightItem::Block(block.height().into()));
                 } else {
                     self.block_heights = SumTree::new();
                 }
@@ -3715,6 +3454,56 @@ impl ToTotalIndex for BlockIndex {
         let mut cursor = block_list.block_heights().cursor::<BlockIndex, ()>();
         let count_including_item = cursor.slice(self, SeekBias::Right).summary().total_count;
         TotalIndex(count_including_item)
+    }
+}
+
+#[cfg(test)]
+impl BlockList {
+    fn remove_block_at_index(&mut self, block_index: BlockIndex) -> Option<Block> {
+        debug_assert!(block_index != self.active_block_index());
+
+        let block = self.blocks.remove(block_index.0);
+        self.block_id_to_block_index.remove(block.id());
+
+        // Shift down the index of any blocks after the removed one.
+        for index in BlockIndex::range_as_iter(block_index..BlockIndex(self.blocks.len())) {
+            self.reset_internal_block_index(index);
+        }
+
+        let (new_heights, removed_index) = {
+            let mut cursor = self.block_heights.cursor::<BlockIndex, TotalIndex>();
+            let mut tree_before_block =
+                cursor.slice(&(block_index + BlockIndex(1)), SeekBias::Left);
+            let removed_index = *cursor.start();
+            // Skip past the block being removed.
+            cursor.next();
+            tree_before_block.push_tree(cursor.suffix());
+            (tree_before_block, removed_index)
+        };
+        self.block_heights = new_heights;
+
+        // It's unlikely that they exist, but if there are any non-block items
+        // after the removed block, we must update tracking information for them.
+        self.update_block_height_indices(BlockHeightUpdate::Removal(removed_index), true);
+
+        Some(block)
+    }
+    fn remove_command_blocks_at_indices(&mut self, indices_to_remove: Vec<BlockIndex>) {
+        if indices_to_remove.is_empty() {
+            return;
+        }
+
+        self.clear_selection();
+        self.clear_smart_select_override();
+        self.clear_scroll_position_before_filter();
+
+        // Remove in reverse order so indices remain valid.
+        for index in indices_to_remove.into_iter().rev() {
+            self.remove_block_at_index(index);
+        }
+
+        // Force a re-draw since the blocklist has changed.
+        self.event_proxy.send_wakeup_event();
     }
 }
 

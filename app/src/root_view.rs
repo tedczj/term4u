@@ -17,15 +17,18 @@ use warpui::{
 use crate::app_state::{AppState, PaneUuid, WindowSnapshot};
 use crate::appearance::Appearance;
 use crate::launch_configs::launch_config;
+use crate::notebooks::manager::{NotebookManager, NotebookSource};
 use crate::pane_group::{NewTerminalOptions, PanesLayout};
 use crate::settings::QuakeModeSettings;
 use crate::settings_view::SettingsSection;
 use crate::terminal::available_shells::AvailableShell;
 use crate::terminal::model::SerializedBlockListItem;
-use crate::terminal::shell::ShellType;
 use crate::themes::theme::AnsiColorIdentifier;
 use crate::uri::OpenSettingsArgs;
-use crate::workspace::{PaneViewLocator, Workspace, WorkspaceAction};
+use crate::view_components::DismissibleToast;
+use crate::workspace::{
+    PaneViewLocator, ToastStack, Workspace, WorkspaceAction, WorkspaceRegistry,
+};
 use crate::{GlobalResourceHandles, GlobalResourceHandlesProvider};
 
 const WINDOW_TITLE: &str = "Term4u";
@@ -79,11 +82,6 @@ pub struct OpenPath {
     pub path: PathBuf,
 }
 
-pub struct SubshellCommandArg {
-    pub command: String,
-    pub shell_type: Option<ShellType>,
-}
-
 #[derive(Clone)]
 pub enum NewWorkspaceSource {
     Empty {
@@ -134,7 +132,6 @@ impl NewWorkspaceSource {
 
 pub struct RootView {
     workspace: ViewHandle<Workspace>,
-    window_id: WindowId,
 }
 
 impl RootView {
@@ -144,10 +141,7 @@ impl RootView {
         ctx: &mut ViewContext<Self>,
     ) -> Self {
         let workspace = ctx.add_typed_action_view(|ctx| Workspace::new(resources, source, ctx));
-        Self {
-            workspace,
-            window_id: ctx.window_id(),
-        }
+        Self { workspace }
     }
 
     pub fn workspace_view(&self) -> Option<&ViewHandle<Workspace>> {
@@ -237,12 +231,6 @@ impl RootView {
         });
         true
     }
-
-    fn insert_subshell_command(&mut self, arg: &SubshellCommandArg, ctx: &mut ViewContext<Self>) {
-        self.workspace.update(ctx, |workspace, ctx| {
-            workspace.handle_action(&WorkspaceAction::RunCommand(arg.command.clone()), ctx)
-        });
-    }
 }
 
 impl Entity for RootView {
@@ -277,11 +265,26 @@ impl View for RootView {
     }
 }
 
-impl Drop for RootView {
-    fn drop(&mut self) {}
-}
-
 pub fn init(app: &mut AppContext) {
+    app.add_global_action("workspace:open_repository", |path: &String, ctx| {
+        let workspace = ctx
+            .windows()
+            .active_window()
+            .and_then(|window| WorkspaceRegistry::as_ref(ctx).get(window, ctx));
+        if let Some(workspace) = workspace {
+            workspace.update(ctx, |workspace, ctx| {
+                workspace.handle_action(
+                    &WorkspaceAction::OpenRepository {
+                        path: Some(path.clone()),
+                    },
+                    ctx,
+                )
+            });
+        } else {
+            let _ = open_new_from_path(&OpenPath { path: path.into() }, ctx);
+        }
+    });
+    app.add_global_action("workspace:open_notebook", open_notebook);
     #[cfg(feature = "local_fs")]
     app.add_global_action("workspace:save_app", |_: &(), ctx| {
         crate::persistence::save_app_snapshot(ctx);
@@ -293,7 +296,7 @@ pub fn init(app: &mut AppContext) {
         let _ = open_new_from_path(path, ctx);
     });
     app.add_global_action("root_view:open_launch_config", open_launch_config);
-    app.add_global_action("root_view:send_feedback", send_feedback);
+    app.add_global_action("root_view:export_logs", export_logs);
     app.add_global_action(
         "root_view:toggle_quake_mode_window",
         toggle_quake_mode_window,
@@ -327,6 +330,27 @@ pub fn init(app: &mut AppContext) {
     app.add_action("root_view:toggle_fullscreen", RootView::toggle_fullscreen);
 }
 
+fn open_notebook(source: &NotebookSource, ctx: &mut AppContext) {
+    if let Some((window, locator)) = NotebookManager::as_ref(ctx).find_pane(source)
+        && let Some(workspace) = WorkspaceRegistry::as_ref(ctx).get(window, ctx)
+    {
+        workspace.update(ctx, |workspace, ctx| workspace.focus_pane(locator, ctx));
+        ctx.windows().show_window_and_focus_app(window);
+        return;
+    }
+    let workspace = ctx
+        .windows()
+        .active_window()
+        .and_then(|window| WorkspaceRegistry::as_ref(ctx).get(window, ctx));
+    let action = WorkspaceAction::OpenNotebook(source.clone());
+    if let Some(workspace) = workspace {
+        workspace.update(ctx, |workspace, ctx| workspace.handle_action(&action, ctx));
+    } else {
+        let (_, root) = open_new_window_get_handles(None, ctx);
+        root.update(ctx, |root, ctx| root.handle_action(&action, ctx));
+    }
+}
+
 fn open_from_restored(arg: &OpenFromRestoredArg, ctx: &mut AppContext) {
     let Some(state) = &arg.app_state else {
         open_new(&(), ctx);
@@ -355,8 +379,25 @@ fn open_launch_config(arg: &OpenLaunchConfigArg, ctx: &mut AppContext) {
     }
 }
 
-fn send_feedback(_: &(), ctx: &mut AppContext) {
-    ctx.open_url("mailto:feedback@term4u.local");
+fn export_logs(_: &(), ctx: &mut AppContext) {
+    ToastStack::handle(ctx).update(ctx, |_, ctx| {
+        ctx.spawn(
+            async { warp_logging::create_log_bundle_zip() },
+            |stack, result, ctx| match result {
+                Ok(path) => ctx.open_file_path_in_explorer(&path),
+                Err(error) => {
+                    log::warn!("Unable to export local logs: {error}");
+                    if let Some(window_id) = ctx.windows().active_window() {
+                        stack.add_ephemeral_toast(
+                            DismissibleToast::error("Unable to export local logs.".into()),
+                            window_id,
+                            ctx,
+                        );
+                    }
+                }
+            },
+        );
+    });
 }
 
 pub(crate) fn open_new_with_workspace_source(

@@ -17,8 +17,6 @@ use crate::util::git::{BranchEntry, Commit, FileChangeEntry, PrInfo};
 #[cfg_attr(not(feature = "local_fs"), allow(dead_code))]
 mod local;
 pub use local::LocalDiffStateModel;
-#[cfg(feature = "local_fs")]
-pub(crate) use local::diff_metadata_against_head;
 
 #[cfg_attr(not(feature = "local_fs"), allow(dead_code))]
 mod error;
@@ -37,31 +35,6 @@ pub enum CommitChainMode {
     CommitOnly,
     CommitAndPush,
     CommitAndCreatePr,
-}
-
-#[derive(Clone, Copy, Debug, Serialize, PartialEq, Eq)]
-pub enum BackendOrigin {
-    #[serde(rename = "client_local")]
-    ClientLocal,
-}
-
-/// Identifies the diff-state operation that produced a [`DiffStateError`]
-/// on the `LoadDiffFailed` telemetry path. Carried alongside the error so
-/// failures can be sliced by originating operation — every operation shares
-/// the same failure pool, so the error variant alone doesn't reveal where
-/// it came from.
-///
-/// Metadata-load failures are reported through a dedicated
-/// `LoadMetadataFailed` event and therefore don't need a variant here.
-#[derive(Clone, Copy, Debug, Serialize, PartialEq, Eq)]
-#[cfg_attr(not(feature = "local_fs"), allow(dead_code))]
-pub enum DiffOperation {
-    /// Per-file diff refresh triggered by the file-invalidation queue.
-    #[serde(rename = "file_invalidation")]
-    FileInvalidation,
-    /// Full repo-wide diff snapshot load.
-    #[serde(rename = "diff_load")]
-    DiffLoad,
 }
 
 // -- Shared types ──────────────────────────────────────────────────────
@@ -270,14 +243,6 @@ impl GitDiffData {
     }
 }
 
-/// Some actions should only apply when a [`GitDiffData`] is dirty, i.e. not empty. This enum allows
-/// callers to express this preference.
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
-pub enum GitDeltaPreference {
-    Always,
-    OnlyDirty,
-}
-
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Default, Serialize)]
 pub enum DiffMode {
     /// Show changes in working directory against latest commit (git diff)
@@ -420,8 +385,7 @@ impl warpui::Entity for DiffStateModel {
 impl DiffStateModel {
     pub fn new_local(path: PathBuf, ctx: &mut ModelContext<Self>) -> Self {
         let repo_path = Some(path.display().to_string());
-        let local = ctx
-            .add_model(|ctx| LocalDiffStateModel::new(repo_path, BackendOrigin::ClientLocal, ctx));
+        let local = ctx.add_model(|ctx| LocalDiffStateModel::new(repo_path, ctx));
         ctx.subscribe_to_model(&local, |model, _, event, ctx| {
             model.forward_event(event, ctx)
         });
@@ -562,20 +526,6 @@ impl DiffStateModel {
         }
     }
 
-    pub(crate) fn set_diff_mode_and_fetch_base(
-        &self,
-        mode: DiffMode,
-        preferred_session: Option<SessionId>,
-        ctx: &mut ModelContext<Self>,
-    ) {
-        let _ = preferred_session;
-        match self {
-            Self::Local(model) => model.update(ctx, |model, ctx| {
-                model.set_diff_mode_and_fetch_base(mode, ctx);
-            }),
-        }
-    }
-
     pub(crate) fn load_diffs_for_current_repo(
         &self,
         should_fetch_base: bool,
@@ -652,10 +602,10 @@ impl DiffStateModel {
         }
     }
 
-    pub(crate) fn create_pr(&self, branch: String, ctx: &mut ModelContext<Self>) {
+    pub(crate) fn create_pr(&self, ctx: &mut ModelContext<Self>) {
         match self {
             Self::Local(model) => model.update(ctx, |model, ctx| {
-                model.create_pr(branch, ctx);
+                model.create_pr(ctx);
             }),
         }
     }

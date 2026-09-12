@@ -507,5 +507,6 @@ diesel::allow_tables_to_appear_in_same_query!(
 );
 diesel::allow_tables_to_appear_in_same_query!(code_pane_tabs, code_panes,);
 diesel::allow_tables_to_appear_in_same_query!(object_metadata, object_permissions,);
+diesel::allow_tables_to_appear_in_same_query!(notebooks, object_metadata,);
 diesel::allow_tables_to_appear_in_same_query!(team_members, team_settings, teams,);
 diesel::allow_tables_to_appear_in_same_query!(workspace_language_server, workspace_metadata,);

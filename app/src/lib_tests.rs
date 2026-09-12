@@ -42,12 +42,6 @@ fn launch_modes_select_expected_logging_frontend() {
     let app = LaunchMode::App {
         args: Default::default(),
     };
-    let test = LaunchMode::Test {
-        driver: Box::new(None),
-        is_integration_test: false,
-    };
-
     assert_eq!(tui.log_frontend(), LogFrontend::Tui);
     assert_eq!(app.log_frontend(), LogFrontend::Gui);
-    assert_eq!(test.log_frontend(), LogFrontend::Gui);
 }

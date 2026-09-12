@@ -389,7 +389,7 @@ impl From<&Block> for BlockType {
             BootstrapStage::RestoreBlocks => BlockType::Restored,
             BootstrapStage::WarpInput | BootstrapStage::Bootstrapped => BlockType::BootstrapHidden,
             BootstrapStage::ScriptExecution => {
-                if block.is_empty(&TranscriptScope::Terminal) {
+                if block.is_empty() {
                     BlockType::BootstrapHidden
                 } else {
                     let serialized_block = block.into();
@@ -846,25 +846,6 @@ impl Block {
         self.size
     }
 
-    /// Replaces this block's visibility to be associated with the given conversation.
-    /// Use this when a block is being created/assigned to a conversation (e.g., entering agent view).
-
-    /// Resets this block's visibility to terminal mode.
-    /// Use this when a block is being returned to terminal context (e.g., exiting agent view).
-
-    /// Sets this block's agent view visibility state directly.
-    /// Use this when restoring a block from serialization.
-
-    /// Adds a conversation ID to the set of conversations where this block is attached as context.
-
-    /// Adds a conversation ID to the set of conversations where this block is pending context.
-    /// It maybe removed if the user removes the block attachment before sending the request, else if it is attached it will be 'promoted'.
-
-    /// Removes a conversation ID from the set of conversations where this block should be visible.
-    /// Returns true if the conversation ID was present and removed, false if it wasn't present.
-
-    /// Moves the block from pending context to attached context for the given conversation ID.
-
     /// Returns whether NLD was overridden (input type was manually locked) when this block's
     /// command was submitted.
     ///
@@ -880,10 +861,6 @@ impl Block {
 
     pub fn set_trim_trailing_blank_rows(&mut self, trim: bool) {
         self.output_grid.set_trim_trailing_blank_rows(trim);
-    }
-
-    pub(in crate::terminal) fn enable_full_grid_clear_behavior(&mut self) {
-        self.output_grid.enable_full_grid_clear_behavior();
     }
 
     pub fn set_restored_block_was_local(&mut self, was_local: bool) {
@@ -1117,9 +1094,9 @@ impl Block {
         self.header_grid.clone_command_from_blockgrid(command);
     }
 
-    pub fn is_empty(&self, transcript_scope: &TranscriptScope) -> bool {
+    pub fn is_empty(&self) -> bool {
         // TODO(vorporeal): this should use a larger epsilon
-        self.height(transcript_scope).as_f64() < f64::EPSILON
+        self.height().as_f64() < f64::EPSILON
     }
 
     pub fn is_restored(&self) -> bool {
@@ -1140,7 +1117,7 @@ impl Block {
     }
 
     /// If true, this block is hidden and has a height of 0.
-    pub fn should_hide_block(&self, transcript_scope: &TranscriptScope) -> bool {
+    pub fn should_hide_block(&self) -> bool {
         if self.hidden {
             return true;
         }
@@ -1208,11 +1185,8 @@ impl Block {
 
     /// Returns true iff this block should be used as a scrollback block in a shared session context.
     /// The active block is included when it is eligible so viewers can restore the active prompt.
-    pub fn is_scrollback_block_for_shared_session(
-        &self,
-        transcript_scope: &TranscriptScope,
-    ) -> bool {
-        !self.should_hide_block(transcript_scope) && !self.is_restored()
+    pub fn is_scrollback_block_for_shared_session(&self) -> bool {
+        !self.should_hide_block() && !self.is_restored()
     }
 
     pub fn index(&self) -> BlockIndex {
@@ -1220,15 +1194,15 @@ impl Block {
     }
 
     /// `true` if the block is rendered in the blocklist.
-    pub fn is_visible(&self, transcript_scope: &TranscriptScope) -> bool {
-        self.height(transcript_scope) > Lines::zero()
+    pub fn is_visible(&self) -> bool {
+        self.height() > Lines::zero()
     }
 
     /// Height is the source-of-truth determinant for whether or not a block is hidden (i.e. if it
     /// has a height of 0). Thus it depends on the transcript scope, which affects whether a block
     /// should be hidden.
-    pub fn height(&self, transcript_scope: &TranscriptScope) -> Lines {
-        if self.should_hide_block(transcript_scope) {
+    pub fn height(&self) -> Lines {
+        if self.should_hide_block() {
             Lines::zero()
         } else {
             self.block_banner_height()
@@ -1866,7 +1840,7 @@ impl Block {
     }
 
     /// Returns the contents of all block grids as a string.
-    #[cfg(any(test, feature = "integration_tests"))]
+    #[cfg(test)]
     pub fn contents_to_string(&self) -> String {
         self.bounds_to_string(self.start_point(), self.end_point())
     }
@@ -2296,7 +2270,7 @@ impl Block {
             x if x < (self.output_grid_offset() + self.output_grid_displayed_height()) => {
                 BlockSection::OutputGrid((row - self.output_grid_offset()).max(Lines::zero()))
             }
-            x if x < self.height(&TranscriptScope::Terminal) => BlockSection::PaddingBottom,
+            x if x < self.height() => BlockSection::PaddingBottom,
             _ => BlockSection::NotContained,
         }
     }
@@ -2418,11 +2392,6 @@ impl Block {
         self.node_version.as_ref()
     }
 
-    #[cfg(feature = "integration_tests")]
-    pub fn prompt_to_string(&self) -> String {
-        self.header_grid.prompt_to_string()
-    }
-
     pub fn virtual_env_short_name(&self) -> Option<String> {
         self.virtual_env
             .as_ref()
@@ -2538,8 +2507,6 @@ impl Block {
             self.output_grid.needs_bracketed_paste()
         }
     }
-
-    /// Returns `true` if this block is a valid option to use as context for an AI model.
 
     pub fn estimated_heap_usage_bytes(&self) -> usize {
         // For now, we're only factoring in heap allocations in grids, and not

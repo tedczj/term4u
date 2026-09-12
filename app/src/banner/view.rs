@@ -6,9 +6,8 @@ use markdown_parser::{
 };
 use pathfinder_geometry::vector::Vector2F;
 use warpui::elements::{
-    ConstrainedBox, Container, CrossAxisAlignment, Flex, FormattedTextElement,
-    HighlightedHyperlink, HyperlinkLens, HyperlinkUrl, MainAxisAlignment, MainAxisSize,
-    MouseStateHandle, ParentElement, Shrinkable,
+    Container, CrossAxisAlignment, Flex, FormattedTextElement, HighlightedHyperlink, HyperlinkLens,
+    HyperlinkUrl, MainAxisAlignment, MainAxisSize, MouseStateHandle, ParentElement, Shrinkable,
 };
 use warpui::fonts::Weight;
 use warpui::ui_components::button::ButtonVariant;
@@ -19,7 +18,6 @@ use warpui::{
 };
 
 use crate::appearance::Appearance;
-use crate::ui_components::icons::Icon;
 
 const CLOSE_BUTTON_DIAMETER: f32 = 20.;
 const INNER_MARGIN: f32 = 12.;
@@ -36,9 +34,8 @@ pub enum DismissalType {
     Permanent,
 }
 
-pub enum BannerEvent<T> {
+pub enum BannerEvent {
     Dismiss(DismissalType),
-    Action(T),
 }
 
 pub struct BannerTextContent<T: Action + Clone> {
@@ -85,7 +82,7 @@ impl<T: Action + Clone> BannerTextContent<T> {
         .register_default_click_handlers_with_action_support(|hyperlink_lens, evt, _ctx| {
             match hyperlink_lens {
                 HyperlinkLens::Url(url) => {
-                    evt.dispatch_typed_action(BannerAction::<T>::HyperlinkClick(HyperlinkUrl {
+                    evt.dispatch_typed_action(BannerAction::HyperlinkClick(HyperlinkUrl {
                         url: url.to_owned(),
                     }));
                 }
@@ -120,10 +117,6 @@ impl BannerTextButton {
 
 /// Informational banner for the terminal.
 pub struct Banner<T: Action + Clone> {
-    /// Optional icon to render at the start of the banner,
-    /// before the text content.
-    icon: Option<Icon>,
-
     text_content: BannerTextContent<T>,
 
     /// Optional buttons to render at the end,
@@ -136,18 +129,12 @@ pub struct Banner<T: Action + Clone> {
 }
 
 #[derive(Clone, Debug)]
-pub enum BannerAction<T: Action + Clone> {
+pub enum BannerAction {
     Dismiss(DismissalType),
     HyperlinkClick(HyperlinkUrl),
-    Action(T),
 }
 
 impl<T: Action + Clone> Banner<T> {
-    /// Creates a plain banner with a close button.
-    pub fn new(content: BannerTextContent<T>) -> Self {
-        Self::new_internal(content, vec![], /* with_close_button */ true)
-    }
-
     /// Creates a banner with the given text buttons and a close button.
     pub fn new_with_buttons(
         content: BannerTextContent<T>,
@@ -172,7 +159,7 @@ impl<T: Action + Clone> Banner<T> {
         BannerTextButton::new(
             String::from("Don't show me again"),
             Rc::new(|ctx, _, _| {
-                ctx.dispatch_typed_action(BannerAction::<T>::Dismiss(DismissalType::Permanent));
+                ctx.dispatch_typed_action(BannerAction::Dismiss(DismissalType::Permanent));
             }),
         )
     }
@@ -190,40 +177,7 @@ impl<T: Action + Clone> Banner<T> {
                 None
             },
             end_buttons,
-            icon: None,
         }
-    }
-
-    /// Replaces the banner's content with new items.
-    pub fn set_content(&mut self, content: BannerTextContent<T>, ctx: &mut ViewContext<Self>) {
-        self.text_content = content;
-        ctx.notify();
-    }
-
-    /// Updates the label of an action button at the given index.
-    pub fn set_action_button_label(
-        &mut self,
-        index: usize,
-        label: &str,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        if let Some(button) = self.end_buttons.get_mut(index) {
-            button.text = label.to_owned();
-            ctx.notify();
-        }
-    }
-
-    pub fn with_icon(mut self, icon: Icon) -> Self {
-        self.icon = Some(icon);
-        self
-    }
-
-    fn render_icon(appearance: &Appearance, icon: &Icon) -> Box<dyn Element> {
-        let icon_size = font_size(appearance);
-        ConstrainedBox::new(icon.to_warpui_icon(appearance.theme().accent()).finish())
-            .with_width(icon_size)
-            .with_height(icon_size)
-            .finish()
     }
 
     fn render_close_button(
@@ -240,7 +194,7 @@ impl<T: Action + Clone> Banner<T> {
             })
             .build()
             .on_click(|ctx, _, _| {
-                ctx.dispatch_typed_action(BannerAction::<T>::Dismiss(DismissalType::Temporary));
+                ctx.dispatch_typed_action(BannerAction::Dismiss(DismissalType::Temporary));
             })
             .finish()
     }
@@ -267,11 +221,11 @@ impl<T: Action + Clone> Banner<T> {
 }
 
 impl<T: Action + Clone> Entity for Banner<T> {
-    type Event = BannerEvent<T>;
+    type Event = BannerEvent;
 }
 
 impl<T: Action + Clone> TypedActionView for Banner<T> {
-    type Action = BannerAction<T>;
+    type Action = BannerAction;
 
     fn handle_action(&mut self, action: &Self::Action, ctx: &mut ViewContext<Self>) {
         match action {
@@ -281,9 +235,6 @@ impl<T: Action + Clone> TypedActionView for Banner<T> {
             BannerAction::HyperlinkClick(hyperlink) => {
                 ctx.notify();
                 ctx.open_url(&hyperlink.url);
-            }
-            BannerAction::Action(action) => {
-                ctx.emit(BannerEvent::Action(action.clone()));
             }
         }
     }
@@ -300,14 +251,6 @@ impl<T: Action + Clone> View for Banner<T> {
         let mut left_side = Flex::row()
             .with_cross_axis_alignment(CrossAxisAlignment::Center)
             .with_constrain_horizontal_bounds_to_parent(true);
-
-        if let Some(icon) = &self.icon {
-            left_side.add_child(
-                Container::new(Banner::<T>::render_icon(appearance, icon))
-                    .with_margin_right(INNER_MARGIN)
-                    .finish(),
-            );
-        }
 
         left_side.add_child(Shrinkable::new(1., self.text_content.render(appearance)).finish());
 

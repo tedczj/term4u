@@ -1,0 +1,137 @@
+    Updating git repository `https://github.com/wgsl-analyzer/wgsl-analyzer`
+From https://github.com/wgsl-analyzer/wgsl-analyzer
+ * [new tag]         2025-06-28 -> origin/tags/2025-06-28
+  Installing wgslfmt v0.1.0 (https://github.com/wgsl-analyzer/wgsl-analyzer?tag=2025-06-28#7e34f03c)
+    Updating crates.io index
+     Locking 45 packages to latest compatible versions
+      Adding itertools v0.14.0 (available: v0.15.0)
+      Adding logos v0.12.1 (available: v0.16.1)
+      Adding prettydiff v0.8.1 (available: v0.9.0)
+      Adding rowan v0.16.1 (available: v0.17.0)
+ Downloading crates ...
+  Downloaded drop_bomb v0.1.5
+  Downloaded countme v3.0.1
+  Downloaded text-size v1.1.1
+  Downloaded logos v0.12.1
+  Downloaded owo-colors v4.4.0
+  Downloaded logos-derive v0.12.1
+  Downloaded lexopt v0.3.2
+  Downloaded either v1.18.0
+  Downloaded quote v1.0.47
+  Downloaded term v0.7.0
+  Downloaded rowan v0.16.1
+  Downloaded unicode-ident v1.0.24
+  Downloaded proc-macro2 v1.0.107
+  Downloaded prettydiff v0.8.1
+  Downloaded anyhow v1.0.104
+  Downloaded prettytable-rs v0.10.0
+  Downloaded hashbrown v0.14.5
+  Downloaded regex-syntax v0.6.29
+  Downloaded libc v0.2.189
+warning: profile package spec `salsa` in profile `dev` did not match any packages
+
+help: a package with a similar name exists: `wasi`
+warning: profile package spec `serde` in profile `dev` did not match any packages
+
+help: a package with a similar name exists: `term`
+warning: profile package spec `smol_str` in profile `dev` did not match any packages
+   Compiling proc-macro2 v1.0.107
+   Compiling unicode-ident v1.0.24
+   Compiling libc v0.2.189
+   Compiling quote v1.0.47
+   Compiling syn v1.0.109
+   Compiling regex-syntax v0.6.29
+   Compiling beef v0.5.2
+   Compiling fnv v1.0.7
+   Compiling cfg-if v1.0.4
+   Compiling hashbrown v0.14.5
+   Compiling rustc-hash v1.1.0
+   Compiling countme v3.0.1
+   Compiling text-size v1.1.1
+   Compiling edition v0.0.0 (/Users/tedczj/.cargo/git/checkouts/wgsl-analyzer-3be45a7933ee846a/7e34f03/crates/edition)
+   Compiling drop_bomb v0.1.5
+   Compiling either v1.18.0
+   Compiling rowan v0.16.1
+   Compiling itertools v0.14.0
+   Compiling dirs-sys-next v0.1.2
+   Compiling dirs-next v2.0.0
+   Compiling term v0.7.0
+   Compiling is-terminal v0.4.17
+   Compiling encode_unicode v1.0.0
+   Compiling unicode-width v0.1.14
+   Compiling anyhow v1.0.104
+   Compiling lazy_static v1.5.0
+   Compiling prettytable-rs v0.10.0
+   Compiling logos-derive v0.12.1
+   Compiling owo-colors v4.4.0
+   Compiling lexopt v0.3.2
+   Compiling logos v0.12.1
+   Compiling prettydiff v0.8.1
+   Compiling parser v0.0.0 (/Users/tedczj/.cargo/git/checkouts/wgsl-analyzer-3be45a7933ee846a/7e34f03/crates/parser)
+warning: enum `WgslLanguage` is never used
+   --> crates/parser/src/syntax_kind.rs:469:17
+    |
+469 | pub(crate) enum WgslLanguage {}
+    |                 ^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: hiding a lifetime that's elided elsewhere is confusing
+  --> crates/parser/src/source.rs:35:30
+   |
+35 |     pub(crate) fn peek_token(&mut self) -> Option<&Token<SyntaxKind>> {
+   |                              ^^^^^^^^^            ^^^^^^^^^^^^^^^^^^
+   |                              |                    ||
+   |                              |                    |the same lifetime is hidden here
+   |                              |                    the same lifetime is elided here
+   |                              the lifetime is elided here
+   |
+   = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+   = note: `#[warn(mismatched_lifetime_syntaxes)]` on by default
+help: use `'_` for type paths
+   |
+35 |     pub(crate) fn peek_token(&mut self) -> Option<&Token<'_, SyntaxKind>> {
+   |                                                          +++
+
+warning: hiding a lifetime that's elided elsewhere is confusing
+  --> crates/parser/src/source.rs:62:23
+   |
+62 |     fn peek_token_raw(&self) -> Option<&Token<SyntaxKind>> {
+   |                       ^^^^^            ^^^^^^^^^^^^^^^^^^
+   |                       |                ||
+   |                       |                |the same lifetime is hidden here
+   |                       |                the same lifetime is elided here
+   |                       the lifetime is elided here
+   |
+   = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+help: use `'_` for type paths
+   |
+62 |     fn peek_token_raw(&self) -> Option<&Token<'_, SyntaxKind>> {
+   |                                               +++
+
+warning: hiding a lifetime that's elided elsewhere is confusing
+  --> crates/parser/src/source.rs:67:26
+   |
+67 |     fn peek_compound_raw(&self) -> Option<(&Token<SyntaxKind>, &Token<SyntaxKind>)> {
+   |                          ^^^^^             ^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^
+   |                          |                 ||                  ||
+   |                          |                 ||                  |the same lifetime is hidden here
+   |                          |                 ||                  the same lifetime is elided here
+   |                          |                 |the same lifetime is hidden here
+   |                          |                 the same lifetime is elided here
+   |                          the lifetime is elided here
+   |
+   = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+help: use `'_` for type paths
+   |
+67 |     fn peek_compound_raw(&self) -> Option<(&Token<'_, SyntaxKind>, &Token<'_, SyntaxKind>)> {
+   |                                                   +++                     +++
+
+   Compiling syntax v0.0.0 (/Users/tedczj/.cargo/git/checkouts/wgsl-analyzer-3be45a7933ee846a/7e34f03/crates/syntax)
+   Compiling wgsl-formatter v0.0.0 (/Users/tedczj/.cargo/git/checkouts/wgsl-analyzer-3be45a7933ee846a/7e34f03/crates/wgsl_formatter)
+warning: `parser` (lib) generated 4 warnings (run `cargo fix --lib -p parser` to apply 3 suggestions)
+   Compiling wgslfmt v0.1.0 (/Users/tedczj/.cargo/git/checkouts/wgsl-analyzer-3be45a7933ee846a/7e34f03/crates/wgslfmt)
+    Finished `release` profile [optimized] target(s) in 10.93s
+  Installing /tmp/term4u-verification-tools/bin/wgslfmt
+   Installed package `wgslfmt v0.1.0 (https://github.com/wgsl-analyzer/wgsl-analyzer?tag=2025-06-28#7e34f03c)` (executable `wgslfmt`)
+warning: be sure to add `/tmp/term4u-verification-tools/bin` to your PATH to be able to run the installed binaries

@@ -6,7 +6,7 @@ use warpui::elements::{
     ParentElement, ParentOffsetBounds, Percentage, Radius, Shrinkable, Stack, Text,
 };
 use warpui::fonts::{Properties, Weight};
-use warpui::keymap::{FixedBinding, Keystroke};
+use warpui::keymap::Keystroke;
 use warpui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
 use warpui::{
     AppContext, Entity, FocusContext, ModelHandle, SingletonEntity, TypedActionView, View,
@@ -43,69 +43,9 @@ pub struct Modal<T> {
     dismiss_keystroke: Option<Keystroke>,
 }
 
-#[derive(Clone, Debug, Default)]
-pub enum ModalState {
-    Open,
-    #[default]
-    Closed,
-}
-
-/// Helper struct that holds the view handle and the state of the "handled" modal.
-/// It's supposed to be used within places like Input or Workspace, where there are multiple
-/// internal views for which we want the owner to decide whether it's open or closed  (instead of
-/// multiplying the amount of members by adding extra booleans to hold that state).
-pub struct ModalViewState<T> {
-    pub view: ViewHandle<T>,
-    state: ModalState,
-}
-
-impl<T: View> ModalViewState<T> {
-    pub fn new(view: ViewHandle<T>) -> Self {
-        Self {
-            view,
-            state: Default::default(),
-        }
-    }
-
-    pub fn is_open(&self) -> bool {
-        matches!(self.state, ModalState::Open)
-    }
-
-    pub fn open(&mut self) {
-        self.state = ModalState::Open;
-    }
-
-    pub fn close(&mut self) {
-        self.state = ModalState::Closed;
-    }
-
-    pub fn render(&self) -> Box<dyn Element> {
-        ChildView::new(&self.view).finish()
-    }
-}
-
-impl<T> Clone for ModalViewState<T> {
-    fn clone(&self) -> Self {
-        Self {
-            view: self.view.clone(),
-            state: self.state.clone(),
-        }
-    }
-}
-
 #[derive(Debug)]
 pub enum ModalAction {
     Close,
-}
-
-pub fn init(app: &mut AppContext) {
-    use warpui::keymap::macros::*;
-
-    app.register_fixed_bindings(vec![FixedBinding::new(
-        "escape",
-        ModalAction::Close,
-        id!("Modal"),
-    )]);
 }
 
 #[derive(PartialEq, Eq, Debug)]
@@ -203,33 +143,6 @@ impl<T: View> Modal<T> {
     pub fn with_background_opacity(mut self, opacity: u8) -> Self {
         self.background_opacity = opacity;
         self
-    }
-    /// Caps the modal height at a percentage of the containing window height.
-    pub fn with_max_height_percentage(mut self, percentage: f32) -> Self {
-        self.max_height_percentage = Some(percentage.clamp(0., 1.));
-        self
-    }
-
-    /// Set the keystroke to display alongside the close button.
-    pub fn with_dismiss_keystroke(mut self, keystroke: Keystroke) -> Self {
-        self.dismiss_keystroke = Some(keystroke);
-        self
-    }
-
-    pub fn set_title(&mut self, title: Option<String>) {
-        self.title = title;
-    }
-
-    pub fn set_header_icon(&mut self, icon: Option<icons::Icon>) {
-        self.header_icon = icon;
-    }
-
-    pub fn set_header_icon_color(&mut self, color: Option<Fill>) {
-        self.header_icon_color = color;
-    }
-
-    pub fn set_offset_positioning(&mut self, offset_positioning: OffsetPositioning) {
-        self.offset_positioning = offset_positioning;
     }
 
     fn handle_appearance_update(

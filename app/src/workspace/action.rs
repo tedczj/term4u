@@ -5,6 +5,7 @@ use std::sync::Arc;
 use warp_util::path::LineAndColumnArg;
 use warpui::{EntityId, WindowId};
 
+use crate::notebooks::manager::NotebookSource;
 use crate::palette::PaletteMode;
 use crate::server::telemetry::{AddTabWithShellSource, PaletteSource};
 use crate::settings_view::SettingsSection;
@@ -48,6 +49,7 @@ impl VerticalTabsPaneContextMenuTarget {
 
 #[derive(Debug, Clone)]
 pub enum WorkspaceAction {
+    OpenNotebook(NotebookSource),
     ActivateTab(usize),
     ActivateTabByNumber(usize),
     ActivatePrevTab,
@@ -99,7 +101,6 @@ pub enum WorkspaceAction {
     ToggleResourceCenter,
     CopyVersion(&'static str),
     CopyTextToClipboard(String),
-    SendFeedback,
     OpenRepository {
         path: Option<String>,
     },
@@ -117,7 +118,6 @@ pub enum WorkspaceAction {
     ToggleSyncAllTerminalInputsInAllTabs,
     ToggleRecordingMode,
     ToggleInBandGenerators,
-    ToggleDebugNetworkStatus,
     ToggleShowMemoryStats,
     OpenProjectExplorer,
     OpenGlobalSearch,
@@ -125,6 +125,7 @@ pub enum WorkspaceAction {
     ToggleVerticalTabsPanel,
     OpenVerticalTabsPanel,
     OpenCodeReviewPanel(PaneViewLocator),
+    OpenCodeReview,
     FocusTerminalViewInWorkspace {
         terminal_view_id: EntityId,
     },

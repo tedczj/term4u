@@ -698,7 +698,7 @@ fn test_selection_is_removed_if_contained_within_active_truncated_block() {
 #[test]
 fn test_smart_selection_in_single_block() {
     App::test((), |app| async move {
-        app.read(|ctx| {
+        app.read(|_| {
             let mut block_list =
                 new_bootstrapped_block_list(None, None, ChannelEventListener::new_for_test());
 
@@ -728,7 +728,7 @@ fn test_smart_selection_in_single_block() {
             );
 
             assert_eq!(
-                block_list.selection_to_string(&semantic_selection, false, ctx),
+                block_list.selection_to_string(&semantic_selection, false),
                 Some("https://warp.dev/about".to_string())
             );
             block_list.clear_selection();
@@ -746,7 +746,7 @@ fn test_smart_selection_in_single_block() {
             );
 
             assert_eq!(
-                block_list.selection_to_string(&semantic_selection, false, ctx),
+                block_list.selection_to_string(&semantic_selection, false),
                 Some("https://warp.dev/about".to_string())
             );
             block_list.clear_selection();
@@ -764,7 +764,7 @@ fn test_smart_selection_in_single_block() {
             );
 
             assert_eq!(
-                block_list.selection_to_string(&semantic_selection, false, ctx),
+                block_list.selection_to_string(&semantic_selection, false),
                 Some("https://warp.dev/about hello".to_string())
             );
             block_list.clear_selection();
@@ -782,7 +782,7 @@ fn test_smart_selection_in_single_block() {
             );
 
             assert_eq!(
-                block_list.selection_to_string(&semantic_selection, false, ctx),
+                block_list.selection_to_string(&semantic_selection, false),
                 Some("about hello/world.js".to_string())
             );
             block_list.clear_selection();
@@ -793,7 +793,7 @@ fn test_smart_selection_in_single_block() {
 #[test]
 fn test_smart_selection_in_multiple_blocks() {
     App::test((), |app| async move {
-        app.read(|ctx| {
+        app.read(|_| {
             let mut block_list =
                 new_bootstrapped_block_list(None, None, ChannelEventListener::new_for_test());
 
@@ -814,8 +814,7 @@ fn test_smart_selection_in_multiple_blocks() {
 
             let first_command_grid_offset = first_block.command_grid_offset();
             let first_output_grid_offset = first_block.output_grid_offset();
-            let first_block_height =
-                first_block.height(&crate::terminal::model::block::TranscriptScope::Terminal);
+            let first_block_height = first_block.height();
             let second_command_grid_offset =
                 first_block_height + second_block.command_grid_offset();
             let second_output_grid_offset = first_block_height + second_block.output_grid_offset();
@@ -836,7 +835,7 @@ fn test_smart_selection_in_multiple_blocks() {
             );
 
             assert_eq!(
-                block_list.selection_to_string(&semantic_selection, false, ctx),
+                block_list.selection_to_string(&semantic_selection, false),
                 Some("https://warp.dev/about hello/world.js\nhttps".to_string())
             );
             block_list.clear_selection();
@@ -855,7 +854,7 @@ fn test_smart_selection_in_multiple_blocks() {
             );
 
             assert_eq!(
-        block_list.selection_to_string(&semantic_selection, false, ctx),
+        block_list.selection_to_string(&semantic_selection, false),
         Some(
             "hello/world.js\nhttps://warp.dev/about hello/world.js\necho 192.168.0.1\n192.168"
                 .to_string()
@@ -876,7 +875,7 @@ fn test_smart_selection_in_multiple_blocks() {
             );
 
             assert_eq!(
-                block_list.selection_to_string(&semantic_selection, false, ctx),
+                block_list.selection_to_string(&semantic_selection, false),
                 Some("dev/about hello/world.js\necho 192.168.0.1".to_string())
             );
             block_list.clear_selection();
@@ -887,7 +886,7 @@ fn test_smart_selection_in_multiple_blocks() {
 #[test]
 fn test_semantic_selection_with_custom_boundaries() {
     App::test((), |app| async move {
-        app.read(|ctx| {
+        app.read(|_| {
             let mut block_list =
                 new_bootstrapped_block_list(None, None, ChannelEventListener::new_for_test());
 
@@ -913,7 +912,7 @@ fn test_semantic_selection_with_custom_boundaries() {
             block_list.update_selection(BlockListPoint::new(output_grid_offset, 0), Side::Right);
 
             assert_eq!(
-                block_list.selection_to_string(&semantic_selection, false, ctx),
+                block_list.selection_to_string(&semantic_selection, false),
                 Some("localhost:3000".to_string())
             );
             block_list.clear_selection();
@@ -924,7 +923,7 @@ fn test_semantic_selection_with_custom_boundaries() {
 #[test]
 fn test_smart_selection_override() {
     App::test((), |app| async move {
-        app.read(|ctx| {
+        app.read(|_| {
             let mut block_list =
                 new_bootstrapped_block_list(None, None, ChannelEventListener::new_for_test());
 
@@ -953,7 +952,7 @@ fn test_smart_selection_override() {
             block_list.update_selection(BlockListPoint::new(2.0, 0), Side::Right);
 
             assert_eq!(
-                block_list.selection_to_string(&semantic_selection, false, ctx),
+                block_list.selection_to_string(&semantic_selection, false),
                 Some("https://warp.dev/about hello/world".to_string())
             );
         })
@@ -963,7 +962,7 @@ fn test_smart_selection_override() {
 #[test]
 pub fn test_selection_to_string() {
     App::test((), |app| async move {
-        app.read(|ctx| {
+        app.read(|_| {
             let mut block_list =
                 new_bootstrapped_block_list(None, None, ChannelEventListener::new_for_test());
             let bootstrapped_block_list_len = block_list.blocks().len();
@@ -990,21 +989,14 @@ pub fn test_selection_to_string() {
             assert_eq!(second_block.prompt_and_command_number_of_rows(), 3);
             assert_eq!(second_block.output_grid().len(), 3);
 
-            assert_lines_approx_eq!(
-                first_block.height(&crate::terminal::model::block::TranscriptScope::Terminal),
-                8.5
-            );
-            assert_lines_approx_eq!(
-                second_block.height(&crate::terminal::model::block::TranscriptScope::Terminal),
-                8.5
-            );
+            assert_lines_approx_eq!(first_block.height(), 8.5);
+            assert_lines_approx_eq!(second_block.height(), 8.5);
             let semantic_selection = SemanticSelection::mock(false, "");
 
             // Save some positions for later use.
             let first_command_grid_offset = first_block.command_grid_offset();
             let first_output_grid_offset = first_block.output_grid_offset();
-            let first_block_height =
-                first_block.height(&crate::terminal::model::block::TranscriptScope::Terminal);
+            let first_block_height = first_block.height();
             let second_command_grid_offset =
                 first_block_height + second_block.command_grid_offset();
             let second_output_grid_offset = first_block_height + second_block.output_grid_offset();
@@ -1021,7 +1013,7 @@ pub fn test_selection_to_string() {
             );
 
             assert_eq!(
-                block_list.selection_to_string(&semantic_selection, false, ctx),
+                block_list.selection_to_string(&semantic_selection, false),
                 Some("foo".to_string())
             );
 
@@ -1039,7 +1031,7 @@ pub fn test_selection_to_string() {
             );
 
             assert_eq!(
-                block_list.selection_to_string(&semantic_selection, false, ctx),
+                block_list.selection_to_string(&semantic_selection, false),
                 Some("foo\nbar\nbazz\nfoo".to_string())
             );
 
@@ -1055,7 +1047,7 @@ pub fn test_selection_to_string() {
                 Side::Right,
             );
             assert_eq!(
-                block_list.selection_to_string(&semantic_selection, false, ctx),
+                block_list.selection_to_string(&semantic_selection, false),
                 Some("foo\nbar\nbazz\nfoo\nbar\nbazz\nfoo".to_string())
             );
 
@@ -1072,7 +1064,7 @@ pub fn test_selection_to_string() {
             );
 
             assert_eq!(
-                block_list.selection_to_string(&semantic_selection, false, ctx),
+                block_list.selection_to_string(&semantic_selection, false),
                 Some(format!("{}{}", "foo\nbar\nbazz\n".repeat(3), "foo"))
             );
 
@@ -1088,7 +1080,7 @@ pub fn test_selection_to_string() {
                 Side::Right,
             );
             assert_eq!(
-                block_list.selection_to_string(&semantic_selection, false, ctx),
+                block_list.selection_to_string(&semantic_selection, false),
                 Some("foo\nbar\nbazz\nfoo".to_string())
             )
         })
@@ -1098,7 +1090,7 @@ pub fn test_selection_to_string() {
 #[test]
 pub fn test_selection_to_string_inverted_blocklist() {
     App::test((), |app| async move {
-        app.read(|ctx| {
+        app.read(|_| {
     let mut block_list =
         new_bootstrapped_block_list(None, None, ChannelEventListener::new_for_test());
 
@@ -1132,7 +1124,7 @@ pub fn test_selection_to_string_inverted_blocklist() {
     block_list.update_selection(end, Side::Right);
 
     assert_eq!(
-        block_list.selection_to_string(&semantic_selection, true, ctx),
+        block_list.selection_to_string(&semantic_selection, true),
         Some("block B input\nblock B output\nblock A input\nblock A output".to_string())
     );
 
@@ -1158,7 +1150,7 @@ pub fn test_selection_to_string_inverted_blocklist() {
     block_list.update_selection(end, Side::Right);
 
     assert_eq!(
-            block_list.selection_to_string(&semantic_selection, true, ctx),
+            block_list.selection_to_string(&semantic_selection, true),
             Some("block D input\nblock D output\nblock C input\nblock C output\nblock B input\nblock B output\nblock A input\nblock A output".to_string())
         );
     })
@@ -1223,7 +1215,7 @@ pub fn test_select_left_select_right() {
 #[test]
 pub fn test_selection_to_string_hidden_blocks() {
     App::test((), |app| async move {
-        app.read(|ctx| {
+        app.read(|_| {
             let mut block_list =
                 new_bootstrapped_block_list(None, None, ChannelEventListener::new_for_test());
             let bootstrapped_block_list_len = block_list.blocks().len();
@@ -1293,7 +1285,7 @@ pub fn test_selection_to_string_hidden_blocks() {
             block_list.update_selection(BlockListPoint::new(7., 3), Side::Right);
 
             assert_eq!(
-                block_list.selection_to_string(&semantic_selection, false, ctx),
+                block_list.selection_to_string(&semantic_selection, false),
                 Some("before\nfoo\nafter\nbar".into())
             );
         })
@@ -1303,7 +1295,7 @@ pub fn test_selection_to_string_hidden_blocks() {
 #[test]
 pub fn test_rect_selection_single_block() {
     App::test((), |app| async move {
-        app.read(|ctx| {
+        app.read(|_| {
             let mut blocks =
                 new_bootstrapped_block_list(None, None, ChannelEventListener::new_for_test());
 
@@ -1324,7 +1316,7 @@ pub fn test_rect_selection_single_block() {
             blocks.update_selection(BlockListPoint::new(output_grid_offset + 2., 6), Side::Right);
 
             assert_eq!(
-                blocks.selection_to_string(&semantic_selection, false, ctx),
+                blocks.selection_to_string(&semantic_selection, false),
                 Some("efore\nfoo\nafter".to_string())
             );
 
@@ -1338,7 +1330,7 @@ pub fn test_rect_selection_single_block() {
             blocks.update_selection(BlockListPoint::new(output_grid_offset, 0), Side::Right);
 
             assert_eq!(
-                blocks.selection_to_string(&semantic_selection, false, ctx),
+                blocks.selection_to_string(&semantic_selection, false),
                 Some("efore\nfoo\nafter".to_string())
             );
 
@@ -1387,7 +1379,7 @@ pub fn test_rect_selection_single_block() {
             );
 
             assert_eq!(
-                blocks.selection_to_string(&semantic_selection, false, ctx),
+                blocks.selection_to_string(&semantic_selection, false),
                 Some("efore\noo\nfter".to_string())
             );
 
@@ -1436,7 +1428,7 @@ pub fn test_rect_selection_single_block() {
             );
 
             assert_eq!(
-                blocks.selection_to_string(&semantic_selection, false, ctx),
+                blocks.selection_to_string(&semantic_selection, false),
                 Some("or\n\ner".to_string())
             );
 
@@ -1484,7 +1476,7 @@ pub fn test_rect_selection_single_block() {
             );
 
             assert_eq!(
-                blocks.selection_to_string(&semantic_selection, false, ctx),
+                blocks.selection_to_string(&semantic_selection, false),
                 Some("or\n\ner".to_string())
             );
         })
@@ -1494,7 +1486,7 @@ pub fn test_rect_selection_single_block() {
 #[test]
 pub fn test_rect_selection_multi_block() {
     App::test((), |app| async move {
-        app.read(|ctx| {
+        app.read(|_| {
             let mut block_list =
                 new_bootstrapped_block_list(None, None, ChannelEventListener::new_for_test());
 
@@ -1512,8 +1504,7 @@ pub fn test_rect_selection_multi_block() {
 
             // Save some positions for later use.
             let first_command_grid_offset = first_block.command_grid_offset();
-            let first_block_height =
-                first_block.height(&crate::terminal::model::block::TranscriptScope::Terminal);
+            let first_block_height = first_block.height();
             let second_output_grid_offset = first_block_height + second_block.output_grid_offset();
 
             // Start a selection at the start of the line in the first command grid.
@@ -1529,7 +1520,7 @@ pub fn test_rect_selection_multi_block() {
             );
 
             assert_eq!(
-                block_list.selection_to_string(&semantic_selection, false, ctx),
+                block_list.selection_to_string(&semantic_selection, false),
                 Some("firs\nline\nseco\nline".to_string())
             );
         })
@@ -1539,7 +1530,7 @@ pub fn test_rect_selection_multi_block() {
 #[test]
 pub fn test_rect_selection_inverted_multi_block() {
     App::test((), |app| async move {
-        app.read(|ctx| {
+        app.read(|_| {
             let mut block_list =
                 new_bootstrapped_block_list(None, None, ChannelEventListener::new_for_test());
 
@@ -1581,7 +1572,7 @@ pub fn test_rect_selection_inverted_multi_block() {
             // bloc|k A|
             //  out|put|
             assert_eq!(
-                block_list.selection_to_string(&semantic_selection, true, ctx),
+                block_list.selection_to_string(&semantic_selection, true),
                 Some("k B\nut\nk B\nput\nk A\nut\nk A\nput".to_string())
             );
         })

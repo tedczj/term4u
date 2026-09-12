@@ -1,0 +1,10 @@
+{
+  "pid": 41945,
+  "profile": "r1r2-oracle-066ec71b-20260913",
+  "binary": "/Users/tedczj/workspace/term4u/target/debug/bundle/osx/WarpOss.app/Contents/MacOS/warp-oss",
+  "sha256": "f78af902120b7cd63a962873a991d9f02c381e2b04cadf6b2b836eaf79e4a568",
+  "started_utc": "2026-09-12T17:46:36.734337+00:00",
+  "source_commit": "066ec71b736fc3755e29f58f733deadbdac3d1af",
+  "source_worktree": "/tmp/term4u-r1r2-oracle-066ec71b",
+  "build_note": "Original OSS binary; channel_versions/default matches workspace default feature unification. Final binary strip disabled to avoid failed rust-objcopy on low disk. Product source unchanged."
+}

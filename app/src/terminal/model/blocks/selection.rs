@@ -7,9 +7,9 @@ use sum_tree::SeekBias;
 use vec1::{Vec1, vec1};
 use warp_core::semantic_selection::SemanticSelection;
 use warp_terminal::model::grid::CellType;
+use warpui::EntityId;
 use warpui::text::{IsRect, SelectionType};
 use warpui::units::{IntoLines as _, Lines};
-use warpui::{AppContext, EntityId};
 
 use super::{
     BlockHeight, BlockHeightItem, BlockHeightSummary, BlockList, BlockListPoint, RichContentItem,
@@ -921,7 +921,6 @@ impl BlockList {
         &self,
         semantic_selection: &SemanticSelection,
         inverted_blocklist: bool,
-        app: &AppContext,
     ) -> Option<String> {
         match self.expand_selection(semantic_selection, inverted_blocklist) {
             Some(ExpandedSelectionRange::Regular { start, end, .. }) => {
@@ -947,7 +946,7 @@ impl BlockList {
                 selection_start_cursor.seek(&BlockHeight::from(top_row), SeekBias::Right);
 
                 // Loop over each block, adding their contents to the output.
-                let transcript_scope = self.transcript_scope();
+
                 while bottom_row >= selection_start_cursor.start().height {
                     let Some(item) = selection_start_cursor.item() else {
                         // We reached the end of the block list.
@@ -959,7 +958,7 @@ impl BlockList {
                             let block_index = selection_start_cursor.start().block_count.into();
                             if let Some(command_block) = self.block_at(block_index) {
                                 // Don't copy hidden or empty blocks.
-                                if command_block.is_empty(transcript_scope) {
+                                if command_block.is_empty() {
                                     selection_start_cursor.next();
                                     continue;
                                 }

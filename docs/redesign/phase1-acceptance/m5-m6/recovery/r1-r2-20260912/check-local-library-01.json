@@ -1,0 +1,14 @@
+{
+  "command": [
+    "cargo",
+    "check",
+    "-p",
+    "warp",
+    "--lib",
+    "--no-default-features",
+    "--features",
+    "local_only"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 20.296
+}

@@ -58,15 +58,6 @@ impl CommentEditor {
         Self::build(ctx, comment_model, None, None)
     }
 
-    pub fn new_embedded(
-        ctx: &mut ViewContext<Self>,
-        comment_model: ModelHandle<EditorCommentsModel>,
-        comment_id: Option<CommentId>,
-        line: EditorLineLocation,
-    ) -> Self {
-        Self::build(ctx, comment_model, comment_id, Some(line))
-    }
-
     fn build(
         ctx: &mut ViewContext<Self>,
         comment_model: ModelHandle<EditorCommentsModel>,
@@ -141,10 +132,6 @@ impl CommentEditor {
 
     pub fn get_laid_out_size(&self) -> Option<Vector2F> {
         *self.laid_out_size.borrow()
-    }
-
-    pub fn set_laid_out_size(&self, value: Vector2F) {
-        self.laid_out_size.replace(Some(value));
     }
 
     fn update_save_button_state(&mut self, ctx: &mut ViewContext<Self>) {

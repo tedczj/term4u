@@ -1,5 +1,7 @@
 use std::collections::HashSet;
 use std::ops::Range;
+use std::path::PathBuf;
+use std::sync::Arc;
 use std::time::Duration;
 
 use async_channel::Sender;
@@ -27,16 +29,14 @@ use super::history::history_data_source_for_session;
 use super::workflows::WorkflowsDataSource;
 use super::zero_state::{CommandSearchZeroStateEvent, CommandSearchZeroStateView};
 use crate::appearance::Appearance;
-use crate::completer::SessionContext;
 use crate::search::QueryFilter;
 use crate::search::command_search::searcher::{CommandSearchItemAction, CommandSearchMixer};
 use crate::search::mixer::AddAsyncSourceOptions;
 use crate::search::result_renderer::{QueryResultRenderer, QueryResultRendererStyles};
 use crate::search::search_bar::{SearchBar, SearchBarEvent, SearchBarState, SearchResultOrdering};
-use crate::send_telemetry_from_ctx;
 use crate::terminal::History;
 use crate::terminal::input::MenuPositioning;
-use crate::terminal::model::session::SessionId;
+use crate::terminal::model::session::Session;
 use crate::terminal::resizable_data::{DEFAULT_UNIVERSAL_SEARCH_WIDTH, ModalType, ResizableData};
 
 const DEFAULT_PLACEHOLDER_TEXT: &str = "Search your history, workflows, and more";
@@ -191,18 +191,20 @@ impl CommandSearchView {
     /// Resets the mixer with the relevant data sources for Command Search registered.
     fn reset_command_search_mixer(
         &mut self,
-        session_id: SessionId,
-        session_context: Option<SessionContext>,
+        session: Option<Arc<Session>>,
+        working_directory: Option<PathBuf>,
         ctx: &mut ViewContext<Self>,
     ) {
         self.mixer.update(ctx, |mixer, ctx| {
             mixer.reset(ctx);
             mixer.add_sync_source(
-                WorkflowsDataSource::new(session_context.as_ref(), ctx),
+                WorkflowsDataSource::new(session.clone(), working_directory.as_deref(), ctx),
                 HashSet::from([QueryFilter::Workflows]),
             );
-            if History::as_ref(ctx).is_queryable(&session_id) {
-                let source = History::handle(ctx).read(ctx, |history, app| {
+            if let Some(session_id) = session.map(|session| session.id())
+                && History::as_ref(ctx).is_queryable(&session_id)
+            {
+                let source = History::handle(ctx).read(ctx, |history, _| {
                     history_data_source_for_session(session_id, history)
                 });
                 mixer.add_async_source(
@@ -223,14 +225,14 @@ impl CommandSearchView {
     #[allow(clippy::too_many_arguments)]
     pub fn reset_state(
         &mut self,
-        session_id: SessionId,
-        session_context: Option<SessionContext>,
+        session: Option<Arc<Session>>,
+        working_directory: Option<PathBuf>,
         initial_query: String,
         query_filter: Option<QueryFilter>,
         menu_positioning: MenuPositioning,
         ctx: &mut ViewContext<Self>,
     ) {
-        self.reset_command_search_mixer(session_id, session_context, ctx);
+        self.reset_command_search_mixer(session, working_directory, ctx);
         let ordering = match menu_positioning {
             MenuPositioning::AboveInputBox => SearchResultOrdering::BottomUp,
             MenuPositioning::BelowInputBox => SearchResultOrdering::TopDown,
@@ -280,14 +282,6 @@ impl CommandSearchView {
     }
 
     fn blur(&self, ctx: &mut ViewContext<Self>) {
-        let buffer_length = self.search_bar.as_ref(ctx).query(ctx).len();
-        send_telemetry_from_ctx!(
-            TelemetryEvent::CommandSearchExited {
-                query_filter: self.active_query_filter(ctx),
-                buffer_length
-            },
-            ctx
-        );
         ctx.emit(CommandSearchEvent::Blur);
     }
 
@@ -299,29 +293,14 @@ impl CommandSearchView {
     ) {
         match event {
             SearchBarEvent::Close => {
-                let buffer_length = self.search_bar.as_ref(ctx).query(ctx).len();
-                send_telemetry_from_ctx!(
-                    TelemetryEvent::CommandSearchExited {
-                        query_filter: self.active_query_filter(ctx),
-                        buffer_length
-                    },
-                    ctx
-                );
                 self.close(ctx);
             }
             // ctrl-c should close the command search view
-            SearchBarEvent::BufferCleared { buffer_len } => {
-                send_telemetry_from_ctx!(
-                    TelemetryEvent::CommandSearchExited {
-                        query_filter: self.active_query_filter(ctx),
-                        buffer_length: *buffer_len
-                    },
-                    ctx
-                );
+            SearchBarEvent::BufferCleared { buffer_len: _ } => {
                 self.close(ctx);
             }
-            SearchBarEvent::ResultAccepted { index, action } => {
-                self.handle_result_selected(*index, action.clone(), ctx);
+            SearchBarEvent::ResultAccepted { index: _, action } => {
+                self.handle_result_selected(action.clone(), ctx);
             }
             SearchBarEvent::ResultSelected { index } => {
                 self.state.list_state.scroll_to(*index);
@@ -348,16 +327,11 @@ impl CommandSearchView {
         });
     }
 
-    /// Returns the active query filters
-    fn active_query_filter(&self, app: &AppContext) -> Option<QueryFilter> {
-        self.search_bar_state.as_ref(app).active_query_filter()
-    }
-
     /// Emits the `ItemSelected` event containing the passed `CommandSearchEventPayload` and closes
     /// the search panel.
     fn handle_result_selected(
         &self,
-        result_index: usize,
+
         result_action: CommandSearchItemAction,
         ctx: &mut ViewContext<Self>,
     ) {
@@ -387,21 +361,6 @@ impl CommandSearchView {
 
             // Recompute the result index - the incoming index is the index in the
             // uniform list, but what we want is the "distance from first result".
-            let result_index = match self.search_bar_state.as_ref(ctx).query_result_renderers() {
-                Some(renderers) => renderers.len() - result_index - 1,
-                None => result_index,
-            };
-
-            send_telemetry_from_ctx!(
-                TelemetryEvent::CommandSearchResultAccepted {
-                    result_index,
-                    result_type: (&result_action).into(),
-                    query_filter: self.search_bar_state.as_ref(ctx).active_query_filter(),
-                    buffer_length: self.search_bar.as_ref(ctx).query(ctx).len(),
-                    was_immediately_executed,
-                },
-                ctx
-            );
         }
 
         let query = self.search_bar.as_ref(ctx).query(ctx);
@@ -688,9 +647,9 @@ impl TypedActionView for CommandSearchView {
         match action {
             Close => self.blur(ctx),
             ResultClicked {
-                result_index,
+                result_index: _,
                 result_action,
-            } => self.handle_result_selected(*result_index, *result_action.clone(), ctx),
+            } => self.handle_result_selected(*result_action.clone(), ctx),
             Resize => ctx.emit(CommandSearchEvent::Resize),
         }
     }
@@ -813,20 +772,6 @@ impl View for CommandSearchView {
                 ctx.dispatch_typed_action(CommandSearchAction::Close);
             })
             .finish()
-    }
-}
-
-#[cfg(feature = "integration_tests")]
-impl CommandSearchView {
-    pub fn search_bar(&self) -> &ViewHandle<SearchBar<CommandSearchItemAction>> {
-        &self.search_bar
-    }
-
-    pub fn has_search_results(&self, app: &AppContext) -> bool {
-        self.search_bar_state
-            .as_ref(app)
-            .query_result_renderers()
-            .is_some_and(|results| !results.is_empty())
     }
 }
 

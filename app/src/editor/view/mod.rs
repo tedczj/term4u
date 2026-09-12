@@ -1,5 +1,4 @@
 mod element;
-mod figma_utils;
 mod model;
 mod movement;
 mod snapshot;
@@ -52,8 +51,7 @@ use warpui::actions::StandardAction;
 use warpui::r#async::Timer;
 use warpui::clipboard::ClipboardContent;
 use warpui::elements::{
-    CornerRadius, CrossAxisAlignment, DEFAULT_UI_LINE_HEIGHT_RATIO, Flex, Hoverable, MainAxisSize,
-    MouseStateHandle, ParentElement, Radius, Shrinkable,
+    CornerRadius, DEFAULT_UI_LINE_HEIGHT_RATIO, Hoverable, MouseStateHandle, Radius,
 };
 use warpui::fonts::{Cache as FontCache, FamilyId, Properties, Weight};
 use warpui::keymap::{EditableBinding, FixedBinding, Keystroke, PerPlatformKeystroke};
@@ -61,12 +59,12 @@ use warpui::platform::{Cursor, OperatingSystem};
 use warpui::text::TextBuffer;
 use warpui::text::word_boundaries::WordBoundariesPolicy;
 use warpui::text_layout::TextStyle;
-use warpui::ui_components::components::{UiComponent, UiComponentStyles};
+use warpui::ui_components::components::UiComponentStyles;
 use warpui::windowing::WindowManager;
 use warpui::{
     AppContext, BlurContext, CursorInfo, Element, Entity, EntityId, FocusContext, ModelAsRef,
     ModelContext, ModelHandle, SingletonEntity, TypedActionView, View, ViewContext, ViewHandle,
-    WindowId, elements, windowing,
+    WindowId, windowing,
 };
 /// The editor interfaces that we publicly expose to consumers.
 /// This should be a very limited set; if you need to add something here,
@@ -3172,9 +3170,6 @@ impl EditorView {
         }
     }
 
-    /// Clears any existing autosuggestions (intelligent or not) that weren't for the current input_type.
-    /// If there's an empty buffer, populates the input with an intelligent autosuggestion for the input_type.
-
     /// Set placeholder text that appears when buffer matches the given prefix.
     /// Use empty string prefix "" for the default placeholder (shown when buffer is empty).
     pub fn set_placeholder_text_with_prefix(
@@ -3239,8 +3234,6 @@ impl EditorView {
 
         ctx.notify();
     }
-
-    /// Clears any next command state. Autosuggestion (ghosted text) is not cleared.
 
     /// Remove a specific placeholder by prefix.
     pub fn clear_placeholder_text_with_prefix(
@@ -4554,18 +4547,6 @@ impl EditorView {
             }),
         );
     }
-
-    /// Reads and processes images asynchronously from file paths.
-    ///
-    /// This function reads image files from the given paths, validates they are supported formats,
-    /// and processes them for AI context attachment via `process_and_attach_images_as_ai_context`.
-
-    /// Processes and attaches images to the AI context model.
-    ///
-    /// This function handles the final step of image attachment after validation,
-    /// updating the context model and UI state accordingly.
-
-    /// Stores non-image files selected via the file picker into the pending files context.
 
     /// Alternate path to Self::user_insert for when Vim mode is enabled. Forwards character
     /// commands to the VimFSA for interpretation.
@@ -7203,33 +7184,6 @@ impl EditorView {
         self.user_insert(&input, ctx);
     }
 
-    fn render_menu_button_tooltip(
-        &self,
-        tooltip_text: String,
-        appearance: &Appearance,
-    ) -> Box<dyn FnOnce() -> Box<dyn Element>> {
-        let tooltip_background = appearance.theme().surface_1().into_solid();
-        let tooltip_text_color = appearance
-            .theme()
-            .main_text_color(tooltip_background.into())
-            .into_solid();
-        let ui_builder = appearance.ui_builder().clone();
-
-        Box::new(move || {
-            let tool_tip_style = UiComponentStyles {
-                background: Some(elements::Fill::Solid(tooltip_background)),
-                font_color: Some(tooltip_text_color),
-                ..Default::default()
-            };
-
-            ui_builder
-                .tool_tip(tooltip_text)
-                .with_style(tool_tip_style)
-                .build()
-                .finish()
-        })
-    }
-
     /// Commits the currently composed text from the IME (if there is any) to properly handle one of the following:
     /// - a new selection
     /// - clicking outside of the editor
@@ -7304,6 +7258,7 @@ impl EditorView {
 
     /// If the editor should show any controls, render them.
     /// Otherwise, return the child element.
+    #[cfg(feature = "voice_input")]
     fn render_controls(&self, ctx: &AppContext) -> Option<Box<dyn Element>> {
         #[cfg(feature = "voice_input")]
         {
@@ -7726,7 +7681,8 @@ impl View for EditorView {
             .with_cursor(Cursor::IBeam)
             .finish();
 
-        match self.render_controls(ctx) {
+        #[cfg(feature = "voice_input")]
+        return match self.render_controls(ctx) {
             Some(controls) => {
                 let mut row = Flex::row()
                     .with_main_axis_size(MainAxisSize::Max)
@@ -7735,8 +7691,10 @@ impl View for EditorView {
                 row.add_child(controls);
                 row.finish()
             }
-            _ => hoverable,
-        }
+            None => hoverable,
+        };
+        #[cfg(not(feature = "voice_input"))]
+        hoverable
     }
 
     fn keymap_context(&self, ctx: &AppContext) -> warpui::keymap::Context {

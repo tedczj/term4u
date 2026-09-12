@@ -134,21 +134,6 @@ impl super::WarpConfig {
         }
     }
 
-    /// Writes a custom model router to disk as a YAML file.
-    ///
-    /// When `existing_path` is provided (editing) the file at that path is
-    /// overwritten; otherwise a new file is created under
-    /// `custom_model_routers_dir()`. The file name is derived from `name` by
-    /// lowercasing and replacing non-alphanumeric characters (except `-`) with
-    /// `_`. If the candidate path already exists, a numeric suffix is appended
-    /// (`_2`, `_3`, …) until a free slot is found. Returns the path written to.
-    #[cfg(feature = "local_fs")]
-
-    /// Deletes a custom model router file from disk.
-    /// The filesystem watcher in [`Self::handle_warp_managed_paths_event`] will
-    /// pick up the deletion and reload `custom_model_routers`.
-    #[cfg(feature = "local_fs")]
-
     /// This method takes a file name candidate (appends .yaml if missing) and a LaunchConfig as
     /// arguments. It saves the file and returns the filename used if successful.
     #[cfg(feature = "local_fs")]

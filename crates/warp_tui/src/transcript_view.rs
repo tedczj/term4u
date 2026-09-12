@@ -45,7 +45,7 @@ impl TuiTranscriptView {
         let model = self.model.lock();
         let block_list = model.block_list();
         !block_list.blocks().iter().any(|block| {
-            should_render_terminal_block(block, block_list) && !block_content_rows(block).is_empty()
+            should_render_terminal_block(block) && !block_content_rows(block).is_empty()
         })
     }
 }

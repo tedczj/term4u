@@ -1,15 +1,10 @@
-use std::sync::Arc;
-
 use warp_core::ui::appearance::Appearance;
 use warpui::{App, ViewHandle, WindowId};
 
 use super::settings::initialize_history_persistence_for_tests;
-use crate::auth::auth_state::{AuthState, AuthStateProvider, LocalAuthStateProvider};
 use crate::changelog_model::ChangelogModel;
-use crate::network::NetworkStatus;
 use crate::settings::PrivacySettings;
 use crate::settings_view::keybindings::KeybindingChangedNotifier;
-use crate::suggestions::ignored_suggestions_model::IgnoredSuggestionsModel;
 use crate::system::SystemStats;
 use crate::terminal::mock_terminal_manager::MockTerminalManager;
 use crate::terminal::model::SerializedBlockListItem;
@@ -26,11 +21,8 @@ pub fn initialize_app_for_terminal_view(app: &mut App) {
     initialize_history_persistence_for_tests(app);
     app.add_singleton_model(|_| Appearance::mock());
     app.update(PrivacySettings::register_singleton);
-    let auth_state = Arc::new(AuthState::new_for_test());
-    app.add_singleton_model(|_| AuthStateProvider::new(auth_state.clone()));
-    app.add_singleton_model(|_| LocalAuthStateProvider::new(auth_state));
+
     app.add_singleton_model(|_| ChangelogModel::new(()));
-    app.add_singleton_model(|_| NetworkStatus::new());
     app.add_singleton_model(|_| SystemStats::new());
     app.add_singleton_model(|_| SyncedInputState::new());
     app.add_singleton_model(|_| ResizableData::default());
@@ -40,18 +32,11 @@ pub fn initialize_app_for_terminal_view(app: &mut App) {
     app.add_singleton_model(|_| KeybindingChangedNotifier::new());
     app.add_singleton_model(|_| ActiveSession::default());
     app.add_singleton_model(|_| WorkspaceRegistry::new());
-    app.add_singleton_model(|_| IgnoredSuggestionsModel::new(vec![]));
+    app.add_singleton_model(|_| crate::workspace::ToastStack);
     app.add_singleton_model(|_| VimRegisters::new());
     app.update(crate::terminal::init);
     app.update(crate::editor::init);
     app.update(crate::terminal::input::Input::init);
-}
-
-pub fn add_window_with_terminal(
-    app: &mut App,
-    restored_blocks: Option<&[SerializedBlockListItem]>,
-) -> ViewHandle<TerminalView> {
-    add_window_with_id_and_terminal(app, restored_blocks).1
 }
 
 pub fn add_window_with_id_and_terminal(
@@ -67,6 +52,7 @@ pub fn initialize_app_for_pane_group(app: &mut App) {
     initialize_app_for_terminal_view(app);
     app.add_singleton_model(|_| crate::terminal::local_tty::spawner::PtySpawner::new_for_test());
     app.add_singleton_model(crate::notebooks::manager::NotebookManager::new_local);
+    app.add_singleton_model(crate::workflows::manager::WorkflowManager::new);
     app.add_singleton_model(repo_metadata::watcher::DirectoryWatcher::new);
     app.add_singleton_model(|_| repo_metadata::repositories::DetectedRepositories::default());
     app.add_singleton_model(watcher::HomeDirectoryWatcher::new_for_test);
@@ -80,7 +66,7 @@ pub fn initialize_app_for_pane_group(app: &mut App) {
     }
     app.add_singleton_model(crate::search::files::model::FileSearchModel::new);
     app.add_singleton_model(|_| crate::code_review::git_repo_model::GitRepoModels::new());
-    app.add_singleton_model(crate::ai::persisted_workspace::PersistedWorkspace::new_for_test);
+    app.add_singleton_model(|_| crate::ai::persisted_workspace::PersistedWorkspace::new_for_test());
     app.add_singleton_model(|_| ai::project_context::model::ProjectContextModel::default());
     crate::terminal::available_shells::register(app);
 }

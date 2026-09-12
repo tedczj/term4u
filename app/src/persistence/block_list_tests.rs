@@ -160,7 +160,7 @@ fn old_terminal_fixture_remains_readable_after_migrations() {
     let path = directory.path().join("warp.sqlite");
     std::fs::write(
         &path,
-        include_bytes!("../../../crates/integration/tests/data/restored_blocks.sqlite"),
+        include_bytes!("../../../crates/persistence/fixtures/legacy/restored_blocks.sqlite"),
     )
     .unwrap();
     let mut conn = SqliteConnection::establish(path.to_str().unwrap()).unwrap();
