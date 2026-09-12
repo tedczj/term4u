@@ -1,7 +1,7 @@
 # R0 环境与基线刷新 · 2026-09-12
 
 **状态：基线刷新完成，R0 环境准备仍 INCOMPLETE。** 当前仅支持 macOS；Linux 验证环境不再要求，
-Linux 专属代码与配置后续清理。本机抓包权限和构建空间仍受阻，不能标成 R0 全部完成或 C1–C10 PASS。
+Linux 专属代码与配置后续清理。构建空间与完整网络归因条件仍受阻；管理员抓包权限已在后续实测中验证，不能标成 R0 全部完成或 C1–C10 PASS。
 
 本轮起点 `ee1308620c478643d63e865677598eb90d6ffc18`（main），UTC、命令及退出码见
 [commands.json](commands.json)。仅更新文档及新证据目录，不覆盖旧 baseline/batches。
@@ -41,10 +41,11 @@ Linux 专属代码与配置后续清理。本机抓包权限和构建空间仍�
 - 旧提交 `066ec71b`、`94912b78` 可读取，仓库 DB fixtures 已重新记录 SHA256，见
   [legacy-prerequisites.log](legacy-prerequisites.log)。已有 fixture/迁移对照可用；
   detached `066ec71b` 生成的真实旧样本仍无完成证据，保留为 R2.6 待做，不能以 fixture 替代。
-- **网络测试环境确定为这台 macOS。** 实际执行 tcpdump 失败（exit 1）：BPF 权限被拒绝，
+- **网络测试环境确定为这台 macOS。** 后续用户授权并完成系统认证后，[受控抓包已通过](../r0-capture-20260912/README.md)，
+  捕获 16 包、0 内核丢包，直接发包 PID 可归因。以下权限失败仅为此前尝试：tcpdump exit 1，BPF 权限被拒绝，
   `/dev/bpf*` 仅 root 可读，`sudo -n` 需要密码，见 [network-permission.log](network-permission.log)。
   `tcpdump -D` 能列接口不代表有抓包权限。未改系统防火墙或设备权限。
-- 权限就绪后先抓受控 loopback TCP/UDP 流量，验证非空捕获及进程信息；再验证 DNS 53/853 的
+- 受控 loopback TCP/UDP 非空捕获和直接发包进程信息已验证；仍需验证系统 resolver 与 DNS 53/853 的
   归因路径，无法归因则仍 INCOMPLETE。之后按第 11 章对隔离 HOME 的 GUI/TUI 各运行 60 秒、
   恶意代理、子进程及第二道防线拒绝日志执行正式测试。受控探针与产品静默窗口分别留证，
   不把空日志或权限错误当零外连。正式场景仍归 R6.9/R6.10。
