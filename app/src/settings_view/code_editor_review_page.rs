@@ -27,11 +27,11 @@ use super::{
     flags,
 };
 use crate::appearance::Appearance;
+use crate::send_telemetry_from_ctx;
 use crate::settings::{AppEditorSettings, CodeEditorLineNumberMode, CodeSettings};
 use crate::terminal::general_settings::GeneralSettings;
 use crate::view_components::{Dropdown, DropdownItem};
 use crate::workspace::tab_settings::TabSettings;
-use crate::{TelemetryEvent, send_telemetry_from_ctx};
 
 const PAGE_TITLE: &str = "Editor and Code Review";
 

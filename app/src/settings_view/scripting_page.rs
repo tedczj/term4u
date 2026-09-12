@@ -14,7 +14,7 @@ use super::settings_page::{
 use super::{SettingsSection, ToggleState};
 use crate::appearance::Appearance;
 use crate::features::FeatureFlag;
-use crate::settings::{LocalControlMode, LocalControlModeSetting, LocalControlSettings};
+use crate::settings::{LocalControlMode, LocalControlSettings};
 use crate::view_components::{Dropdown, DropdownItem};
 
 #[derive(Clone, Debug, PartialEq)]

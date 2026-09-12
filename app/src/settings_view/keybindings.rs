@@ -20,8 +20,8 @@ use warpui::{
 
 use super::SettingsSection;
 use super::settings_page::{
-    LocalOnlyIconState, MatchData, PageType, SettingsPageMeta, SettingsPageViewHandle,
-    SettingsWidget, render_sub_header,
+    MatchData, PageType, SettingsPageMeta, SettingsPageViewHandle, SettingsWidget,
+    render_sub_header,
 };
 use crate::appearance::Appearance;
 use crate::editor::{
@@ -34,7 +34,7 @@ use crate::util::bindings::{
     CommandBinding, filter_bindings_including_keystroke, reset_keybinding_to_default,
     set_custom_keybinding,
 };
-use crate::{TelemetryEvent, send_telemetry_from_ctx, themes};
+use crate::{send_telemetry_from_ctx, themes};
 
 const FONT_DELTA: f32 = 2.;
 const CANCEL_SAVE_BUTTONS_SPACING: f32 = 4.0;

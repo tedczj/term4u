@@ -12,12 +12,11 @@ use crate::code::editor_management::{CodeEditorStatus, CodeEditorSummary};
 use crate::code::view::CodeView;
 use crate::code_review::code_review_view::CodeReviewView;
 use crate::pane_group::{CodePane, PaneGroup, PaneId, TerminalPane};
+use crate::send_telemetry_from_app_ctx;
 use crate::server::telemetry::CloseTarget;
 use crate::session_management::{RunningSessionSummary, SessionNavigationData};
 use crate::settings::CodeSettings;
 use crate::terminal::general_settings::GeneralSettings;
-use crate::workspace::Workspace;
-use crate::{TelemetryEvent, send_telemetry_from_app_ctx};
 
 /// Scope of what's being quit/closed.
 #[derive(Clone)]

@@ -1,13 +1,10 @@
 use std::any::Any;
-use std::cell::RefCell;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::ffi::OsString;
 use std::path::PathBuf;
-use std::rc::Rc;
 use std::sync::Arc;
 use std::sync::mpsc::SyncSender;
 
-use instant::Instant;
 use itertools::Itertools;
 use lazy_static::lazy_static;
 use markdown_parser::FormattedTextFragment;
@@ -16,29 +13,25 @@ use pathfinder_geometry::rect::RectF;
 use pathfinder_geometry::vector::{Vector2F, vec2f};
 use serde::{Deserialize, Serialize};
 use settings::Setting as _;
-use tree::DEFAULT_FLEX_VALUE;
 use typed_path::TypedPath;
 use url::Url;
 use uuid::Uuid;
-use warp_core::command::ExitCode;
 use warp_core::context_flag::ContextFlag;
 use warp_errors::report_if_error;
 use warp_terminal::focus_env::add_session_focus_env_vars;
-use warp_terminal::shell::{ShellName, ShellType};
 #[cfg(feature = "local_fs")]
 use warp_util::path::LineAndColumnArg;
 use warp_util::path::convert_wsl_to_windows_host_path;
-use warpui::r#async::SpawnedFutureHandle;
 use warpui::elements::{
-    ChildView, Clipped, CrossAxisAlignment, DispatchEventResult, Element, EventHandler, Flex,
-    MainAxisSize, ParentElement, Shrinkable, Stack,
+    ChildView, CrossAxisAlignment, DispatchEventResult, Element, EventHandler, Flex, MainAxisSize,
+    ParentElement, Shrinkable,
 };
 use warpui::keymap::{Context, EditableBinding, FixedBinding};
 use warpui::notification::NotificationSendError;
 use warpui::windowing::WindowManager;
 use warpui::{
     AppContext, Entity, EntityId, ModelHandle, SingletonEntity, TypedActionView, View, ViewContext,
-    ViewHandle, WeakViewHandle, WindowId,
+    ViewHandle, WindowId,
 };
 
 #[cfg(feature = "local_fs")]
@@ -58,7 +51,7 @@ use crate::code::view::{CodeView, CodeViewAction};
 use crate::code_review::comments::{AttachedReviewComment, PendingImportedReviewComment};
 use crate::code_review::diff_state::DiffMode;
 use crate::features::FeatureFlag;
-use crate::launch_configs::launch_config::{self, PaneMode, PaneTemplateType};
+use crate::launch_configs::launch_config::{self, PaneTemplateType};
 use crate::palette::PaletteMode;
 use crate::pane_group::focus_state::PaneGroupFocusEvent;
 use crate::pane_group::pane::ActionOrigin;
@@ -68,13 +61,13 @@ use crate::quit_warning::UnsavedStateSummary;
 use crate::resource_center::{
     Tip, TipAction, TipsCompleted, mark_feature_used_and_write_to_user_defaults,
 };
-use crate::server::telemetry::{PaletteSource, TelemetryEvent};
+use crate::server::telemetry::PaletteSource;
 use crate::session_management::SessionNavigationData;
 use crate::settings::PaneSettings;
 use crate::settings_view::SettingsSection;
 use crate::shell_indicator::ShellIndicatorType;
 use crate::terminal::available_shells::{AvailableShell, AvailableShells};
-use crate::terminal::general_settings::{GeneralSettings, GeneralSettingsChangedEvent};
+use crate::terminal::general_settings::GeneralSettings;
 #[cfg(feature = "local_tty")]
 use crate::terminal::local_tty::TerminalManager as LocalTtyTerminalManager;
 #[cfg(all(feature = "local_tty", not(feature = "remote_tty")))]
@@ -85,10 +78,7 @@ use crate::terminal::model::SerializedBlockListItem;
 use crate::terminal::model::session::Session;
 use crate::terminal::session_settings::{NewSessionSource, SessionSettings};
 use crate::terminal::view::{ExecuteCommandEvent, SyncEvent};
-use crate::terminal::{
-    MockTerminalManager, ShellLaunchData, ShellLaunchState, TerminalManager, TerminalModel,
-    TerminalView,
-};
+use crate::terminal::{ShellLaunchData, TerminalManager, TerminalModel, TerminalView};
 use crate::undo_close::{UndoCloseStack, UndoCloseStackEvent};
 use crate::util::bindings::{CustomAction, is_binding_pty_compliant};
 #[cfg(feature = "local_fs")]
@@ -97,9 +87,7 @@ use crate::view_components::ToastFlavor;
 use crate::workflows::workflow::Workflow;
 use crate::workflows::{WorkflowSelectionSource, WorkflowSource, WorkflowType};
 use crate::workspace::tab_group::TabGroupId;
-use crate::workspace::{
-    self, CommandSearchOptions, PaneViewLocator, TabBarLocation, WorkspaceAction,
-};
+use crate::workspace::{self, CommandSearchOptions, PaneViewLocator, TabBarLocation};
 use crate::{cmd_or_ctrl_shift, send_telemetry_from_ctx};
 
 pub mod focus_state;
@@ -3961,6 +3949,31 @@ impl PaneGroup {
             .collect()
     }
 
+    pub(crate) fn snapshot_blocks(
+        &self,
+        app: &AppContext,
+    ) -> Vec<(PaneUuid, Vec<SerializedBlockListItem>)> {
+        self.panes_of::<TerminalPane>()
+            .filter(|pane| !self.is_pane_hidden_for_close(pane.terminal_pane_id().into()))
+            .map(|pane| {
+                let view = pane.terminal_view(app);
+                let model = view.as_ref(app).model.lock();
+                let scope = model.block_list().transcript_scope();
+                let mut blocks = model
+                    .block_list()
+                    .blocks()
+                    .iter()
+                    .rev()
+                    .filter(|block| block.is_visible(scope))
+                    .take(100)
+                    .map(|block| crate::terminal::model::block::SerializedBlock::from(block).into())
+                    .collect::<Vec<_>>();
+                blocks.reverse();
+                (PaneUuid(pane.session_uuid()), blocks)
+            })
+            .collect()
+    }
+
     /// Returns terminal views from layout-tree-visible panes only.
     /// Unlike `terminal_views()`, this excludes off-tree child agent panes
     /// and panes hidden for any reason (temporary replacement, child agent, etc.).
@@ -4007,26 +4020,8 @@ impl PaneGroup {
         })
     }
 
-    #[cfg(test)]
-    #[cfg(test)]
-
-    /// Add and focus a terminal pane in AI mode. Adds the pane to the right of all other panes as
-    /// a split on the root node. If `initial_query` is `Some` pre-fill the input with its value.
-
-    /// Creates an ambient agent pane with the given initial prompt.
-
-    /// Add and focus a cloud mode pane.
-
-    /// Close overlays whose state is managed by this pane group or its terminal panes. Does not
-    /// change what element is focused.
+    /// Close code pane overlays without changing focus.
     pub fn close_overlays(&mut self, ctx: &mut ViewContext<Self>) {
-        self.for_all_terminal_panes(
-            |terminal_view, ctx| {
-                terminal_view.close_overlays(ctx);
-            },
-            ctx,
-        );
-
         self.for_all_code_panes(
             |code_view, ctx| {
                 code_view.close_overlays(ctx);
@@ -4115,6 +4110,10 @@ impl TypedActionView for PaneGroup {
 }
 
 impl View for PaneGroup {
+    fn on_focus(&mut self, _focus: &warpui::FocusContext, ctx: &mut ViewContext<Self>) {
+        self.handle_focus_change(ctx);
+    }
+
     fn ui_name() -> &'static str {
         "PaneGroup"
     }

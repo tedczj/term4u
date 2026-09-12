@@ -1,0 +1,18 @@
+{
+  "path": "/Users/tedczj/workspace/term4u/target/debug/bundle/osx/Term4u.app/Contents/MacOS/term4u",
+  "sha256": "722b6141f4617141735d3cffe05ff188b30f13be51ea45db8193d14fc14a939e",
+  "build_command": "./script/run --dont-open",
+  "signature_verification": "codesign --verify --deep --strict passed",
+  "visual_checks": [
+    "PageUp middle and start, PageDown end",
+    "split pane mouse focus and separate command output",
+    "shell bootstrap queue with isolated 15-second .zshrc delay"
+  ],
+  "bootstrap_queue_timing": {
+    "submitted_utc": "2026-09-12T08:53:34Z",
+    "bootstrapped_utc": "2026-09-12T08:53:42Z",
+    "command": "echo QUEUEDBEFOREBOOT",
+    "output_observed_once": true
+  },
+  "status": "local_gui_verified_not_full_V1_acceptance"
+}

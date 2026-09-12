@@ -19,7 +19,6 @@ use settings_page::{
 use warp_core::channel::ChannelState;
 use warp_core::context_flag::ContextFlag;
 use warp_core::features::FeatureFlag;
-use warp_core::send_telemetry_from_ctx;
 use warp_core::settings::ToggleableSetting as _;
 use warp_core::ui::theme::color::internal_colors;
 use warp_editor::editor::NavigationKey;
@@ -37,7 +36,6 @@ use warpui::{
     UpdateView as _, View, ViewContext, ViewHandle, id,
 };
 
-use self::telemetry::SettingsTelemetryEvent;
 use crate::appearance::Appearance;
 use crate::editor::{
     EditorView, Event as EditorEvent, PropagateAndNoOpNavigationKeys, SingleLineEditorOptions,
@@ -52,7 +50,6 @@ use crate::terminal::SizeInfo;
 use crate::terminal::model::blockgrid::BlockGrid;
 use crate::ui_components::icons;
 use crate::util::bindings::{BindingGroup, CustomAction, keybinding_name_to_display_string};
-use crate::view_components::ToastFlavor;
 use crate::workspace::WorkspaceAction;
 
 mod about_page;
@@ -202,7 +199,9 @@ pub enum SettingsViewEvent {
     OpenProjectRulesPane { rule_paths: Vec<PathBuf> },
 }
 
-#[derive(Copy, Clone, Debug, Default, PartialEq, Eq, Hash)]
+#[derive(
+    Copy, Clone, Debug, Default, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize,
+)]
 pub enum SettingsSection {
     About,
     #[default]

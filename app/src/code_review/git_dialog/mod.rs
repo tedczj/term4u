@@ -10,7 +10,6 @@
 //! outcome variant, and wire up dispatch.
 
 use pathfinder_geometry::vector::vec2f;
-use warp_core::features::FeatureFlag;
 use warp_core::send_telemetry_from_ctx;
 use warp_core::ui::appearance::Appearance;
 use warpui::elements::{
@@ -32,9 +31,7 @@ use crate::code::editor::{add_color, remove_color};
 use crate::code_review::diff_state::{
     CommitChainMode, DiffStateModel, DiffStateModelEvent, GitOpResult,
 };
-use crate::code_review::telemetry_event::{
-    CodeReviewTelemetryEvent, GitDialogStatus, GitOperationKind,
-};
+use crate::code_review::telemetry_event::GitOperationKind;
 use crate::ui_components::dialog::{Dialog, dialog_styles};
 use crate::ui_components::icons::Icon;
 use crate::util::git::{Commit, FileChangeEntry};

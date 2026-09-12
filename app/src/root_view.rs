@@ -7,7 +7,7 @@ use parking_lot::Mutex;
 use pathfinder_geometry::rect::RectF;
 use pathfinder_geometry::vector::{Vector2F, vec2f};
 use serde::{Deserialize, Serialize};
-use warpui::elements::{ChildView, Element};
+use warpui::elements::{ChildView, Container, Element};
 use warpui::platform::{WindowBounds, WindowStyle};
 use warpui::{
     AddWindowOptions, AppContext, Entity, FocusContext, SingletonEntity, TypedActionView, View,
@@ -15,18 +15,18 @@ use warpui::{
 };
 
 use crate::app_state::{AppState, PaneUuid, WindowSnapshot};
+use crate::appearance::Appearance;
 use crate::launch_configs::launch_config;
 use crate::pane_group::{NewTerminalOptions, PanesLayout};
-use crate::settings::{QuakeModeSettings, ThemeSettings};
+use crate::settings::QuakeModeSettings;
 use crate::settings_view::SettingsSection;
 use crate::terminal::available_shells::AvailableShell;
 use crate::terminal::model::SerializedBlockListItem;
 use crate::terminal::shell::ShellType;
 use crate::themes::theme::AnsiColorIdentifier;
 use crate::uri::OpenSettingsArgs;
-use crate::window_settings::WindowSettings;
-use crate::workspace::{PaneViewLocator, Workspace, WorkspaceAction, WorkspaceRegistry};
-use crate::{GlobalResourceHandles, GlobalResourceHandlesProvider, UpdateQuakeModeEventArg};
+use crate::workspace::{PaneViewLocator, Workspace, WorkspaceAction};
+use crate::{GlobalResourceHandles, GlobalResourceHandlesProvider};
 
 const WINDOW_TITLE: &str = "Term4u";
 
@@ -263,8 +263,11 @@ impl View for RootView {
         "RootView"
     }
 
-    fn render(&self, _app: &AppContext) -> Box<dyn Element> {
-        ChildView::new(&self.workspace).finish()
+    fn render(&self, app: &AppContext) -> Box<dyn Element> {
+        Container::new(ChildView::new(&self.workspace).finish())
+            .with_padding_top(28.)
+            .with_background(Appearance::as_ref(app).theme().background())
+            .finish()
     }
 
     fn on_focus(&mut self, focus: &FocusContext, ctx: &mut ViewContext<Self>) {
@@ -279,6 +282,10 @@ impl Drop for RootView {
 }
 
 pub fn init(app: &mut AppContext) {
+    #[cfg(feature = "local_fs")]
+    app.add_global_action("workspace:save_app", |_: &(), ctx| {
+        crate::persistence::save_app_snapshot(ctx);
+    });
     app.add_global_action("root_view:open_from_restored", open_from_restored);
     app.add_global_action("root_view:open_new", open_new);
     app.add_global_action("root_view:open_new_with_shell", open_new_with_shell);
@@ -329,7 +336,9 @@ fn open_from_restored(arg: &OpenFromRestoredArg, ctx: &mut AppContext) {
         open_new(&(), ctx);
         return;
     }
-    for window in &state.windows {
+    let mut windows = state.windows.iter().enumerate().collect::<Vec<_>>();
+    windows.sort_by_key(|(index, _)| Some(*index) == state.active_window_index);
+    for (_, window) in windows {
         open_new_with_workspace_source(
             NewWorkspaceSource::Restored {
                 window_snapshot: window.clone(),
@@ -355,7 +364,17 @@ pub(crate) fn open_new_with_workspace_source(
     ctx: &mut AppContext,
 ) -> (WindowId, ViewHandle<RootView>) {
     let resources = GlobalResourceHandlesProvider::as_ref(ctx).get().clone();
-    ctx.add_window(default_window_options(), |ctx| {
+    let mut options = default_window_options();
+    if let NewWorkspaceSource::Restored {
+        window_snapshot, ..
+    } = &source
+    {
+        if let Some(bounds) = window_snapshot.bounds {
+            options.window_bounds = WindowBounds::new(Some(bounds));
+        }
+        options.fullscreen_state = window_snapshot.fullscreen_state;
+    }
+    ctx.add_window(options, |ctx| {
         let mut root = RootView::new(resources, source, ctx);
         root.focus(ctx);
         root

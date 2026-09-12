@@ -19,7 +19,6 @@ use warpui::elements::{
 };
 use warpui::platform::Cursor;
 use warpui::text_layout::ClipConfig;
-use warpui::units::Pixels;
 use warpui::{AppContext, Element, EventContext, SingletonEntity, View, ViewContext, ViewHandle};
 
 use crate::appearance::Appearance;

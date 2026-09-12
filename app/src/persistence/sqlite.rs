@@ -208,7 +208,7 @@ fn handle_model_event(event: ModelEvent, connection: &mut SqliteConnection) -> R
             block,
         }) => save_block(connection, pane_id, &block, is_local)?,
         ModelEvent::DeleteBlocks(pane_id) => delete_blocks(connection, pane_id)?,
-        ModelEvent::Snapshot(_) => {}
+        ModelEvent::Snapshot(snapshot) => super::local_snapshot::save(connection, snapshot)?,
         ModelEvent::InsertCommand { metadata } => insert_command(connection, metadata)?,
         ModelEvent::UpdateFinishedCommand { metadata } => {
             update_finished_command(connection, metadata)?;
@@ -280,7 +280,7 @@ fn read_sqlite_data(
         .load(connection)?;
 
     Ok(PersistedData {
-        app_state: None,
+        app_state: super::local_snapshot::load(connection)?,
         command_history,
         legacy_notebooks,
         codebase_indices,

@@ -1,0 +1,50 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "./script/format"
+    ],
+    "started_at": "2026-09-12T06:21:30.481370+00:00",
+    "exit_code": 0
+  },
+  {
+    "name": "presubmit",
+    "command": [
+      "./script/presubmit"
+    ],
+    "started_at": "2026-09-12T06:21:33.646387+00:00",
+    "exit_code": 101
+  },
+  {
+    "name": "clippy-gui",
+    "command": [
+      "cargo",
+      "clippy",
+      "-p",
+      "warp",
+      "--all-targets",
+      "--tests",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "started_at": "2026-09-12T06:22:06.473475+00:00",
+    "exit_code": 101
+  },
+  {
+    "name": "clippy-completer",
+    "command": [
+      "cargo",
+      "clippy",
+      "-p",
+      "warp_completer",
+      "--all-targets",
+      "--tests",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "started_at": "2026-09-12T06:22:41.227178+00:00",
+    "exit_code": 0
+  }
+]

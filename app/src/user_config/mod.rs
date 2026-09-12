@@ -8,7 +8,6 @@ mod imp;
 use std::path::Path;
 use std::path::PathBuf;
 
-pub(crate) use imp::load_tab_configs;
 #[cfg(feature = "local_fs")]
 pub use imp::load_workflows;
 pub use imp::{load_launch_configs, load_theme_configs};

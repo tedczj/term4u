@@ -4,7 +4,6 @@ use std::sync::Arc;
 
 use itertools::Itertools;
 use lazy_static::lazy_static;
-use warp_core::send_telemetry_from_app_ctx;
 use warp_util::path::LineAndColumnArg;
 use warpui::elements::{
     Align, Border, ChildView, Clipped, ClippedScrollStateHandle, ClippedScrollable, ConstrainedBox,
@@ -23,7 +22,6 @@ use warpui::{
 use super::super::palette_styles as styles;
 use super::CommandPaletteMixer;
 use crate::appearance::Appearance;
-use crate::features::FeatureFlag;
 use crate::palette::PaletteMode;
 use crate::root_view::OpenLaunchConfigArg;
 use crate::search::QueryFilter;
@@ -39,7 +37,7 @@ use crate::search::search_bar::{
     SearchBar, SearchBarEvent, SearchBarState, SearchResultOrdering, SelectionUpdate,
 };
 use crate::send_telemetry_from_ctx;
-use crate::server::telemetry::{LaunchConfigUiLocation, TelemetryEvent};
+use crate::server::telemetry::LaunchConfigUiLocation;
 use crate::session_management::SessionSource;
 use crate::settings::CtrlTabBehavior;
 use crate::terminal::keys_settings::KeysSettings;

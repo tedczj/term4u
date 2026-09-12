@@ -1,6 +1,5 @@
 use core::fmt::{self, Display};
 use std::borrow::Cow;
-use std::collections::HashMap;
 
 use itertools::Itertools as _;
 use markdown_parser::{FormattedText, FormattedTextFragment, FormattedTextLine};

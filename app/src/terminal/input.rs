@@ -1,9 +1,10 @@
 use std::sync::Arc;
 
-use warpui::elements::{ChildView, Container, ParentElement, SavePosition};
+use warpui::elements::{ChildView, Container, SavePosition};
+use warpui::keymap::FixedBinding;
 use warpui::{AppContext, Element, Entity, TypedActionView, View, ViewContext, ViewHandle, keymap};
 
-use crate::editor::{EditorView, Event as EditorEvent};
+use crate::editor::{EditorOptions, EditorView, Event as EditorEvent};
 
 pub const OPEN_COMPLETIONS_KEYBINDING_NAME: &str = "input:open_completion_suggestions";
 
@@ -49,6 +50,7 @@ pub enum InputAction {
     Focus,
     Clear,
     Submit,
+    CtrlD,
     Insert(String),
 }
 
@@ -67,9 +69,24 @@ pub struct Input {
 
 impl Input {
     pub fn new(ctx: &mut ViewContext<Self>) -> Self {
-        let editor = ctx.add_typed_action_view(|ctx| EditorView::new(Default::default(), ctx));
+        let editor = ctx.add_typed_action_view(|ctx| {
+            EditorView::new(
+                EditorOptions {
+                    keymap_context_modifier: Some(Box::new(|context, _| {
+                        context.set.insert(
+                            crate::settings_view::flags::TERMINAL_INPUT_PAGE_KEYS_HANDLED_BY_INPUT,
+                        );
+                    })),
+                    ..Default::default()
+                },
+                ctx,
+            )
+        });
         ctx.subscribe_to_view(&editor, |input, _, event, ctx| match event {
             EditorEvent::Enter | EditorEvent::CmdEnter => input.submit(ctx),
+            EditorEvent::CtrlC { cleared_buffer_len } => ctx.emit(Event::CtrlC {
+                cleared_buffer_len: *cleared_buffer_len,
+            }),
             EditorEvent::Activate => ctx.emit(Event::EditorFocused),
             _ => {}
         });
@@ -79,7 +96,15 @@ impl Input {
         }
     }
 
-    pub fn init(_app: &mut AppContext) {}
+    pub fn init(app: &mut AppContext) {
+        use warpui::keymap::macros::*;
+
+        app.register_fixed_bindings([FixedBinding::new(
+            "ctrl-d",
+            InputAction::CtrlD,
+            id!("TerminalInput") & id!("InputEmpty"),
+        )]);
+    }
 
     pub fn editor(&self) -> &ViewHandle<EditorView> {
         &self.editor
@@ -165,9 +190,12 @@ impl View for Input {
         .finish()
     }
 
-    fn keymap_context(&self, _app: &AppContext) -> keymap::Context {
+    fn keymap_context(&self, app: &AppContext) -> keymap::Context {
         let mut context = keymap::Context::default();
         context.set.insert(Self::ui_name());
+        if self.buffer_text(app).is_empty() {
+            context.set.insert("InputEmpty");
+        }
         context
     }
 }
@@ -180,6 +208,7 @@ impl TypedActionView for Input {
             InputAction::Focus => self.focus_input_box(ctx),
             InputAction::Clear => self.clear_buffer_and_reset_undo_stack(ctx),
             InputAction::Submit => self.submit(ctx),
+            InputAction::CtrlD => ctx.emit(Event::CtrlD),
             InputAction::Insert(text) => self.append_to_buffer(text, ctx),
         }
     }

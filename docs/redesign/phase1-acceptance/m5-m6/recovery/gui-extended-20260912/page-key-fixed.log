@@ -1,0 +1,12 @@
+
+running 1 test
+16:42:36.592 [INFO] [warpui_core::core::app] Starting test app...
+16:42:36.595 [INFO] [warpui_core::core::app] Executing test...
+16:42:36.614 [INFO] [warp::terminal::model::block] Block finished with new state DoneWithExecution
+16:42:36.620 [INFO] [warpui_core::core::app] dispatching typed action: warp::terminal::view::action::TerminalAction::PageUp
+16:42:36.620 [INFO] [warpui_core::core::app] dispatching typed action: warp::terminal::view::action::TerminalAction::PageDown
+16:42:36.621 [INFO] [warpui_core::core::app] Test complete; terminating application...
+test terminal::view::tests::page_keys_scroll_transcript_while_input_editor_is_focused ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 1600 filtered out; finished in 0.03s
+

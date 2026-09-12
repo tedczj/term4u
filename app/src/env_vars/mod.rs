@@ -3,7 +3,7 @@ use warp_util::path::ShellFamily;
 
 pub mod model;
 
-pub use model::{EnvVar, EnvVarCollection, EnvVarCommand, EnvVarValue};
+pub use model::{EnvVar, EnvVarCollection, EnvVarValue};
 
 use crate::terminal::shell::ShellType;
 

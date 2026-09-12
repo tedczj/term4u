@@ -20,6 +20,7 @@ pub enum TerminalAction {
         point: Point,
     },
     AltSelect(SelectAction<Point>),
+    SelectOutput(SelectAction<crate::terminal::model::blocks::BlockListPoint>),
     AltMouseAction(MouseState),
     AltScreenContextMenu {
         position: Vector2F,
@@ -53,7 +54,6 @@ pub enum TerminalAction {
     ControlSequence(Vec<u8>),
     KeyDown(String),
     TypedCharacters(String),
-    CtrlD,
     CtrlC,
     ClearMarkedText,
     SetMarkedText(String),

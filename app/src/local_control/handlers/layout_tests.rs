@@ -3,8 +3,24 @@ use ::local_control::{ErrorCode, InstanceId};
 use warpui::App;
 
 use super::create_tab;
+use crate::GlobalResourceHandles;
 use crate::local_control::LocalControlBridge;
-use crate::workspace::view::tests::{initialize_app, mock_workspace};
+use crate::test_util::terminal::initialize_app_for_pane_group;
+use crate::workspace::Workspace;
+
+fn initialize_app(app: &mut App) {
+    initialize_app_for_pane_group(app);
+    app.add_singleton_model(crate::appearance::AppearanceManager::new);
+    app.add_singleton_model(|_| crate::settings_view::pane_manager::SettingsPaneManager::new());
+}
+
+fn mock_workspace(app: &mut App) -> warpui::ViewHandle<Workspace> {
+    let resources = GlobalResourceHandles::mock(app);
+    app.add_window(warpui::platform::WindowStyle::NotStealFocus, |ctx| {
+        Workspace::new_for_test(resources, ctx)
+    })
+    .1
+}
 
 #[test]
 fn tab_create_handler_adds_and_activates_terminal_tab() {

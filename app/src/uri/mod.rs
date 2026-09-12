@@ -13,7 +13,7 @@ use crate::server::telemetry::LaunchConfigUiLocation;
 use crate::settings_view::{SettingsSection, settings_widget_deeplink_target};
 use crate::user_config::load_launch_configs;
 use crate::util::openable_file_type::{EditorLayout, FileTarget};
-use crate::workspace::{PaneViewLocator, Workspace, WorkspaceAction, WorkspaceRegistry};
+use crate::workspace::{PaneViewLocator, WorkspaceAction, WorkspaceRegistry};
 
 pub enum OpenSettingsArgs {
     Default,

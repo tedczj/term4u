@@ -1,0 +1,332 @@
+{
+  "source": "crates/integration/tests/data/cloud_objects.sqlite",
+  "source_sha256": "7746df7a139e28208a137790fbd546821641ebadbb08ba2156a50539b9f91a69",
+  "tables": {
+    "__diesel_schema_migrations": {
+      "rows": 73,
+      "sha256": "6937fbe71b23fe7afb5331b66b232e78efde2c2e42aa3ed344ba48b85ba1a20d",
+      "columns": [
+        "version",
+        "run_on"
+      ]
+    },
+    "windows": {
+      "rows": 1,
+      "sha256": "1992e336bf63d3c62e81bff33344bcd45b2e00e477bd61f5ef867698e7116c11",
+      "columns": [
+        "id",
+        "active_tab_index",
+        "window_width",
+        "window_height",
+        "origin_x",
+        "origin_y",
+        "quake_mode",
+        "universal_search_width",
+        "warp_ai_width",
+        "voltron_width",
+        "warp_drive_index_width",
+        "fullscreen"
+      ]
+    },
+    "tabs": {
+      "rows": 1,
+      "sha256": "ba7677a75a6044777138d719870ff657bd1cb71c23e098d04d6eb79fbd500013",
+      "columns": [
+        "id",
+        "window_id",
+        "custom_title",
+        "color"
+      ]
+    },
+    "pane_nodes": {
+      "rows": 1,
+      "sha256": "970e4e84c1a1c4024f3ba4ddd7a98e38b12b15fbe2113085b381a21204c3926e",
+      "columns": [
+        "id",
+        "tab_id",
+        "parent_pane_node_id",
+        "flex",
+        "is_leaf"
+      ]
+    },
+    "pane_branches": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "columns": [
+        "id",
+        "pane_node_id",
+        "horizontal"
+      ]
+    },
+    "blocks": {
+      "rows": 4,
+      "sha256": "eeed1d0aeb646fec802703a394bafe06ce3604918ade14469fde2c59aad07a7d",
+      "columns": [
+        "id",
+        "pane_leaf_uuid",
+        "stylized_command",
+        "stylized_output",
+        "pwd",
+        "git_branch",
+        "virtual_env",
+        "conda_env",
+        "exit_code",
+        "did_execute",
+        "completed_ts",
+        "start_ts",
+        "ps1",
+        "honor_ps1",
+        "shell",
+        "user",
+        "host",
+        "is_background",
+        "rprompt",
+        "prompt_snapshot",
+        "block_id",
+        "ai_metadata"
+      ]
+    },
+    "app": {
+      "rows": 1,
+      "sha256": "dba010dc185ba44cc16ac8ed5e5bbbe721e8dc9d928b5377686d1b3a9d786530",
+      "columns": [
+        "id",
+        "active_window_id"
+      ]
+    },
+    "users": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "columns": [
+        "id",
+        "firebase_uid"
+      ]
+    },
+    "workflows": {
+      "rows": 290,
+      "sha256": "7eae9b5d07241c23dfa6cdadccafd39776976f0004a71a2e40d2c46b151e431b",
+      "columns": [
+        "id",
+        "data"
+      ]
+    },
+    "notebooks": {
+      "rows": 27,
+      "sha256": "8119d40ad1dd6c402fded48610459add1b5345df1aa44feb5bf95725c667cc27",
+      "columns": [
+        "id",
+        "title",
+        "data"
+      ]
+    },
+    "teams": {
+      "rows": 1,
+      "sha256": "db5d519971f04937c98c84bfb5846e6c6f88133ac33e524a0e6f520b86b965bb",
+      "columns": [
+        "id",
+        "server_id",
+        "name",
+        "server_uid"
+      ]
+    },
+    "folders": {
+      "rows": 164,
+      "sha256": "edb84af46f6a4243d24a31ab98aef16d1ca9ea954ddc05858d628a0378cd1a5f",
+      "columns": [
+        "id",
+        "name",
+        "is_open"
+      ]
+    },
+    "object_metadata": {
+      "rows": 481,
+      "sha256": "348ed24d40a9ae49747f1ba4c798db7c7890ddebc7ef4df2beba42fd677e27af",
+      "columns": [
+        "id",
+        "is_pending",
+        "object_type",
+        "revision_ts",
+        "server_id",
+        "client_id",
+        "shareable_object_id",
+        "author_id",
+        "retry_count",
+        "metadata_last_updated_ts",
+        "trashed_ts",
+        "folder_id",
+        "is_welcome_object",
+        "creator_uid",
+        "last_editor_uid",
+        "current_editor"
+      ]
+    },
+    "commands": {
+      "rows": 5,
+      "sha256": "90bf5181790a826dc02b38c3f18219b21ca4eda8858584a62d7de59d93a7d2fe",
+      "columns": [
+        "id",
+        "command",
+        "exit_code",
+        "start_ts",
+        "completed_ts",
+        "pwd",
+        "shell",
+        "username",
+        "hostname",
+        "session_id",
+        "git_branch",
+        "cloud_workflow_id",
+        "workflow_command"
+      ]
+    },
+    "pane_leaves": {
+      "rows": 1,
+      "sha256": "2e1f88e694a0cb9d4ef7e63ed93cc0f0b9c6c20f0ec45164bfb7a762903f40fa",
+      "columns": [
+        "pane_node_id",
+        "kind",
+        "is_focused"
+      ]
+    },
+    "terminal_panes": {
+      "rows": 1,
+      "sha256": "51121e86601be181de908f32d08949019700980cedf93949d45968402ba50ecc",
+      "columns": [
+        "id",
+        "kind",
+        "uuid",
+        "cwd",
+        "is_active"
+      ]
+    },
+    "notebook_panes": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "columns": [
+        "id",
+        "kind",
+        "notebook_id",
+        "local_path"
+      ]
+    },
+    "user_profiles": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "columns": [
+        "firebase_uid",
+        "photo_url",
+        "email",
+        "display_name"
+      ]
+    },
+    "cloud_objects_refreshes": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "columns": [
+        "id",
+        "time_of_next_refresh"
+      ]
+    },
+    "generic_string_objects": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "columns": [
+        "id",
+        "data"
+      ]
+    },
+    "object_actions": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "columns": [
+        "id",
+        "hashed_object_id",
+        "timestamp",
+        "action",
+        "data",
+        "count",
+        "oldest_timestamp",
+        "latest_timestamp",
+        "pending",
+        "processed_at_timestamp"
+      ]
+    },
+    "server_experiments": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "columns": [
+        "experiment"
+      ]
+    },
+    "env_var_collection_panes": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "columns": [
+        "id",
+        "kind",
+        "env_var_collection_id"
+      ]
+    },
+    "code_panes": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "columns": [
+        "id",
+        "kind",
+        "local_path"
+      ]
+    },
+    "workflow_panes": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "columns": [
+        "id",
+        "kind",
+        "workflow_id"
+      ]
+    },
+    "ai_queries": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "columns": [
+        "id",
+        "exchange_id",
+        "conversation_id",
+        "start_ts",
+        "input",
+        "working_directory",
+        "output_status"
+      ]
+    },
+    "ai_blocks": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "columns": [
+        "id",
+        "exchange_id",
+        "pane_leaf_uuid",
+        "output"
+      ]
+    },
+    "current_user_information": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "columns": [
+        "email"
+      ]
+    },
+    "object_permissions": {
+      "rows": 481,
+      "sha256": "93086a82fa6b722a9f52c721b07f119622cd36d4c90aa814a1c41f1bbd26a714",
+      "columns": [
+        "id",
+        "object_metadata_id",
+        "subject_type",
+        "subject_id",
+        "subject_uid",
+        "permissions_last_updated_at",
+        "object_guests"
+      ]
+    }
+  }
+}

@@ -24,11 +24,9 @@ use warpui::image_cache::ImageType;
 
 use super::super::{AltScreen, BlockList};
 use super::ansi::{BootstrappedValue, FinishUpdateValue, InputBufferValue, Mode, PendingHook};
-use super::block::{
-    Block, BlockId, BlockMetadata, BlockSize, BlockState, BlocklistEnvVarMetadata, SerializedBlock,
-};
+use super::block::{Block, BlockId, BlockMetadata, BlockSize, BlockState, BlocklistEnvVarMetadata};
 use super::blockgrid::BlockGrid;
-use super::blocks::{ActiveBlockCompletion, BlockFilter};
+use super::blocks::ActiveBlockCompletion;
 use super::grid::grid_handler::{
     ContainsPoint, FragmentBoundary, GridHandler, Link, PossiblePath, TermMode,
 };
@@ -69,7 +67,7 @@ use crate::terminal::model::iterm_image::{ITermImage, ITermImageMetadata};
 use crate::terminal::model::secrets::ObfuscateSecrets;
 use crate::terminal::model::session::SessionInfo;
 use crate::terminal::model::{SerializedBlockListItem, ansi};
-use crate::terminal::shell::{ShellName, ShellType};
+use crate::terminal::shell::ShellType;
 use crate::terminal::ssh::util::{InteractiveSshCommand, SshLoginState};
 use crate::terminal::{
     BlockPadding, ShellHost, ShellLaunchData, ShellLaunchState, SizeUpdate, color, ssh,
@@ -922,7 +920,7 @@ impl TerminalModel {
             session_startup_path,
             ShellLaunchState::ShellSpawned {
                 available_shell: None,
-                display_name: ShellName::blank(),
+                display_name: crate::terminal::shell::ShellName::blank(),
                 shell_type: ShellType::Zsh,
             },
         );

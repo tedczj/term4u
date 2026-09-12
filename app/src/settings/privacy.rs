@@ -8,7 +8,7 @@ use settings::{
 };
 use warp_errors::report_error;
 pub use warp_terminal::model::secrets::RegexDisplayInfo;
-use warpui::{AppContext, Entity, ModelContext, SingletonEntity, UpdateModel};
+use warpui::{AppContext, Entity, ModelContext, SingletonEntity};
 
 use super::local_privacy_policy::LocalPrivacyPolicy;
 

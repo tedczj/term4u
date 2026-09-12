@@ -1,0 +1,90 @@
+[
+  {
+    "name": "final-format",
+    "command": [
+      "./script/format"
+    ],
+    "started_at": "2026-09-12T07:25:11.364133+00:00",
+    "exit_code": 0
+  },
+  {
+    "name": "final-format-check",
+    "command": [
+      "./script/format",
+      "--check"
+    ],
+    "started_at": "2026-09-12T07:25:14.501921+00:00",
+    "exit_code": 0
+  },
+  {
+    "name": "final-diff-check",
+    "command": [
+      "git",
+      "diff",
+      "--check"
+    ],
+    "started_at": "2026-09-12T07:25:17.249323+00:00",
+    "exit_code": 0
+  },
+  {
+    "name": "final-bundle",
+    "command": [
+      "./script/run",
+      "--dont-open"
+    ],
+    "started_at": "2026-09-12T07:25:17.315056+00:00",
+    "exit_code": 0
+  },
+  {
+    "name": "final-presubmit",
+    "command": [
+      "./script/presubmit"
+    ],
+    "started_at": "2026-09-12T07:25:22.559163+00:00",
+    "exit_code": 101
+  },
+  {
+    "name": "final-clippy-gui",
+    "command": [
+      "cargo",
+      "clippy",
+      "-p",
+      "warp",
+      "--all-targets",
+      "--tests",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "started_at": "2026-09-12T07:25:57.624086+00:00",
+    "exit_code": 101
+  },
+  {
+    "name": "final-clippy-completer",
+    "command": [
+      "cargo",
+      "clippy",
+      "-p",
+      "warp_completer",
+      "--all-targets",
+      "--tests",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "started_at": "2026-09-12T07:26:19.376674+00:00",
+    "exit_code": 0
+  },
+  {
+    "name": "final-signature",
+    "command": [
+      "codesign",
+      "--verify",
+      "--deep",
+      "--strict",
+      "target/debug/bundle/osx/Term4u.app"
+    ],
+    "started_at": "2026-09-12T07:26:19.844067+00:00",
+    "exit_code": 0
+  }
+]

@@ -16,9 +16,7 @@ use crate::code_review::git_dialog::{
     GitDialog, GitDialogAction, GitDialogEvent, GitDialogMode, render_branch_section,
     render_file_changes_box, show_toast, user_facing_git_error,
 };
-use crate::code_review::telemetry_event::{
-    CodeReviewTelemetryEvent, GitDialogStatus, GitOperationKind,
-};
+use crate::code_review::telemetry_event::GitDialogStatus;
 use crate::ui_components::icons::Icon;
 use crate::util::git::{FileChangeEntry, PrInfo};
 use crate::view_components::{DismissibleToast, ToastLink};

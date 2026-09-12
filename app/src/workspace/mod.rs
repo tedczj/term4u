@@ -22,8 +22,12 @@ pub use view::{
     NEW_SESSION_MENU_BUTTON_POSITION_ID, NEW_TAB_BUTTON_POSITION_ID, PANEL_HEADER_HEIGHT,
     TAB_BAR_HEIGHT, TOTAL_TAB_BAR_HEIGHT, WORKSPACE_PADDING, Workspace,
 };
+use warpui::AppContext;
 use warpui::elements::DropTargetData;
-use warpui::{AppContext, SingletonEntity as _};
+use warpui::keymap::EditableBinding;
+
+use crate::settings_view::SettingsSection;
+use crate::util::bindings::CustomAction;
 
 #[derive(PartialEq, Copy, Clone, Debug)]
 pub struct TabBarDropTargetData {
@@ -58,9 +62,87 @@ pub fn panel_header_corner_radius() -> warpui::elements::CornerRadius {
 }
 
 pub fn init(app: &mut AppContext) {
+    use warpui::keymap::macros::*;
+
     app.add_singleton_model(|_| WorkspaceRegistry::new());
     app.add_singleton_model(|_| ActiveSession::default());
     app.add_singleton_model(|_| ToastStack);
     app.add_singleton_model(|_| sync_inputs::SyncedInputState::new());
     sync_inputs::init(app);
+    app.register_editable_bindings(
+        [
+            (
+                "workspace:new_tab",
+                "New Tab",
+                WorkspaceAction::AddDefaultTab,
+                CustomAction::NewTab,
+            ),
+            (
+                "workspace:new_terminal_tab",
+                "New Terminal Tab",
+                WorkspaceAction::AddDefaultTab,
+                CustomAction::NewTerminalTab,
+            ),
+            (
+                "workspace:close_active_tab",
+                "Close Tab",
+                WorkspaceAction::CloseActiveTab,
+                CustomAction::CloseTab,
+            ),
+            (
+                "workspace:activate_next_tab",
+                "Next Tab",
+                WorkspaceAction::ActivateNextTab,
+                CustomAction::ActivateNextTab,
+            ),
+            (
+                "workspace:activate_prev_tab",
+                "Previous Tab",
+                WorkspaceAction::ActivatePrevTab,
+                CustomAction::ActivatePreviousTab,
+            ),
+            (
+                "workspace:cycle_next_session",
+                "Next Session",
+                WorkspaceAction::CycleNextSession,
+                CustomAction::CycleNextSession,
+            ),
+            (
+                "workspace:cycle_prev_session",
+                "Previous Session",
+                WorkspaceAction::CyclePrevSession,
+                CustomAction::CyclePrevSession,
+            ),
+            (
+                "workspace:show_settings",
+                "Settings",
+                WorkspaceAction::ShowSettings,
+                CustomAction::ShowSettings,
+            ),
+            (
+                "workspace:show_settings_about_page",
+                "About Term4u",
+                WorkspaceAction::ShowSettingsPage(SettingsSection::About),
+                CustomAction::ShowAboutWarp,
+            ),
+            (
+                "workspace:show_settings_appearance_page",
+                "Appearance",
+                WorkspaceAction::ShowSettingsPage(SettingsSection::Appearance),
+                CustomAction::ShowAppearance,
+            ),
+            (
+                "workspace:show_settings_keyboard_shortcuts_page",
+                "Keyboard Shortcuts",
+                WorkspaceAction::ShowSettingsPage(SettingsSection::Keybindings),
+                CustomAction::ConfigureKeybindings,
+            ),
+        ]
+        .into_iter()
+        .map(|(name, description, action, custom_action)| {
+            EditableBinding::new(name, description, action)
+                .with_context_predicate(id!("Workspace"))
+                .with_custom_action(custom_action)
+        }),
+    );
 }

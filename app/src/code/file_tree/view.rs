@@ -43,9 +43,6 @@ use crate::code::buffer_location::LocalOrRemotePath;
 use crate::coding_panel_enablement_state::CodingPanelEnablementState;
 use crate::editor::{EditorOptions, EditorView, TextOptions};
 use crate::menu::{Menu, MenuItem, MenuItemFields};
-#[cfg(feature = "local_fs")]
-use crate::server::telemetry::CodePanelsFileOpenEntrypoint;
-use crate::server::telemetry::TelemetryEvent;
 use crate::ui_components::icons::Icon;
 use crate::ui_components::item_highlight::{ImageOrIcon, ItemHighlightState};
 #[cfg(feature = "local_fs")]

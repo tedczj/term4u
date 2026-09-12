@@ -1,0 +1,10 @@
+{
+  "build_command": "cargo rustc -p warp --lib --profile test --no-default-features --features local_only -- -C strip=none",
+  "run_command": "target/debug/deps/warp-9685fc73b45f80fd --test-threads=4",
+  "binary_sha256": "93d5e22f50725e847eb47d2f21017705a4482e469e9e57b61da9c5dc1105a0d4",
+  "passed": 1599,
+  "failed": 0,
+  "ignored_existing": 3,
+  "status": "local_library_tests_passed_not_full_workspace_acceptance",
+  "head": "2a18b733dc78daa846e36ee41392f234472c7534"
+}

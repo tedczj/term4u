@@ -1,9 +1,7 @@
-pub mod ai_agent_tasks;
 pub mod settings;
 pub mod terminal;
 mod virtual_fs;
 
-pub use terminal::add_window_with_terminal;
 pub use virtual_fs::{Stub, VirtualFS};
 pub use warp_terminal::test_util::mock_blockgrid;
 
@@ -27,4 +25,3 @@ macro_rules! assert_eventually {
         }
     }};
 }
-pub(crate) use assert_eventually;

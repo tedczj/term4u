@@ -7,7 +7,8 @@ use std::sync::Arc;
 use warp_util::path::ShellFamily;
 use warpui::clipboard::ClipboardContent;
 use warpui::elements::{
-    ChildView, Container, Element, EventHandler, Flex, ParentElement, Shrinkable, Text,
+    ChildView, Container, CrossAxisAlignment, Element, EventHandler, Expanded, Flex, MainAxisSize,
+    ParentElement, Text,
 };
 use warpui::{
     AppContext, Entity, EntityId, FocusContext, SingletonEntity, TypedActionView, View,
@@ -16,28 +17,25 @@ use warpui::{
 
 use super::sync_inputs::SyncedInputState;
 use super::tab_group::{TabGroup, TabGroupId};
-use super::{ActiveSession, PaneViewLocator, WorkspaceAction, WorkspaceRegistry};
+use super::{PaneViewLocator, WorkspaceAction, WorkspaceRegistry};
+use crate::GlobalResourceHandles;
 use crate::app_state::{
-    AppState, LeftPanelSnapshot, PaneUuid, TabGroupSnapshot, TabSnapshot, WindowSnapshot,
+    LeftPanelSnapshot, PaneUuid, TabGroupSnapshot, TabSnapshot, WindowSnapshot,
 };
 use crate::appearance::Appearance;
-use crate::code::buffer_location::LocalOrRemotePath;
 use crate::code::editor_management::CodeSource;
 use crate::notebooks::manager::{NotebookManager, NotebookSource};
 use crate::pane_group::{
     CodePane, Direction, Event as PaneGroupEvent, NewTerminalOptions, PaneGroup, PanesLayout,
 };
 use crate::root_view::NewWorkspaceSource;
+use crate::settings_view::pane_manager::SettingsPaneManager;
 use crate::settings_view::{SettingsSection, SettingsView};
 use crate::tab::{SelectedTabColor, TabData};
-use crate::terminal::available_shells::AvailableShell;
 use crate::terminal::model::SerializedBlockListItem;
-use crate::terminal::session_settings::NewSessionSource;
-use crate::themes::theme::AnsiColorIdentifier;
 use crate::util::openable_file_type::{EditorLayout, FileTarget};
+use crate::workflows::WorkflowViewMode;
 use crate::workflows::manager::{WorkflowManager, WorkflowOpenSource};
-use crate::workflows::{WorkflowSelectionSource, WorkflowSource, WorkflowType, WorkflowViewMode};
-use crate::{GlobalResourceHandles, send_telemetry_from_ctx};
 
 pub const WORKSPACE_PADDING: f32 = 8.;
 pub const TAB_BAR_HEIGHT: f32 = 36.;
@@ -68,6 +66,11 @@ impl Workspace {
         source: NewWorkspaceSource,
         ctx: &mut ViewContext<Self>,
     ) -> Self {
+        let window_id = ctx.window_id();
+        let settings_view = ctx.add_typed_action_view(|ctx| SettingsView::new(None, ctx));
+        SettingsPaneManager::handle(ctx).update(ctx, |manager, _| {
+            manager.register_view(window_id, settings_view);
+        });
         let mut workspace = Self {
             resources,
             tabs: Vec::new(),
@@ -81,7 +84,6 @@ impl Workspace {
         if workspace.tabs.is_empty() {
             workspace.add_terminal_tab(false, ctx);
         }
-        let window_id = ctx.window_id();
         let handle = ctx.handle();
         WorkspaceRegistry::handle(ctx).update(ctx, |registry, _| {
             registry.register(window_id, handle);
@@ -120,7 +122,7 @@ impl Workspace {
             } => {
                 self.left_panel_open = window_snapshot.left_panel_open;
                 self.vertical_tabs_panel_open = window_snapshot.vertical_tabs_panel_open;
-                self.active_tab_index = window_snapshot.active_tab_index;
+                let active_tab_index = window_snapshot.active_tab_index;
                 for group in window_snapshot.tab_groups {
                     self.tab_groups.insert(
                         group.id,
@@ -154,8 +156,7 @@ impl Workspace {
                         created.pinned = metadata.3;
                     }
                 }
-                self.active_tab_index =
-                    self.active_tab_index.min(self.tabs.len().saturating_sub(1));
+                self.activate_tab(active_tab_index.min(self.tabs.len().saturating_sub(1)), ctx);
             }
             NewWorkspaceSource::FromTemplate { window_template } => {
                 for tab in window_template.tabs {
@@ -343,8 +344,7 @@ impl Workspace {
         });
         self.subscribe_to_pane_group(&pane_group, ctx);
         self.tabs.push(TabData::new(pane_group));
-        self.active_tab_index = self.tabs.len() - 1;
-        ctx.notify();
+        self.activate_tab(self.tabs.len() - 1, ctx);
     }
 
     fn add_tab_for_pane(
@@ -365,8 +365,7 @@ impl Workspace {
         });
         self.subscribe_to_pane_group(&pane_group, ctx);
         self.tabs.push(TabData::new(pane_group));
-        self.active_tab_index = self.tabs.len() - 1;
-        ctx.notify();
+        self.activate_tab(self.tabs.len() - 1, ctx);
     }
 
     pub fn add_terminal_tab(&mut self, hide_homepage: bool, ctx: &mut ViewContext<Self>) {
@@ -445,6 +444,15 @@ impl Workspace {
             .collect()
     }
 
+    fn activate_tab(&mut self, index: usize, ctx: &mut ViewContext<Self>) {
+        let Some(tab) = self.tabs.get(index) else {
+            return;
+        };
+        self.active_tab_index = index;
+        tab.pane_group.update(ctx, |group, ctx| group.focus(ctx));
+        ctx.notify();
+    }
+
     fn close_tab(&mut self, index: usize, ctx: &mut ViewContext<Self>) {
         if index >= self.tabs.len() {
             return;
@@ -455,8 +463,7 @@ impl Workspace {
         if self.tabs.is_empty() {
             self.add_terminal_tab(false, ctx);
         }
-        self.active_tab_index = self.active_tab_index.min(self.tabs.len() - 1);
-        ctx.notify();
+        self.activate_tab(self.active_tab_index.min(self.tabs.len() - 1), ctx);
     }
 
     fn run_command(&mut self, command: String, ctx: &mut ViewContext<Self>) {
@@ -498,6 +505,18 @@ impl Workspace {
         query: Option<&str>,
         ctx: &mut ViewContext<Self>,
     ) {
+        let existing = SettingsPaneManager::as_ref(ctx).find_pane(ctx.window_id());
+        if let Some(locator) = existing {
+            let view = SettingsPaneManager::as_ref(ctx).settings_view(ctx.window_id());
+            view.update(ctx, |view, ctx| {
+                view.set_and_refresh_current_page(section, ctx);
+                if let Some(query) = query {
+                    view.set_search_query(query, ctx);
+                }
+            });
+            self.focus_pane(locator, ctx);
+            return;
+        }
         let pane = crate::pane_group::SettingsPane::new(section, query, ctx.window_id(), ctx);
         self.add_tab_for_pane(Box::new(pane), ctx);
     }
@@ -658,8 +677,7 @@ impl Workspace {
     pub fn restore_closed_tab(&mut self, _index: usize, tab: TabData, ctx: &mut ViewContext<Self>) {
         self.subscribe_to_pane_group(&tab.pane_group, ctx);
         self.tabs.push(tab);
-        self.active_tab_index = self.tabs.len() - 1;
-        ctx.notify();
+        self.activate_tab(self.tabs.len() - 1, ctx);
     }
 }
 
@@ -673,35 +691,28 @@ impl TypedActionView for Workspace {
     fn handle_action(&mut self, action: &Self::Action, ctx: &mut ViewContext<Self>) {
         match action {
             WorkspaceAction::ActivateTab(index) | WorkspaceAction::ActivateTabByNumber(index) => {
-                if *index < self.tabs.len() {
-                    self.active_tab_index = *index;
-                    ctx.notify();
-                }
+                self.activate_tab(*index, ctx);
             }
             WorkspaceAction::ActivatePrevTab | WorkspaceAction::CyclePrevSession => {
-                self.active_tab_index = self
+                let index = self
                     .active_tab_index
                     .checked_sub(1)
                     .unwrap_or(self.tabs.len() - 1);
-                ctx.notify();
+                self.activate_tab(index, ctx);
             }
             WorkspaceAction::ActivateNextTab | WorkspaceAction::CycleNextSession => {
-                self.active_tab_index = (self.active_tab_index + 1) % self.tabs.len();
-                ctx.notify();
+                self.activate_tab((self.active_tab_index + 1) % self.tabs.len(), ctx);
             }
             WorkspaceAction::ActivateLastTab => {
-                self.active_tab_index = self.tabs.len() - 1;
-                ctx.notify();
+                self.activate_tab(self.tabs.len() - 1, ctx);
             }
             WorkspaceAction::MoveTabLeft(index) if *index > 0 && *index < self.tabs.len() => {
                 self.tabs.swap(*index, *index - 1);
-                self.active_tab_index = *index - 1;
-                ctx.notify();
+                self.activate_tab(*index - 1, ctx);
             }
             WorkspaceAction::MoveTabRight(index) if *index + 1 < self.tabs.len() => {
                 self.tabs.swap(*index, *index + 1);
-                self.active_tab_index = *index + 1;
-                ctx.notify();
+                self.activate_tab(*index + 1, ctx);
             }
             WorkspaceAction::CloseTab(index) => self.close_tab(*index, ctx),
             WorkspaceAction::CloseActiveTab => self.close_tab(self.active_tab_index, ctx),
@@ -849,8 +860,14 @@ impl View for Workspace {
                             appearance.ui_font_family(),
                             appearance.ui_font_size(),
                         )
+                        .with_color(appearance.theme().foreground().into_solid())
                         .finish(),
                     )
+                    .with_background(if index == self.active_tab_index {
+                        appearance.theme().foreground().with_opacity(20)
+                    } else {
+                        appearance.theme().background()
+                    })
                     .with_uniform_padding(8.)
                     .finish(),
                 )
@@ -862,13 +879,15 @@ impl View for Workspace {
             );
         }
         Flex::column()
+            .with_main_axis_size(MainAxisSize::Max)
+            .with_cross_axis_alignment(CrossAxisAlignment::Stretch)
             .with_child(
                 warpui::elements::ConstrainedBox::new(Container::new(tabs.finish()).finish())
                     .with_height(TAB_BAR_HEIGHT)
                     .finish(),
             )
             .with_child(
-                Shrinkable::new(1., ChildView::new(self.active_tab_pane_group()).finish()).finish(),
+                Expanded::new(1., ChildView::new(self.active_tab_pane_group()).finish()).finish(),
             )
             .finish()
     }

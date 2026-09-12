@@ -15,11 +15,18 @@ use super::view::TerminalAction;
 pub struct TerminalSizeElement {
     child: Box<dyn Element>,
     resize_tx: Sender<Vector2F>,
+    size: Option<Vector2F>,
+    receives_input: bool,
 }
 
 impl TerminalSizeElement {
-    pub fn new(resize_tx: Sender<Vector2F>, child: Box<dyn Element>) -> Self {
-        TerminalSizeElement { child, resize_tx }
+    pub fn new(resize_tx: Sender<Vector2F>, child: Box<dyn Element>, receives_input: bool) -> Self {
+        TerminalSizeElement {
+            child,
+            resize_tx,
+            size: None,
+            receives_input,
+        }
     }
 }
 
@@ -30,7 +37,9 @@ impl Element for TerminalSizeElement {
         ctx: &mut LayoutContext,
         app: &AppContext,
     ) -> Vector2F {
-        self.child.layout(constraint, ctx, app)
+        self.size = Some(constraint.max);
+        self.child.layout(constraint, ctx, app);
+        constraint.max
     }
 
     fn after_layout(&mut self, ctx: &mut AfterLayoutContext, app: &AppContext) {
@@ -49,7 +58,7 @@ impl Element for TerminalSizeElement {
     }
 
     fn size(&self) -> Option<Vector2F> {
-        self.child.size()
+        self.size
     }
 
     fn origin(&self) -> Option<Point> {
@@ -77,6 +86,21 @@ impl Element for TerminalSizeElement {
 
         if !handled_by_child && let Some(event_at_z_index) = event.at_z_index(z_index, ctx) {
             match event_at_z_index {
+                Event::KeyDown {
+                    chars,
+                    is_composing: false,
+                    ..
+                } if self.receives_input
+                    && !chars.is_empty()
+                    && chars.chars().all(char::is_control) =>
+                {
+                    ctx.dispatch_typed_action(TerminalAction::KeyDown(chars.clone()));
+                    return true;
+                }
+                Event::TypedCharacters { chars } if self.receives_input && !chars.is_empty() => {
+                    ctx.dispatch_typed_action(TerminalAction::TypedCharacters(chars.clone()));
+                    return true;
+                }
                 Event::DragFiles { location } => {
                     if self.mouse_position_is_in_bounds(*location) {
                         ctx.dispatch_typed_action(TerminalAction::StartFileDropTarget);

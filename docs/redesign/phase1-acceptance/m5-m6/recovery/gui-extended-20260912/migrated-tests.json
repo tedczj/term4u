@@ -1,0 +1,52 @@
+[
+  {
+    "file": "app/src/settings_view/mod_tests.rs",
+    "old": "arrow_down_from_account_with_collapsed_agents_lands_on_first_subpage",
+    "new": "arrow_down_from_appearance_with_collapsed_local_pages_lands_on_first_subpage"
+  },
+  {
+    "file": "app/src/settings_view/mod_tests.rs",
+    "old": "arrow_up_from_billing_and_usage_with_collapsed_agents_lands_on_last_subpage",
+    "new": "arrow_up_from_privacy_with_collapsed_local_pages_lands_on_last_subpage"
+  },
+  {
+    "file": "app/src/editor/view/mod_tests.rs",
+    "old": "test_paste_clipboard_with_image_only_should_switch_to_agent_mode",
+    "new": "test_paste_clipboard_with_image_only_keeps_text_empty"
+  },
+  {
+    "file": "app/src/editor/view/mod_tests.rs",
+    "old": "test_paste_clipboard_with_supported_image_and_text_should_handle_both",
+    "new": "test_paste_clipboard_with_png_and_text_pastes_text"
+  },
+  {
+    "file": "app/src/editor/view/mod_tests.rs",
+    "old": "test_paste_clipboard_with_unsupported_image_and_text_should_show_error",
+    "new": "test_paste_clipboard_with_bmp_and_text_pastes_text"
+  },
+  {
+    "file": "app/src/local_control/handlers/metadata_tests.rs",
+    "old": "agent_management_surface_reports_feature_flag_unavailable",
+    "new": "vertical_tabs_surface_reports_feature_flag_unavailable"
+  },
+  {
+    "file": "app/src/pane_group/mod_tests.rs",
+    "old": "test_undo_close_keeps_a_file_pane_watching_its_file",
+    "new": "test_undo_close_keeps_a_code_pane_watching_its_markdown_file"
+  },
+  {
+    "file": "app/src/settings/privacy_tests.rs",
+    "old": "privacy_settings_apply_to_gui_and_tui",
+    "new": "privacy_settings_stay_disabled_in_gui_and_tui"
+  },
+  {
+    "file": "app/src/terminal/model/blocks_tests.rs",
+    "old": "unfiltered_transcript_scope_shows_restored_conversation_command_blocks",
+    "new": "unfiltered_transcript_scope_shows_restored_blocks_with_legacy_visibility"
+  },
+  {
+    "file": "app/src/terminal/model/terminal_model_tests.rs",
+    "old": "sharer_rejects_dcs_hook_with_unregistered_session_id",
+    "new": "local_terminal_rejects_dcs_hook_with_unregistered_session_id"
+  }
+]

@@ -4,11 +4,9 @@ use ai::skills::SkillPathOrigin;
 use warp_util::local_or_remote_path::LocalOrRemotePath;
 
 mod telemetry;
-pub use telemetry::{SkillOpenOrigin, SkillTelemetryEvent};
+pub use telemetry::SkillOpenOrigin;
 #[cfg(feature = "local_fs")]
 mod bundled;
-#[cfg(all(test, feature = "local_fs"))]
-pub(crate) use bundled::BundledSkillActivation;
 
 cfg_if::cfg_if! {
     if #[cfg(not(feature = "local_fs"))] {
@@ -50,7 +48,6 @@ impl ActiveSkillLookupError {
 pub use ai::skills::SkillDescriptor;
 
 mod skill_utils;
-pub use skill_utils::skill_path_from_location;
 pub trait SkillPathQuery {
     fn to_skill_location(&self) -> LocalOrRemotePath;
 }
@@ -76,8 +73,6 @@ impl SkillPathQuery for PathBuf {
 cfg_if::cfg_if! {
     if #[cfg(feature = "local_fs")] {
         mod skill_manager;
-        pub use skill_manager::{
-            read_skills_from_directories, SkillManager, SkillWatcher,
-        };
+        pub use skill_manager::SkillManager;
     }
 }

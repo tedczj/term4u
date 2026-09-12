@@ -1,8 +1,9 @@
 use chrono::{DateTime, Local};
+use serde::{Deserialize, Serialize};
 
 use super::block::SerializedBlock;
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub enum SerializedBlockListItem {
     Command { block: Box<SerializedBlock> },
 }

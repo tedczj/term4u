@@ -9,7 +9,7 @@ use warp_core::semantic_selection::SemanticSelection;
 use warp_terminal::model::grid::CellType;
 use warpui::text::{IsRect, SelectionType};
 use warpui::units::{IntoLines as _, Lines};
-use warpui::{AppContext, EntityId, ViewAsRef as _};
+use warpui::{AppContext, EntityId};
 
 use super::{
     BlockHeight, BlockHeightItem, BlockHeightSummary, BlockList, BlockListPoint, RichContentItem,

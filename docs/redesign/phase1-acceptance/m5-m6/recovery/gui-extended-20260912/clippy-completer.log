@@ -1,0 +1,45 @@
+warning: patch `tink-core v0.3.0 (https://github.com/warpdotdev/tink-rust?rev=54b9ac9af93b0c08b446a7bc0582836c9403a71b#54b9ac9a)` was not used in the crate graph
+warning: patch `tink-hybrid v0.3.0 (https://github.com/warpdotdev/tink-rust?rev=54b9ac9af93b0c08b446a7bc0582836c9403a71b#54b9ac9a)` was not used in the crate graph
+warning: patch `tink-proto v0.3.0 (https://github.com/warpdotdev/tink-rust?rev=54b9ac9af93b0c08b446a7bc0582836c9403a71b#54b9ac9a)` was not used in the crate graph
+help: Check that the patched package version and available features are compatible
+      with the dependency requirements. If the patch has a different version from
+      what is locked in the Cargo.lock file, run `cargo update` to use the new
+      version. This may also occur with an optional dependency that is not enabled.
+    Checking regex-automata v0.4.9
+    Checking uuid v1.19.0
+    Checking usvg v0.47.0
+    Checking tiny-skia v0.12.0
+    Checking cfb v0.7.3
+    Checking infer v0.19.0
+    Checking string-offset v0.0.0 (/Users/tedczj/workspace/term4u/crates/string-offset)
+    Checking url v2.5.4
+    Checking rstar v0.12.2
+    Checking resvg v0.47.0
+    Checking image v0.25.9
+    Checking ordered-float v3.9.2
+    Checking num-integer v0.1.46
+    Checking reqwest v0.13.3
+    Checking num-bigint v0.4.6
+    Checking regex v1.11.1
+    Checking bstr v1.9.0
+    Checking warp_util v0.1.0 (/Users/tedczj/workspace/term4u/crates/warp_util)
+    Checking titlecase v1.1.0
+    Checking jaq-std v3.0.0
+    Checking globset v0.4.18
+    Checking command-corrections v0.0.0 (https://github.com/warpdotdev/command-corrections.git?rev=eae08c8c51d9bc9741fcb17eef2c21f696aebbeb#eae08c8c)
+    Checking rust-embed-utils v7.8.1
+    Checking jaq-json v2.0.0
+    Checking websocket v0.1.0 (/Users/tedczj/workspace/term4u/crates/websocket)
+    Checking warpui_core v0.1.0 (/Users/tedczj/workspace/term4u/crates/warpui_core)
+    Checking color-print v0.3.7
+    Checking rust-embed v6.8.1
+    Checking local_control v0.0.0 (/Users/tedczj/workspace/term4u/crates/local_control)
+    Checking jaq-fmts v0.1.0
+    Checking warp-command-signatures v0.0.0 (https://github.com/warpdotdev/command-signatures.git?rev=d3725aa42375cc229699c87be2b38f9d9f07080f#d3725aa4)
+    Checking jaq-all v0.1.0
+    Checking warpui_extras v0.0.0 (/Users/tedczj/workspace/term4u/crates/warpui_extras)
+    Checking settings v0.0.0 (/Users/tedczj/workspace/term4u/crates/settings)
+    Checking warp_core v0.0.0 (/Users/tedczj/workspace/term4u/crates/warp_core)
+    Checking warp_cli v0.0.0 (/Users/tedczj/workspace/term4u/crates/warp_cli)
+    Checking warp_completer v0.1.0 (/Users/tedczj/workspace/term4u/crates/warp_completer)
+    Finished `dev` profile [unoptimized] target(s) in 8.00s

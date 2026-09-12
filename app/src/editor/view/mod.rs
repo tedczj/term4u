@@ -12,19 +12,13 @@ use std::cmp::{self, Ordering};
 use std::collections::HashMap;
 use std::fmt;
 use std::ops::Range;
-use std::path::Path;
 use std::rc::Rc;
 use std::sync::Arc;
 use std::time::Duration;
 
 use anyhow::Result;
-use async_fs;
-use base64::Engine as _;
-use base64::engine::general_purpose;
 use element::CommandXRayMouseStateHandle;
-use figma_utils::is_figma_png;
 use itertools::{Either, Itertools};
-use mime_guess::from_path;
 use model::{
     Anchor, AnchorBias, Bias, DisplayMap, DrawableSelection, EditorModel, EditorModelEvent, Edits,
     LocalPendingSelection, LocalSelection, MarkedTextState, MovementResult, SelectionMode,
@@ -50,27 +44,24 @@ use vim::{
 };
 use warp_completer::completer::Description;
 use warp_core::semantic_selection::SemanticSelection;
-use warp_core::{safe_error, send_telemetry_from_ctx};
 use warp_editor::editor::NavigationKey;
 use warp_util::path::ShellFamily;
 use warp_util::user_input::UserInput;
 use warpui::accessibility::{AccessibilityContent, ActionAccessibilityContent, WarpA11yRole};
 use warpui::actions::StandardAction;
-use warpui::r#async::{SpawnedFutureHandle, Timer};
+use warpui::r#async::Timer;
 use warpui::clipboard::ClipboardContent;
 use warpui::elements::{
-    ChildView, Container, CornerRadius, CrossAxisAlignment, DEFAULT_UI_LINE_HEIGHT_RATIO, Flex,
-    Hoverable, MainAxisSize, MouseStateHandle, ParentElement, Radius, Shrinkable,
+    CornerRadius, CrossAxisAlignment, DEFAULT_UI_LINE_HEIGHT_RATIO, Flex, Hoverable, MainAxisSize,
+    MouseStateHandle, ParentElement, Radius, Shrinkable,
 };
 use warpui::fonts::{Cache as FontCache, FamilyId, Properties, Weight};
 use warpui::keymap::{EditableBinding, FixedBinding, Keystroke, PerPlatformKeystroke};
-use warpui::platform::keyboard::KeyCode;
-use warpui::platform::{Cursor, FilePickerConfiguration, OperatingSystem};
+use warpui::platform::{Cursor, OperatingSystem};
 use warpui::text::TextBuffer;
 use warpui::text::word_boundaries::WordBoundariesPolicy;
 use warpui::text_layout::TextStyle;
-use warpui::ui_components::button::ButtonTooltipPosition;
-use warpui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
+use warpui::ui_components::components::{UiComponent, UiComponentStyles};
 use warpui::windowing::WindowManager;
 use warpui::{
     AppContext, BlurContext, CursorInfo, Element, Entity, EntityId, FocusContext, ModelAsRef,
@@ -98,27 +89,21 @@ use crate::editor::RangeExt;
 use crate::editor::accept_autosuggestion_keybinding_view::AcceptAutosuggestionKeybinding;
 use crate::editor::autosuggestion_ignore_view::{AutosuggestionIgnore, AutosuggestionIgnoreEvent};
 use crate::features::FeatureFlag;
-use crate::server::telemetry::TelemetryEvent;
 use crate::settings::{
     AppEditorSettings, AppEditorSettingsChangedEvent, CursorBlink, CursorDisplayType,
-    InputSettings, SelectionSettings,
+    SelectionSettings,
 };
 use crate::settings_view::flags;
-use crate::suggestions::ignored_suggestions_model::{IgnoredSuggestionsModel, SuggestionType};
 use crate::terminal::grid_size_util::grid_cell_dimensions;
 use crate::themes::theme::Fill;
 use crate::ui_components::avatar::{Avatar, AvatarContent};
-use crate::ui_components::buttons::icon_button;
-use crate::ui_components::icons;
 use crate::util::bindings::{CustomAction, cmd_or_ctrl_shift, keybinding_name_to_keystroke};
 use crate::util::clipboard::clipboard_content_with_escaped_paths;
 use crate::util::color::{ContrastingColor, MinimumAllowedContrast};
 use crate::util::merge_ranges;
-use crate::view_components::DismissibleToast;
 #[cfg(feature = "voice_input")]
 use crate::view_components::FeaturePopup;
 use crate::vim_registers::{RegisterContent, VimRegisters};
-use crate::workspace::ToastStack;
 
 const CURSOR_BLINK_INTERVAL: Duration = Duration::from_millis(500);
 const DEFAULT_TAB_SIZE: usize = 4;

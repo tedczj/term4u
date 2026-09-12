@@ -4,6 +4,7 @@ cfg_if::cfg_if! {
     if #[cfg(feature = "local_fs")] {
         mod block_list;
         mod sqlite;
+        mod local_snapshot;
         pub mod commands;
     }
 }
@@ -26,15 +27,11 @@ use ai::workspace::WorkspaceMetadata as CodeWorkspaceMetadata;
 use chrono::{DateTime, Local};
 use instant::Instant;
 use lsp::supported_servers::LSPServerType;
-#[cfg(any(feature = "local_fs", feature = "integration_tests"))]
-pub use sqlite::database_file_path_for_current_scope;
 // Only re-exported for integration tests (via `integration_testing::persistence`);
 // in-crate code should resolve paths through `database_file_path_for_current_scope`.
 #[cfg(any(feature = "local_fs", feature = "integration_tests"))]
 #[cfg_attr(not(feature = "integration_tests"), expect(unused_imports))]
 pub use sqlite::database_file_path_for_scope;
-#[cfg(any(feature = "local_fs", feature = "integration_tests"))]
-pub use sqlite::establish_ro_connection;
 use warp_core::command::ExitCode;
 use warp_errors::report_error;
 use warpui::{AppContext, Entity, SingletonEntity};
@@ -290,4 +287,14 @@ pub enum ModelEvent {
         lsp_type: LSPServerType,
         enabled: EnablementState,
     },
+}
+
+#[cfg(feature = "local_fs")]
+pub(crate) fn save_app_snapshot(ctx: &AppContext) {
+    let snapshot = crate::app_state::get_app_state(ctx);
+    if let Some(sender) = PersistenceWriter::as_ref(ctx).sender()
+        && sender.send(ModelEvent::Snapshot(snapshot)).is_err()
+    {
+        log::warn!("Could not queue local session snapshot");
+    }
 }

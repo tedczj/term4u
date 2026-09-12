@@ -5,7 +5,7 @@ use regex::Regex;
 use warp_core::session_id::SessionId;
 use warp_terminal::bootstrap::SESSION_ID_PLACEHOLDER;
 pub use warp_terminal::bootstrap::{
-    generate_session_id, init_shell_script_for_shell, load_and_escape_script, script_for_shell,
+    init_shell_script_for_shell, load_and_escape_script, script_for_shell,
 };
 use warpui::{AppContext, AssetProvider, SingletonEntity};
 

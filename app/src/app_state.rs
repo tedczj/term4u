@@ -27,14 +27,16 @@ pub struct AppState {
     pub block_lists: Arc<HashMap<PaneUuid, Vec<SerializedBlockListItem>>>,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct PaneUuid(pub Vec<u8>);
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct WindowSnapshot {
     pub tabs: Vec<TabSnapshot>,
     pub active_tab_index: usize,
+    #[serde(with = "snapshot_bounds")]
     pub bounds: Option<RectF>,
+    #[serde(with = "SnapshotFullscreenState")]
     pub fullscreen_state: FullscreenState,
     pub quake_mode: bool,
     pub universal_search_width: Option<f32>,
@@ -45,7 +47,7 @@ pub struct WindowSnapshot {
     pub tab_groups: Vec<TabGroupSnapshot>,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct TabGroupSnapshot {
     pub id: TabGroupId,
     pub name: Option<String>,
@@ -54,7 +56,7 @@ pub struct TabGroupSnapshot {
     pub pinned: bool,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct TabSnapshot {
     pub custom_title: Option<String>,
     pub root: PaneNodeSnapshot,
@@ -71,7 +73,7 @@ impl TabSnapshot {
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub enum PaneNodeSnapshot {
     Branch(BranchSnapshot),
     Leaf(LeafSnapshot),
@@ -92,20 +94,20 @@ impl PaneNodeSnapshot {
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct BranchSnapshot {
     pub direction: SplitDirection,
     pub children: Vec<(PaneFlex, PaneNodeSnapshot)>,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct LeafSnapshot {
     pub is_focused: bool,
     pub custom_vertical_tabs_title: Option<String>,
     pub contents: LeafContents,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub enum LeafContents {
     Terminal(TerminalPaneSnapshot),
     Notebook(NotebookPaneSnapshot),
@@ -123,7 +125,7 @@ impl LeafContents {
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct TerminalPaneSnapshot {
     pub uuid: Vec<u8>,
     pub cwd: Option<String>,
@@ -131,18 +133,18 @@ pub struct TerminalPaneSnapshot {
     pub is_active: bool,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub enum NotebookPaneSnapshot {
     LocalNotebook { notebook_id: Option<NotebookId> },
     LocalFileNotebook { path: Option<PathBuf> },
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct CodePaneTabSnapshot {
     pub path: Option<PathBuf>,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub enum CodePaneSnapShot {
     Local {
         tabs: Vec<CodePaneTabSnapshot>,
@@ -151,7 +153,7 @@ pub enum CodePaneSnapShot {
     },
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub enum WorkflowPaneSnapshot {
     LocalWorkflow {
         workflow_id: WorkflowId,
@@ -159,7 +161,7 @@ pub enum WorkflowPaneSnapshot {
     },
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub enum SettingsPaneSnapshot {
     Local {
         current_page: SettingsSection,
@@ -167,7 +169,7 @@ pub enum SettingsPaneSnapshot {
     },
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub enum CodeReviewPaneSnapshot {
     Local {
         terminal_uuid: Vec<u8>,
@@ -197,13 +199,13 @@ pub struct LeftPanelSnapshot {
     pub width: usize,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub enum SplitDirection {
     Horizontal,
     Vertical,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct PaneFlex(pub f32);
 
 pub fn get_app_state(app: &AppContext) -> AppState {
@@ -211,11 +213,9 @@ pub fn get_app_state(app: &AppContext) -> AppState {
     let quake_mode_id = quake_mode_window_id();
     let mut active_window_index = None;
     let mut windows = Vec::new();
+    let mut block_lists = HashMap::new();
 
-    for (index, window_id) in app.window_ids().enumerate() {
-        if active_window_id == Some(window_id) {
-            active_window_index = Some(index);
-        }
+    for window_id in app.window_ids() {
         if let Some(workspace) = WorkspaceRegistry::as_ref(app).get(window_id, app) {
             let workspace = workspace.as_ref(app);
             if workspace.is_tab_drag_preview() {
@@ -227,6 +227,12 @@ pub fn get_app_state(app: &AppContext) -> AppState {
                 app,
             );
             if !snapshot.tabs.is_empty() {
+                if active_window_id == Some(window_id) {
+                    active_window_index = Some(windows.len());
+                }
+                for tab in workspace.tab_views() {
+                    block_lists.extend(tab.as_ref(app).snapshot_blocks(app));
+                }
                 windows.push(snapshot);
             }
         }
@@ -235,7 +241,44 @@ pub fn get_app_state(app: &AppContext) -> AppState {
     AppState {
         windows,
         active_window_index,
-        block_lists: Arc::new(HashMap::new()),
+        block_lists: Arc::new(block_lists),
+    }
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(remote = "FullscreenState")]
+enum SnapshotFullscreenState {
+    Normal,
+    Fullscreen,
+    Maximized,
+}
+
+mod snapshot_bounds {
+    use pathfinder_geometry::rect::RectF;
+    use pathfinder_geometry::vector::vec2f;
+    use serde::{Deserialize, Deserializer, Serialize, Serializer};
+
+    pub fn serialize<S: Serializer>(
+        bounds: &Option<RectF>,
+        serializer: S,
+    ) -> Result<S::Ok, S::Error> {
+        bounds
+            .map(|rect| {
+                [
+                    rect.origin().x(),
+                    rect.origin().y(),
+                    rect.width(),
+                    rect.height(),
+                ]
+            })
+            .serialize(serializer)
+    }
+
+    pub fn deserialize<'de, D: Deserializer<'de>>(
+        deserializer: D,
+    ) -> Result<Option<RectF>, D::Error> {
+        Ok(Option::<[f32; 4]>::deserialize(deserializer)?
+            .map(|[x, y, width, height]| RectF::new(vec2f(x, y), vec2f(width, height))))
     }
 }
 

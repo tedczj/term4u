@@ -59,8 +59,6 @@ use super::comments::{AttachedReviewComment, CommentOrigin, attach_pending_impor
 use super::diff_size_limits::DiffSize;
 use super::git_dialog::{GitDialog, GitDialogEvent, GitDialogKind};
 use super::{GlobalCodeReviewEvent, GlobalCodeReviewModel};
-#[cfg(feature = "local_fs")]
-use crate::TelemetryEvent;
 use crate::appearance::Appearance;
 use crate::code::ShowCommentEditorProvider;
 #[cfg(not(target_family = "wasm"))]
@@ -83,7 +81,7 @@ use crate::code::view::PendingSaveIntent;
 use crate::code_review::comments::{
     AttachedReviewCommentTarget, CommentId, ReviewCommentBatch, ReviewCommentBatchEvent,
 };
-use crate::code_review::context::{CurrentHead, DiffBase, convert_file_diffs_to_diffset_hunks};
+use crate::code_review::context::{CurrentHead, DiffBase};
 use crate::code_review::diff_selector::{DiffSelector, DiffSelectorEvent, DiffTarget};
 use crate::code_review::diff_state::{
     DiffHunk, DiffLineType, DiffMode, DiffState, DiffStateModel, DiffStateModelEvent, DiffStats,
@@ -94,12 +92,7 @@ use crate::code_review::find_model::CodeReviewFindModel;
 use crate::code_review::git_repo_model::{GitRepoModels, GitRepoStatusEvent, GitRepoStatusModel};
 use crate::code_review::github_repo_model::{GitHubRepoEvent, GitHubRepoModel};
 use crate::code_review::hidden_lines::calculate_hidden_lines;
-#[cfg(feature = "local_fs")]
-use crate::code_review::telemetry_event::DiffSetContextScope;
-use crate::code_review::telemetry_event::{
-    AddToContextOrigin, CodeReviewContextDestination, CodeReviewTelemetryEvent, GitButtonKind,
-    PaneStateChange,
-};
+use crate::code_review::telemetry_event::PaneStateChange;
 use crate::coding_panel_enablement_state::CodingPanelEnablementState;
 use crate::editor::InteractionState;
 use crate::menu::{Event as MenuEvent, Menu, MenuItem, MenuItemFields};
@@ -108,8 +101,6 @@ use crate::pane_group::focus_state::{PaneFocusHandle, PaneGroupFocusEvent};
 use crate::pane_group::pane::{BackingView, PaneEvent, view};
 use crate::quit_warning::UnsavedStateSummary;
 use crate::send_telemetry_from_ctx;
-#[cfg(feature = "local_fs")]
-use crate::server::telemetry::CodePanelsFileOpenEntrypoint;
 use crate::settings::CodeSettings;
 use crate::settings_view::SettingsSection;
 use crate::terminal::input::MenuPositioning;
@@ -130,7 +121,6 @@ use crate::util::git::{BranchEntry, PrInfo};
 use crate::util::openable_file_type::FileTarget;
 #[cfg(feature = "local_fs")]
 use crate::util::openable_file_type::resolve_file_target_with_editor_choice;
-use crate::view_components::DismissibleToast;
 use crate::view_components::action_button::{
     ActionButton, ActionButtonTheme, AdjoinedSide, ButtonSize, DangerPrimaryTheme, KeystrokeSource,
     NakedTheme, PaneHeaderTheme, SecondaryTheme, TooltipAlignment,
@@ -3958,7 +3948,7 @@ impl CodeReviewView {
             .with_cross_axis_alignment(CrossAxisAlignment::Center)
             .with_main_axis_size(MainAxisSize::Max);
 
-        let mut zero_state_column = Flex::column()
+        let zero_state_column = Flex::column()
             .with_main_axis_alignment(MainAxisAlignment::Center)
             .with_cross_axis_alignment(CrossAxisAlignment::Center)
             .with_child(

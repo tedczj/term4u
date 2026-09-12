@@ -125,7 +125,7 @@ use terminal::keys_settings::KeysSettings;
 #[cfg(all(not(target_family = "wasm"), feature = "local_tty"))]
 use terminal::local_shell::LocalShellState;
 pub use util::bindings::cmd_or_ctrl_shift;
-use warp_cli::{CliCommand, GlobalOptions};
+use warp_cli::GlobalOptions;
 #[cfg(feature = "local_fs")]
 use watcher::HomeDirectoryWatcher;
 
@@ -140,7 +140,7 @@ use ::settings::{Setting, ToggleableSetting};
 #[cfg(feature = "local_tty")]
 use anyhow::Context;
 use anyhow::{Result, anyhow};
-use appearance::{Appearance, AppearanceManager};
+use appearance::AppearanceManager;
 use channel::ChannelState;
 use interval_timer::IntervalTimer;
 use itertools::Itertools;
@@ -159,7 +159,7 @@ pub use warp_core::send_telemetry_from_app_ctx;
 pub use warp_core::send_telemetry_from_ctx;
 // Re-export the safe logging macros at the crate root level for backwards compatibility
 pub use warp_core::{safe_debug, safe_error, safe_info, safe_warn};
-use warp_errors::{report_error, report_if_error};
+use warp_errors::report_if_error;
 #[cfg(feature = "local_fs")]
 use warp_files::FileModel;
 use warp_logging::{LogDestination, LogFrontend};
@@ -170,7 +170,6 @@ use warpui::platform::app::{ApproveTerminateResult, TerminationRequestSource};
 use warpui::windowing::state::ApplicationStage;
 use warpui::{App, AppContext, Event, SingletonEntity, WindowId};
 use window_settings::WindowSettings;
-use workspace::sync_inputs::SyncedInputState;
 
 use self::features::FeatureFlag;
 use crate::ai::skills::SkillManager;
@@ -191,9 +190,7 @@ use crate::notification::NotificationContext;
 use crate::palette::PaletteMode;
 use crate::persistence::PersistenceWriter;
 use crate::projects::ProjectManagementModel;
-use crate::root_view::{
-    OpenFromRestoredArg, OpenPath, quake_mode_window_id, quake_mode_window_is_open,
-};
+use crate::root_view::OpenFromRestoredArg;
 use crate::server::telemetry::PaletteSource;
 pub use crate::server::telemetry::TelemetryEvent;
 use crate::session_management::{RunningSessionSummary, SessionNavigationData};
@@ -212,7 +209,7 @@ use crate::util::bindings::is_binding_cross_platform;
 use crate::vim_registers::VimRegisters;
 use crate::warp_managed_paths_watcher::{WarpManagedPathsWatcher, ensure_warp_watch_roots_exist};
 use crate::workflows::local_workflows::LocalWorkflows;
-use crate::workspace::{ActiveSession, PaneViewLocator, ToastStack, Workspace, WorkspaceAction};
+use crate::workspace::{PaneViewLocator, Workspace, WorkspaceAction};
 
 /// Our embedded application assets.
 pub static ASSETS: warp_assets::Assets = warp_assets::Assets;
@@ -1123,7 +1120,6 @@ fn initialize_local_app(
             report_if_error!(settings.copy_on_select.toggle_and_save_value(ctx));
         });
     });
-    ctx.add_singleton_model(|_| SyncedInputState::new());
 
     ctx.set_event_munger(move |event, ctx| {
         let extra_meta_keys = *KeysSettings::as_ref(ctx).extra_meta_keys;
@@ -1198,8 +1194,8 @@ fn initialize_local_app(
     ctx.add_singleton_model(search::files::model::FileSearchModel::new);
     ctx.add_singleton_model(|_| VimRegisters::new());
     ctx.add_singleton_model(UndoCloseStack::new);
-    ctx.add_singleton_model(|_| ToastStack);
     ctx.add_singleton_model(|_| GlobalCodeReviewModel);
+    lsp::init(ctx);
     #[cfg(feature = "local_fs")]
     ctx.add_singleton_model(FileModel::new);
     ctx.add_singleton_model(GlobalBufferModel::new);
@@ -1212,7 +1208,6 @@ fn initialize_local_app(
     ctx.add_singleton_model(SkillManager::new);
     ctx.add_singleton_model(|_| CodeManager::default());
     ctx.add_singleton_model(|_| OpenedFilesModel::new());
-    ctx.add_singleton_model(|_| ActiveSession::default());
 
     #[cfg(all(not(target_family = "wasm"), feature = "local_tty"))]
     {
@@ -1315,6 +1310,8 @@ pub(crate) fn app_callbacks(
             ctx.dispatch_global_action("root_view:update_quake_mode_state", &update_quake_mode_arg);
         })),
         on_will_terminate: Some(Box::new(move |ctx| {
+            #[cfg(feature = "local_fs")]
+            persistence::save_app_snapshot(ctx);
             NotebookManager::handle(ctx).update(ctx, |manager, ctx| {
                 // Notebooks are only saved periodically, so ensure that any pending changes have
                 // been sent to the writer thread before terminating.

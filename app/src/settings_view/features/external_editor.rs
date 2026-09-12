@@ -11,13 +11,11 @@ use warpui::{Element, Entity, SingletonEntity, TypedActionView, View, ViewContex
 
 use crate::appearance::Appearance;
 use crate::send_telemetry_from_ctx;
-use crate::server::telemetry::TelemetryEvent;
 use crate::settings_view::settings_page::{
     AdditionalInfo, LocalOnlyIconState, ToggleState, render_body_item, render_dropdown_item,
 };
 use crate::util::file::external_editor::settings::{
-    EditorChoice, EditorLayout, OpenCodePanelsFileEditor, OpenFileEditor, OpenFileLayout,
-    PreferMarkdownViewer, PreferTabbedEditorView,
+    EditorChoice, EditorLayout, PreferMarkdownViewer, PreferTabbedEditorView,
 };
 use crate::util::file::external_editor::{EditorSettings, SUPPORTED_EDITORS};
 use crate::view_components::{Dropdown, DropdownItem};

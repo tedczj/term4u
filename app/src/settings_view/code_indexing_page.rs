@@ -1,12 +1,11 @@
 use std::path::PathBuf;
 
-use warpui::elements::{Container, Element, ParentElement, Text};
+use warpui::elements::{Container, Element, Text};
 use warpui::{AppContext, Entity, TypedActionView, View, ViewContext, ViewHandle};
 
 use super::SettingsSection;
 use super::settings_page::{
-    MatchData, PageType, SettingsPageEvent, SettingsPageMeta, SettingsPageViewHandle,
-    SettingsWidget,
+    MatchData, PageType, SettingsPageMeta, SettingsPageViewHandle, SettingsWidget,
 };
 use crate::appearance::Appearance;
 

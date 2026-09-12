@@ -1,0 +1,61 @@
+2026-09-12T04:45:15Z [INFO] [warp::resource_limits] Initial open file descriptor limit is 256, with a hard limit of 9223372036854775807
+2026-09-12T04:45:15Z [INFO] [warp::resource_limits] Increased open file descriptor limit to 2560
+2026-09-12T04:45:15Z [INFO] [warp_terminal::local_tty::server] Spawning terminal server process...
+2026-09-12T04:45:15Z [INFO] [warp_terminal::local_tty::server::event_loop] Running terminal server...
+2026-09-12T04:45:15Z [INFO] [warpui::platform::mac::app] application will finish launching
+2026-09-12T04:45:15Z [INFO] [warp::settings::init] Migrating public settings from native store to settings.toml
+2026-09-12T04:45:15Z [INFO] [warp::settings::init] Settings file migration complete — migrated 0 settings, 0 failed
+2026-09-12T04:45:15Z [INFO] [warp::app_services] Initializing app services
+2026-09-12T04:45:15Z [ERROR] [panic] thread 'main' panicked at 'add_singleton_model() was called twice for "warp::workspace::sync_inputs::SyncedInputState"': /Users/tedczj/workspace/term4u/crates/warpui_core/src/core/app.rs:2253
+   0: backtrace::backtrace::trace::<<backtrace::capture::Backtrace>::create::{closure#0}>
+   1: <backtrace::capture::Backtrace>::create
+   2: <backtrace::capture::Backtrace>::new
+   3: <log_panics::Config>::install_panic_hook::{closure#0}
+   4: std::panicking::panic_with_hook
+   5: std::panicking::panic_handler::{{closure}}
+   6: std::sys::backtrace::__rust_end_short_backtrace
+   7: __rustc::rust_begin_unwind
+   8: core::panicking::panic_fmt
+   9: <warpui_core::core::app::AppContext>::add_singleton_model::<warp::workspace::sync_inputs::SyncedInputState, warp::workspace::init::{closure#3}>
+  10: warp::workspace::init
+  11: warp::initialize_local_app
+  12: warp::initialize_app
+  13: warp::run_internal::{closure#2}
+  14: <warpui::platform::app::AppBuilder>::run::<warp::run_internal::{closure#2}>::{closure#0}
+  15: <warpui::platform::app::AppBuilder>::run::<warp::run_internal::{closure#2}>::{closure#2}
+  16: <<warpui::platform::app::AppBuilder>::run<warp::run_internal::{closure#2}>::{closure#2} as core::ops::function::FnOnce<(&mut warpui_core::core::app::AppContext, core::pin::Pin<alloc::boxed::Box<dyn core::future::future::Future<Output = warpui_core::core::app::App>>>)>>::call_once::{shim:vtable#0}
+  17: <alloc::boxed::Box<dyn for<'a> core::ops::function::FnOnce<(&'a mut warpui_core::core::app::AppContext, core::pin::Pin<alloc::boxed::Box<dyn core::future::future::Future<Output = warpui_core::core::app::App>>>), Output = ()>> as core::ops::function::FnOnce<(&mut warpui_core::core::app::AppContext, core::pin::Pin<alloc::boxed::Box<dyn core::future::future::Future<Output = warpui_core::core::app::App>>>)>>::call_once
+  18: <warpui_core::platform::app::AppCallbackDispatcher>::initialize_app::{closure#0}
+  19: <warpui_core::core::app::App>::update::<(), <warpui_core::platform::app::AppCallbackDispatcher>::initialize_app::{closure#0}>
+  20: <warpui_core::platform::app::AppCallbackDispatcher>::initialize_app
+  21: _warp_app_will_finish_launching
+  22: -[WarpDelegate applicationWillFinishLaunching:]
+  23: <unknown>
+  24: <unknown>
+  25: <unknown>
+  26: <unknown>
+  27: <unknown>
+  28: <unknown>
+  29: <unknown>
+  30: <unknown>
+  31: <() as objc2::encode::EncodeArguments>::__invoke::<()>
+  32: objc2::runtime::message_receiver::msg_send_primitive::send::<(), ()>
+  33: <*mut objc2::runtime::AnyObject as objc2::runtime::message_receiver::MessageReceiver>::send_message::<(), ()>
+  34: <objc2::__macro_helpers::method_family::MethodFamily<6> as objc2::__macro_helpers::msg_send_retained::MsgSend<&objc2_app_kit::generated::__NSApplication::NSApplication, ()>>::send_message::<()>
+  35: <objc2_app_kit::generated::__NSApplication::NSApplication>::run
+  36: <warpui::platform::mac::app::App>::run::<<warpui::platform::app::AppBuilder>::run<warp::run_internal::{closure#2}>::{closure#2}>::{closure#0}
+  37: objc2::rc::autorelease::autoreleasepool::<(), <warpui::platform::mac::app::App>::run<<warpui::platform::app::AppBuilder>::run<warp::run_internal::{closure#2}>::{closure#2}>::{closure#0}>
+  38: <warpui::platform::mac::app::App>::run::<<warpui::platform::app::AppBuilder>::run<warp::run_internal::{closure#2}>::{closure#2}>
+  39: <warpui::platform::app::AppBackend>::run::<<warpui::platform::app::AppBuilder>::run<warp::run_internal::{closure#2}>::{closure#2}>
+  40: <warpui::platform::app::AppBuilder>::run::<warp::run_internal::{closure#2}>
+  41: warp::run_internal
+  42: warp::run
+  43: term4u::main
+  44: <fn() -> core::result::Result<(), anyhow::Error> as core::ops::function::FnOnce<()>>::call_once
+  45: std::sys::backtrace::__rust_begin_short_backtrace::<fn() -> core::result::Result<(), anyhow::Error>, core::result::Result<(), anyhow::Error>>
+  46: std::rt::lang_start::<core::result::Result<(), anyhow::Error>>::{closure#0}
+  47: std::rt::lang_start_internal
+  48: std::rt::lang_start::<core::result::Result<(), anyhow::Error>>
+  49: _main
+
+2026-09-12T04:45:15Z [INFO] [warp::persistence] Shut down SQLite writer in 945.958µs

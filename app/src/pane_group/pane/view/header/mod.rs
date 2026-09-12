@@ -30,7 +30,6 @@ use crate::pane_group::{
     BackingView, Direction, PaneDragDropLocation, PaneId, TabBarAxis, TabBarHoverIndex,
 };
 use crate::send_telemetry_from_ctx;
-use crate::server::telemetry::TelemetryEvent;
 use crate::tab::tab_position_id;
 use crate::workspace::{TabBarDropTargetData, TabBarLocation, VerticalTabsPaneDropTargetData};
 
@@ -431,7 +430,7 @@ impl<P: BackingView> PaneHeader<P> {
             required_controls.add_child(close_button);
         }
 
-        let mut optional_controls = Flex::row()
+        let optional_controls = Flex::row()
             .with_main_axis_alignment(MainAxisAlignment::End)
             .with_cross_axis_alignment(CrossAxisAlignment::Center)
             .with_main_axis_size(MainAxisSize::Min);

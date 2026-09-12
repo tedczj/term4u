@@ -1,0 +1,104 @@
+^D12:55:23.776 [0m[34m[INFO][0m [0m[2m[warp::resource_limits] [0mInitial open file descriptor limit is 256, with a hard limit of 9223372036854775807
+12:55:23.777 [0m[34m[INFO][0m [0m[2m[warp::resource_limits] [0mIncreased open file descriptor limit to 2560
+12:55:23.782 [0m[34m[INFO][0m [0m[2m[warp_terminal::local_tty::server] [0mSpawning terminal server process...
+12:55:23.794 [0m[34m[INFO][0m [0m[2m[warp_terminal::local_tty::server::event_loop] [0mRunning terminal server...
+12:55:23.907 [0m[34m[INFO][0m [0m[2m[warpui::platform::mac::app] [0mapplication will finish launching
+12:55:23.988 [0m[34m[INFO][0m [0m[2m[warp::app_services] [0mInitializing app services
+12:55:24.002 [0m[34m[INFO][0m [0m[2m[warpui_core::core::app] [0mdispatching global action for root_view:open_from_restored
+12:55:24.002 [0m[34m[INFO][0m [0m[2m[warpui::platform::mac::window] [0mOpening window with id 0
+12:55:24.009 [0m[34m[INFO][0m [0m[2m[warpui::platform::mac::window] [0mUsing discrete GPU for rendering new window.
+12:55:24.042 [0m[34m[INFO][0m [0m[2m[warp::terminal::local_tty::terminal_manager] [0mCreating terminal model with 0 restored blocks
+12:55:24.082 [0m[34m[INFO][0m [0m[2m[warpui_core::platform::app] [0mapplication did become active
+12:55:24.128 [0m[34m[INFO][0m [0m[2m[warp_terminal::local_tty::unix] [0mStarting shell /bin/zsh
+12:55:24.130 [0m[34m[INFO][0m [0m[2m[warp_terminal::local_tty::server::event_loop] [0mSuccessfully spawned tty with pid: 27069
+12:55:24.130 [0m[34m[INFO][0m [0m[2m[warp_terminal::local_tty::unix] [0mSuccessfully spawned child zsh process with pid 27069
+2026-09-12 12:55:24.130 term4u[27063:32188996] error messaging the mach port for IMKCFRunLoopWakeUpReliable
+12:55:24.131 [0m[34m[INFO][0m [0m[2m[warpui_core::core::app] [0mdispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+12:55:24.132 [0m[34m[INFO][0m [0m[2m[warpui_core::core::app] [0mdispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+12:55:24.133 [0m[34m[INFO][0m [0m[2m[warpui_core::core::app] [0mdispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+12:55:24.133 [0m[34m[INFO][0m [0m[2m[warpui_core::platform::app] [0mapplication can reach internet
+12:55:24.133 [0m[34m[INFO][0m [0m[2m[warpui_core::platform::app] [0mwindow resized
+12:55:24.133 [0m[34m[INFO][0m [0m[2m[warpui_core::platform::app] [0mwindow resized
+12:55:24.133 [0m[34m[INFO][0m [0m[2m[warpui_core::platform::app] [0mwindow resized
+12:55:24.133 [0m[34m[INFO][0m [0m[2m[warpui_core::platform::app] [0mwindow resized
+12:55:24.133 [0m[34m[INFO][0m [0m[2m[warpui_core::platform::app] [0mactive window changed: Some(WindowId(0))
+12:55:24.133 [0m[34m[INFO][0m [0m[2m[warpui_core::platform::app] [0mwindow resized
+12:55:24.137 [0m[34m[INFO][0m [0m[2m[warpui_core::core::app] [0mdispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+12:55:24.169 [0m[34m[INFO][0m [0m[2m[warp_terminal::model::ansi] [0mReceived InitShell hook
+12:55:24.218 [0m[34m[INFO][0m [0m[2m[warp_terminal::model::ansi] [0mReceived CommandFinished hook
+12:55:24.218 [0m[34m[INFO][0m [0m[2m[warp::terminal::model::terminal_model] [0mTried to exit the alternate screen, but it was already inactive
+12:55:24.220 [0m[34m[INFO][0m [0m[2m[warp::terminal::model::block] [0mBlock finished with new state DoneWithExecution
+12:55:24.220 [0m[34m[INFO][0m [0m[2m[warp::terminal::model::blocks] [0mIncrementing stage from WarpInput to ScriptExecution
+12:55:24.229 [0m[34m[INFO][0m [0m[2m[warp_terminal::model::ansi] [0mReceived Precmd hook
+12:55:24.313 [0m[34m[INFO][0m [0m[2m[warp_terminal::model::ansi] [0mReceived Bootstrapped hook
+12:55:24.314 [0m[34m[INFO][0m [0m[2m[warp::terminal::model::early_output] [0mConfigured typeahead mode as ShellReported
+12:55:24.314 [0m[34m[INFO][0m [0m[2m[warp::terminal::model::session::command_executor] [0mcreating a local executor!
+12:55:24.314 [0m[34m[INFO][0m [0m[2m[warp::terminal::model::session] [0mParsed shell version string: Some([Number(5), Number(9)])
+12:55:24.314 [0m[34m[INFO][0m [0m[2m[warp::terminal::model::session] [0mShell is bootstrapped with session_id SessionId(15568368860673537126)
+12:55:24.314 [0m[34m[INFO][0m [0m[2m[warp::terminal::model::session] [0mNo history file found for shell zsh, starting with empty history
+12:55:24.318 [0m[34m[INFO][0m [0m[2m[warp_terminal::model::ansi] [0mReceived CommandFinished hook
+12:55:24.318 [0m[34m[INFO][0m [0m[2m[warp::terminal::model::terminal_model] [0mTried to exit the alternate screen, but it was already inactive
+12:55:24.318 [0m[34m[INFO][0m [0m[2m[warp::terminal::model::block] [0mBlock finished with new state DoneWithExecution
+12:55:24.318 [0m[34m[INFO][0m [0m[2m[warp::terminal::model::blocks] [0mIncrementing stage from Bootstrapped to PostBootstrapPrecmd
+12:55:24.367 [0m[34m[INFO][0m [0m[2m[warp_terminal::model::ansi] [0mReceived Precmd hook
+12:55:24.429 [0m[34m[INFO][0m [0m[2m[warp_terminal::model::ansi] [0mReceived InputBuffer hook
+12:56:06.984 [0m[34m[INFO][0m [0m[2m[warpui_core::core::app] [0mdispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("p"))
+12:56:06.985 [0m[34m[INFO][0m [0m[2m[warpui_core::core::app] [0mdispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+12:56:06.986 [0m[34m[INFO][0m [0m[2m[warpui_core::core::app] [0mdispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("r"))
+12:56:06.986 [0m[34m[INFO][0m [0m[2m[warpui_core::core::app] [0mdispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+12:56:06.987 [0m[34m[INFO][0m [0m[2m[warpui_core::core::app] [0mdispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("i"))
+12:56:06.987 [0m[34m[INFO][0m [0m[2m[warpui_core::core::app] [0mdispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+12:56:07.001 [0m[34m[INFO][0m [0m[2m[warpui_core::core::app] [0mdispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("n"))
+12:56:07.001 [0m[34m[INFO][0m [0m[2m[warpui_core::core::app] [0mdispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+12:56:07.002 [0m[34m[INFO][0m [0m[2m[warpui_core::core::app] [0mdispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("t"))
+12:56:07.002 [0m[34m[INFO][0m [0m[2m[warpui_core::core::app] [0mdispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+12:56:07.003 [0m[34m[INFO][0m [0m[2m[warpui_core::core::app] [0mdispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("f"))
+12:56:07.004 [0m[34m[INFO][0m [0m[2m[warpui_core::core::app] [0mdispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+12:56:07.005 [0m[34m[INFO][0m [0m[2m[warpui_core::core::app] [0mdispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput(" "))
+12:56:07.005 [0m[34m[INFO][0m [0m[2m[warpui_core::core::app] [0mdispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+12:56:07.018 [0m[34m[INFO][0m [0m[2m[warpui_core::core::app] [0mdispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("'"))
+12:56:07.018 [0m[34m[INFO][0m [0m[2m[warpui_core::core::app] [0mdispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+12:56:07.019 [0m[34m[INFO][0m [0m[2m[warpui_core::core::app] [0mdispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("T"))
+12:56:07.019 [0m[34m[INFO][0m [0m[2m[warpui_core::core::app] [0mdispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+12:56:07.020 [0m[34m[INFO][0m [0m[2m[warpui_core::core::app] [0mdispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("E"))
+12:56:07.020 [0m[34m[INFO][0m [0m[2m[warpui_core::core::app] [0mdispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+12:56:07.034 [0m[34m[INFO][0m [0m[2m[warpui_core::core::app] [0mdispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("R"))
+12:56:07.035 [0m[34m[INFO][0m [0m[2m[warpui_core::core::app] [0mdispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+12:56:07.036 [0m[34m[INFO][0m [0m[2m[warpui_core::core::app] [0mdispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("M"))
+12:56:07.036 [0m[34m[INFO][0m [0m[2m[warpui_core::core::app] [0mdispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+12:56:07.037 [0m[34m[INFO][0m [0m[2m[warpui_core::core::app] [0mdispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("4"))
+12:56:07.037 [0m[34m[INFO][0m [0m[2m[warpui_core::core::app] [0mdispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+12:56:07.051 [0m[34m[INFO][0m [0m[2m[warpui_core::core::app] [0mdispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("U"))
+12:56:07.051 [0m[34m[INFO][0m [0m[2m[warpui_core::core::app] [0mdispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+12:56:07.052 [0m[34m[INFO][0m [0m[2m[warpui_core::core::app] [0mdispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("G"))
+12:56:07.052 [0m[34m[INFO][0m [0m[2m[warpui_core::core::app] [0mdispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+12:56:07.053 [0m[34m[INFO][0m [0m[2m[warpui_core::core::app] [0mdispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("U"))
+12:56:07.054 [0m[34m[INFO][0m [0m[2m[warpui_core::core::app] [0mdispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+12:56:07.055 [0m[34m[INFO][0m [0m[2m[warpui_core::core::app] [0mdispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("I"))
+12:56:07.055 [0m[34m[INFO][0m [0m[2m[warpui_core::core::app] [0mdispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+12:56:07.068 [0m[34m[INFO][0m [0m[2m[warpui_core::core::app] [0mdispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("O"))
+12:56:07.068 [0m[34m[INFO][0m [0m[2m[warpui_core::core::app] [0mdispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+12:56:07.069 [0m[34m[INFO][0m [0m[2m[warpui_core::core::app] [0mdispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("K"))
+12:56:07.069 [0m[34m[INFO][0m [0m[2m[warpui_core::core::app] [0mdispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+12:56:07.071 [0m[34m[INFO][0m [0m[2m[warpui_core::core::app] [0mdispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("n"))
+12:56:07.071 [0m[34m[INFO][0m [0m[2m[warpui_core::core::app] [0mdispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+12:56:07.072 [0m[34m[INFO][0m [0m[2m[warpui_core::core::app] [0mdispatching typed action: warp::editor::view::EditorAction::UserInsert(UserInput("'"))
+12:56:07.072 [0m[34m[INFO][0m [0m[2m[warpui_core::core::app] [0mdispatching typed action: warp::editor::view::EditorAction::ClearMarkedText
+12:56:07.097 [0m[34m[INFO][0m [0m[2m[warpui_core::core::app] [0mdispatching typed action: warp::editor::view::EditorAction::Enter
+12:56:07.097 [0m[33m[WARN][0m [0m[2m[warp::terminal::model::terminal_model] [0mReceived 'end_in_band_command_output' while not expecting to read in-band command output.
+12:56:07.111 [0m[34m[INFO][0m [0m[2m[warp_terminal::model::ansi] [0mReceived Preexec hook
+12:56:07.116 [0m[34m[INFO][0m [0m[2m[warp_terminal::model::ansi] [0mReceived CommandFinished hook
+12:56:07.116 [0m[34m[INFO][0m [0m[2m[warp::terminal::model::terminal_model] [0mTried to exit the alternate screen, but it was already inactive
+12:56:07.116 [0m[34m[INFO][0m [0m[2m[warp::terminal::model::block] [0mBlock finished with new state DoneWithExecution
+12:56:07.164 [0m[34m[INFO][0m [0m[2m[warp_terminal::model::ansi] [0mReceived Precmd hook
+12:56:07.225 [0m[34m[INFO][0m [0m[2m[warp_terminal::model::ansi] [0mReceived InputBuffer hook
+12:57:09.897 [0m[34m[INFO][0m [0m[2m[warpui_core::platform::app] [0mapplication will terminate
+12:57:09.900 [0m[34m[INFO][0m [0m[2m[warp::persistence] [0mShut down SQLite writer in 2.900042ms
+12:57:09.900 [0m[34m[INFO][0m [0m[2m[lsp::manager] [0mTerminating all LSP servers for 0 workspaces
+12:57:09.900 [0m[34m[INFO][0m [0m[2m[warp_terminal::local_tty::spawner] [0mTearing down terminal server...
+12:57:09.901 [0m[34m[INFO][0m [0m[2m[warp_terminal::local_tty::server::protocol] [0mReceived empty message; assuming the connection has been closed.
+12:57:09.901 [0m[34m[INFO][0m [0m[2m[warp::app_services] [0mTearing down app services...
+12:57:09.901 [0m[34m[INFO][0m [0m[2m[warpui_core::platform::app] [0mWindowId(0) will close
+12:57:09.901 [0m[33m[WARN][0m [0m[2m[warp_terminal::local_tty::server::client] [0mReceived EPIPE when trying to kill child shell process; assuming the terminal server has terminated.
+12:57:09.901 [0m[34m[INFO][0m [0m[2m[warp::terminal::model::terminal_model] [0mTried to exit the alternate screen, but it was already inactive
+12:57:09.901 [0m[34m[INFO][0m [0m[2m[warp::terminal::model::block] [0mBlock finished with new state DoneWithNoExecution

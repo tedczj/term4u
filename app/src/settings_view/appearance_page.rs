@@ -10,7 +10,7 @@ use warp_core::ui::theme::color::internal_colors;
 use warp_errors::{report_error, report_if_error};
 use warp_util::path::user_friendly_path;
 use warpui::elements::{
-    Align, Border, ChildView, Clipped, ConstrainedBox, Container, CornerRadius, CrossAxisAlignment,
+    Align, Border, ChildView, ConstrainedBox, Container, CornerRadius, CrossAxisAlignment,
     DEFAULT_UI_LINE_HEIGHT_RATIO, Dismiss, Element, Empty, Fill, Flex, FormattedTextElement,
     Hoverable, MainAxisAlignment, MainAxisSize, MouseStateHandle, ParentElement, Radius,
     Shrinkable, Text,
@@ -48,25 +48,19 @@ use crate::editor::{
 };
 use crate::features::FeatureFlag;
 use crate::gpu_state::GPUState;
-use crate::server::telemetry::{InputUXChangeOrigin, TelemetryEvent};
-use crate::settings::app_icon::{AppIcon, AppIconSettings, ShowDockIconState};
+use crate::settings::app_icon::{AppIcon, AppIconSettings};
 use crate::settings::{
-    AIFontName, AppEditorSettings, CodeSettings, CursorBlink, CursorBlinkEnabled,
-    CursorDisplayType, DEFAULT_MONOSPACE_FONT_NAME, EnforceMinimumContrast, FocusPaneOnHover,
-    FontSettings, FontSettingsChangedEvent, GPUSettings, InputBoxType, InputMode,
-    InputModeSettings, InputModeState, InputSettings, InputSettingsChangedEvent, MonospaceFontName,
-    PaneSettings, ShouldDimInactivePanes, ThemeSettings, UseSystemTheme, UseThinStrokes,
-    active_theme_kind, respect_system_theme,
+    AIFontName, AppEditorSettings, CodeSettings, CursorBlink, CursorDisplayType,
+    DEFAULT_MONOSPACE_FONT_NAME, EnforceMinimumContrast, FontSettings, FontSettingsChangedEvent,
+    GPUSettings, InputBoxType, InputMode, InputModeSettings, InputSettings,
+    InputSettingsChangedEvent, MonospaceFontName, PaneSettings, ThemeSettings, active_theme_kind,
+    respect_system_theme,
 };
-use crate::terminal::ligature_settings::{LigatureRenderingEnabled, LigatureSettings};
+use crate::terminal::ligature_settings::LigatureSettings;
 use crate::terminal::model::blockgrid::BlockGrid;
 use crate::terminal::session_settings::SessionSettings;
-use crate::terminal::settings::{
-    AltScreenPadding, AltScreenPaddingMode, Spacing, SpacingMode, TerminalSettings,
-};
-use crate::terminal::{
-    BlockListSettings, ShowBlockDividers, ShowJumpToBottomOfBlockButton, SizeInfo,
-};
+use crate::terminal::settings::{AltScreenPaddingMode, SpacingMode, TerminalSettings};
+use crate::terminal::{BlockListSettings, SizeInfo};
 use crate::themes::theme::{self, RespectSystemTheme, SelectedSystemThemes, ThemeKind, WarpTheme};
 use crate::themes::theme_chooser::ThemeChooserMode;
 use crate::ui_components::color_dot::{TAB_COLOR_OPTIONS, render_color_dot};
@@ -76,15 +70,12 @@ use crate::util::bindings;
 use crate::view_components::action_button::{ActionButton, ButtonSize, NakedTheme};
 use crate::view_components::{Dropdown, DropdownItem, FilterableDropdown};
 use crate::window_settings::{
-    BackgroundBlurRadius, BackgroundBlurTexture, BackgroundOpacity, LeftPanelVisibilityAcrossTabs,
-    OpenWindowsAtCustomSize, WindowSettings, WindowSettingsChangedEvent, ZoomLevel,
+    BackgroundBlurRadius, BackgroundOpacity, WindowSettings, WindowSettingsChangedEvent, ZoomLevel,
 };
 use crate::workspace::WorkspaceAction;
 use crate::workspace::tab_settings::{
-    DirectoryTabColor, HideTitleBarSearchBarInVerticalTabs, PreserveActiveTabColor,
-    ShowIndicatorsButton, ShowVerticalTabPanelInRestoredWindows, TabCloseButtonPosition,
-    TabSettings, TabSettingsChangedEvent, UseLatestUserPromptAsConversationTitleInTabNames,
-    UseVerticalTabs, WorkspaceDecorationVisibility, canonical_directory_key,
+    DirectoryTabColor, TabCloseButtonPosition, TabSettings, TabSettingsChangedEvent,
+    WorkspaceDecorationVisibility, canonical_directory_key,
 };
 use crate::{send_telemetry_from_ctx, themes};
 
@@ -1406,7 +1397,6 @@ impl AppearanceSettingsPageView {
         let font_settings = FontSettings::as_ref(ctx);
         let mut text_settings_widgets: Vec<Box<dyn SettingsWidget<View = Self>>> = vec![
             Box::new(TerminalFontWidget::default()),
-            Box::new(AIFontWidget::default()),
             Box::new(NotebookFontSizeWidget::default()),
         ];
         if font_settings
@@ -3395,7 +3385,7 @@ impl SettingsWidget for ToolsPanelStateScopeWidget {
     type View = AppearanceSettingsPageView;
 
     fn search_terms(&self) -> &str {
-        "left tools panel open closed across tabs file tree project explorer global search warp drive conversation list"
+        "left tools panel open closed across tabs file tree project explorer global search"
     }
 
     fn render(
@@ -3801,70 +3791,6 @@ impl SettingsWidget for ShowBlockDividersWidget {
                 .finish(),
             None,
         )
-    }
-}
-
-#[derive(Default)]
-struct AIFontWidget {
-    checkbox_state: MouseStateHandle,
-}
-
-impl SettingsWidget for AIFontWidget {
-    type View = AppearanceSettingsPageView;
-
-    fn search_terms(&self) -> &str {
-        "text agent ai font family font size monospace"
-    }
-
-    fn render(
-        &self,
-        view: &Self::View,
-        appearance: &Appearance,
-        app: &AppContext,
-    ) -> Box<dyn Element> {
-        let font_settings = FontSettings::as_ref(app);
-        let mut ai_font_row = Flex::row().with_cross_axis_alignment(CrossAxisAlignment::Center);
-        let mut ai_font = Flex::column();
-        ai_font.add_child(render_body_item_label::<AppearancePageAction>(
-            "Agent font".to_string(),
-            None,
-            None,
-            LocalOnlyIconState::Hidden,
-            ToggleState::Enabled,
-            appearance,
-        ));
-        ai_font.add_child(
-            Container::new(ChildView::new(&view.ai_font_family_dropdown).finish())
-                .with_margin_bottom(10.)
-                .finish(),
-        );
-
-        ai_font_row
-            .add_child(Shrinkable::new(1., Align::new(ai_font.finish()).left().finish()).finish());
-        ai_font_row.add_child(
-            appearance
-                .ui_builder()
-                .checkbox(self.checkbox_state.clone(), None)
-                .check(*font_settings.match_ai_font_to_terminal_font)
-                .build()
-                .on_click(move |ctx, _, _| {
-                    ctx.dispatch_typed_action(
-                        AppearancePageAction::ToggleMatchAIToTerminalFontFamily,
-                    )
-                })
-                .finish(),
-        );
-        ai_font_row.add_child(
-            appearance
-                .ui_builder()
-                .span("Match terminal".to_string())
-                .build()
-                .with_margin_left(2.)
-                .with_margin_right(16.)
-                .finish(),
-        );
-
-        ai_font_row.finish()
     }
 }
 

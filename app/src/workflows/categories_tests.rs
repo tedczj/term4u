@@ -6,7 +6,7 @@ use crate::workflows::workflow::Workflow;
 
 #[test]
 fn test_workflow_matches() {
-    let workflow = Arc::new(WorkflowType::Local(Workflow::Command {
+    let workflow = Arc::new(WorkflowType::Local(Workflow {
         name: "g workflow_name it ".into(),
         command: "command_name git".to_string(),
         tags: vec!["foo".into(), "bar".into()],

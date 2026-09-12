@@ -10,7 +10,6 @@ use urlocator::{UrlLocation, UrlLocator};
 use warp_editor::content::buffer::Buffer;
 #[cfg(feature = "local_fs")]
 use warp_util::path::CleanPathResult;
-use warpui::text::char_slice;
 use warpui::text::word_boundaries::WordBoundariesPolicy;
 
 use crate::terminal::ShellLaunchData;

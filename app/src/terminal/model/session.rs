@@ -34,7 +34,6 @@ use warpui::{Entity, ModelContext, SingletonEntity};
 
 use super::ansi::{BootstrappedValue, InitShellValue, SSHValue};
 use super::terminal_model::{HistoryEntry, SubshellInitializationInfo};
-use crate::server::telemetry::{BootstrappingInfo, TelemetryEvent};
 use crate::terminal::event::ExecutedExecutorCommandEvent;
 use crate::terminal::shell::{Shell, ShellType};
 use crate::terminal::{History, ShellHost, ShellLaunchData};

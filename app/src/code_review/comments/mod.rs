@@ -10,6 +10,6 @@ pub(crate) use comment::{
     AttachedReviewComment, AttachedReviewCommentTarget, CommentId, CommentOrigin, LineDiffContent,
 };
 pub(crate) use flatten::attach_pending_imported_comments;
-pub(crate) use pending_imported::{
-    PendingImportedReviewComment, PendingImportedReviewCommentTarget,
-};
+pub(crate) use pending_imported::PendingImportedReviewComment;
+#[cfg(test)]
+pub(crate) use pending_imported::PendingImportedReviewCommentTarget;

@@ -7,16 +7,14 @@ use itertools::Itertools;
 use lazy_static::lazy_static;
 use pathfinder_color::ColorU;
 use pathfinder_geometry::vector::Vector2F;
-use warp_core::features::FeatureFlag;
 use warp_errors::report_error;
 use warpui::accessibility::{AccessibilityContent, WarpA11yRole};
 use warpui::elements::{
     Align, AnchorPair, Border, ConstrainedBox, Container, CornerRadius, CrossAxisAlignment,
-    Dismiss, Fill, Flex, MouseStateHandle, OffsetPositioning, OffsetType, ParentElement,
-    ParentOffsetBounds, PositionedElementOffsetBounds, PositioningAxis, Radius, Resizable,
-    ResizableStateHandle, SavePosition, ScrollStateHandle, Scrollable, ScrollableElement,
-    Shrinkable, Stack, UniformList, UniformListState, XAxisAnchor, YAxisAnchor,
-    resizable_state_handle,
+    Dismiss, Fill, Flex, OffsetPositioning, OffsetType, ParentElement, ParentOffsetBounds,
+    PositionedElementOffsetBounds, PositioningAxis, Radius, Resizable, ResizableStateHandle,
+    SavePosition, ScrollStateHandle, Scrollable, ScrollableElement, Shrinkable, Stack, UniformList,
+    UniformListState, XAxisAnchor, YAxisAnchor, resizable_state_handle,
 };
 use warpui::presenter::ChildView;
 use warpui::ui_components::components::{UiComponent, UiComponentStyles};
@@ -36,11 +34,10 @@ use crate::search::mixer::AddAsyncSourceOptions;
 use crate::search::result_renderer::{QueryResultRenderer, QueryResultRendererStyles};
 use crate::search::search_bar::{SearchBar, SearchBarEvent, SearchBarState, SearchResultOrdering};
 use crate::send_telemetry_from_ctx;
-use crate::server::telemetry::TelemetryEvent;
+use crate::terminal::History;
 use crate::terminal::input::MenuPositioning;
 use crate::terminal::model::session::SessionId;
 use crate::terminal::resizable_data::{DEFAULT_UNIVERSAL_SEARCH_WIDTH, ModalType, ResizableData};
-use crate::terminal::{History, HistoryEvent};
 
 const DEFAULT_PLACEHOLDER_TEXT: &str = "Search your history, workflows, and more";
 const PANEL_POSITION_ID: &str = "CommandSearchViewPanel";

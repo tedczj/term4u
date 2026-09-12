@@ -1669,22 +1669,18 @@ fn test_restored_block_was_local() {
 
 #[test]
 fn test_deserialize_legacy_agent_view_visibility_agent_variant() {
-    let origin_conversation_id = AIConversationId::new();
-    let json = format!("{{\"Agent\":{{\"conversation_id\":\"{origin_conversation_id}\"}}}}");
-
-    let visibility: SerializedAgentViewVisibility = serde_json::from_str(&json).unwrap();
-    match visibility {
-        SerializedAgentViewVisibility::Agent {
-            origin_conversation_id: parsed_origin_conversation_id,
-            pending_other_conversation_ids,
-            other_conversation_ids,
-        } => {
-            assert_eq!(parsed_origin_conversation_id, origin_conversation_id);
-            assert!(pending_other_conversation_ids.is_empty());
-            assert!(other_conversation_ids.is_empty());
-        }
-        _ => panic!("Expected agent visibility"),
-    }
+    let visibility = serde_json::json!({"Agent": {"conversation_id": "legacy-conversation"}});
+    let mut block = serde_json::to_value(SerializedBlock::new_for_test(vec![], vec![])).unwrap();
+    block["agent_view_visibility"] = visibility.clone();
+    let restored: SerializedBlock = serde_json::from_value(block).unwrap();
+    assert_eq!(
+        restored.removed_feature_visibility,
+        Some(visibility.clone())
+    );
+    assert_eq!(
+        serde_json::to_value(restored).unwrap()["agent_view_visibility"],
+        visibility
+    );
 }
 
 #[test]

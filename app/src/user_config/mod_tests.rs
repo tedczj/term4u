@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::io::Write;
 use std::path::Path;
 
+use super::imp::load_tab_configs;
 use super::*;
 use crate::launch_configs::launch_config::PaneTemplateType;
 use crate::tab_configs::render_tab_config;

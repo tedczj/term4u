@@ -1,12 +1,13 @@
 //! Tab group data model. Gated at runtime by `FeatureFlag::GroupedTabs`.
 
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use warpui::elements::DraggableState;
 
 use crate::tab::SelectedTabColor;
 
 /// Stable identity for a tab group.
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Serialize, Deserialize)]
 pub struct TabGroupId(pub Uuid);
 
 impl TabGroupId {

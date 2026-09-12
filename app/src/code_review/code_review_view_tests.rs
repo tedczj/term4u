@@ -1,7 +1,6 @@
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use ai::agent::action::InsertReviewComment;
 use chrono::Local;
 use lsp::LspManagerModel;
 use repo_metadata::repositories::DetectedRepositories;
@@ -14,11 +13,8 @@ use warpui::platform::WindowStyle;
 use warpui::{App, ViewHandle};
 
 use super::*;
-use crate::NotebookKeybindings;
 use crate::ai::persisted_workspace::PersistedWorkspace;
-use crate::ai::request_usage_model::AIRequestUsageModel;
 use crate::auth::AuthStateProvider;
-use crate::cloud_object::model::persistence::CloudModel;
 use crate::code::buffer_location::LocalOrRemotePath;
 use crate::code::editor::view::{CodeEditorRenderOptions, CodeEditorView};
 use crate::code::local_code_editor::LocalCodeEditorView;
@@ -33,16 +29,12 @@ use crate::code_review::diff_state::{DiffStateModel, FileDiff, GitFileStatus};
 use crate::code_review::editor_state::CodeReviewEditorState;
 use crate::code_review::git_repo_model::GitRepoModels;
 use crate::pane_group::WorkingDirectoriesModel;
-use crate::server::server_api::ServerApiProvider;
-use crate::server::server_api::team::MockTeamClient;
-use crate::server::server_api::workspace::MockWorkspaceClient;
 use crate::settings_view::keybindings::KeybindingChangedNotifier;
 use crate::terminal::local_shell::LocalShellState;
 use crate::test_util::settings::initialize_settings_for_tests;
 use crate::vim_registers::VimRegisters;
 use crate::workspace::ActiveSession;
 use crate::workspace::sync_inputs::SyncedInputState;
-use crate::workspaces::user_workspaces::UserWorkspaces;
 
 #[derive(Default)]
 struct TestView;
@@ -79,23 +71,9 @@ fn initialize_test_app(app: &mut App) {
     app.add_singleton_model(|_| LocalShellState::NotLoaded);
     app.add_singleton_model(PersistedWorkspace::new_for_test);
     app.add_singleton_model(|_| GlobalCodeReviewModel);
-    app.add_singleton_model(|ctx| {
-        UserWorkspaces::mock(
-            Arc::new(MockTeamClient::new()),
-            Arc::new(MockWorkspaceClient::new()),
-            vec![],
-            ctx,
-        )
-    });
 
     // Add mocks required by rich text editor (used in the CommentEditor)
-    app.add_singleton_model(CloudModel::mock);
     app.add_singleton_model(|_| ActiveSession::default());
-    app.add_singleton_model(NotebookKeybindings::new);
-    app.add_singleton_model(|_| ServerApiProvider::new_for_test());
-    app.add_singleton_model(|ctx| {
-        AIRequestUsageModel::new_for_test(ServerApiProvider::as_ref(ctx).get_ai_client(), ctx)
-    });
 }
 
 /// Creates a LocalCodeEditorView with the given content
@@ -262,21 +240,19 @@ fn make_pending_comment(
     timestamp: &str,
     target: PendingImportedReviewCommentTarget,
 ) -> PendingImportedReviewComment {
-    let mut pending = PendingImportedReviewComment::try_from(InsertReviewComment {
-        comment_id: id.to_string(),
-        author: author.to_string(),
-        comment_body: body.to_string(),
-        parent_comment_id: parent_id.map(|s| s.to_string()),
-        last_modified_timestamp: timestamp.to_string(),
-        comment_location: None,
-        html_url: None,
-    })
-    .expect("valid pending import conversion");
-
-    // Override the location target since we intentionally use `comment_location: None` above.
-    pending.target = target;
-
-    pending
+    PendingImportedReviewComment {
+        github_details: ImportedCommentDetails {
+            github_comment_id: id.to_owned(),
+            author: author.to_owned(),
+            github_parent_id: parent_id.map(str::to_owned),
+            html_url: None,
+        },
+        body: body.to_owned(),
+        last_update_time: chrono::DateTime::parse_from_rfc3339(timestamp)
+            .expect("valid fixture timestamp")
+            .with_timezone(&Local),
+        target,
+    }
 }
 
 use crate::view_components::action_button::{ActionButton, NakedTheme};
@@ -345,7 +321,6 @@ fn create_loaded_state_with_editors(
             let chevron_button = app.add_view(window_id, |_| ActionButton::new("", NakedTheme));
             let open_in_tab_button = app.add_view(window_id, |_| ActionButton::new("", NakedTheme));
             let discard_button = app.add_view(window_id, |_| ActionButton::new("", NakedTheme));
-            let add_context_button = app.add_view(window_id, |_| ActionButton::new("", NakedTheme));
             let copy_path_button = app.add_view(window_id, |_| ActionButton::new("", NakedTheme));
 
             let state = FileState {
@@ -366,7 +341,6 @@ fn create_loaded_state_with_editors(
                 chevron_button,
                 open_in_tab_button,
                 discard_button,
-                add_context_button,
                 copy_path_button,
             };
             (file_path, state)

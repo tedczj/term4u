@@ -10,7 +10,6 @@ use warpui::App;
 use super::*;
 use crate::code::editor::line::EditorLineLocation;
 use crate::code::editor::view::code_text_styles;
-use crate::settings::FontSettings;
 use crate::test_util::settings::initialize_settings_for_tests;
 
 fn initialize_deps(app: &mut App) {
@@ -20,7 +19,7 @@ fn initialize_deps(app: &mut App) {
 
 fn mock_model(app: &mut App, text: &str, version: ContentVersion) -> ModelHandle<CodeEditorModel> {
     app.add_model(|ctx| {
-        let styles = code_text_styles(Appearance::as_ref(ctx), FontSettings::as_ref(ctx), None);
+        let styles = code_text_styles(Appearance::as_ref(ctx), None);
         let mut model = CodeEditorModel::new(styles, None, false, None, ctx);
         let state = InitialBufferState::plain_text(text).with_version(version);
         model.reset_content(state, ctx);
@@ -38,7 +37,7 @@ fn mock_model_with_buffer(
     buffer: ModelHandle<Buffer>,
 ) -> ModelHandle<CodeEditorModel> {
     app.add_model(|ctx| {
-        let styles = code_text_styles(Appearance::as_ref(ctx), FontSettings::as_ref(ctx), None);
+        let styles = code_text_styles(Appearance::as_ref(ctx), None);
         let mut model = CodeEditorModel::new(styles, None, false, Some(buffer), ctx);
         model.set_language_with_local_path(Path::new("/test.rs"), ctx);
         model
@@ -52,7 +51,7 @@ fn mock_model_with_diff(
     version: ContentVersion,
 ) -> ModelHandle<CodeEditorModel> {
     app.add_model(|ctx| {
-        let styles = code_text_styles(Appearance::as_ref(ctx), FontSettings::as_ref(ctx), None);
+        let styles = code_text_styles(Appearance::as_ref(ctx), None);
         let mut model = CodeEditorModel::new(styles, None, false, None, ctx);
         let state = InitialBufferState::plain_text(current_text).with_version(version);
         model.reset_content(state, ctx);

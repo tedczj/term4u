@@ -1,0 +1,180 @@
+warning: patch `tink-core v0.3.0 (https://github.com/warpdotdev/tink-rust?rev=54b9ac9af93b0c08b446a7bc0582836c9403a71b#54b9ac9a)` was not used in the crate graph
+warning: patch `tink-hybrid v0.3.0 (https://github.com/warpdotdev/tink-rust?rev=54b9ac9af93b0c08b446a7bc0582836c9403a71b#54b9ac9a)` was not used in the crate graph
+warning: patch `tink-proto v0.3.0 (https://github.com/warpdotdev/tink-rust?rev=54b9ac9af93b0c08b446a7bc0582836c9403a71b#54b9ac9a)` was not used in the crate graph
+help: Check that the patched package version and available features are compatible
+      with the dependency requirements. If the patch has a different version from
+      what is locked in the Cargo.lock file, run `cargo update` to use the new
+      version. This may also occur with an optional dependency that is not enabled.
+   Compiling libgit2-sys v0.18.3+1.9.2
+   Compiling warpui v0.0.0 (/Users/tedczj/workspace/term4u/crates/warpui)
+   Compiling warp v0.1.0 (/Users/tedczj/workspace/term4u/app)
+   Compiling warp_search_core v0.1.0 (/Users/tedczj/workspace/term4u/crates/warp_search_core)
+   Compiling syntect v5.2.0
+   Compiling cynic v3.8.0
+   Compiling kmeans_colors v0.5.0
+   Compiling warp_ripgrep v0.1.0 (/Users/tedczj/workspace/term4u/crates/warp_ripgrep)
+   Compiling git2 v0.20.4
+   Compiling addr v0.15.6
+   Compiling toml v0.8.23
+   Compiling ipc v0.1.0 (/Users/tedczj/workspace/term4u/crates/ipc)
+error: failed to run custom build command for `warpui v0.0.0 (/Users/tedczj/workspace/term4u/crates/warpui)`
+
+Caused by:
+  process didn't exit successfully: `/Users/tedczj/workspace/term4u/target/debug/build/warpui-8f2ecbb3dbc43dfc/build-script-build` (exit status: 101)
+  --- stdout
+  cargo:rustc-check-cfg=cfg(macos)
+  cargo:rustc-cfg=macos
+  cargo:rustc-check-cfg=cfg(winit)
+  cargo:rustc-check-cfg=cfg(wgpu)
+  cargo:rustc-check-cfg=cfg(native)
+  cargo:rustc-cfg=native
+  cargo:rerun-if-changed=src/platform/mac/rendering/metal/shaders/shader_types.h
+  cargo:rerun-if-env-changed=TARGET
+  cargo:rerun-if-env-changed=BINDGEN_EXTRA_CLANG_ARGS_aarch64-apple-darwin
+  cargo:rerun-if-env-changed=BINDGEN_EXTRA_CLANG_ARGS_aarch64_apple_darwin
+  cargo:rerun-if-env-changed=BINDGEN_EXTRA_CLANG_ARGS
+  cargo:rerun-if-changed=src/platform/mac/rendering/metal/shaders/shader_types.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/simd/simd.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/simd/vector.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/simd/vector_types.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/simd/base.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/Availability.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/AvailabilityVersions.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/AvailabilityInternal.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/usr/lib/clang/14.0.3/include/arm_neon.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/usr/lib/clang/14.0.3/include/stdint.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/stdint.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_int8_t.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_int16_t.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_int32_t.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_int64_t.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_types/_uint8_t.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_types/_uint16_t.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_types/_uint32_t.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_types/_uint64_t.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/cdefs.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_symbol_aliasing.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_posix_availability.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/machine/_types.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/arm/_types.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_types.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/cdefs.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_intptr_t.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/machine/types.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/arm/types.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/arm/_types.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/cdefs.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_int8_t.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_int16_t.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_int32_t.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_int64_t.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_u_int8_t.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_u_int16_t.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_u_int32_t.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_u_int64_t.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_intptr_t.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_uintptr_t.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_uintptr_t.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_types/_intmax_t.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_types/_uintmax_t.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/simd/packed.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/simd/vector_types.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/simd/vector_make.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/simd/vector_types.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/simd/logic.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/simd/base.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/simd/vector_make.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/usr/lib/clang/14.0.3/include/stdint.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/simd/math.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/simd/base.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/simd/vector_make.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/simd/logic.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/usr/lib/clang/14.0.3/include/tgmath.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/math.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/cdefs.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/Availability.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/tgmath.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/math.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/complex.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/cdefs.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/simd/common.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/simd/base.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/simd/vector_make.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/simd/logic.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/simd/math.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/simd/geometry.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/simd/base.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/simd/vector_types.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/simd/common.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/simd/extern.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/simd/base.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/simd/types.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/simd/vector_types.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/simd/conversion.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/simd/base.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/simd/vector_types.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/simd/common.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/simd/logic.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/simd/matrix.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/simd/base.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/simd/matrix_types.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/simd/types.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/simd/vector_make.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/simd/geometry.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/simd/extern.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/simd/logic.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/simd/quaternion.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/simd/base.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/simd/vector.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/simd/types.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/simd/math.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/simd/geometry.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/simd/math.h
+  cargo:rerun-if-changed=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/simd/geometry.h
+  cargo:rerun-if-changed=src/platform/mac/rendering/metal/shaders/shader_types.h
+  cargo:rerun-if-changed=src/platform/mac/rendering/metal/shaders/shaders.metal
+  cargo:rerun-if-env-changed=MACOSX_DEPLOYMENT_TARGET
+
+  --- stderr
+
+  thread 'main' (32155535) panicked at crates/warpui/build.rs:113:5:
+  error compiling metal shaders to .air; xcrun: error: unable to find utility "metal", not a developer tool or in PATH
+
+  note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+warning: build failed, waiting for other jobs to finish...
+   Compiling comfy-table v7.2.1
+   Compiling inquire v0.9.1
+   Compiling tabwriter v1.4.1
+   Compiling warp_files v0.1.0 (/Users/tedczj/workspace/term4u/crates/warp_files)
+   Compiling asset_macro v0.1.0 (/Users/tedczj/workspace/term4u/crates/asset_macro)
+   Compiling http_server v0.0.0 (/Users/tedczj/workspace/term4u/crates/http_server)
+   Compiling difflib v0.4.0 (https://github.com/warpdotdev/difflib.git?rev=114177e7d8e1f8017baca397f943e11644b14d63#114177e7)
+   Compiling build_cache v0.1.0 (/Users/tedczj/workspace/term4u/crates/build_cache)
+   Compiling ui_components v0.0.0 (/Users/tedczj/workspace/term4u/crates/ui_components)
+   Compiling lasso v0.7.3
+   Compiling ai_types v0.1.0 (/Users/tedczj/workspace/term4u/crates/ai_types)
+   Compiling serde-bytes-repr v0.3.0
+   Compiling tracing-futures v0.2.5
+   Compiling iso8601-duration v0.2.0
+   Compiling validator v0.19.0
+   Compiling serde_regex v1.1.0
+   Compiling variant_count v1.1.0
+   Compiling hashbrown v0.17.1
+   Compiling counter v0.6.0
+   Compiling email_address v0.2.3 (https://github.com/warpdotdev/rust-email_address?rev=b3e5205b4efdc83832f230d8eb6894fd00a9ec32#b3e5205b)
+   Compiling os_info v3.7.0
+   Compiling mach2 v0.5.0
+   Compiling permissions v0.4.1
+   Compiling serde_bytes v0.11.19
+   Compiling unindent v0.1.11
+   Compiling siphasher v0.3.11
+   Compiling enclose v1.1.8
+   Compiling handlebars v0.0.0 (/Users/tedczj/workspace/term4u/crates/handlebars)
+   Compiling thousands v0.2.0
+   Compiling qrcode v0.14.1
+   Compiling deltae v0.3.2
+   Compiling bytecount v0.6.9
+   Compiling shell-words v1.1.0
+   Compiling alphanumeric-sort v1.5.7
+   Compiling embed_plist v1.2.2

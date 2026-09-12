@@ -6,7 +6,6 @@ use pathfinder_color::ColorU;
 use pathfinder_geometry::rect::RectF;
 use pathfinder_geometry::vector::{Vector2F, vec2f};
 use warp_core::channel::{Channel, ChannelState};
-use warp_core::features::FeatureFlag;
 use warp_core::ui::appearance::Appearance;
 use warp_core::ui::icons::ICON_DIMENSIONS;
 use warp_editor::render::element::VerticalExpansionBehavior;
@@ -33,7 +32,7 @@ use warpui::{
 use super::buffer_location::LocalOrRemotePath;
 use super::diff_viewer::DiffViewer;
 use super::editor::view::{CodeEditorEvent, CodeEditorView};
-use super::editor_management::{CodeManager, CodeSource};
+use super::editor_management::CodeSource;
 use super::local_code_editor::{LocalCodeEditorEvent, LocalCodeEditorView};
 use crate::code::editor::scroll::ScrollPosition;
 use crate::code::editor::view::CodeEditorRenderOptions;
@@ -57,14 +56,14 @@ use crate::pane_group::{
 use crate::quit_warning::UnsavedStateSummary;
 use crate::search::ItemHighlightState;
 use crate::search::files::icon::icon_from_file_path;
+use crate::send_telemetry_from_ctx;
 use crate::settings::CodeSettings;
 use crate::tab::TAB_BAR_BORDER_HEIGHT;
 use crate::ui_components::blended_colors;
 use crate::ui_components::buttons::icon_button;
 use crate::util::path::{display_name_with_host, display_path_with_host};
 use crate::view_components::{DismissibleToast, MarkdownToggleView};
-use crate::workspace::{ActiveSession, TabBarDropTargetData, ToastStack, WorkspaceAction};
-use crate::{TelemetryEvent, send_telemetry_from_ctx};
+use crate::workspace::{ActiveSession, TabBarDropTargetData, ToastStack};
 
 type SaveCallback =
     Box<dyn FnOnce(SaveOutcome, &mut CodeView, &mut ViewContext<CodeView>) + Send + Sync + 'static>;
@@ -545,6 +544,15 @@ impl CodeView {
 
     fn clear_drag_position(&mut self) {
         self.drag_position = None;
+    }
+
+    #[cfg(test)]
+    pub(crate) fn active_file_id_for_test(
+        &self,
+        ctx: &AppContext,
+    ) -> Option<warp_util::file::FileId> {
+        self.tab_at(self.active_tab_index)
+            .and_then(|tab| tab.editor_view.as_ref(ctx).file_id())
     }
 
     pub fn tab_at(&self, index: usize) -> Option<&TabData> {

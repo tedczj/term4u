@@ -3,7 +3,7 @@ use std::sync::Arc;
 
 use parking_lot::FairMutex;
 use pathfinder_geometry::vector::Vector2F;
-use warpui::{AppContext, ModelHandle, SingletonEntity, ViewHandle, WindowId};
+use warpui::{AppContext, ModelHandle, ViewHandle, WindowId};
 
 use super::event_listener::ChannelEventListener;
 use super::model::session::Sessions;
@@ -116,7 +116,6 @@ mod testing {
     use warpui::{App, Element, SingletonEntity};
 
     use super::*;
-    use crate::server::server_api::ServerApiProvider;
     use crate::terminal::ShellLaunchState;
     use crate::terminal::shell::{ShellName, ShellType};
 
@@ -147,13 +146,11 @@ mod testing {
             app: &mut App,
             restored_blocks: Option<&[SerializedBlockListItem]>,
         ) -> ViewHandle<TerminalView> {
-            let server_api = app.read(|ctx| ServerApiProvider::as_ref(ctx).get());
             let tips_model = app.add_model(|_| Default::default());
 
             let (window_id, _) = app.add_window(WindowStyle::NotStealFocus, |ctx| {
                 let resources = TerminalViewResources {
                     tips_completed: tips_model,
-                    server_api,
                     model_event_sender: None,
                 };
                 let terminal_init = MockTerminalManager::create_model(
@@ -164,7 +161,6 @@ mod testing {
                     },
                     resources,
                     restored_blocks.map(|blocks| blocks.to_vec()).as_ref(),
-                    None,
                     Vector2F::new(7., 10.5),
                     ctx.window_id(),
                     ctx,

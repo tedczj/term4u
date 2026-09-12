@@ -29,7 +29,6 @@ use string_offset::CharOffset;
 use vec1::Vec1;
 use vim::vim::{MotionType, VimMode};
 use warp_core::r#async::debounce;
-use warp_core::features::FeatureFlag;
 use warp_core::ui::appearance::Appearance;
 use warp_core::ui::icons::Icon;
 use warp_editor::content::buffer::InitialBufferState;
@@ -92,7 +91,6 @@ use super::editor::scroll::{ScrollPosition, ScrollTrigger};
 use super::editor::view::{CodeEditorEvent, CodeEditorView};
 use super::find_references_view::{FindReferencesView, FindReferencesViewEvent};
 use super::language_server_extension::ProcessedDiagnostic;
-use super::lsp_telemetry::LspTelemetryEvent;
 
 type SaveCallback =
     Box<dyn FnOnce(SaveOutcome, &mut ViewContext<LocalCodeEditorView>) + Send + Sync + 'static>;

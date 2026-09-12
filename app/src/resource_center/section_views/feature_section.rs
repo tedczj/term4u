@@ -21,7 +21,6 @@ use crate::resource_center::{
     skip_tips_and_write_to_user_defaults,
 };
 use crate::send_telemetry_from_ctx;
-use crate::server::telemetry::TelemetryEvent;
 use crate::settings_view::keybindings::{KeybindingChangedEvent, KeybindingChangedNotifier};
 use crate::themes::theme::Fill;
 

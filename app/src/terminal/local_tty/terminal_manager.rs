@@ -32,7 +32,7 @@ use crate::banner::BannerState;
 use crate::features::FeatureFlag;
 use crate::persistence::ModelEvent;
 use crate::send_telemetry_on_executor;
-use crate::server::telemetry::{PtySpawnMode as TelemetryPtySpawnMode, TelemetryEvent};
+use crate::server::telemetry::PtySpawnMode as TelemetryPtySpawnMode;
 use crate::settings::{DebugSettings, PrivacySettings, SshSettings};
 use crate::terminal::available_shells::{AvailableShell, AvailableShells};
 use crate::terminal::color::List as ColorList;

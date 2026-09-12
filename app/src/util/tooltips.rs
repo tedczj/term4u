@@ -10,9 +10,7 @@ use warpui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
 use warpui::{AppContext, Element, EventContext, SingletonEntity};
 
 use crate::appearance::Appearance;
-use crate::settings::PrivacySettings;
 use crate::terminal::model::secrets::SecretLevel;
-use crate::ui_components::blended_colors;
 
 /// A link to be shown in a tooltip
 pub struct TooltipLink<OnClick> {

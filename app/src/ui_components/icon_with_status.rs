@@ -1,7 +1,7 @@
 use warp_core::ui::icons::Icon as WarpIcon;
 use warp_core::ui::theme::color::internal_colors;
 use warp_core::ui::theme::{Fill as WarpThemeFill, WarpTheme};
-use warpui::elements::{ConstrainedBox, Container, Element, ParentElement};
+use warpui::elements::{ConstrainedBox, Container, Element};
 
 pub(crate) const CIRCLE_RATIO: f32 = 0.76;
 const NEUTRAL_GLYPH_RATIO: f32 = 16.0 / 24.0;

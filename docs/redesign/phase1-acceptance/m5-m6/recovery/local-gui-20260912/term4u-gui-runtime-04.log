@@ -1,0 +1,54 @@
+^D12:51:23.982 [0m[34m[INFO][0m [0m[2m[warp::resource_limits] [0mInitial open file descriptor limit is 256, with a hard limit of 9223372036854775807
+12:51:23.983 [0m[34m[INFO][0m [0m[2m[warp::resource_limits] [0mIncreased open file descriptor limit to 2560
+12:51:23.985 [0m[34m[INFO][0m [0m[2m[warp_terminal::local_tty::server] [0mSpawning terminal server process...
+12:51:24.000 [0m[34m[INFO][0m [0m[2m[warp_terminal::local_tty::server::event_loop] [0mRunning terminal server...
+12:51:24.061 [0m[34m[INFO][0m [0m[2m[warpui::platform::mac::app] [0mapplication will finish launching
+12:51:24.147 [0m[34m[INFO][0m [0m[2m[warp::app_services] [0mInitializing app services
+12:51:24.161 [0m[34m[INFO][0m [0m[2m[warpui_core::core::app] [0mdispatching global action for root_view:open_from_restored
+12:51:24.161 [0m[34m[INFO][0m [0m[2m[warpui::platform::mac::window] [0mOpening window with id 0
+12:51:24.167 [0m[34m[INFO][0m [0m[2m[warpui::platform::mac::window] [0mUsing discrete GPU for rendering new window.
+12:51:24.193 [0m[34m[INFO][0m [0m[2m[warp::terminal::local_tty::terminal_manager] [0mCreating terminal model with 0 restored blocks
+
+thread 'main' (32183980) panicked at app/src/app_menus.rs:95:13:
+action should have a name: ShowAboutWarp
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+   1: core::panicking::panic_fmt
+   2: warp::app_menus::default_name::{closure#0}
+   3: <core::option::Option<alloc::string::String>>::unwrap_or_else::<warp::app_menus::default_name::{closure#0}>
+   4: warp::app_menus::default_name
+   5: warp::app_menus::updateable_custom_item_with_checkmark
+   6: warp::app_menus::updateable_custom_item_without_checkmark
+   7: warp::app_menus::make_new_app_menu
+   8: warp::app_menus::menu_bar
+   9: <warp::app_menus::menu_bar as core::ops::function::FnOnce<(&mut warpui_core::core::app::AppContext,)>>::call_once
+  10: <warp::app_menus::menu_bar as core::ops::function::FnOnce<(&mut warpui_core::core::app::AppContext,)>>::call_once::{shim:vtable#0}
+  11: <alloc::boxed::Box<dyn for<'a> core::ops::function::FnOnce<(&'a mut warpui_core::core::app::AppContext,), Output = warpui_core::platform::menu::MenuBar>> as core::ops::function::FnOnce<(&mut warpui_core::core::app::AppContext,)>>::call_once
+  12: <warpui_core::platform::app::AppCallbackDispatcher>::with_mutable_app_context::<warpui_core::platform::menu::MenuBar, alloc::boxed::Box<dyn for<'a> core::ops::function::FnOnce<(&'a mut warpui_core::core::app::AppContext,), Output = warpui_core::platform::menu::MenuBar>>>::{closure#0}
+  13: <warpui_core::core::app::App>::update::<warpui_core::platform::menu::MenuBar, <warpui_core::platform::app::AppCallbackDispatcher>::with_mutable_app_context<warpui_core::platform::menu::MenuBar, alloc::boxed::Box<dyn for<'a> core::ops::function::FnOnce<(&'a mut warpui_core::core::app::AppContext,), Output = warpui_core::platform::menu::MenuBar>>>::{closure#0}>
+  14: <warpui_core::platform::app::AppCallbackDispatcher>::with_mutable_app_context::<warpui_core::platform::menu::MenuBar, alloc::boxed::Box<dyn for<'a> core::ops::function::FnOnce<(&'a mut warpui_core::core::app::AppContext,), Output = warpui_core::platform::menu::MenuBar>>>
+  15: _warp_app_will_finish_launching
+  16: -[WarpDelegate applicationWillFinishLaunching:]
+  17: <unknown>
+  18: <unknown>
+  19: <unknown>
+  20: <unknown>
+  21: <unknown>
+  22: <unknown>
+  23: <unknown>
+  24: <unknown>
+  25: <() as objc2::encode::EncodeArguments>::__invoke::<()>
+  26: objc2::runtime::message_receiver::msg_send_primitive::send::<(), ()>
+  27: <*mut objc2::runtime::AnyObject as objc2::runtime::message_receiver::MessageReceiver>::send_message::<(), ()>
+  28: <objc2::__macro_helpers::method_family::MethodFamily<6> as objc2::__macro_helpers::msg_send_retained::MsgSend<&objc2_app_kit::generated::__NSApplication::NSApplication, ()>>::send_message::<()>
+  29: <objc2_app_kit::generated::__NSApplication::NSApplication>::run
+  30: <warpui::platform::mac::app::App>::run::<<warpui::platform::app::AppBuilder>::run<warp::run_internal::{closure#2}>::{closure#2}>::{closure#0}
+  31: objc2::rc::autorelease::autoreleasepool::<(), <warpui::platform::mac::app::App>::run<<warpui::platform::app::AppBuilder>::run<warp::run_internal::{closure#2}>::{closure#2}>::{closure#0}>
+  32: <warpui::platform::mac::app::App>::run::<<warpui::platform::app::AppBuilder>::run<warp::run_internal::{closure#2}>::{closure#2}>
+  33: <warpui::platform::app::AppBackend>::run::<<warpui::platform::app::AppBuilder>::run<warp::run_internal::{closure#2}>::{closure#2}>
+  34: <warpui::platform::app::AppBuilder>::run::<warp::run_internal::{closure#2}>
+  35: warp::run_internal
+  36: warp::run
+  37: term4u::main
+  38: <fn() -> core::result::Result<(), anyhow::Error> as core::ops::function::FnOnce<()>>::call_once
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.

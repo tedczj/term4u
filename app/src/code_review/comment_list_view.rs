@@ -3,8 +3,6 @@ use std::borrow::Cow;
 use indexmap::IndexMap;
 use pathfinder_color::ColorU;
 use pathfinder_geometry::vector::vec2f;
-use string_offset::CharOffset;
-use vec1::vec1;
 use warp_core::ui::color::blend::Blend;
 use warp_core::ui::theme::Fill;
 use warp_core::ui::theme::color::internal_colors::{
@@ -25,11 +23,9 @@ use warpui::elements::{
     Radius, SavePosition, ScrollTarget, ScrollToPositionMode, ScrollbarWidth, Shrinkable, Stack,
     Text,
 };
-use warpui::keymap::Keystroke;
 use warpui::platform::Cursor;
 use warpui::ui_components::button::ButtonVariant;
 use warpui::ui_components::components::UiComponent;
-use warpui::units::Pixels;
 use warpui::{
     AppContext, Entity, EntityId, ModelHandle, SingletonEntity, TypedActionView, View, ViewContext,
     ViewHandle, WeakViewHandle,
@@ -37,7 +33,6 @@ use warpui::{
 
 use crate::appearance::Appearance;
 use crate::code::buffer_location::LocalOrRemotePath;
-use crate::code::editor::comment_editor::DEFAULT_COMMENT_MAX_WIDTH;
 use crate::code::editor::view::{CodeEditorEvent, CodeEditorView};
 use crate::code_review::code_review_view::CodeReviewView;
 use crate::code_review::comment_rendering::CommentViewCard;
@@ -45,14 +40,12 @@ use crate::code_review::comments::{
     AttachedReviewComment, AttachedReviewCommentTarget, CommentId, CommentOrigin,
     ReviewCommentBatch, ReviewCommentBatchEvent,
 };
-use crate::code_review::telemetry_event::CodeReviewTelemetryEvent;
 use crate::editor::{EditorView, Event as EditorEvent};
 use crate::menu::{Event, Menu, MenuItem, MenuItemFields};
 use crate::send_telemetry_from_ctx;
 use crate::ui_components::icons::Icon;
 use crate::view_components::action_button::{
-    ActionButton, ActionButtonTheme, ButtonSize, KeystrokeSource, NakedTheme, PrimaryTheme,
-    SecondaryTheme,
+    ActionButton, ActionButtonTheme, ButtonSize, NakedTheme, SecondaryTheme,
 };
 
 /// Header text for the outdated section when there is exactly one outdated comment.

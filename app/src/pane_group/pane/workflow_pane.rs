@@ -1,6 +1,3 @@
-use std::collections::HashMap;
-use std::sync::Arc;
-
 use warpui::{AppContext, ModelHandle, SingletonEntity, ViewContext, ViewHandle};
 
 use super::{
@@ -10,9 +7,7 @@ use super::{
 use crate::app_state::{LeafContents, WorkflowPaneSnapshot};
 use crate::workflows::manager::{WorkflowManager, WorkflowOpenSource};
 use crate::workflows::workflow_view::{WorkflowView, WorkflowViewEvent};
-use crate::workflows::{
-    Workflow, WorkflowId, WorkflowSelectionSource, WorkflowSource, WorkflowType, WorkflowViewMode,
-};
+use crate::workflows::{Workflow, WorkflowId, WorkflowSelectionSource, WorkflowViewMode};
 
 pub struct WorkflowPane {
     view: ViewHandle<PaneView<WorkflowView>>,

@@ -3,7 +3,6 @@ use warpui::AppContext;
 use warpui::keymap::Keystroke;
 
 pub mod tip_view;
-pub use tip_view::{TipsEvent, TipsView};
 
 use crate::util::bindings::trigger_to_keystroke;
 

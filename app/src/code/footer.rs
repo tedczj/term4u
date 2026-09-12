@@ -35,7 +35,6 @@ use crate::ai::persisted_workspace::PersistedWorkspaceEvent;
 use crate::ai::persisted_workspace::{
     LSPEnablementResultForFile, LspRepoStatus, PersistedWorkspace,
 };
-use crate::code::lsp_telemetry::{LspControlActionType, LspEnablementSource, LspTelemetryEvent};
 use crate::ui_components::blended_colors;
 #[cfg(feature = "local_fs")]
 use crate::user_config::is_tab_config_toml;

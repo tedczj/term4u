@@ -9,8 +9,8 @@ pub use header_content::{
 };
 use pathfinder_geometry::rect::RectF;
 use warpui::elements::{
-    Border, ConstrainedBox, Container, DropTarget, DropTargetData, Flex, MainAxisSize,
-    ParentElement, SavePosition, Shrinkable,
+    Border, ConstrainedBox, Container, CrossAxisAlignment, DropTarget, DropTargetData, Flex,
+    MainAxisSize, ParentElement, SavePosition, Shrinkable,
 };
 use warpui::presenter::ChildView;
 use warpui::{
@@ -360,7 +360,9 @@ impl<P: BackingView> View for PaneView<P> {
         }
 
         // Normal case: pane is visible (i.e. not being dragged), use Max sizing to fill available space
-        let mut column = Flex::column().with_main_axis_size(MainAxisSize::Max);
+        let mut column = Flex::column()
+            .with_main_axis_size(MainAxisSize::Max)
+            .with_cross_axis_alignment(CrossAxisAlignment::Stretch);
 
         let split_pane_state = self
             .focus_handle

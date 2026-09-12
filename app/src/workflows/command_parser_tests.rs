@@ -6,7 +6,7 @@ use super::{compute_workflow_display_data, compute_workflow_display_data_for_his
 use crate::workflows::workflow::{Argument, Workflow};
 
 lazy_static! {
-    static ref WORKFLOW: Workflow = Workflow::Command {
+    static ref WORKFLOW: Workflow = Workflow {
         name: "Run single integration test with display".to_owned(),
         command:
             "RUST_BACKTRACE=full WARP_SHELL_PATH={{shell_path}} cargo run -p integration --bin \
@@ -38,7 +38,7 @@ lazy_static! {
         ],
         environment_variables: None,
     };
-    static ref WORKFLOW_MULTIPLE_INSTANCES_SAME_PARAMETER: Workflow = Workflow::Command {
+    static ref WORKFLOW_MULTIPLE_INSTANCES_SAME_PARAMETER: Workflow = Workflow {
         name: "Echo my name 3 times".to_owned(),
         command: r#"echo {{name}} {{name}} {{name}}"#.to_owned(),
         arguments: vec![Argument {
@@ -59,7 +59,7 @@ lazy_static! {
         ],
         environment_variables: None,
     };
-    static ref WORKFLOW_NO_PARAMETERS: Workflow = Workflow::Command {
+    static ref WORKFLOW_NO_PARAMETERS: Workflow = Workflow {
         name: "Print numbers 1 to 13".to_owned(),
         command: r#"for i in {0..13}; do echo $i; done"#.to_owned(),
         arguments: vec![],
@@ -75,7 +75,7 @@ lazy_static! {
         ],
         environment_variables: None,
     };
-    static ref WORKFLOW_WITH_ESCAPES: Workflow = Workflow::Command {
+    static ref WORKFLOW_WITH_ESCAPES: Workflow = Workflow {
         name: "Workflow with escaped arguments".to_owned(),
         command:
             r#"docker history --no-trunc --format {{arg1}} {{{.ID}}}: {{{.CreatedBy}}} {{{arg2}}} {{arg2}}"#
@@ -106,7 +106,7 @@ lazy_static! {
         ],
         environment_variables: None,
     };
-    static ref WORKFLOW_WITH_DUPLICATES_AND_ESCAPES: Workflow = Workflow::Command {
+    static ref WORKFLOW_WITH_DUPLICATES_AND_ESCAPES: Workflow = Workflow {
         name: "Workflow with escaped arguments".to_owned(),
         command:
             r#"{{{hi}}} {{hi}} {{{{{{hi}} {{{{hi}}}} {{{{{hi}}} {{hi}}"#
@@ -132,7 +132,7 @@ lazy_static! {
         environment_variables: None,
     };
 
-    static ref WORKFLOW_WITH_MULTIBYTE_CHARS: Workflow = Workflow::Command {
+    static ref WORKFLOW_WITH_MULTIBYTE_CHARS: Workflow = Workflow {
         name: "Workflow with multiyte chars".to_owned(),
         command:
             r#"echo "hello 😎{{name}}🤠{{name}}"#

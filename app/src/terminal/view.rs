@@ -3,21 +3,25 @@ pub mod init;
 
 use std::borrow::Cow;
 use std::sync::Arc;
+use std::sync::atomic::AtomicBool;
 use std::sync::mpsc::SyncSender;
 
 pub use action::TerminalAction;
 use async_channel::{Receiver, Sender};
 use parking_lot::FairMutex;
 use pathfinder_geometry::vector::Vector2F;
-use vec1::{Vec1, vec1};
+use vec1::vec1;
 use warp_completer::meta::Span;
 use warp_core::semantic_selection::SemanticSelection;
 use warp_editor::model::CoreEditorModel as _;
 use warp_util::path::ShellFamily;
 use warpui::clipboard::ClipboardContent;
-use warpui::elements::{ChildView, Clipped, Expanded, Flex, ParentElement, Shrinkable};
+use warpui::elements::{
+    Align, ChildView, ClippedScrollStateHandle, ClippedScrollable, CrossAxisAlignment, Expanded,
+    Fill, Flex, MainAxisSize, ParentElement, ScrollbarWidth,
+};
 use warpui::ui_components::components::UiComponent;
-use warpui::units::Lines;
+use warpui::units::{IntoPixels, Lines};
 use warpui::{
     AppContext, Element, Entity, EntityId, FocusContext, ModelHandle, SingletonEntity,
     TypedActionView, View, ViewContext, ViewHandle,
@@ -27,14 +31,15 @@ use super::alt_screen::alt_screen_element::AltScreenElement;
 use super::blockgrid_element::BlockGridElement;
 use super::color::List;
 use super::find::TerminalFindModel;
-use super::input::{self, CommandExecutionSource, Input};
+use super::grid_size_util::grid_cell_dimensions;
+use super::input::{CommandExecutionSource, Input};
 use super::model::ObfuscateSecrets;
 use super::model::completions::ShellCompletion;
 use super::model::grid::grid_handler::Link;
 use super::model::selection::SelectAction;
 use super::model::session::{Session, SessionId, Sessions};
-use super::model::terminal_model::{TerminalInputState, WithinModel};
-use super::model_events::{ModelEvent, ModelEventDispatcher};
+use super::model::terminal_model::TerminalInputState;
+use super::model_events::{AnsiHandlerEvent, ModelEvent, ModelEventDispatcher};
 use super::terminal_size_element::TerminalSizeElement;
 use super::{
     PtyIntent, PtyIntentEvent, ShellLaunchData, SizeInfo, SizeUpdate, SizeUpdateReason,
@@ -50,11 +55,13 @@ use crate::pane_group::{BackingView, PaneConfiguration, PaneEvent, SplitPaneStat
 use crate::persistence;
 use crate::session_management::{CommandContext, SessionNavigationPromptElements};
 use crate::settings::EnforceMinimumContrast;
+use crate::terminal::GridType;
 use crate::terminal::event::BlockCompletedEvent;
 use crate::terminal::input::Event as InputEvent;
 use crate::terminal::model::block::SerializedBlock;
+use crate::terminal::model::blocks::BlockListPoint;
 use crate::terminal::model::index::Point;
-use crate::terminal::model::mouse::MouseState;
+use crate::terminal::model::terminal_model::{BlockIndex, WithinBlock};
 use crate::terminal::shell::ShellType;
 use crate::throttle::throttle;
 use crate::util::openable_file_type::{EditorLayout, FileTarget};
@@ -202,11 +209,14 @@ pub struct TerminalViewRenderContext {
 }
 
 pub struct TerminalView {
+    view_id: EntityId,
     pub model: Arc<FairMutex<TerminalModel>>,
     input: ViewHandle<Input>,
     size_info: SizeInfo,
     colors: List,
     resize_tx: Sender<Vector2F>,
+    transcript_scroll: ClippedScrollStateHandle,
+    transcript_height: f32,
     find_model: ModelHandle<TerminalFindModel>,
     find_bar: ViewHandle<Find<TerminalFindModel>>,
     pane_configuration: ModelHandle<PaneConfiguration>,
@@ -218,7 +228,10 @@ pub struct TerminalView {
     current_repo_path: Option<LocalOrRemotePath>,
     pty_spawn_error: Option<String>,
     is_selecting: bool,
+    output_dragging: Arc<AtomicBool>,
     pending_commands: Vec<String>,
+    is_bootstrapped: bool,
+    was_ever_visible: bool,
 }
 
 impl TerminalView {
@@ -252,11 +265,14 @@ impl TerminalView {
         let (resize_tx, resize_rx) = async_channel::unbounded();
         ctx.spawn_stream_local(resize_rx, Self::after_layout, |_, _| {});
         Self {
+            view_id: ctx.view_id(),
             model,
             input,
             size_info,
             colors,
             resize_tx,
+            transcript_scroll: ClippedScrollStateHandle::default(),
+            transcript_height: 0.,
             find_model,
             find_bar,
             pane_configuration,
@@ -268,7 +284,10 @@ impl TerminalView {
             current_repo_path: None,
             pty_spawn_error: None,
             is_selecting: false,
+            output_dragging: Arc::new(AtomicBool::new(false)),
             pending_commands: Vec::new(),
+            is_bootstrapped: false,
+            was_ever_visible: false,
         }
     }
 
@@ -386,7 +405,13 @@ impl TerminalView {
         ctx: &mut ViewContext<Self>,
     ) {
         self.pending_commands = commands;
-        if let Some(command) = self.pending_commands.first().cloned() {
+        self.run_pending_command(ctx);
+    }
+
+    fn run_pending_command(&mut self, ctx: &mut ViewContext<Self>) {
+        if self.is_bootstrapped
+            && let Some(command) = self.pending_commands.first().cloned()
+        {
             self.input
                 .update(ctx, |input, ctx| input.set_pending_command(&command, ctx));
             self.pending_commands.remove(0);
@@ -399,7 +424,17 @@ impl TerminalView {
         false
     }
 
-    pub fn mark_as_visible(&mut self) {}
+    pub fn mark_as_visible(&mut self) {
+        self.was_ever_visible = true;
+    }
+
+    pub fn was_ever_visible(&self) -> bool {
+        self.was_ever_visible
+    }
+
+    pub fn size_info(&self) -> SizeInfo {
+        self.size_info
+    }
 
     pub fn dismiss_tooltips(&mut self, _: &mut ViewContext<Self>) {}
 
@@ -484,7 +519,13 @@ impl TerminalView {
     }
 
     pub fn focus(&mut self, ctx: &mut ViewContext<Self>) {
-        if self.input_is_visible() {
+        let model = self.model.lock();
+        let focus_input = matches!(
+            model.terminal_input_state(),
+            TerminalInputState::InputEditor | TerminalInputState::NotBootstrapped
+        ) && model.block_list().selection().is_none();
+        drop(model);
+        if focus_input {
             self.input
                 .update(ctx, |input, ctx| input.focus_input_box(ctx));
         } else {
@@ -518,6 +559,12 @@ impl TerminalView {
     fn handle_input_event(&mut self, event: &InputEvent, ctx: &mut ViewContext<Self>) {
         match event {
             InputEvent::ExecuteCommand(command) => {
+                if !self.is_bootstrapped {
+                    self.pending_commands.push(command.clone());
+                    return;
+                }
+                self.transcript_scroll
+                    .scroll_to(self.transcript_height.into_pixels());
                 let session_id = self
                     .model_events
                     .as_ref(ctx)
@@ -537,12 +584,20 @@ impl TerminalView {
             }
             InputEvent::CtrlC { .. } => ctx.emit(Event::InterruptPty),
             InputEvent::CtrlD => ctx.emit(Event::CtrlD),
-            InputEvent::EditorFocused => ctx.notify(),
+            InputEvent::EditorFocused => {
+                self.model.lock().block_list_mut().clear_selection();
+                ctx.notify();
+            }
         }
     }
 
     fn handle_model_event(&mut self, event: &ModelEvent, ctx: &mut ViewContext<Self>) {
         match event {
+            ModelEvent::Handler(AnsiHandlerEvent::Bootstrapped { .. }) => {
+                self.is_bootstrapped = true;
+                self.run_pending_command(ctx);
+                ctx.emit(Event::SessionBootstrapped);
+            }
             ModelEvent::Title(title) => {
                 self.pane_configuration.update(ctx, |configuration, ctx| {
                     configuration.set_title(title.clone(), ctx)
@@ -561,8 +616,11 @@ impl TerminalView {
                         is_local: true,
                     });
                 }
-                self.input
-                    .update(ctx, |input, ctx| input.focus_input_box(ctx));
+                if ctx.is_self_or_child_focused() {
+                    self.input
+                        .update(ctx, |input, ctx| input.focus_input_box(ctx));
+                }
+                self.run_pending_command(ctx);
             }
             ModelEvent::AfterBlockStarted {
                 is_for_in_band_command,
@@ -608,25 +666,78 @@ impl TerminalView {
 
     fn handle_wakeup(&mut self, ctx: &mut ViewContext<Self>) {
         let mut model = self.model.lock();
+        let show_input = matches!(
+            model.terminal_input_state(),
+            TerminalInputState::InputEditor | TerminalInputState::NotBootstrapped
+        );
+        let has_output_selection = model.block_list().selection().is_some();
         if !model.is_alt_screen_active() {
             model.block_list_mut().update_background_block_height();
             model.block_list_mut().update_active_block_height();
+            let follows_output = self.transcript_scroll.scroll_start().as_f32()
+                >= (self.transcript_height
+                    - self.size_info.pane_height_px
+                    - self.size_info.cell_height_px().as_f32())
+                .max(0.);
+            let scope = model.block_list().transcript_scope();
+            self.transcript_height = model
+                .block_list()
+                .blocks()
+                .iter()
+                .filter(|block| block.is_visible(scope))
+                .map(|block| {
+                    let command_rows = if block.should_hide_command_grid() {
+                        0
+                    } else {
+                        block.prompt_and_command_grid().len_displayed()
+                    };
+                    let output_rows = if block.should_hide_output_grid() {
+                        0
+                    } else {
+                        block.output_grid().len_displayed()
+                    };
+                    (command_rows + output_rows) as f32 * self.size_info.cell_height_px().as_f32()
+                })
+                .sum();
+            if follows_output {
+                self.transcript_scroll
+                    .scroll_to(self.transcript_height.into_pixels());
+            }
         }
         drop(model);
+        if !show_input && self.input.as_ref(ctx).editor().is_focused(ctx) {
+            log::debug!("Moving keyboard focus from command editor to terminal");
+            ctx.focus_self();
+        } else if show_input && !has_output_selection && ctx.is_self_focused() {
+            self.input
+                .update(ctx, |input, ctx| input.focus_input_box(ctx));
+        }
         ctx.notify();
     }
 
     fn after_layout(&mut self, size: Vector2F, ctx: &mut ViewContext<Self>) {
+        let cell_size = if ctx.is_headless() {
+            Vector2F::new(
+                self.size_info.cell_width_px().as_f32(),
+                self.size_info.cell_height_px().as_f32(),
+            )
+        } else {
+            let appearance = Appearance::as_ref(ctx);
+            grid_cell_dimensions(
+                ctx.font_cache(),
+                appearance.monospace_font_family(),
+                appearance.monospace_font_size(),
+                appearance.ui_builder().line_height_ratio(),
+            )
+        };
         let new_size = SizeInfo::new(
             size,
-            self.size_info.cell_width_px(),
-            self.size_info.cell_height_px(),
+            cell_size.x().into_pixels(),
+            cell_size.y().into_pixels(),
             self.size_info.padding_x_px(),
             self.size_info.padding_y_px(),
         );
-        if new_size.rows() == self.size_info.rows()
-            && new_size.columns() == self.size_info.columns()
-        {
+        if new_size == self.size_info {
             return;
         }
         let update = SizeUpdate {
@@ -649,38 +760,59 @@ impl TerminalView {
         let appearance = Appearance::as_ref(app);
         let model = self.model.lock();
         let scope = model.block_list().transcript_scope();
-        let mut column = Flex::column().with_reverse_orientation();
-        for block in model.block_list().blocks().iter().rev() {
+        let ranges = model
+            .block_list()
+            .renderable_selection(SemanticSelection::as_ref(app), false)
+            .map(|ranges| ranges.into_iter().collect::<Vec<_>>())
+            .unwrap_or_default();
+        let mut column = Flex::column().with_cross_axis_alignment(CrossAxisAlignment::Stretch);
+        for (index, block) in model.block_list().blocks().iter().enumerate() {
             if !block.is_visible(scope) {
                 continue;
             }
-            if !block.should_hide_output_grid() {
-                column.add_child(
-                    BlockGridElement::new(
-                        block.output_grid(),
-                        appearance,
-                        EnforceMinimumContrast::default(),
-                        ObfuscateSecrets::No,
-                        self.size_info,
+            for (hidden, grid, grid_type) in [
+                (
+                    block.should_hide_command_grid(),
+                    block.prompt_and_command_grid(),
+                    GridType::PromptAndCommand,
+                ),
+                (
+                    block.should_hide_output_grid(),
+                    block.output_grid(),
+                    GridType::Output,
+                ),
+            ] {
+                if !hidden {
+                    let first_row = BlockListPoint::from_within_block_point(
+                        &WithinBlock::new(Point { row: 0, col: 0 }, BlockIndex(index), grid_type),
+                        model.block_list(),
                     )
-                    .finish(),
-                );
-            }
-            if !block.should_hide_command_grid() {
-                column.add_child(
-                    BlockGridElement::new(
-                        block.prompt_and_command_grid(),
-                        appearance,
-                        EnforceMinimumContrast::default(),
-                        ObfuscateSecrets::No,
-                        self.size_info,
-                    )
-                    .finish(),
-                );
+                    .row;
+                    column.add_child(
+                        BlockGridElement::new(
+                            grid,
+                            appearance,
+                            EnforceMinimumContrast::default(),
+                            ObfuscateSecrets::No,
+                            self.size_info,
+                        )
+                        .with_selection(first_row, &ranges, self.output_dragging.clone())
+                        .finish(),
+                    );
+                }
             }
         }
         drop(model);
-        Clipped::new(column.finish()).finish()
+        ClippedScrollable::vertical_centered(
+            self.transcript_scroll.clone(),
+            Align::new(column.finish()).bottom_left().finish(),
+            ScrollbarWidth::Auto,
+            appearance.theme().nonactive_ui_detail().into(),
+            appearance.theme().active_ui_detail().into(),
+            Fill::None,
+        )
+        .with_overlayed_scrollbar()
+        .finish()
     }
 
     fn render_alt_screen(&self, app: &AppContext) -> Box<dyn Element> {
@@ -738,7 +870,9 @@ impl Entity for TerminalView {
 
 impl TerminalSurface for TerminalView {
     fn on_shell_determined(&mut self, ctx: &mut ViewContext<Self>) {
-        self.focus(ctx);
+        if ctx.is_self_or_child_focused() {
+            self.focus(ctx);
+        }
     }
 
     fn on_active_shell_launch_data_updated(
@@ -777,9 +911,45 @@ impl TypedActionView for TerminalView {
                     ctx.emit(Event::InterruptPty);
                 }
             }
-            TerminalAction::CtrlD => ctx.emit(Event::CtrlD),
+            TerminalAction::TypedCharacters(text) if self.input_is_visible() => {
+                self.input.update(ctx, |input, ctx| {
+                    input.append_to_buffer(text, ctx);
+                    input.focus_input_box(ctx);
+                });
+            }
             TerminalAction::TypedCharacters(text) | TerminalAction::KeyDown(text) => {
                 self.write_bytes(text.as_bytes().to_vec(), ctx)
+            }
+            TerminalAction::SelectOutput(action) => {
+                match action {
+                    SelectAction::Begin {
+                        point,
+                        side,
+                        selection_type,
+                        ..
+                    } => {
+                        self.model.lock().block_list_mut().start_selection(
+                            *point,
+                            *selection_type,
+                            *side,
+                        );
+                        self.is_selecting = true;
+                        ctx.focus_self();
+                    }
+                    SelectAction::Update { point, side, .. } => {
+                        self.model
+                            .lock()
+                            .block_list_mut()
+                            .update_selection(*point, *side);
+                    }
+                    SelectAction::End => self.is_selecting = false,
+                }
+                ctx.notify();
+            }
+            TerminalAction::Copy => {
+                if let Some(text) = self.selected_text(ctx) {
+                    ctx.clipboard().write(ClipboardContent::plain_text(text));
+                }
             }
             TerminalAction::UserInputSequence(bytes) | TerminalAction::ControlSequence(bytes) => {
                 self.write_bytes(bytes.clone(), ctx)
@@ -788,14 +958,27 @@ impl TypedActionView for TerminalView {
             TerminalAction::Down => self.write_bytes(b"\x1b[B".to_vec(), ctx),
             TerminalAction::Home => self.write_bytes(b"\x1b[H".to_vec(), ctx),
             TerminalAction::End => self.write_bytes(b"\x1b[F".to_vec(), ctx),
+            TerminalAction::PageUp if self.input_is_visible() => {
+                self.transcript_scroll
+                    .scroll_by((-self.size_info.pane_height_px).into_pixels());
+                ctx.notify();
+            }
+            TerminalAction::PageDown if self.input_is_visible() => {
+                self.transcript_scroll
+                    .scroll_by(self.size_info.pane_height_px.into_pixels());
+                ctx.notify();
+            }
             TerminalAction::PageUp => self.write_bytes(b"\x1b[5~".to_vec(), ctx),
             TerminalAction::PageDown => self.write_bytes(b"\x1b[6~".to_vec(), ctx),
             TerminalAction::Paste => {
-                if !self.input_is_visible() {
-                    let content = ctx.clipboard().read();
-                    if !content.plain_text.is_empty() {
-                        self.write_bytes(content.plain_text.into_bytes(), ctx);
-                    }
+                let content = ctx.clipboard().read();
+                if self.input_is_visible() {
+                    self.input.update(ctx, |input, ctx| {
+                        input.append_to_buffer(&content.plain_text, ctx);
+                        input.focus_input_box(ctx);
+                    });
+                } else if !content.plain_text.is_empty() {
+                    self.write_bytes(content.plain_text.into_bytes(), ctx);
                 }
             }
             TerminalAction::ClearBuffer => self.clear_buffer(ctx),
@@ -855,7 +1038,6 @@ impl TypedActionView for TerminalView {
             | TerminalAction::MaybeDismissToolTip { .. }
             | TerminalAction::MaybeHoverSecret
             | TerminalAction::MaybeLinkHover
-            | TerminalAction::Copy
             | TerminalAction::ClearMarkedText
             | TerminalAction::SetMarkedText(_)
             | TerminalAction::StartFileDropTarget
@@ -882,11 +1064,15 @@ impl View for TerminalView {
         } else {
             self.render_blocks(app)
         };
-        let output = TerminalSizeElement::new(self.resize_tx.clone(), output).finish();
-        let mut column = Flex::column().with_child(Expanded::new(1., output).finish());
+        let receives_input = app.focused_view_id(self.input.window_id(app)) == Some(self.view_id);
+        let output =
+            TerminalSizeElement::new(self.resize_tx.clone(), output, receives_input).finish();
+        let mut column = Flex::column()
+            .with_main_axis_size(MainAxisSize::Max)
+            .with_cross_axis_alignment(CrossAxisAlignment::Stretch)
+            .with_child(Expanded::new(1., output).finish());
         if self.input_is_visible() {
-            column = column
-                .with_child(Shrinkable::new(0., ChildView::new(&self.input).finish()).finish());
+            column = column.with_child(ChildView::new(&self.input).finish());
         }
         column.finish()
     }
@@ -902,8 +1088,12 @@ impl View for TerminalView {
         if self.input_is_visible() {
             context.set.insert(init::INPUT_BOX_VISIBLE_KEY);
         }
-        if self.model.lock().is_alt_screen_active() {
+        let model = self.model.lock();
+        if model.is_alt_screen_active() {
             context.set.insert("AltScreen");
+        }
+        if model.block_list().selection().is_some() {
+            context.set.insert("OutputSelected");
         }
         context
     }
@@ -964,3 +1154,7 @@ impl BackingView for TerminalView {
         self.install_focus_handle(focus_handle, ctx);
     }
 }
+
+#[cfg(test)]
+#[path = "local_view_tests.rs"]
+mod tests;

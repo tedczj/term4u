@@ -56,7 +56,7 @@ const MAX_RECENT_REPOS_IN_MENU: usize = 10;
 
 /// Creates the root app menu bar
 pub fn menu_bar(ctx: &mut AppContext) -> MenuBar {
-    MenuBar::new(vec![
+    let mut menus = vec![
         make_new_app_menu(ctx),
         make_new_file_menu(ctx),
         make_new_edit_menu(ctx),
@@ -64,7 +64,30 @@ pub fn menu_bar(ctx: &mut AppContext) -> MenuBar {
         make_new_tab_menu(ctx),
         make_new_blocks_menu(ctx),
         make_new_window_menu(),
-    ])
+    ];
+    for menu in &mut menus {
+        compact_menu_items(&mut menu.menu_items);
+    }
+    menus.retain(|menu| !menu.menu_items.is_empty());
+    MenuBar::new(menus)
+}
+
+fn compact_menu_items(items: &mut Vec<MenuItem>) {
+    let mut previous_separator = true;
+    items.retain_mut(|item| {
+        if let MenuItem::Custom(custom) = item
+            && let Some(submenu) = &mut custom.submenu
+        {
+            compact_menu_items(submenu);
+        }
+        let separator = matches!(item, MenuItem::Separator);
+        let retain = !separator || !previous_separator;
+        previous_separator = separator;
+        retain
+    });
+    if matches!(items.last(), Some(MenuItem::Separator)) {
+        items.pop();
+    }
 }
 
 // Creates the app dock menu
@@ -89,17 +112,16 @@ fn custom_shortcut(action: CustomAction) -> Option<Keystroke> {
     trigger_to_keystroke(&Trigger::Custom(action.into()))
 }
 
-fn default_name(action: CustomAction, ctx: &AppContext) -> String {
+fn default_name(action: CustomAction, ctx: &AppContext) -> Option<String> {
     ctx.description_for_custom_action(action.into(), bindings::MAC_MENUS_CONTEXT)
-        .unwrap_or_else(|| {
-            debug_assert!(false, "action should have a name: {action:?}");
-            "<NO DESCRIPTION>".into()
-        })
 }
 
 fn non_updateable_custom_item(action: CustomAction, ctx: &AppContext) -> MenuItem {
+    let Some(name) = default_name(action, ctx) else {
+        return MenuItem::Separator;
+    };
     MenuItem::Custom(CustomMenuItem::new(
-        &default_name(action, ctx),
+        &name,
         custom_action_dispatcher(action),
         no_updates,
         custom_shortcut(action),
@@ -114,8 +136,11 @@ fn updateable_custom_item_with_checkmark(
     ctx: &AppContext,
     should_be_checked: Box<CheckmarkStatusGetter>,
 ) -> MenuItem {
+    let Some(name) = default_name(action, ctx) else {
+        return MenuItem::Separator;
+    };
     MenuItem::Custom(CustomMenuItem::new(
-        &default_name(action, ctx),
+        &name,
         custom_action_dispatcher(action),
         custom_action_updater(action, should_be_checked),
         custom_shortcut(action),
