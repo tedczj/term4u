@@ -1,5 +1,11 @@
 # 本机 DNS 归因与应用静默网络验证 · 2026-09-12
 
+> 后续更新：用户已开启 iTerm 完全磁盘访问权限。第二次手动运行
+> `/private/tmp/term4u-network-te64vz1y` 已采到 6 条 ES 事件，权限阻塞已解除。
+> 校准失败的原因是脚本让 eslogger 与探针共享进程组，被 eslogger 自身的过滤规则排除。
+> 已用 `start_new_session=True` 隔离 eslogger，真实进程组 smoke 通过；等待用户手动 sudo 重跑。
+> 见 [诊断](process-group-diagnosis.json)与[检查](process-group-fix-check.json)。下文 TCC 缺失描述保留历史时点。
+
 **当前仍 INCOMPLETE：完整短命子进程追踪缺 TCC 完全磁盘访问权限。**
 系统 DNS 代理归因已校准；GUI 实际运行 620 秒，TUI 两次各运行约 65 秒。
 [最终分析](network-analysis.json)显示已追踪 PID 的网络包、DNS 记录和重试/上传日志命中均为 0；

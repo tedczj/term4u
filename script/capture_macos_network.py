@@ -66,7 +66,11 @@ def main():
             path = directory / (name + ".log")
             handles[name] = path.open("w")
             os.chown(path, owner, group)
-            children[name] = subprocess.Popen(command, stdout=handles[name], stderr=subprocess.STDOUT)
+            # eslogger suppresses events from its own process group to avoid feedback loops.
+            children[name] = subprocess.Popen(
+                command, stdout=handles[name], stderr=subprocess.STDOUT,
+                start_new_session=(name == "processes"),
+            )
         time.sleep(2)
         exited = [name for name, child in children.items() if child.poll() is not None]
         if exited:
@@ -89,6 +93,10 @@ def main():
             dns_probe.kill()
             dns_probe.wait()
             raise RuntimeError("System DNS calibration timed out")
+        report["calibration"] = {"exec_probe_pid": probe.pid, "udp_probe_pid": os.getpid(),
+                                 "udp_port": 49331, "dns_probe_pid": dns_probe.pid}
+        report["process_groups"] = {"controller": os.getpgrp(),
+                                    "eslogger": os.getpgid(children["processes"].pid)}
         time.sleep(2)
         events = (directory / "processes.log").read_text()
         if not re.search(r'"pid"\s*:\s*' + str(probe.pid) + r'\b', events):
@@ -99,8 +107,6 @@ def main():
         dns = (directory / "dns.log").read_text()
         if not re.search(r'client pid: ' + str(dns_probe.pid) + r'\b', dns):
             raise RuntimeError("System DNS log did not attribute the controlled resolver request")
-        report["calibration"] = {"exec_probe_pid": probe.pid, "udp_probe_pid": os.getpid(),
-                                 "udp_port": 49331, "dns_probe_pid": dns_probe.pid}
         report["status"] = "CAPTURING"
         report["ready"] = utc_now()
         write_json("ready.json", report)

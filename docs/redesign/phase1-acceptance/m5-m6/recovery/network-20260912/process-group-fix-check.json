@@ -1,0 +1,7 @@
+{
+  "collector_group": 16052,
+  "probe_group": 16049,
+  "controller_group": 16049,
+  "isolated": true,
+  "scope": "Real subprocess group smoke; Endpoint Security must be rechecked with manual sudo"
+}

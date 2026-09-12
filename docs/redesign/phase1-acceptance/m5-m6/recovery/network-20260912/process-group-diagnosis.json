@@ -1,0 +1,12 @@
+{
+  "source": "/private/tmp/term4u-network-te64vz1y/processes.log",
+  "sha256": "fef62b88ed5ad02108c2556632be2d2e4ad731305ec36473de78a0130162a44a",
+  "event_count": 6,
+  "events_by_type": {
+    "fork": 2,
+    "exec": 2,
+    "exit": 2
+  },
+  "finding": "Endpoint Security events are available. eslogger and the controlled exec inherited the same process group, which eslogger automatically suppresses. Fixed by starting eslogger in a new session.",
+  "reference": "Local eslogger(1) DESCRIPTION: automatic suppression for all processes in its process group."
+}
