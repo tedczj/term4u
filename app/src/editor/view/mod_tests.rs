@@ -4061,7 +4061,7 @@ fn test_cursor_blink() {
             let mut editor = EditorView::single_line(Default::default(), ctx);
             editor.on_focus(&FocusContext::SelfFocused, ctx);
             // cursors not visible in non-active window
-            assert!(!editor.cursors_visible);
+            assert!(!editor.should_draw_cursors(ctx));
             editor
         });
         // set active window ID to enable cursor drawing and blinking
@@ -4071,12 +4071,13 @@ fn test_cursor_blink() {
             ctx.notify();
         });
         app.update_view(&editor_handle, |editor, ctx| {
+            assert!(editor.should_draw_cursors(ctx));
             let mut epoch = editor.next_blink_epoch();
             editor.blink_cursors(epoch, ctx);
-            assert!(editor.cursors_visible);
+            assert!(!editor.cursors_visible);
             epoch = editor.next_blink_epoch();
             editor.blink_cursors(epoch, ctx);
-            assert!(!editor.cursors_visible);
+            assert!(editor.cursors_visible);
         });
         // change the blink setting to disabled
         let editor_settings_handle = app.get_singleton_model_handle::<AppEditorSettings>();

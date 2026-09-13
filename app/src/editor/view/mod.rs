@@ -229,7 +229,7 @@ pub fn init(ctx: &mut AppContext) {
         FixedBinding::new(
             "tab",
             EditorAction::Tab,
-            id!("EditorView") & !id!("IMEOpen"),
+            id!("EditorView") & !id!("IMEOpen") & !id!("TerminalCommandEditor"),
         ),
         FixedBinding::new("up", EditorAction::Up, id!("EditorView") & !id!("IMEOpen")),
         FixedBinding::new(
@@ -7546,6 +7546,7 @@ impl TypedActionView for EditorView {
             Focus => {
                 ctx.emit(Event::Focused);
                 ctx.focus_self();
+                self.reset_cursor_blink_timer(ctx);
             }
             UnhandledModifierKey(keystroke) => {
                 if self.can_select(ctx) {
@@ -7740,7 +7741,7 @@ impl View for EditorView {
     fn on_focus(&mut self, focus_ctx: &FocusContext, ctx: &mut ViewContext<Self>) {
         if focus_ctx.is_self_focused() {
             self.focused = true;
-            self.blink_cursors(self.blink_epoch, ctx);
+            self.reset_cursor_blink_timer(ctx);
             if self.select_all_on_focus {
                 self.select_all(ctx);
             }

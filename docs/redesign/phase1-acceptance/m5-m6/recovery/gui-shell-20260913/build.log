@@ -1,0 +1,20 @@
+Bundling app (bin: term4u)...
+   Compiling warp v0.1.0 (/Users/tedczj/workspace/term4u/app)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 26.75s
+[1m[32m    Bundling(B[m Term4u.app
+[1m[32m    Finished(B[m 1 bundle at:
+        /Users/tedczj/workspace/term4u/target/debug/bundle/osx/Term4u.app
+Successfully bundled...
+Adding @executable_path/../Frameworks rpath to /Users/tedczj/workspace/term4u/target/debug/bundle/osx/Term4u.app/Contents/MacOS/term4u to support bundled macOS frameworks
+Updating plist to support a custom url scheme
+Updating plist with supported file types
+Updating plist with permissions descriptions
+Disabling use of Liquid Glass on macOS Tahoe
+Preparing bundled resources...
+Copying bundled resources to /Users/tedczj/workspace/term4u/target/debug/bundle/osx/Term4u.app/Contents/Resources/bundled
+Copying channel-gated skills for channel 'oss'...
+  Channel 'oss' has no gated skills, skipping
+Successfully prepared bundled resources in /Users/tedczj/workspace/term4u/target/debug/bundle/osx/Term4u.app/Contents/Resources
+Warning: no .icon bundle found for oss channel at /Users/tedczj/workspace/term4u/app/channels/oss/icon/AppIcon.icon; skipping adaptive icon compilation.
+Codesigning app...
+/Users/tedczj/workspace/term4u/target/debug/bundle/osx/Term4u.app: replacing existing signature

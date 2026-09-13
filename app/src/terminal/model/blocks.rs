@@ -816,7 +816,9 @@ impl BlockList {
 
         let active_block_height = self.active_block_mut().height().into();
 
-        if active_block_height > BlockHeight::zero() {
+        if active_block_height > BlockHeight::zero()
+            || !self.active_block().command_to_string().is_empty()
+        {
             self.block_heights
                 .push(BlockHeightItem::Block(active_block_height));
             self.block_heights.push(gap);

@@ -2177,3 +2177,16 @@ fn test_device_status_uses_active_block_if_no_typeahead() {
 
     assert_eq!(writer, "\x1b[1;21R".as_bytes());
 }
+
+#[test]
+fn clear_places_gap_after_command_even_before_header_is_visible() {
+    let mut blocks = TestBlockListBuilder::new().build();
+    blocks.active_block_mut().init_command("clear");
+    blocks.active_block_mut().set_should_hide_command_grid(true);
+    blocks.set_next_gap_height_in_lines(20.0.into_lines());
+    blocks.clear_visible_screen();
+    assert!(matches!(
+        blocks.block_heights.cursor::<TotalIndex, ()>().next_back(),
+        Some(BlockHeightItem::Gap(_))
+    ));
+}

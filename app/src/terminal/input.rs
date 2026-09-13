@@ -1,10 +1,33 @@
 use std::sync::Arc;
 
-use warpui::elements::{ChildView, Container, SavePosition};
+use warp_completer::completer::{
+    CompleterOptions, ExplicitTabCompletion, MatchStrategy, PreparedSuggestion, SuggestionResults,
+    suggestions,
+};
+use warp_completer::meta::Span;
+use warpui::elements::{
+    ChildView, Container, CrossAxisAlignment, Flex, ParentElement, SavePosition,
+};
 use warpui::keymap::FixedBinding;
-use warpui::{AppContext, Element, Entity, TypedActionView, View, ViewContext, ViewHandle, keymap};
+use warpui::ui_components::components::{UiComponent, UiComponentStyles};
+use warpui::{
+    AppContext, Element, Entity, SingletonEntity, TypedActionView, View, ViewContext, ViewHandle,
+    keymap,
+};
 
-use crate::editor::{EditorOptions, EditorView, Event as EditorEvent};
+use crate::appearance::Appearance;
+use crate::completer::SessionContext;
+use crate::editor::{
+    EditorAction, EditorOptions, EditorView, Event as EditorEvent, PlainTextEditorViewAction,
+};
+
+struct CompletionMenu {
+    suggestions: Vec<PreparedSuggestion>,
+    span: Span,
+    buffer: String,
+    cursor: usize,
+    next: usize,
+}
 
 pub const OPEN_COMPLETIONS_KEYBINDING_NAME: &str = "input:open_completion_suggestions";
 
@@ -46,6 +69,7 @@ pub enum InputAction {
     Clear,
     Submit,
     CtrlD,
+    Complete,
     Insert(String),
 }
 
@@ -55,11 +79,14 @@ pub enum Event {
     CtrlC { cleared_buffer_len: usize },
     CtrlD,
     EditorFocused,
+    Complete,
 }
 
 pub struct Input {
     editor: ViewHandle<EditorView>,
     save_position_id: String,
+    completions: Option<CompletionMenu>,
+    completion_request: usize,
 }
 
 impl Input {
@@ -68,6 +95,7 @@ impl Input {
             EditorView::new(
                 EditorOptions {
                     keymap_context_modifier: Some(Box::new(|context, _| {
+                        context.set.insert("TerminalCommandEditor");
                         context.set.insert(
                             crate::settings_view::flags::TERMINAL_INPUT_PAGE_KEYS_HANDLED_BY_INPUT,
                         );
@@ -82,11 +110,27 @@ impl Input {
             EditorEvent::CtrlC { cleared_buffer_len } => ctx.emit(Event::CtrlC {
                 cleared_buffer_len: *cleared_buffer_len,
             }),
+            EditorEvent::Edited(_) | EditorEvent::SelectionChanged => {
+                if input.completions.as_ref().is_some_and(|menu| {
+                    menu.buffer != input.buffer_text(ctx) || menu.cursor != input.cursor(ctx)
+                }) {
+                    input.completions = None;
+                }
+                input.completion_request += 1;
+                ctx.notify();
+            }
+            EditorEvent::Escape => {
+                input.completions = None;
+                input.completion_request += 1;
+                ctx.notify();
+            }
             EditorEvent::Activate => ctx.emit(Event::EditorFocused),
             _ => {}
         });
         Self {
             editor,
+            completions: None,
+            completion_request: 0,
             save_position_id: format!("terminal_input_{}", ctx.view_id()),
         }
     }
@@ -94,11 +138,18 @@ impl Input {
     pub fn init(app: &mut AppContext) {
         use warpui::keymap::macros::*;
 
-        app.register_fixed_bindings([FixedBinding::new(
-            "ctrl-d",
-            InputAction::CtrlD,
-            id!("TerminalInput") & id!("InputEmpty"),
-        )]);
+        app.register_fixed_bindings([
+            FixedBinding::new(
+                "tab",
+                InputAction::Complete,
+                id!("TerminalCommandEditor") & !id!("IMEOpen"),
+            ),
+            FixedBinding::new(
+                "ctrl-d",
+                InputAction::CtrlD,
+                id!("TerminalInput") & id!("InputEmpty"),
+            ),
+        ]);
     }
 
     pub fn editor(&self) -> &ViewHandle<EditorView> {
@@ -153,10 +204,141 @@ impl Input {
     }
 
     pub fn focus_input_box(&mut self, ctx: &mut ViewContext<Self>) {
-        ctx.focus(&self.editor);
+        self.editor.update(ctx, |editor, ctx| {
+            editor.handle_action(&EditorAction::Focus, ctx)
+        });
+    }
+
+    fn cursor(&self, app: &AppContext) -> usize {
+        self.editor
+            .as_ref(app)
+            .end_byte_index_of_last_selection(app)
+            .as_usize()
+    }
+
+    fn replace_completion(&mut self, span: Span, replacement: &str, ctx: &mut ViewContext<Self>) {
+        self.editor.update(ctx, |editor, ctx| {
+            editor.select_and_replace(
+                replacement,
+                [span.start().into()..span.end().into()],
+                PlainTextEditorViewAction::Tab,
+                ctx,
+            );
+        });
+    }
+
+    fn tab(&mut self, ctx: &mut ViewContext<Self>) {
+        if let Some(mut menu) = self.completions.take()
+            && menu.buffer == self.buffer_text(ctx)
+            && menu.cursor == self.cursor(ctx)
+        {
+            let replacement = menu.suggestions[menu.next]
+                .suggestion
+                .replacement
+                .to_string();
+            self.replace_completion(menu.span, &replacement, ctx);
+            menu.span = Span::new(menu.span.start(), menu.span.start() + replacement.len());
+            menu.next = (menu.next + 1) % menu.suggestions.len();
+            menu.buffer = self.buffer_text(ctx);
+            menu.cursor = self.cursor(ctx);
+            self.completions = Some(menu);
+            ctx.notify();
+            return;
+        }
+        ctx.emit(Event::Complete);
+    }
+
+    pub fn complete(&mut self, session: SessionContext, ctx: &mut ViewContext<Self>) {
+        if !self.editor.as_ref(ctx).is_single_cursor_only(ctx) {
+            return;
+        }
+        self.completion_request += 1;
+        let request = self.completion_request;
+        let buffer = self.buffer_text(ctx);
+        let cursor = self.cursor(ctx);
+        ctx.spawn(
+            async move {
+                let result = suggestions(
+                    &buffer,
+                    cursor,
+                    None,
+                    CompleterOptions {
+                        match_strategy: MatchStrategy::CaseInsensitive,
+                        ..Default::default()
+                    },
+                    &session,
+                )
+                .await;
+                (buffer, cursor, result)
+            },
+            move |input, (buffer, cursor, result), ctx| {
+                input.finish_completion(request, buffer, cursor, result, ctx);
+            },
+        );
+    }
+
+    fn finish_completion(
+        &mut self,
+        request: usize,
+        buffer: String,
+        cursor: usize,
+        result: Option<SuggestionResults>,
+        ctx: &mut ViewContext<Self>,
+    ) {
+        if request != self.completion_request
+            || buffer != self.buffer_text(ctx)
+            || cursor != self.cursor(ctx)
+        {
+            return;
+        }
+        let Some(result) = result else {
+            return;
+        };
+        let span = result.replacement_span;
+        let Some(query) = buffer.get(span.start()..span.end()) else {
+            return;
+        };
+        let (suggestions, span) = match result.explicit_tab_completion(query, &['/']) {
+            ExplicitTabCompletion::NoAction => return,
+            ExplicitTabCompletion::InsertSingle {
+                suggestion,
+                replacement_span,
+            } => {
+                self.replace_completion(replacement_span, &suggestion.suggestion.replacement, ctx);
+                return;
+            }
+            ExplicitTabCompletion::InsertCommonPrefixAndOpen {
+                common_prefix,
+                suggestions,
+                replacement_span,
+            } => {
+                self.replace_completion(replacement_span, &common_prefix, ctx);
+                (
+                    suggestions,
+                    Span::new(
+                        replacement_span.start(),
+                        replacement_span.start() + common_prefix.len(),
+                    ),
+                )
+            }
+            ExplicitTabCompletion::Open {
+                suggestions,
+                replacement_span,
+            } => (suggestions, replacement_span),
+        };
+        self.completions = Some(CompletionMenu {
+            suggestions,
+            span,
+            buffer: self.buffer_text(ctx),
+            cursor: self.cursor(ctx),
+            next: 0,
+        });
+        ctx.notify();
     }
 
     fn submit(&mut self, ctx: &mut ViewContext<Self>) {
+        self.completions = None;
+        self.completion_request += 1;
         let command = self.buffer_text(ctx);
         if command.trim().is_empty() {
             return;
@@ -175,14 +357,38 @@ impl View for Input {
         "TerminalInput"
     }
 
-    fn render(&self, _app: &AppContext) -> Box<dyn Element> {
-        SavePosition::new(
-            Container::new(ChildView::new(&self.editor).finish())
-                .with_uniform_padding(8.)
-                .finish(),
-            &self.save_position_id,
-        )
-        .finish()
+    fn render(&self, app: &AppContext) -> Box<dyn Element> {
+        let mut column = Flex::column().with_cross_axis_alignment(CrossAxisAlignment::Stretch);
+        if let Some(menu) = &self.completions {
+            let labels = menu
+                .suggestions
+                .iter()
+                .map(|item| item.suggestion.replacement.as_str())
+                .collect::<Vec<_>>()
+                .join("  ");
+            column.add_child(
+                Appearance::as_ref(app)
+                    .ui_builder()
+                    .paragraph(labels)
+                    .with_style(UiComponentStyles {
+                        font_family_id: Some(Appearance::as_ref(app).monospace_font_family()),
+                        font_size: Some(Appearance::as_ref(app).monospace_font_size()),
+                        ..Default::default()
+                    })
+                    .build()
+                    .finish(),
+            );
+        }
+        column.add_child(
+            SavePosition::new(
+                Container::new(ChildView::new(&self.editor).finish())
+                    .with_uniform_padding(8.)
+                    .finish(),
+                &self.save_position_id,
+            )
+            .finish(),
+        );
+        column.finish()
     }
 
     fn keymap_context(&self, app: &AppContext) -> keymap::Context {
@@ -203,8 +409,13 @@ impl TypedActionView for Input {
             InputAction::Focus => self.focus_input_box(ctx),
             InputAction::Clear => self.clear_buffer_and_reset_undo_stack(ctx),
             InputAction::Submit => self.submit(ctx),
+            InputAction::Complete => self.tab(ctx),
             InputAction::CtrlD => ctx.emit(Event::CtrlD),
             InputAction::Insert(text) => self.append_to_buffer(text, ctx),
         }
     }
 }
+
+#[cfg(test)]
+#[path = "input_tests.rs"]
+mod tests;

@@ -56,6 +56,18 @@ pub struct SessionContext {
 }
 
 impl SessionContext {
+    pub fn for_terminal(session: Arc<Session>, current_working_directory: TypedPathBuf) -> Self {
+        Self {
+            session,
+            command_registry: CommandRegistry::global_instance(),
+            current_working_directory,
+            #[cfg(feature = "completions_v2")]
+            js_ctx: None,
+            cached_directory_entries: Arc::new(Default::default()),
+            workflow_aliases: HashMap::new(),
+        }
+    }
+
     async fn list_directory_entries_internal(
         &self,
         directory: &TypedPath<'_>,

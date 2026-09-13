@@ -216,3 +216,101 @@ fn commands_submitted_during_bootstrap_wait_for_the_shell() {
         );
     });
 }
+
+#[test]
+fn prompt_tracks_directory_branch_and_leaving_a_repository() {
+    use crate::terminal::model::ansi::PromptMetadata;
+
+    App::test((), |mut app| async move {
+        initialize_app_for_terminal_view(&mut app);
+        let (_, terminal) = add_window_with_id_and_terminal(&mut app, None);
+        terminal.update(&mut app, |view, _| {
+            view.model
+                .lock()
+                .block_list_mut()
+                .active_block_mut()
+                .prompt_only_precmd(PromptMetadata {
+                    pwd: Some("/tmp/project".into()),
+                    git_head: Some("main".into()),
+                    git_branch: Some("main".into()),
+                    ..Default::default()
+                });
+        });
+        terminal.read(&app, |view, ctx| {
+            assert_eq!(view.full_prompt(ctx), "/tmp/project (main) %")
+        });
+        terminal.update(&mut app, |view, _| {
+            view.model
+                .lock()
+                .block_list_mut()
+                .active_block_mut()
+                .prompt_only_precmd(PromptMetadata {
+                    pwd: Some("/tmp".into()),
+                    ..Default::default()
+                });
+        });
+        terminal.read(&app, |view, ctx| {
+            assert_eq!(view.full_prompt(ctx), "/tmp %")
+        });
+    });
+}
+
+#[test]
+fn clear_moves_output_into_scrollback_without_deleting_history() {
+    App::test((), |mut app| async move {
+        initialize_app_for_terminal_view(&mut app);
+        let block = SerializedBlock::new_for_test(b"echo old".to_vec(), b"old output\r\n".to_vec());
+        let (_, terminal) = add_window_with_id_and_terminal(&mut app, Some(&[block.into()]));
+        terminal.update(&mut app, |view, ctx| {
+            view.handle_wakeup(None, ctx);
+            let before_height = view.transcript_height;
+            let before_blocks = view.model.lock().block_list().blocks().len();
+            view.model.lock().clear_visible_screen();
+            view.handle_model_event(&ModelEvent::TerminalClear, ctx);
+            assert_eq!(view.model.lock().block_list().blocks().len(), before_blocks);
+            assert!(view.transcript_height >= before_height + view.size_info.pane_height_px);
+            assert!(view.transcript_scroll.scroll_start().as_f32() >= before_height);
+            let height = view.transcript_height;
+            view.model.lock().clear_visible_screen();
+            view.handle_model_event(&ModelEvent::TerminalClear, ctx);
+            assert_eq!(
+                view.transcript_height, height,
+                "repeated clear must replace the old gap"
+            );
+        });
+    });
+}
+
+#[test]
+fn clicking_output_without_dragging_returns_focus_to_the_input() {
+    use warpui::text::SelectionType;
+
+    use crate::terminal::model::index::Side;
+
+    App::test((), |mut app| async move {
+        initialize_app_for_terminal_view(&mut app);
+        let block = SerializedBlock::new_for_test(b"echo old".to_vec(), b"old output\r\n".to_vec());
+        let (_, terminal) = add_window_with_id_and_terminal(&mut app, Some(&[block.into()]));
+        terminal.update(&mut app, |view, ctx| {
+            let point = BlockListPoint::from_within_block_point(
+                &WithinBlock::new(Point::new(0, 0), BlockIndex(0), GridType::Output),
+                view.model.lock().block_list(),
+            );
+            view.handle_action(
+                &TerminalAction::SelectOutput(SelectAction::Begin {
+                    point,
+                    side: Side::Left,
+                    selection_type: SelectionType::Simple,
+                    position: Vector2F::zero(),
+                }),
+                ctx,
+            );
+            view.handle_action(&TerminalAction::SelectOutput(SelectAction::End), ctx);
+        });
+        terminal.read(&app, |view, ctx| {
+            assert!(view.input.as_ref(ctx).editor().is_focused(ctx));
+            assert!(view.model.lock().block_list().selection().is_none());
+            assert!(view.input.as_ref(ctx).buffer_text(ctx).is_empty());
+        });
+    });
+}
