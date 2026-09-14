@@ -1,4 +1,5 @@
 mod action;
+mod context_menu;
 pub mod init;
 
 use std::borrow::Cow;
@@ -15,9 +16,10 @@ use warp_core::semantic_selection::SemanticSelection;
 use warp_util::path::ShellFamily;
 use warpui::clipboard::ClipboardContent;
 use warpui::elements::{
-    Align, ChildView, ClippedScrollStateHandle, ClippedScrollable, ConstrainedBox, Container,
-    CrossAxisAlignment, DispatchEventResult, Empty, EventHandler, Expanded, Fill, Flex,
-    MainAxisSize, ParentElement, ScrollbarWidth,
+    Align, ChildAnchor, ChildView, ClippedScrollStateHandle, ClippedScrollable, ConstrainedBox,
+    Container, CrossAxisAlignment, DispatchEventResult, Empty, EventHandler, Expanded, Fill, Flex,
+    MainAxisSize, OffsetPositioning, ParentAnchor, ParentElement, ParentOffsetBounds, SavePosition,
+    ScrollbarWidth, Stack,
 };
 use warpui::ui_components::components::{UiComponent, UiComponentStyles};
 use warpui::units::{IntoLines, IntoPixels, Lines};
@@ -48,13 +50,12 @@ use super::{
 use crate::appearance::Appearance;
 use crate::code::buffer_location::LocalOrRemotePath;
 use crate::code::editor_management::CodeSource;
-use crate::menu::{MenuItem, MenuItemFields};
+use crate::menu::{Menu, MenuItem, MenuItemFields};
 use crate::pane_group::focus_state::PaneFocusHandle;
 use crate::pane_group::pane::view;
 use crate::pane_group::{BackingView, PaneConfiguration, PaneEvent, SplitPaneState};
 use crate::session_management::{CommandContext, SessionNavigationPromptElements};
 use crate::settings::EnforceMinimumContrast;
-use crate::terminal::GridType;
 use crate::terminal::event::BlockCompletedEvent;
 use crate::terminal::input::Event as InputEvent;
 use crate::terminal::model::block::SerializedBlock;
@@ -62,6 +63,7 @@ use crate::terminal::model::blocks::{BlockHeightItem, BlockListPoint, TotalIndex
 use crate::terminal::model::index::Point;
 use crate::terminal::model::terminal_model::{BlockIndex, WithinBlock};
 use crate::terminal::shell::ShellType;
+use crate::terminal::{GridType, context_menu_offset, should_right_click_paste};
 use crate::throttle::throttle;
 use crate::util::openable_file_type::{EditorLayout, FileTarget};
 use crate::view_components::find::{Event as FindViewEvent, Find, FindWithinBlockState};
@@ -233,6 +235,23 @@ pub struct TerminalView {
     pending_commands: Vec<String>,
     is_bootstrapped: bool,
     was_ever_visible: bool,
+    context_menu: ViewHandle<Menu<TerminalAction>>,
+    context_menu_state: Option<ContextMenuState>,
+    position_id: String,
+}
+
+/// Which part of a block the transcript context menu copies.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+enum BlockTextPart {
+    Command,
+    Output,
+    Both,
+}
+
+/// Tracks the open transcript/alt-screen context menu. `position` is relative to the
+/// terminal view's own bounds, so the menu follows the click instead of the window.
+struct ContextMenuState {
+    position: Vector2F,
 }
 
 impl TerminalView {
@@ -263,6 +282,17 @@ impl TerminalView {
                 Some(BlockListMatch::RichContent { .. }) | None => None,
             };
             view.handle_wakeup(matched, ctx);
+        });
+        let context_menu = ctx.add_typed_action_view(|_| {
+            Menu::new()
+                .prevent_interaction_with_other_elements()
+                .with_drop_shadow()
+        });
+        ctx.subscribe_to_view(&context_menu, |view, _, event, ctx| {
+            if let crate::menu::Event::Close { .. } = event {
+                view.context_menu_state.take();
+            }
+            ctx.notify();
         });
         let pane_configuration = ctx.add_model(|_| PaneConfiguration::new("Terminal"));
         ctx.subscribe_to_model(&model_events, |view, _, event, ctx| {
@@ -301,6 +331,9 @@ impl TerminalView {
             pending_commands: Vec::new(),
             is_bootstrapped: false,
             was_ever_visible: false,
+            context_menu,
+            context_menu_state: None,
+            position_id: format!("terminal_content_{}", ctx.view_id()),
         }
     }
 
@@ -1071,6 +1104,7 @@ impl TerminalView {
                                 .and_then(|find| find.focused_range_for_grid(grid_type)),
                         )
                         .with_selection(first_row, &ranges, self.output_dragging.clone())
+                        .with_context_menu(self.position_id.clone(), BlockIndex(index))
                         .finish(),
                     );
                 }
@@ -1135,7 +1169,41 @@ impl TerminalView {
             None,
             None,
         )
+        .with_context_menu_anchor(self.position_id.clone())
         .finish()
+    }
+
+    /// Copies part of `block_index` to the clipboard. Used by the transcript context menu.
+    fn copy_block_text(
+        &self,
+        block_index: BlockIndex,
+        part: BlockTextPart,
+        ctx: &mut ViewContext<Self>,
+    ) {
+        let text = {
+            let model = self.model.lock();
+            let Some(block) = model.block_list().block_at(block_index) else {
+                return;
+            };
+            match part {
+                BlockTextPart::Command => block.command_to_string(),
+                BlockTextPart::Output => block.output_to_string(),
+                BlockTextPart::Both => {
+                    let command = block.command_to_string();
+                    let output = block.output_to_string();
+                    if command.trim().is_empty() {
+                        output
+                    } else if output.trim().is_empty() {
+                        command
+                    } else {
+                        format!("{command}\n{output}")
+                    }
+                }
+            }
+        };
+        if !text.is_empty() {
+            ctx.clipboard().write(ClipboardContent::plain_text(text));
+        }
     }
 
     fn write_bytes(&self, bytes: Vec<u8>, ctx: &mut ViewContext<Self>) {
@@ -1365,8 +1433,37 @@ impl TypedActionView for TerminalView {
                     ctx.notify();
                 }
             },
+            TerminalAction::AltScreenContextMenu { position } => {
+                let items = self.alt_screen_context_menu_items(ctx);
+                self.show_context_menu(*position, items, ctx);
+            }
+            TerminalAction::BlockContextMenu {
+                position,
+                block_index,
+            } => {
+                let items = self.block_context_menu_items(*block_index, ctx);
+                self.show_context_menu(*position, items, ctx);
+            }
+            TerminalAction::CloseContextMenu => self.close_context_menu(ctx),
+            TerminalAction::CopyBlockCommand(block_index) => {
+                self.copy_block_text(*block_index, BlockTextPart::Command, ctx);
+            }
+            TerminalAction::CopyBlockOutput(block_index) => {
+                self.copy_block_text(*block_index, BlockTextPart::Output, ctx);
+            }
+            TerminalAction::CopyBlock(block_index) => {
+                self.copy_block_text(*block_index, BlockTextPart::Both, ctx);
+            }
+            TerminalAction::InsertSelectedTextIntoInput => {
+                if let Some(text) = self.selected_text(ctx).filter(|text| !text.is_empty()) {
+                    self.model.lock().block_list_mut().clear_selection();
+                    self.input.update(ctx, |input, ctx| {
+                        input.append_to_buffer(&text, ctx);
+                        input.focus_input_box(ctx);
+                    });
+                }
+            }
             TerminalAction::Scroll { .. }
-            | TerminalAction::AltScreenContextMenu { .. }
             | TerminalAction::ClickOnGrid { .. }
             | TerminalAction::MiddleClickOnGrid { .. }
             | TerminalAction::MaybeDismissToolTip { .. }
@@ -1405,6 +1502,25 @@ impl View for TerminalView {
                 DispatchEventResult::StopPropagation
             })
             .finish();
+        // Fallback for right-clicks that no block grid claimed: the gaps between blocks, the
+        // prompt row, and the empty space below the transcript. This wrapper deliberately does
+        // not set `always_handle`, so a click a block already handled stops here and keeps its
+        // block-specific menu entries.
+        let position_id = self.position_id.clone();
+        let output = EventHandler::new(output)
+            .on_right_mouse_down(move |ctx, app, position, modifiers| {
+                let action = if should_right_click_paste(modifiers.shift, app) {
+                    TerminalAction::Paste
+                } else {
+                    TerminalAction::BlockContextMenu {
+                        position: context_menu_offset(ctx, Some(&position_id), position),
+                        block_index: None,
+                    }
+                };
+                ctx.dispatch_typed_action(action);
+                DispatchEventResult::StopPropagation
+            })
+            .finish();
         let receives_input = app.focused_view_id(self.input.window_id(app)) == Some(self.view_id);
         let output =
             TerminalSizeElement::new(self.resize_tx.clone(), output, receives_input).finish();
@@ -1419,7 +1535,21 @@ impl View for TerminalView {
             column.add_child(self.render_input_prompt(app));
             column = column.with_child(ChildView::new(&self.input).finish());
         }
-        column.finish()
+
+        let mut stack = Stack::new();
+        stack.add_child(SavePosition::new(column.finish(), &self.position_id).finish());
+        if let Some(context_menu_state) = &self.context_menu_state {
+            stack.add_positioned_overlay_child(
+                ChildView::new(&self.context_menu).finish(),
+                OffsetPositioning::offset_from_parent(
+                    context_menu_state.position,
+                    ParentOffsetBounds::WindowByPosition,
+                    ParentAnchor::TopLeft,
+                    ChildAnchor::TopLeft,
+                ),
+            );
+        }
+        stack.finish()
     }
 
     fn on_focus(&mut self, focus: &FocusContext, ctx: &mut ViewContext<Self>) {

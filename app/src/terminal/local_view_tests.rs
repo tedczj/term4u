@@ -314,3 +314,280 @@ fn clicking_output_without_dragging_returns_focus_to_the_input() {
         });
     });
 }
+
+/// Collects the labels of a built menu, with `None` standing in for separators, so tests can
+/// assert on both the entries and where the sections break.
+fn menu_labels(items: &[MenuItem<TerminalAction>]) -> Vec<Option<String>> {
+    items
+        .iter()
+        .map(|item| match item {
+            MenuItem::Item(fields) => Some(fields.label().to_owned()),
+            MenuItem::Separator => None,
+            _ => Some(String::from("<unsupported>")),
+        })
+        .collect()
+}
+
+fn disabled_labels(items: &[MenuItem<TerminalAction>]) -> Vec<String> {
+    items
+        .iter()
+        .filter_map(|item| match item {
+            MenuItem::Item(fields) if fields.is_disabled() => Some(fields.label().to_owned()),
+            _ => None,
+        })
+        .collect()
+}
+
+#[test]
+fn right_clicking_a_block_opens_a_menu_with_local_entries_only() {
+    App::test((), |mut app| async move {
+        initialize_app_for_terminal_view(&mut app);
+        let block = SerializedBlock::new_for_test(b"echo hi".to_vec(), b"hi\r\n".to_vec());
+        let (_, terminal) = add_window_with_id_and_terminal(&mut app, Some(&[block.into()]));
+
+        terminal.update(&mut app, |view, ctx| {
+            view.handle_action(
+                &TerminalAction::BlockContextMenu {
+                    position: Vector2F::new(12., 34.),
+                    block_index: Some(BlockIndex(0)),
+                },
+                ctx,
+            );
+        });
+
+        terminal.read(&app, |view, _| {
+            let state = view
+                .context_menu_state
+                .as_ref()
+                .expect("right-click should open the context menu");
+            assert_eq!(state.position, Vector2F::new(12., 34.));
+        });
+
+        let labels = terminal.update(&mut app, |view, ctx| {
+            menu_labels(&view.block_context_menu_items(Some(BlockIndex(0)), ctx))
+        });
+        let present: Vec<&str> = labels.iter().filter_map(|label| label.as_deref()).collect();
+        for expected in [
+            "Copy",
+            "Paste",
+            "Copy command",
+            "Copy output",
+            "Copy block",
+            "Find in terminal",
+            "Clear buffer",
+        ] {
+            assert!(
+                present.contains(&expected),
+                "missing {expected:?} in {present:?}"
+            );
+        }
+        // Route A removed sharing, Warp Drive and AI; the restored menu must not bring them back.
+        for forbidden in ["Share", "Ask", "Agent", "workflow", "Drive"] {
+            assert!(
+                !present.iter().any(|label| label.contains(forbidden)),
+                "unexpected cloud/AI entry matching {forbidden:?} in {present:?}"
+            );
+        }
+    });
+}
+
+#[test]
+fn block_menu_copies_command_output_and_both() {
+    App::test((), |mut app| async move {
+        initialize_app_for_terminal_view(&mut app);
+        let block = SerializedBlock::new_for_test(b"echo hi".to_vec(), b"hi\r\n".to_vec());
+        let (_, terminal) = add_window_with_id_and_terminal(&mut app, Some(&[block.into()]));
+
+        for (action, expected) in [
+            (TerminalAction::CopyBlockCommand(BlockIndex(0)), "echo hi"),
+            (TerminalAction::CopyBlockOutput(BlockIndex(0)), "hi"),
+            (TerminalAction::CopyBlock(BlockIndex(0)), "echo hi\nhi"),
+        ] {
+            terminal.update(&mut app, |view, ctx| view.handle_action(&action, ctx));
+            let copied = app.update(|ctx| ctx.clipboard().read().plain_text);
+            assert_eq!(copied.trim_end(), expected, "for {action:?}");
+        }
+    });
+}
+
+#[test]
+fn copy_entries_are_disabled_without_a_selection_or_block_text() {
+    App::test((), |mut app| async move {
+        initialize_app_for_terminal_view(&mut app);
+        let block = SerializedBlock::new_for_test(Vec::new(), Vec::new());
+        let (_, terminal) = add_window_with_id_and_terminal(&mut app, Some(&[block.into()]));
+
+        let disabled = terminal.update(&mut app, |view, ctx| {
+            disabled_labels(&view.block_context_menu_items(Some(BlockIndex(0)), ctx))
+        });
+        for expected in ["Copy", "Copy command", "Copy output", "Copy block"] {
+            assert!(
+                disabled.iter().any(|label| label == expected),
+                "expected {expected:?} to be disabled, got {disabled:?}"
+            );
+        }
+    });
+}
+
+#[test]
+fn alt_screen_right_click_opens_a_menu_that_close_dismisses() {
+    App::test((), |mut app| async move {
+        initialize_app_for_terminal_view(&mut app);
+        let (_, terminal) = add_window_with_id_and_terminal(&mut app, None);
+
+        let labels = terminal.update(&mut app, |view, ctx| {
+            view.handle_action(
+                &TerminalAction::AltScreenContextMenu {
+                    position: Vector2F::new(4., 8.),
+                },
+                ctx,
+            );
+            menu_labels(&view.alt_screen_context_menu_items(ctx))
+        });
+        assert!(
+            terminal.read(&app, |view, _| view.context_menu_state.is_some()),
+            "alt-screen right-click should no longer be a no-op"
+        );
+        // The transcript is not addressable on the alt screen, so no block entries here.
+        let present: Vec<&str> = labels.iter().filter_map(|label| label.as_deref()).collect();
+        assert!(present.contains(&"Paste"), "{present:?}");
+        assert!(
+            !present
+                .iter()
+                .any(|label| label.starts_with("Copy command"))
+        );
+
+        terminal.update(&mut app, |view, ctx| {
+            view.handle_action(&TerminalAction::CloseContextMenu, ctx);
+        });
+        assert!(terminal.read(&app, |view, _| view.context_menu_state.is_none()));
+    });
+}
+
+#[test]
+fn insert_into_input_moves_the_selection_into_the_input_box() {
+    use warpui::text::SelectionType;
+
+    use crate::terminal::model::index::Side;
+
+    App::test((), |mut app| async move {
+        initialize_app_for_terminal_view(&mut app);
+        let block = SerializedBlock::new_for_test(b"echo old".to_vec(), b"old output\r\n".to_vec());
+        let (_, terminal) = add_window_with_id_and_terminal(&mut app, Some(&[block.into()]));
+
+        terminal.update(&mut app, |view, ctx| {
+            let (start, end) = {
+                let model = view.model.lock();
+                let point_at = |col| {
+                    BlockListPoint::from_within_block_point(
+                        &WithinBlock::new(Point::new(0, col), BlockIndex(0), GridType::Output),
+                        model.block_list(),
+                    )
+                };
+                (point_at(0), point_at(2))
+            };
+            view.handle_action(
+                &TerminalAction::SelectOutput(SelectAction::Begin {
+                    point: start,
+                    side: Side::Left,
+                    selection_type: SelectionType::Simple,
+                    position: Vector2F::zero(),
+                }),
+                ctx,
+            );
+            view.handle_action(
+                &TerminalAction::SelectOutput(SelectAction::Update {
+                    point: end,
+                    side: Side::Right,
+                    delta: warpui::units::Lines::zero(),
+                    position: Vector2F::zero(),
+                }),
+                ctx,
+            );
+            view.handle_action(&TerminalAction::InsertSelectedTextIntoInput, ctx);
+        });
+
+        terminal.read(&app, |view, ctx| {
+            assert_eq!(view.input.as_ref(ctx).buffer_text(ctx), "old");
+            assert!(
+                view.model.lock().block_list().selection().is_none(),
+                "inserting should consume the selection"
+            );
+        });
+    });
+}
+
+/// Drives real right-clicks through the element tree instead of calling `handle_action`
+/// directly, so the wiring between the elements and the view is covered. Regression test for
+/// the first restore attempt, where only glyph cells inside a block reacted and every gap,
+/// prompt row and empty area below the transcript stayed dead.
+#[test]
+fn right_mouse_down_opens_the_menu_anywhere_in_the_transcript() {
+    use std::cell::RefCell;
+    use std::rc::Rc;
+
+    use pathfinder_geometry::vector::vec2f;
+    use warpui::Event as UiEvent;
+    use warpui::presenter::Presenter;
+    use warpui::{EntityIdSet, WindowInvalidation};
+
+    App::test((), |mut app| async move {
+        initialize_app_for_terminal_view(&mut app);
+        let block = SerializedBlock::new_for_test(b"echo hi".to_vec(), b"hi\r\n".to_vec());
+        let (window_id, terminal) =
+            add_window_with_id_and_terminal(&mut app, Some(&[block.into()]));
+
+        let mut presenter = Presenter::new(window_id);
+        let mut updated = EntityIdSet::default();
+        updated.insert(app.root_view_id(window_id).unwrap());
+        updated.insert(terminal.id());
+        let invalidation = WindowInvalidation {
+            updated,
+            ..Default::default()
+        };
+        let presenter = app.update(move |ctx| {
+            presenter.invalidate(invalidation, ctx);
+            presenter.build_scene(vec2f(800., 600.), 1., None, ctx);
+            Rc::new(RefCell::new(presenter))
+        });
+
+        let right_click = |app: &mut warpui::App, position| {
+            let presenter = presenter.clone();
+            app.update(move |ctx| {
+                ctx.simulate_window_event(
+                    UiEvent::RightMouseDown {
+                        position,
+                        cmd: false,
+                        shift: false,
+                        click_count: 1,
+                    },
+                    window_id,
+                    presenter,
+                );
+            });
+        };
+
+        // Inside a painted block: the menu carries the block-specific entries.
+        right_click(&mut app, vec2f(2., 556.));
+        assert!(
+            terminal.read(&app, |view, _| view.context_menu_state.is_some()),
+            "right-click on a block should open the menu"
+        );
+        terminal.update(&mut app, |view, ctx| {
+            view.handle_action(&TerminalAction::CloseContextMenu, ctx)
+        });
+
+        // Empty transcript space well above and to the right of any block. This is the case
+        // the first attempt missed: no block grid covers these pixels.
+        for position in [vec2f(400., 100.), vec2f(600., 300.), vec2f(200., 540.)] {
+            right_click(&mut app, position);
+            assert!(
+                terminal.read(&app, |view, _| view.context_menu_state.is_some()),
+                "right-click on empty transcript space at {position:?} should open the menu"
+            );
+            terminal.update(&mut app, |view, ctx| {
+                view.handle_action(&TerminalAction::CloseContextMenu, ctx)
+            });
+        }
+    });
+}

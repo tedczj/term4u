@@ -26,8 +26,11 @@ use crate::terminal::model::blocks::{BlockListPoint, SelectionRange};
 use crate::terminal::model::grid::Dimensions;
 use crate::terminal::model::index::{Point as GridPoint, Side};
 use crate::terminal::model::selection::{SelectAction, SelectionPoint};
+use crate::terminal::model::terminal_model::BlockIndex;
 use crate::terminal::view::TerminalAction;
-use crate::terminal::{SizeInfo, color, grid_renderer};
+use crate::terminal::{
+    SizeInfo, color, context_menu_offset, grid_renderer, should_right_click_paste,
+};
 
 struct GridSelection {
     first_row: Lines,
@@ -45,6 +48,15 @@ pub struct BlockGridElement {
     selection: Option<GridSelection>,
     find_matches: Vec<RangeInclusive<GridPoint>>,
     focused_find_match: Option<RangeInclusive<GridPoint>>,
+    context_menu: Option<ContextMenuAnchor>,
+}
+
+/// Set when this grid belongs to a block that can raise the transcript context menu.
+struct ContextMenuAnchor {
+    /// `SavePosition` id of the terminal view's content container, used to turn a window
+    /// position into an offset the menu overlay understands.
+    position_id: String,
+    block_index: BlockIndex,
 }
 
 impl BlockGridElement {
@@ -90,7 +102,17 @@ impl BlockGridElement {
             selection: None,
             find_matches: Vec::new(),
             focused_find_match: None,
+            context_menu: None,
         }
+    }
+
+    /// Lets a right-click inside this grid open the transcript context menu for `block_index`.
+    pub fn with_context_menu(mut self, position_id: String, block_index: BlockIndex) -> Self {
+        self.context_menu = Some(ContextMenuAnchor {
+            position_id,
+            block_index,
+        });
+        self
     }
 
     pub fn with_find_matches(
@@ -241,12 +263,35 @@ impl Element for BlockGridElement {
         &mut self,
         event: &DispatchedEvent,
         ctx: &mut EventContext,
-        _app: &AppContext,
+        app: &AppContext,
     ) -> bool {
-        let Some(selection) = &self.selection else {
+        let Some(z_index) = self.z_index() else {
             return false;
         };
-        let Some(z_index) = self.z_index() else {
+
+        // Right-click is handled before the selection guard below: the context menu must open
+        // whether or not this grid currently carries a selection.
+        if let Some(Event::RightMouseDown {
+            position, shift, ..
+        }) = event.at_z_index(z_index, ctx)
+            && let Some(anchor) = &self.context_menu
+            && self
+                .bounds
+                .is_some_and(|bounds| bounds.contains_point(*position))
+        {
+            let action = if should_right_click_paste(*shift, app) {
+                TerminalAction::Paste
+            } else {
+                TerminalAction::BlockContextMenu {
+                    position: context_menu_offset(ctx, Some(&anchor.position_id), *position),
+                    block_index: Some(anchor.block_index),
+                }
+            };
+            ctx.dispatch_typed_action(action);
+            return true;
+        }
+
+        let Some(selection) = &self.selection else {
             return false;
         };
         match event.at_z_index(z_index, ctx) {
