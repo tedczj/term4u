@@ -20,7 +20,7 @@ class TestInventory(unittest.TestCase):
         self.root = Path(self.directory.name)
         (self.root / "script").mkdir()
         shutil.copy2(SCRIPT, self.root / "script/test_inventory")
-        self.base = self.root / "docs/redesign/baseline"
+        self.base = self.root / "test-data/localization"
         self.base.mkdir(parents=True)
         self.bin = self.root / "bin"
         self.bin.mkdir()

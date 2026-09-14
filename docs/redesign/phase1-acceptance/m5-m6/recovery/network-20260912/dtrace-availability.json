@@ -1,6 +1,0 @@
-{
-  "command": "/usr/sbin/dtrace -l -n \"proc:::exec-success\" 2>&1",
-  "exit_code": 0,
-  "stdout": "dtrace: system integrity protection is on, some features will not be available\ndtrace: failed to match proc:::exec-success: System Integrity Protection is on\n   ID   PROVIDER            MODULE                          FUNCTION NAME\n",
-  "stderr": ""
-}

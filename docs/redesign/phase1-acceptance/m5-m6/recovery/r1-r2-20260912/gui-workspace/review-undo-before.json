@@ -1,5 +1,0 @@
-{
-  "file": "/tmp/term4u-r1r2-20260912/workspace-gui/project/sample.rs",
-  "content": "fn main() {\n    println!(\"R1R2_SEARCH_MARKER SAVED_FROM_GUI\");\n}\n",
-  "sha256": "361c66158c7b8313a21a9f1a4e9c2c68a7899667b69788ee1c05274863c77b03"
-}

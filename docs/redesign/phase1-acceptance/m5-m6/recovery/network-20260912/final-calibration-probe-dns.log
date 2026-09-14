@@ -1,4 +1,0 @@
-2026-09-12 17:55:20.988 Df mDNSResponder[185:e1a] [com.apple.mDNSResponder:Default] [R262056] DNSServiceCreateConnection START PID[9718](Python)
-2026-09-12 17:55:20.988 Df mDNSResponder[185:e1a] [com.apple.mDNSResponder:Default] [R262057] DNSServiceQueryRecord START -- qname: <mask.hash: 'JlXO0uuAYGeji3dZGVe4/g=='>, qtype: A, flags: 0x1D000, interface index: 0, client pid: 9718 (Python), name hash: 58514cba
-2026-09-12 17:55:20.989 Df mDNSResponder[185:e1a] [com.apple.mDNSResponder:Default] [R262058] DNSServiceQueryRecord START -- qname: <mask.hash: 'JlXO0uuAYGeji3dZGVe4/g=='>, qtype: AAAA, flags: 0x1D000, interface index: 0, client pid: 9718 (Python), name hash: 58514cba
-2026-09-12 17:55:21.062 Df mDNSResponder[185:e1a] [com.apple.mDNSResponder:Default] [R262056] DNSServiceCreateConnection STOP PID[9718](Python)

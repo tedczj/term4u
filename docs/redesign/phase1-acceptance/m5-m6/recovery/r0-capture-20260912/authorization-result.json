@@ -1,7 +1,0 @@
-{
-  "utc": "2026-09-12T09:43:10.292506+00:00",
-  "command": "/usr/sbin/tcpdump -i pktap,lo0 -nn -k INPD -l -c 16 'host 127.0.0.1 and (udp src port 49328 or tcp port 49329)' > /tmp/term4u-r0-capture.log 2>&1 & capture_pid=$!; (sleep 30; kill -INT $capture_pid 2>/dev/null) & timer_pid=$!; wait $capture_pid; result=$?; kill $timer_pid 2>/dev/null; exit $result",
-  "exit_code": 0,
-  "stdout": "\n",
-  "stderr": ""
-}

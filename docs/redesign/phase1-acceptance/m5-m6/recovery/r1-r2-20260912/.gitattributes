@@ -1,4 +1,0 @@
-# Preserve original tool output and fixed-width terminal capture padding.
-*.log whitespace=-blank-at-eol,-blank-at-eof
-tui-live-attempt-*/*.txt whitespace=-blank-at-eol,-blank-at-eof
-oracle-066ec71b/source-window-ax.txt whitespace=-blank-at-eol,-blank-at-eof

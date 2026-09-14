@@ -2,7 +2,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-BASE=docs/redesign/baseline
+BASE=test-data/localization
 BASELINE="$BASE/phase1-before.txt"
 DELETED_TEST_IDS="$BASE/deleted-test-ids.txt"
 LIST_CMD=(cargo nextest list --workspace --exclude command-signatures-v2 --message-format json)
@@ -10,7 +10,7 @@ LIST_CMD=(cargo nextest list --workspace --exclude command-signatures-v2 --messa
 list_tests() (
   local inventory
   inventory=$(mktemp "${TMPDIR:-/tmp}/term4u-nextest-inventory.XXXXXX")
-  trap 'rm -f "$inventory"' EXIT
+  trap "rm -f -- $(printf '%q' "$inventory")" EXIT
   "${LIST_CMD[@]}" > "$inventory"
   python3 - "$inventory" <<'PY'
 import json
@@ -41,7 +41,7 @@ snapshot_tests() (
   local name=$1 snapshot
   mkdir -p "$BASE"
   snapshot=$(mktemp "$BASE/.test-inventory.XXXXXX")
-  trap 'rm -f "$snapshot"' EXIT
+  trap "rm -f -- $(printf '%q' "$snapshot")" EXIT
   list_tests > "$snapshot"
   mv "$snapshot" "$BASE/$name.txt"
   wc -l "$BASE/$name.txt"

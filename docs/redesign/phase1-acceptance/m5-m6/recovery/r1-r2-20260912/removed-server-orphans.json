@@ -1,8 +1,0 @@
-{
-  "files": [
-    "app/src/server/block.rs",
-    "app/src/server/ids.rs",
-    "app/src/server/ids_tests.rs"
-  ],
-  "reason": "server/mod.rs only mounts telemetry; these GraphQL sharing and cloud-ID files have no compiled local consumer."
-}

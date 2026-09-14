@@ -1,8 +1,0 @@
-{
-  "profile": "r1r2-migrate-oracle-20260913",
-  "database": "/Users/tedczj/Library/Application Support/dev.term4u.Term4u-r1r2-migrate-oracle-20260913/warp.sqlite",
-  "sha256": "5c88f21ed0ad702fe48237248ecdeab9e3602eddabef250f741e6f77dbcee5f0",
-  "settings_files": [
-    "settings.toml"
-  ]
-}

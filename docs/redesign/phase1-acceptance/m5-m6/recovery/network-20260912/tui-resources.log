@@ -1,6 +1,0 @@
-Copying bundled resources to /Users/tedczj/workspace/term4u/target/debug/resources/bundled
-Copying channel-gated skills for channel 'oss'...
-  Channel 'oss' has no gated skills, skipping
-Generating settings schema at /Users/tedczj/workspace/term4u/target/debug/resources/settings_schema.json
-Wrote settings schema to /Users/tedczj/workspace/term4u/target/debug/resources/settings_schema.json
-Successfully prepared bundled resources in /Users/tedczj/workspace/term4u/target/debug/resources

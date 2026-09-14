@@ -1,1 +1,0 @@
-error: manifest path `/private/tmp/term4u-r1r2-oracle-066ec71b/Cargo.toml` is a virtual manifest, but this command requires running against an actual package in this workspace

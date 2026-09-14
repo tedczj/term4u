@@ -1,6 +1,0 @@
-UTC=2026-09-05T16:34:20.860609+00:00
-COMMAND=df -h .
-Filesystem      Size    Used   Avail Capacity iused ifree %iused  Mounted on
-/dev/disk3s5   460Gi   427Gi    11Gi    98%    3.1M  115M    3%   /System/Volumes/Data
-
-EXIT_CODE=0
