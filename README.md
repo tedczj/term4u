@@ -1,3 +1,12 @@
+> [!IMPORTANT]
+> This repository is **Term4u**, a macOS-only local/offline derivative of Warp, not the upstream Warp distribution.
+> Start with the [Term4u design and status index](docs/redesign/README.md) and the
+> [current implementation checklist](docs/redesign/11-本地化收敛施工单.md).
+> R1/R2 have recorded batch acceptance; R3–R6 and V1 are not complete. The latest reviewed source is
+> `eef716cd69b84e0676eb90ad3ee776397aa6b515` (2026-09-13); its full presubmit is not yet recorded as passing.
+> The upstream introduction below is retained for provenance pending M7 documentation/branding work.
+> Its cloud features, downloads, support channels and platform claims are not Term4u capabilities or release instructions.
+
 <a href="https://www.warp.dev">
     <img width="1024" alt="Warp Agentic Development Environment product preview" src="https://github.com/user-attachments/assets/9976b2da-2edd-4604-a36c-8fd53719c6d4" />
 </a>

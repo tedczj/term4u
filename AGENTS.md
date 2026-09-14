@@ -2,46 +2,73 @@
 
 This file provides guidance when working with code in this repository.
 
+## Term4u Scope and Current Plan
+
+Term4u is a macOS-only local/offline derivative of Warp. Internal `warp_*` crate names are retained;
+GUI and TUI binaries are `term4u` and `term4u-tui`. The active implementation and acceptance checklist is
+[docs/redesign/11-本地化收敛施工单.md](docs/redesign/11-本地化收敛施工单.md); the
+[design index](docs/redesign/README.md) and [milestones](docs/redesign/08-实施顺序与里程碑.md)
+track its status. Historical upstream designs are not parallel task lists.
+
+As reviewed at `eef716cd69b84e0676eb90ad3ee776397aa6b515` on 2026-09-13, R1/R2 have recorded batch
+acceptance; R3–R6 and V1 remain open. A previous full presubmit PASS does not apply automatically to a
+later source revision. The latest GUI-shell record stops at missing `clang-format`; do not claim that
+its later WGSL, workspace nextest or doc-test stages passed.
+
+Route A removes the built-in Warp Agent UI/SDK/execution layer, cloud control plane and retired
+`crates/integration` harness. Do not restore these to satisfy old documentation, skills or test paths.
+External CLI agents remain ordinary user-launched PTY subprocesses. Product network guards must stay
+hard-offline; this does not prohibit networking explicitly requested through the user's shell commands.
+
+Preserve the Term4u runtime identity, real user data, historical migrations and raw legacy data.
+Use isolated profiles/copies for tests. Follow the active checklist's authorization boundaries for
+commits, pushes, PRs, tags, system installation and privileged capture. M7 branding/release and the
+independent full-MIT route are not part of the current localization work.
+
 ## Development Commands
 
 ### Build and Run
 - `cargo run` / `./script/run` - Build and run the GUI desktop app locally
 - `./script/run-tui` - Build and run the headless TUI front-end (`crates/warp_tui`)
-- `cargo bundle --bin warp` - Bundle the main (GUI) app
+- `cargo bundle --bin term4u --no-default-features --features local_only` - Bundle the local GUI app
 
-### Running with local warp-server
-To connect Warp client to a local warp-server instance:
+### Local Runtime
 
-```bash
-# Connect to server on default port 8080
-WITH_LOCAL_SERVER=1 ./script/run
-
-# Connect to server on custom port (e.g., 8082)
-WITH_LOCAL_SERVER=1 SERVER_ROOT_URL=http://localhost:8082 WS_SERVER_URL=ws://localhost:8082/graphql/v2 ./script/run
-```
-
-Environment variables:
-- `SERVER_ROOT_URL` - HTTP endpoint (default: `http://localhost:8080`)
-- `WS_SERVER_URL` - WebSocket endpoint (default: `ws://localhost:8080/graphql/v2`)
+There is no supported local `warp-server` backend in the current Route A product. Do not use the old
+`WITH_LOCAL_SERVER`, `SERVER_ROOT_URL` or `WS_SERVER_URL` setup to restore removed cloud interfaces.
+Use the local runtime and the build/feature matrix in the active checklist instead.
 
 ### Testing
 - `cargo nextest run --no-fail-fast --workspace --exclude command-signatures-v2` - Run tests with nextest
 - `cargo nextest run -p warp_completer --features v2` - Run completer tests with v2 features
 - `cargo test --doc` - Run doc tests
 - `cargo test` - Run standard tests for individual packages
+- `./script/test_inventory` - Verify the current test-ID inventory against the baseline and explicit deletion list
+
+The inventory failure-handling unit tests in `script/presubmit` do not replace the actual inventory
+verification. R1/R2's authorized removal of retired integration suites is recorded with its ID audit;
+do not restore that harness or treat the authorization as permission to delete future retained-behavior tests.
 
 ### Linting and Formatting
 - `./script/presubmit` - Run all presubmit checks (fmt, clippy, tests)
 - `./script/format` - Format code
-- `cargo clippy --workspace --all-targets --all-features --tests -- -D warnings` - Run clippy
+- `cargo clippy --workspace --exclude warp_completer --all-targets --tests -- -D warnings` - Workspace Clippy
+- `cargo clippy -p warp --all-targets --tests -- -D warnings` - Default GUI Clippy, separate from workspace feature unification
+- `cargo clippy -p warp_completer --all-targets --tests -- -D warnings` - Default completer Clippy
 - `./script/run-clang-format.py -r --extensions 'c,h,cpp,m' ./crates/warpui/src/ ./app/src/` - Format C/C++/Obj-C code
 - `find . -name "*.wgsl" -exec wgslfmt --check {} +` - Check WGSL shader formatting
+
+Use the actual commands in `script/presubmit` and the additional acceptance matrix in chapter 11.
+Do not add `--all-features` as a substitute for the supported feature combinations. Restore missing
+tools without deleting checks, and record stages that did not execute as unverified.
 
 ### Platform Setup
 - `./script/bootstrap` - Install platform development dependencies. It does not download or update agent skills.
 - `./script/install_cargo_build_deps` - Install Cargo build dependencies
 - `./script/install_cargo_test_deps` - Install Cargo test dependencies
 
+Only macOS is a supported product/acceptance platform. Linux cleanup is deferred; remaining Windows
+exclusive files/dependencies are tracked by R4 with explicit shared-code/migration exceptions.
 Repository-local and bundled skills are used exactly as checked in. Runtime and build scripts never download or update them.
 
 ## Architecture Overview
@@ -50,11 +77,11 @@ This is a Rust-based terminal emulator with a custom UI framework called **WarpU
 
 ### Front-ends: GUI and TUI
 
-Warp has two front-ends that share the `warp_core`/`warpui` Entity/model core (App/Entity/`AppContext`, actions, `Appearance`, `FeatureFlag`, telemetry, logging) but differ in UI framework, rendering, input, and verification:
-- **GUI desktop app** — the `app/` crate on the WarpUI pixel/GPU framework (`warpui`, `crates/warpui_core`): `Element`/`View` layout, GPU/WGSL rendering, mouse input, `.app` bundles. Run with `cargo run` / `./script/run`; verify visually with `computer_use` or the real-display integration framework (`crates/integration`).
+Term4u has two front-ends that share the `warp_core`/`warpui` Entity/model core (App/Entity/`AppContext`, actions, `Appearance`, `FeatureFlag`, local logging) but differ in UI framework, rendering, input, and verification:
+- **GUI desktop app** — the `app/` crate on the WarpUI pixel/GPU framework (`warpui`, `crates/warpui_core`): `Element`/`View` layout, GPU/WGSL rendering, mouse input, `.app` bundles. Run with `cargo run` / `./script/run`; verify on a real macOS display and with the retained local regression tests. The old `crates/integration` framework has been retired.
 - **Headless TUI** — the `crates/warp_tui` crate: a console app (run with `./script/run-tui`; no `.app`/GPU) rendered with a parallel cell-grid element library at `crates/warpui_core/src/elements/tui` (the `TuiElement` trait), behind the `tui` cargo feature. Verify by running it in a real terminal and observing output; test with render-to-lines unit tests.
 
-**Skill convention:** a skill specific to one front-end says so in its name and/or description (e.g. `gui-ui-guidelines` / `gui-integration-test` are GUI-only; `tui-ui-guidelines`, `tui-testing`, and `tui-verify-change` are TUI-specific). Skills with no front-end call-out are surface-agnostic and apply to both. For TUI work prefer the `tui-*` skills and ignore GUI-only ones — and vice versa.
+**Skill convention:** a skill specific to one front-end says so in its name and/or description (e.g. `gui-ui-guidelines` / `gui-integration-test` are GUI-only; `tui-ui-guidelines`, `tui-testing`, and `tui-verify-change` are TUI-specific). Skills with no front-end call-out are surface-agnostic and apply to both. For TUI work prefer the `tui-*` skills and ignore GUI-only ones — and vice versa. Historical skill steps that require removed cloud services or the integration harness are obsolete; preserve the real-display/real-PTY validation requirement without restoring those dependencies.
 
 ### Key Components
 
@@ -72,11 +99,13 @@ Warp has two front-ends that share the `warp_core`/`warpui` Entity/model core (A
 
 **Main app / shared surfaces** (`app/`) — the GUI desktop app plus feature surfaces the TUI reuses:
 - Terminal emulation and shell management (`terminal/`)
-- AI integration including Agent Mode (`ai/`)
-- Cloud synchronization and Drive features (`drive/`)
-- Authentication and user management (`auth/`)
-- Settings and preferences (`settings/`)
+- Local workflows, notebooks and persistence (`workflows/`, `notebooks/`, `local_objects/`, `persistence/`)
+- Local settings and preferences (`settings/`, `settings_view/`)
 - Workspace and session management (`workspace/`)
+
+The former built-in Agent, Drive/cloud synchronization, server authentication and GraphQL interfaces
+are not supported capabilities. Audit any remaining files by consumers and module reachability;
+an unmounted legacy file is cleanup work, not proof of an active feature or a compiler error.
 
 **Core Libraries**:
 - `crates/warp_core/` - Core utilities and platform abstractions (shared)
@@ -84,23 +113,23 @@ Warp has two front-ends that share the `warp_core`/`warpui` Entity/model core (A
 - `crates/editor/` - Text editing functionality
 - `crates/warpui/` and `crates/warpui_core/` - Custom UI framework (shared core plus the GUI and TUI element libraries)
 - `crates/ipc/` - Inter-process communication
-- `crates/graphql/` - GraphQL client and schema
+- `crates/persistence/` - SQLite persistence, historical migrations and legacy fixtures
 
 ### Key Architectural Patterns
 
 1. **Entity-Handle System**: Views reference other views via handles, not direct ownership
 2. **Modular Structure**: Workspace contains multiple workspace configurations, each with terminals, notebooks, etc.
-3. **Cross-Platform**: Native implementations for macOS, Windows, Linux, plus WASM target
-4. **AI Integration**: Built-in AI assistant with context awareness and codebase indexing
-5. **Cloud Sync**: Objects can be synchronized across devices via Warp Drive
+3. **macOS Scope**: Remaining platform conditionals do not imply support for Linux, Windows or WASM products
+4. **Local Runtime**: Retained terminal/editor/data capabilities do not depend on a cloud backend
+5. **Offline Boundaries**: Preserve guarded product networking and the separate boundary for user-launched shell subprocesses
 
 ### Development Guidelines
 
 **Workspace Structure**:
-- This is a Cargo workspace with 60+ member crates
+- This is a Cargo workspace; inspect the current manifests/metadata rather than relying on a historical member count
 - Main binary is in `app/`, UI framework in `crates/warpui/`
 - Platform-specific code is conditionally compiled
-- Integration tests are in `crates/integration/`
+- Local regression tests live with their modules; legacy SQLite fixtures are in `crates/persistence/fixtures/legacy/`
 
 **Coding Style Preferences**:
 - Avoid unnecessary type annotations, especially in closure params.
@@ -160,7 +189,7 @@ for itself.
 
 **Testing**:
 - Use `cargo nextest` for parallel test execution
-- Integration tests use the custom framework in `crates/integration/` — this is **GUI-only**. TUI elements/screens are covered by render-to-lines unit tests instead (see the `tui-testing` skill).
+- Use the retained local GUI regression tests and real macOS GUI scenarios. The retired `crates/integration/` framework is not an executable test entry. TUI elements/screens use render-to-lines unit tests and real PTY checks (see the `tui-testing` skill).
 - Tests should be run via presubmit script before submitting
 - Unit tests should be placed in separate files using the naming convention `${filename}_tests.rs` or `mod_test.rs`
 - Test files should be included at the end of their corresponding module with:
@@ -192,14 +221,16 @@ for itself.
 - Uses Diesel ORM with SQLite
 - Migrations in `crates/persistence/migrations/`
 - Schema defined in `crates/persistence/src/schema.rs`
+- Preserve historical migrations/raw data and run compatibility checks on isolated fixture copies
 
-**GraphQL**:
-- Schema and client code generation from `crates/warp_graphql_schema/api/schema.graphql`
-- TypeScript types generated for frontend integration
+**Removed Cloud Interfaces**:
+- Do not regenerate or restore the removed GraphQL/server interfaces from historical instructions
+- Remaining local value types must have an actual local consumer and must not reintroduce cloud providers
 
 ### Feature Flags
 
-Warp uses compile-time feature flags with a small runtime plumbing layer.
+Cargo feature combinations and runtime `FeatureFlag` settings are distinct. Local runtime flags must
+not re-enable deleted cloud interfaces or weaken `offline_hard` boundaries.
 
 How to add a feature flag:
 - Add a new variant to `warp_core/src/features.rs` in the `FeatureFlag` enum
