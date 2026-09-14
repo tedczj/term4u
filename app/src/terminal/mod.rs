@@ -93,6 +93,20 @@ pub fn should_right_click_paste(shift: bool, ctx: &AppContext) -> bool {
     !shift && SelectionSettings::as_ref(ctx).right_click_pastes()
 }
 
+/// Converts a window-space mouse position into an offset from the terminal view's content
+/// container, which is what the context menu overlay is positioned against. Child elements
+/// (block grids, the alt screen) only know window coordinates, so they resolve the container
+/// through the `SavePosition` id the view hands them.
+pub fn context_menu_offset(
+    ctx: &warpui::elements::EventContext,
+    anchor_id: Option<&str>,
+    window_position: pathfinder_geometry::vector::Vector2F,
+) -> pathfinder_geometry::vector::Vector2F {
+    anchor_id
+        .and_then(|id| ctx.element_position_by_id(id))
+        .map_or(window_position, |bounds| window_position - bounds.origin())
+}
+
 /// Treat rounding errors for heights within this amount as equal.
 pub const HEIGHT_FUDGE_FACTOR_LINES: Lines = Lines::new(0.01);
 
