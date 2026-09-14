@@ -1,4 +1,0 @@
-{
-  "test": "lifecycle_telemetry_payload_is_allowlisted_and_non_ugc",
-  "reason": "cloud telemetry exporter removed; local recovery record and limiter tests retained"
-}

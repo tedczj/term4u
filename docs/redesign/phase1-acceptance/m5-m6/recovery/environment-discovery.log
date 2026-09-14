@@ -1,8 +1,0 @@
-UTC=2026-09-05T16:34:20.876790+00:00
-COMMAND=printf "PATH=%s\n" "$PATH"; for p in "$HOME/.cargo" "$HOME/.rustup" /opt/rust /opt/homebrew/opt/rust /usr/local/cargo /tmp/term4u /Volumes; do if test -e "$p"; then ls -ld "$p"; fi; done; xcode-select -p; command -v oz-dev; command -v tmux; command -v tcpdump
-PATH=/Users/tedczj/.pi/agent/bin:/opt/homebrew/opt/node@24/bin:/Users/tedczj/.local/bin:/Library/Frameworks/Python.framework/Versions/3.10/bin:/Library/Frameworks/Python.framework/Versions/3.8/bin:/Library/Frameworks/Python.framework/Versions/3.11/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/opt/pmk/env/global/bin:/Applications/VMware Fusion.app/Contents/Public:/Applications/apache-maven-3.9.6/bin:/Library/Frameworks/Python.framework/Versions/3.8/bin/:/Applications/ffmpeg-5.1.2:/Library/Java/JavaVirtualMachines/jdk-1.8.jdk/Contents/Home/bin
-drwxr-xr-x  5 root  wheel  160  9月  5 18:33 /Volumes
-/Library/Developer/CommandLineTools
-/usr/sbin/tcpdump
-
-EXIT_CODE=0

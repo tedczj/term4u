@@ -1,9 +1,0 @@
-{
-  "recorded_at_utc": "2026-09-12T05:24:46.681040+00:00",
-  "base_head": "2a18b733dc78daa846e36ee41392f234472c7534",
-  "source_diff_sha256": "2c0310c53b04e9dcae9d430a6de6159183baf6acd094aa9aaf98839f450030b2",
-  "binary": "/Users/tedczj/workspace/term4u/target/debug/bundle/osx/Term4u.app/Contents/MacOS/term4u",
-  "binary_sha256": "7f8f38e76698e15da2a7f60d84ff399c27cffb24c951970e27075eaea5ba5c15",
-  "gui_profile": "gui-selftest-launchservices-20260912",
-  "scope": "macOS local GUI build, launch, basic terminal live self-test; not V1 acceptance"
-}

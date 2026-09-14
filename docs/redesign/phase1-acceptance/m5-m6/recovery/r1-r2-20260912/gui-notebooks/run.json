@@ -1,9 +1,0 @@
-{
-  "pid": 21097,
-  "binary": "/Users/tedczj/workspace/term4u/target/debug/bundle/osx/Term4u.app/Contents/MacOS/term4u",
-  "sha256": "a76b94bbc57ded7499f1256895690938b5ae2fe79486f955ddfb68770b7b139c",
-  "profile": "r1r2-gui-notebooks-20260912",
-  "database": "/Users/tedczj/Library/Application Support/dev.term4u.Term4u-r1r2-gui-notebooks-20260912/warp.sqlite",
-  "fixture_sha256": "90af98714ce5f6959603ba14c50127aeb2a03246f05b3710e8de571097e7c6e0",
-  "started_utc": "2026-09-12T14:33:08.499404+00:00"
-}
