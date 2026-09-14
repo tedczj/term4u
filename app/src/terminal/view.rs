@@ -42,6 +42,7 @@ use super::model::selection::SelectAction;
 use super::model::session::{Session, SessionId, Sessions};
 use super::model::terminal_model::TerminalInputState;
 use super::model_events::{AnsiHandlerEvent, ModelEvent, ModelEventDispatcher};
+use super::safe_mode_settings::get_secret_obfuscation_mode;
 use super::terminal_size_element::TerminalSizeElement;
 use super::{
     PtyIntent, PtyIntentEvent, ShellLaunchData, SizeInfo, SizeUpdate, SizeUpdateReason,
@@ -290,7 +291,7 @@ impl TerminalView {
         });
         ctx.subscribe_to_view(&context_menu, |view, _, event, ctx| {
             if let crate::menu::Event::Close { .. } = event {
-                view.context_menu_state.take();
+                view.close_context_menu(ctx);
             }
             ctx.notify();
         });
@@ -549,7 +550,7 @@ impl TerminalView {
                 &grid,
                 Appearance::as_ref(app),
                 EnforceMinimumContrast::default(),
-                ObfuscateSecrets::No,
+                get_secret_obfuscation_mode(app),
                 self.size_info,
             )
             .finish();
@@ -632,6 +633,10 @@ impl TerminalView {
     }
 
     pub fn focus(&mut self, ctx: &mut ViewContext<Self>) {
+        if self.context_menu_state.is_some() {
+            ctx.focus(&self.context_menu);
+            return;
+        }
         let model = self.model.lock();
         let focus_input = matches!(
             model.terminal_input_state(),
@@ -712,6 +717,19 @@ impl TerminalView {
                         .update(ctx, |input, ctx| input.complete(completion_context, ctx));
                 }
             }
+            InputEvent::NavigateHistory { previous } => {
+                if let Some(session) = self.active_session(ctx) {
+                    let commands = super::History::as_ref(ctx)
+                        .commands(session.id())
+                        .unwrap_or_default()
+                        .into_iter()
+                        .map(|entry| entry.command.clone())
+                        .collect();
+                    self.input.update(ctx, |input, ctx| {
+                        input.navigate_history(session.id(), commands, *previous, ctx);
+                    });
+                }
+            }
             InputEvent::CtrlC { .. } => ctx.emit(Event::InterruptPty),
             InputEvent::CtrlD => ctx.emit(Event::CtrlD),
             InputEvent::EditorFocused => {
@@ -746,9 +764,11 @@ impl TerminalView {
                         is_local: true,
                     });
                 }
-                if ctx.is_self_or_child_focused() {
-                    self.input
-                        .update(ctx, |input, ctx| input.focus_input_box(ctx));
+                if self.context_menu_state.is_none()
+                    && !self.find_bar_open
+                    && ctx.is_self_or_child_focused()
+                {
+                    self.focus(ctx);
                 }
                 self.run_pending_command(ctx);
             }
@@ -1084,7 +1104,7 @@ impl TerminalView {
                             grid,
                             appearance,
                             EnforceMinimumContrast::default(),
-                            ObfuscateSecrets::No,
+                            get_secret_obfuscation_mode(app),
                             self.size_info,
                         )
                         .with_find_matches(
@@ -1159,7 +1179,7 @@ impl TerminalView {
                 active_session_state: ActiveSessionState::Active,
                 terminal_view_id: self.input.id(),
                 hovered_secret: None,
-                obfuscate_secrets: ObfuscateSecrets::No,
+                obfuscate_secrets: get_secret_obfuscation_mode(app),
             },
             self.find_model.clone(),
             EnforceMinimumContrast::default(),
@@ -1262,7 +1282,7 @@ impl TypedActionView for TerminalView {
             }
             TerminalAction::TypedCharacters(text) if self.input_is_visible() => {
                 self.input.update(ctx, |input, ctx| {
-                    input.append_to_buffer(text, ctx);
+                    input.insert_text(text, ctx);
                     input.focus_input_box(ctx);
                 });
             }
@@ -1326,14 +1346,18 @@ impl TypedActionView for TerminalView {
             TerminalAction::PageUp => self.write_bytes(b"\x1b[5~".to_vec(), ctx),
             TerminalAction::PageDown => self.write_bytes(b"\x1b[6~".to_vec(), ctx),
             TerminalAction::Paste => {
-                let content = ctx.clipboard().read();
+                let content = crate::util::clipboard::clipboard_content_with_escaped_paths(
+                    ctx.clipboard().read(),
+                    Some(self.shell_family(ctx)),
+                    false,
+                );
                 if self.input_is_visible() {
                     self.input.update(ctx, |input, ctx| {
-                        input.append_to_buffer(&content.plain_text, ctx);
+                        input.insert_text(&content, ctx);
                         input.focus_input_box(ctx);
                     });
-                } else if !content.plain_text.is_empty() {
-                    self.write_bytes(content.plain_text.into_bytes(), ctx);
+                } else if !content.is_empty() {
+                    self.write_bytes(content.into_bytes(), ctx);
                 }
             }
             TerminalAction::ClearBuffer => self.clear_buffer(ctx),
@@ -1458,9 +1482,27 @@ impl TypedActionView for TerminalView {
                 if let Some(text) = self.selected_text(ctx).filter(|text| !text.is_empty()) {
                     self.model.lock().block_list_mut().clear_selection();
                     self.input.update(ctx, |input, ctx| {
-                        input.append_to_buffer(&text, ctx);
+                        input.insert_text(&text, ctx);
                         input.focus_input_box(ctx);
                     });
+                }
+            }
+            TerminalAction::DragAndDropFiles(paths) => {
+                let shell = self.shell_family(ctx);
+                let text = paths
+                    .iter()
+                    .map(|path| shell.escape(&path.to_string_lossy()).into_owned())
+                    .collect::<Vec<_>>()
+                    .join(" ");
+                if !text.is_empty() {
+                    if self.input_is_visible() {
+                        self.input.update(ctx, |input, ctx| {
+                            input.insert_text(&text, ctx);
+                            input.focus_input_box(ctx);
+                        });
+                    } else {
+                        self.write_bytes(text.into_bytes(), ctx);
+                    }
                 }
             }
             TerminalAction::Scroll { .. }
@@ -1472,8 +1514,7 @@ impl TypedActionView for TerminalView {
             | TerminalAction::ClearMarkedText
             | TerminalAction::SetMarkedText(_)
             | TerminalAction::StartFileDropTarget
-            | TerminalAction::StopFileDropTarget
-            | TerminalAction::DragAndDropFiles(_) => {}
+            | TerminalAction::StopFileDropTarget => {}
         }
     }
 }
@@ -1633,3 +1674,7 @@ impl BackingView for TerminalView {
 #[cfg(test)]
 #[path = "local_view_tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "local_interaction_tests.rs"]
+mod local_interaction_tests;

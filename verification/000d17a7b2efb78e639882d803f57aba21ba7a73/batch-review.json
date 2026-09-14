@@ -1,0 +1,131 @@
+{
+  "schema": 1,
+  "kind": "batch-evidence-review",
+  "design": "docs/DESIGN.md#status",
+  "reviewed_date_utc": "2026-09-14",
+  "repository_baseline": "e25f9c174eb38458fb4c4f7a3edcd9260fb6bc5b",
+  "source_head": "000d17a7b2efb78e639882d803f57aba21ba7a73",
+  "source_availability": "Local user candidate supplied as a fixed-commit patch; not present on remote main at review time.",
+  "review_status": "REVIEW_COMPLETE_WITH_FINDINGS",
+  "batch_disposition": {
+    "R0": "CLOSED_FOR_ORIGINAL_BATCH_SCOPE",
+    "R1": "CLOSED_FOR_ORIGINAL_BATCH_SCOPE",
+    "R2": "CLOSED_FOR_ORIGINAL_BATCH_SCOPE",
+    "GUI-shell-original": "CLOSED_FOR_ORIGINAL_COMPLETION_PROMPT_CLEAR_FOCUS_SCOPE",
+    "new-local-context-menu-increment": "OPEN_R3_F1"
+  },
+  "whole_candidate_accepted": false,
+  "V1": "NOT_EVALUATED",
+  "raw_reports_modified": false,
+  "input_sha256": {
+    "user-upload.zip": "2824bba3c3b5406df354193be03da6cfe25ea8eb02f0e6a2264173545d6d1808",
+    "source-delta.patch": "21d2cb3e09e9ecc47e62aeeb06da4713c7f49a7ffeef389f27ddb26194137e5b",
+    "automatic-results.zip": "4ab6afa3b3e3ea4efaf7573712fbe0cde631cdf5aeda096a81da1f8a006ec4c6",
+    "automatic-result.json": "01e39a994302bc8bc9fd158ca313fca717d0d09ab06087f3716e1f87a72f5824",
+    "h1-review-results.zip": "8c0d817131490879c7fef068d0a33b84736f3bf7ede96fb5f68b764c2e2a6365",
+    "h1-result.json": "9fe6268cc3a021ec42efcc67d97c27580808ecabe0a20ffd22080cea8b3171bc"
+  },
+  "evidence_verification": {
+    "automatic_steps": 34,
+    "continuation_total_steps": 45,
+    "additional_continuation_steps": 11,
+    "all_referenced_step_logs_hash_match": true,
+    "all_recorded_step_exit_codes_zero": true,
+    "prior_report_byte_identical": true,
+    "continuation_prior_result_hash_matches": true,
+    "automatic_step_records_reused_identically": true,
+    "patch_paths_match_recorded_11_paths": true,
+    "original_gui_shell_tests_passed": 12,
+    "new_menu_tests_passed": [
+      "right_clicking_a_block_opens_a_menu_with_local_entries_only",
+      "block_menu_copies_command_output_and_both",
+      "copy_entries_are_disabled_without_a_selection_or_block_text",
+      "alt_screen_right_click_opens_a_menu_that_close_dismisses",
+      "insert_into_input_moves_the_selection_into_the_input_box",
+      "right_mouse_down_opens_the_menu_anywhere_in_the_transcript"
+    ]
+  },
+  "observed_results": {
+    "local_app": {
+      "passed": 1525,
+      "skipped": 3
+    },
+    "core_tui": {
+      "passed": 703,
+      "skipped": 2
+    },
+    "presubmit_workspace": {
+      "passed": 4765,
+      "skipped": 20
+    },
+    "completer_v2": {
+      "passed": 131,
+      "skipped": 4
+    },
+    "presubmit": "PASS_IN_UPLOADED_MACOS_LOGS",
+    "clippy": "workspace/default-GUI/default-completer passed with -D warnings",
+    "doc_tests": "PASS_IN_UPLOADED_MACOS_LOGS",
+    "inventory": {
+      "baseline": 9777,
+      "current": 4785,
+      "cumulative_approved_removed": 5089,
+      "added_vs_baseline": 97
+    },
+    "oracle": {
+      "sha256": "5c88f21ed0ad702fe48237248ecdeab9e3602eddabef250f741e6f77dbcee5f0",
+      "integrity": "ok",
+      "source_unchanged": true
+    },
+    "legacy_fixtures": {
+      "count": 15,
+      "integrity": "all ok",
+      "source_unchanged": true
+    },
+    "human_H1": {
+      "status": "PASS",
+      "binary_sha256": "94cb111c047a36f36e3277c4f085ca3626158c3ed0137c146e1828af8c7dc2bb",
+      "started_utc": "2026-09-14T12:53:34.311210+00:00",
+      "exit_code": 0,
+      "finished_utc": "2026-09-14T12:55:38.358966+00:00"
+    },
+    "gui_sha256": "94cb111c047a36f36e3277c4f085ca3626158c3ed0137c146e1828af8c7dc2bb",
+    "tui_sha256": "0c91d7f661e967cbbaa5c8d3da307cee631b3cb37ab24288bde47a985d96bb1a",
+    "platform": "macOS-14.5-arm64-arm-64bit"
+  },
+  "changed_paths": [
+    "app/src/resource_center/sections.rs",
+    "app/src/terminal/alt_screen/alt_screen_element.rs",
+    "app/src/terminal/block_list_viewport.rs",
+    "app/src/terminal/blockgrid_element.rs",
+    "app/src/terminal/local_view_tests.rs",
+    "app/src/terminal/mod.rs",
+    "app/src/terminal/prompt_render_helper.rs",
+    "app/src/terminal/view.rs",
+    "app/src/terminal/view/action.rs",
+    "app/src/terminal/view/context_menu.rs",
+    "app/src/terminal/waterfall_gap_element.rs"
+  ],
+  "source_delta_scope": "Local context menu, six tests, one label and three unmounted legacy rendering sources; no persistence, migrations, network guards, manifests/lockfile, script or resource changes.",
+  "findings": [
+    {
+      "id": "R3-F1",
+      "priority": "P1",
+      "status": "OPEN",
+      "title": "Context menu keyboard focus lifecycle is incomplete",
+      "location": "app/src/terminal/view/context_menu.rs:213-240 and app/src/terminal/view.rs:291-296",
+      "confidence": "High-confidence static control-flow finding; macOS runtime reproduction NOT_RUN by reviewer.",
+      "evidence": "show_context_menu does not focus Menu. Menu::set_items only resets selection. Menu keyboard bindings are scoped to Menu, while Dismiss only intercepts mouse input. The six menu tests never assert focus or keyboard dispatch.",
+      "impact": "Esc/arrows/Enter may remain with the terminal; Enter may submit pending terminal input instead of activating the menu item.",
+      "required_resolution": "See docs/DESIGN.md section 6.2. Original GUI-shell/H1 batch is not reopened; the new menu extension is not accepted.",
+      "additional_manual_confirmation_requested": false
+    }
+  ],
+  "limitations": [
+    "Reviewer ran log/hash/patch integrity checks in Linux, not the macOS Rust/UI test suite.",
+    "Raw logs are user-supplied execution evidence, not signed remote attestation. Binary bytes were not included; recorded artifact identities were cross-checked across reports, not rehashed from executable bytes by the reviewer.",
+    "Both reports record runner SHA256 b29ee8558392ceacdcca05d8bbe2d4af9b1ea7c97e7b558119fdc234acdf2247, different from the mounted v3 attachment. The executed runner bytes are absent. No claim of exact runner identity is made; command outputs and report/log consistency were independently checked.",
+    "No new product network capture, full real-TUI interaction, or GUI legacy-migration/write/restart was performed in this run. Original accepted batch evidence is retained for unchanged contracts; final R6 requires a fresh same-candidate matrix.",
+    "Proposed fix patch is separate and unapplied. Patch applicability is checked against supplied source regions; Rust compilation and new regression execution remain NOT_RUN."
+  ],
+  "detailed_review_sha256": "da421d4818fc27010cb23dcf2ddf268322bf127535733a4a745d95d88bf4db97"
+}

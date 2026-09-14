@@ -5,6 +5,8 @@ use warp_completer::completer::{
     suggestions,
 };
 use warp_completer::meta::Span;
+use warp_editor::editor::NavigationKey;
+use warp_util::user_input::UserInput;
 use warpui::elements::{
     ChildView, Container, CrossAxisAlignment, Flex, ParentElement, SavePosition,
 };
@@ -19,7 +21,18 @@ use crate::appearance::Appearance;
 use crate::completer::SessionContext;
 use crate::editor::{
     EditorAction, EditorOptions, EditorView, Event as EditorEvent, PlainTextEditorViewAction,
+    PropagateAndNoOpNavigationKeys,
 };
+use crate::terminal::model::session::SessionId;
+
+struct HistoryNavigation {
+    session_id: SessionId,
+    commands: Vec<String>,
+    draft: String,
+    draft_cursor: usize,
+    index: usize,
+    displayed: String,
+}
 
 struct CompletionMenu {
     suggestions: Vec<PreparedSuggestion>,
@@ -80,6 +93,7 @@ pub enum Event {
     CtrlD,
     EditorFocused,
     Complete,
+    NavigateHistory { previous: bool },
 }
 
 pub struct Input {
@@ -87,6 +101,7 @@ pub struct Input {
     save_position_id: String,
     completions: Option<CompletionMenu>,
     completion_request: usize,
+    history_navigation: Option<HistoryNavigation>,
 }
 
 impl Input {
@@ -94,6 +109,13 @@ impl Input {
         let editor = ctx.add_typed_action_view(|ctx| {
             EditorView::new(
                 EditorOptions {
+                    propagate_and_no_op_vertical_navigation_keys:
+                        PropagateAndNoOpNavigationKeys::AtBoundary,
+                    autogrow: true,
+                    soft_wrap: true,
+                    use_settings_line_height_ratio: true,
+                    supports_vim_mode: true,
+                    allow_user_cursor_preference: true,
                     keymap_context_modifier: Some(Box::new(|context, _| {
                         context.set.insert("TerminalCommandEditor");
                         context.set.insert(
@@ -110,7 +132,18 @@ impl Input {
             EditorEvent::CtrlC { cleared_buffer_len } => ctx.emit(Event::CtrlC {
                 cleared_buffer_len: *cleared_buffer_len,
             }),
+            EditorEvent::Navigate(NavigationKey::Up) => {
+                ctx.emit(Event::NavigateHistory { previous: true });
+            }
+            EditorEvent::Navigate(NavigationKey::Down) => {
+                ctx.emit(Event::NavigateHistory { previous: false });
+            }
             EditorEvent::Edited(_) | EditorEvent::SelectionChanged => {
+                if input.history_navigation.as_ref().is_some_and(|navigation| {
+                    navigation.displayed != input.buffer_text(ctx)
+                }) {
+                    input.history_navigation = None;
+                }
                 if input.completions.as_ref().is_some_and(|menu| {
                     menu.buffer != input.buffer_text(ctx) || menu.cursor != input.cursor(ctx)
                 }) {
@@ -120,6 +153,7 @@ impl Input {
                 ctx.notify();
             }
             EditorEvent::Escape => {
+                input.history_navigation = None;
                 input.completions = None;
                 input.completion_request += 1;
                 ctx.notify();
@@ -131,6 +165,7 @@ impl Input {
             editor,
             completions: None,
             completion_request: 0,
+            history_navigation: None,
             save_position_id: format!("terminal_input_{}", ctx.view_id()),
         }
     }
@@ -169,8 +204,84 @@ impl Input {
     }
 
     pub fn replace_buffer_content(&mut self, text: &str, ctx: &mut ViewContext<Self>) {
+        self.history_navigation = None;
         self.editor
             .update(ctx, |editor, ctx| editor.set_buffer_text(text, ctx));
+    }
+
+    /// Insert at the editor selections, preserving suffix text and the editor's undo history.
+    pub fn insert_text(&mut self, text: &str, ctx: &mut ViewContext<Self>) {
+        self.history_navigation = None;
+        self.completions = None;
+        self.completion_request += 1;
+        self.editor.update(ctx, |editor, ctx| {
+            editor.handle_action(&EditorAction::UserInsert(UserInput::new(text)), ctx);
+        });
+    }
+
+    /// Navigate an owned snapshot of the active session's local history. Down past the newest
+    /// match restores the draft and its cursor; edits or a session switch start a new traversal.
+    pub fn navigate_history(
+        &mut self,
+        session_id: SessionId,
+        commands: Vec<String>,
+        previous: bool,
+        ctx: &mut ViewContext<Self>,
+    ) {
+        if !self.editor.as_ref(ctx).is_single_cursor_only(ctx) {
+            return;
+        }
+        let buffer = self.buffer_text(ctx);
+        if self.history_navigation.as_ref().is_some_and(|navigation| {
+            navigation.displayed != buffer || navigation.session_id != session_id
+        }) {
+            self.history_navigation = None;
+        }
+        if self.history_navigation.is_none() {
+            if !previous {
+                return;
+            }
+            let commands: Vec<_> = commands
+                .into_iter()
+                .filter(|command| !command.trim().is_empty() && command.starts_with(&buffer))
+                .collect();
+            if commands.is_empty() {
+                return;
+            }
+            self.history_navigation = Some(HistoryNavigation {
+                session_id,
+                index: commands.len(),
+                commands,
+                draft_cursor: self.cursor(ctx),
+                draft: buffer.clone(),
+                displayed: buffer,
+            });
+        }
+        let navigation = self.history_navigation.as_mut().unwrap();
+        navigation.index = if previous {
+            navigation.index.saturating_sub(1)
+        } else {
+            (navigation.index + 1).min(navigation.commands.len())
+        };
+        let at_draft = navigation.index == navigation.commands.len();
+        let (text, cursor) = if at_draft {
+            (navigation.draft.clone(), navigation.draft_cursor)
+        } else {
+            let command = navigation.commands[navigation.index].clone();
+            let cursor = command.len();
+            (command, cursor)
+        };
+        navigation.displayed = text.clone();
+        self.completions = None;
+        self.completion_request += 1;
+        self.editor.update(ctx, |editor, ctx| {
+            editor.set_buffer_text(&text, ctx);
+            editor.select_ranges_by_byte_offset([cursor.into()..cursor.into()], ctx);
+        });
+        if at_draft {
+            self.history_navigation = None;
+        }
+        ctx.notify();
     }
 
     pub fn append_to_buffer(&mut self, text: &str, ctx: &mut ViewContext<Self>) {
@@ -182,6 +293,7 @@ impl Input {
     }
 
     pub fn clear_buffer_and_reset_undo_stack(&mut self, ctx: &mut ViewContext<Self>) {
+        self.history_navigation = None;
         self.editor
             .update(ctx, |editor, ctx| editor.clear_buffer(ctx));
     }
@@ -411,7 +523,7 @@ impl TypedActionView for Input {
             InputAction::Submit => self.submit(ctx),
             InputAction::Complete => self.tab(ctx),
             InputAction::CtrlD => ctx.emit(Event::CtrlD),
-            InputAction::Insert(text) => self.append_to_buffer(text, ctx),
+            InputAction::Insert(text) => self.insert_text(text, ctx),
         }
     }
 }
@@ -419,3 +531,7 @@ impl TypedActionView for Input {
 #[cfg(test)]
 #[path = "input_tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "input_local_tests.rs"]
+mod local_tests;

@@ -1,9 +1,4 @@
-//! Context menus for the terminal transcript and the alt screen.
-//!
-//! These were lost when the terminal view was rewritten for the local runtime: the old
-//! implementation lived inside `block_list_element.rs`, which consumed `ai::blocklist`,
-//! `ai_assistant` and `drive::settings` and was removed wholesale under route A. Only the
-//! local items are restored here — sharing, Warp Drive and AI entries stay deleted.
+//! Local context menus for the terminal transcript and the alt screen.
 
 use pathfinder_geometry::vector::Vector2F;
 use warp_core::context_flag::ContextFlag;
@@ -229,11 +224,16 @@ impl TerminalView {
             menu.set_items(items, ctx);
             ctx.notify();
         });
+        ctx.focus(&self.context_menu);
         ctx.notify();
     }
 
     pub(super) fn close_context_menu(&mut self, ctx: &mut ViewContext<Self>) {
         if self.context_menu_state.take().is_some() {
+            // Find and other menu actions may have deliberately moved focus elsewhere.
+            if self.context_menu.is_focused(ctx) {
+                self.focus(ctx);
+            }
             ctx.notify();
         }
     }
