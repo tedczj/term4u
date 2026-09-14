@@ -1,6 +1,0 @@
-{
-  "local-workflow.out": "R1R2_LOCAL",
-  "project-workflow.out": "R1R2_PROJECT",
-  "external-cli.out": "R1R2_GUI_EXTERNAL",
-  "sample.rs": "fn main() {\n    println!(\"R1R2_SEARCH_MARKER SAVED_FROM_GUI\");\n}\n"
-}

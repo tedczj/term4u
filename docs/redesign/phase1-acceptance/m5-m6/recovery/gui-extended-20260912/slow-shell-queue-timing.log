@@ -1,4 +1,0 @@
-2026-09-12T08:53:03Z [INFO] [warp::terminal::model::session] Shell is bootstrapped with session_id SessionId(15246869750758440672)
-2026-09-12T08:53:03Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::Enter
-2026-09-12T08:53:34Z [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::Enter
-2026-09-12T08:53:42Z [INFO] [warp::terminal::model::session] Shell is bootstrapped with session_id SessionId(5090382255340833423)

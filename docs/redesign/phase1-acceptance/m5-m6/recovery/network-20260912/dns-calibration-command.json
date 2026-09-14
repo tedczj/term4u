@@ -1,6 +1,0 @@
-{
-  "utc": "2026-09-12T09:47:43.433329+00:00",
-  "command": "/usr/sbin/tcpdump -i pktap,all -nn -k INPD -l 'port 53 or port 853 or port 5353' > /tmp/term4u-dns-packets.log 2>&1 & cap=$!; /usr/bin/log stream --level debug --style compact --timeout 25 --predicate 'process == \"mDNSResponder\"' > /tmp/term4u-dns-system.log 2>&1; result=$?; kill -INT $cap; wait $cap; exit $result",
-  "exit_code": -15,
-  "stderr": ""
-}

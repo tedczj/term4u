@@ -1,4 +1,0 @@
-UTC=2026-09-05T16:38:32.686429+00:00
-COMMAND=Python sqlite3 in-memory migration + new test SQL smoke (not Rust/Diesel acceptance)
-Executed 3 SQL setup statements after all migrations; integrity_check=ok
-EXIT_CODE=0

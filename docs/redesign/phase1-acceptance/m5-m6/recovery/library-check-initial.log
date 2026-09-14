@@ -1,5 +1,0 @@
-UTC=2026-09-05T16:34:20.863420+00:00
-COMMAND=cargo check -p warp --lib --no-default-features --features local_only
-/bin/bash: cargo: command not found
-
-EXIT_CODE=127

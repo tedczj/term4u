@@ -1,8 +1,0 @@
-{
-  "files": [
-    "app/src/auth/user_uid.rs",
-    "app/src/auth/auth_state.rs",
-    "app/src/auth/mod.rs"
-  ],
-  "reason": "Only production consumer gated a never-visible invitation button; removed button gate and unused mock identities. Local keyring/storage setup remains independent of cloud auth."
-}

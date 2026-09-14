@@ -1,8 +1,0 @@
-{
-  "recorded_at_utc": "2026-09-12T12:57:22.838693+00:00",
-  "command": "CARGO_PROFILE_DEV_DEBUG=0 CARGO_PROFILE_TEST_DEBUG=0 CARGO_INCREMENTAL=0 CARGO_BUILD_JOBS=4 cargo nextest run -p warp_tui -p ai -p persistence -p warp_terminal -p lsp --no-fail-fast",
-  "exit_code": 0,
-  "passed": 702,
-  "skipped": 2,
-  "source_manifest": "focused-candidate-source.json"
-}

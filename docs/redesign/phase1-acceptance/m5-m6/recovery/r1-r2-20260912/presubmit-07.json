@@ -1,7 +1,0 @@
-{
-  "command": [
-    "./script/presubmit"
-  ],
-  "exit_code": 0,
-  "elapsed_seconds": 109.481
-}

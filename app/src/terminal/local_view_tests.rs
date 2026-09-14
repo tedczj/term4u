@@ -527,9 +527,8 @@ fn right_mouse_down_opens_the_menu_anywhere_in_the_transcript() {
     use std::rc::Rc;
 
     use pathfinder_geometry::vector::vec2f;
-    use warpui::Event as UiEvent;
     use warpui::presenter::Presenter;
-    use warpui::{EntityIdSet, WindowInvalidation};
+    use warpui::{EntityIdSet, Event as UiEvent, WindowInvalidation};
 
     App::test((), |mut app| async move {
         initialize_app_for_terminal_view(&mut app);

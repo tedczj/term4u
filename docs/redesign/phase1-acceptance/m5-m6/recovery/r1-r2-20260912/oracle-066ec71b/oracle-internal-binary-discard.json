@@ -1,7 +1,0 @@
-{
-  "path": "/Users/tedczj/workspace/term4u/target/debug/warp",
-  "bytes": 728426128,
-  "sha256": "0f8de7e38a80e9819984e1c4c801139ab16abed01d4311a1732bfebf8c21b720",
-  "reason": "Task-generated internal-channel oracle executable requires unavailable warp-channel-config; replace it with the public OSS executable from the same commit.",
-  "discarded_duplicate": "/Users/tedczj/workspace/term4u/target/debug/deps/warp-86b8f589821a2870"
-}

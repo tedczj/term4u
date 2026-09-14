@@ -1,1 +1,0 @@
-Apple macOS SDK sys/event.h explicitly marks NOTE_TRACK, NOTE_TRACKERR, NOTE_CHILD unsupported since macOS 10.5. A controlled fork test returned OSError 45 (Operation not supported). kqueue is not a replacement for Endpoint Security child-process tracking.
