@@ -8,7 +8,7 @@ use crate::terminal::available_shells::AvailableShell;
 use crate::terminal::model::index::Point;
 use crate::terminal::model::mouse::MouseState;
 use crate::terminal::model::selection::SelectAction;
-use crate::terminal::model::terminal_model::WithinModel;
+use crate::terminal::model::terminal_model::{BlockIndex, WithinModel};
 
 #[derive(Clone, Debug)]
 pub enum TerminalAction {
@@ -25,6 +25,17 @@ pub enum TerminalAction {
     AltScreenContextMenu {
         position: Vector2F,
     },
+    /// Opens the transcript context menu. `block_index` identifies the block that was
+    /// right-clicked, and is `None` when the click landed outside of any block.
+    BlockContextMenu {
+        position: Vector2F,
+        block_index: Option<BlockIndex>,
+    },
+    CloseContextMenu,
+    CopyBlockCommand(BlockIndex),
+    CopyBlockOutput(BlockIndex),
+    CopyBlock(BlockIndex),
+    InsertSelectedTextIntoInput,
     MaybeClearAltSelect,
     ClickOnGrid {
         position: WithinModel<Point>,

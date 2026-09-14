@@ -1,529 +1,240 @@
-use warpui::{SingletonEntity, UpdateView};
+//! Context menus for the terminal transcript and the alt screen.
+//!
+//! These were lost when the terminal view was rewritten for the local runtime: the old
+//! implementation lived inside `block_list_element.rs`, which consumed `ai::blocklist`,
+//! `ai_assistant` and `drive::settings` and was removed wholesale under route A. Only the
+//! local items are restored here — sharing, Warp Drive and AI entries stay deleted.
 
-use super::{
-    AIAgentExchangeId, AIConversationId, AgentModeRewindEntrypoint, AppContext,
-    BlocklistAIHistoryModel, CONTEXT_MENU_WIDTH, ChannelState, ClipboardContent, ContextMenuAction,
-    ContextMenuState, ContextMenuType, EntityId, FeatureFlag, ForkAIConversationParams,
-    ForkFromExchange, ForkedConversationDestination, MenuItem, MenuItemFields, RichContentLink,
-    ServerConversationToken, ServerOutputId, ShareableObject, TerminalAction, TerminalModel,
-    TerminalView, Tip, TipHint, Vector2F, ViewContext, fork_label_for_query,
-    mark_feature_used_and_write_to_user_defaults,
+use pathfinder_geometry::vector::Vector2F;
+use warp_core::context_flag::ContextFlag;
+use warpui::{AppContext, ViewContext};
+
+use super::{ContextMenuState, TerminalAction, TerminalView};
+use crate::menu::{MenuItem, MenuItemFields};
+use crate::pane_group::SplitPaneState;
+use crate::terminal::available_shells::AvailableShell;
+use crate::terminal::model::terminal_model::BlockIndex;
+use crate::util::bindings::{
+    CustomAction, custom_tag_to_keystroke, keybinding_name_to_display_string,
 };
 
+/// Width of the terminal context menu, matching the pre-rewrite value.
+pub(super) const CONTEXT_MENU_WIDTH: f32 = 280.;
+
 impl TerminalView {
-    pub(super) fn ai_block_copying_menu_items(
+    /// Items for a right-click inside the block transcript. `block_index` is the block under
+    /// the cursor, or `None` when the click landed on empty space below the last block.
+    pub(super) fn block_context_menu_items(
         &self,
-        ai_block_view_id: EntityId,
-        ai_conversation_id: AIConversationId,
-        hovered_link: Option<RichContentLink>,
-        model: &TerminalModel,
+        block_index: Option<BlockIndex>,
         ctx: &mut ViewContext<Self>,
     ) -> Vec<MenuItem<TerminalAction>> {
+        let has_selection = self.selected_text(ctx).is_some_and(|text| !text.is_empty());
+
         let mut items = vec![
             MenuItemFields::new("Copy")
-                .with_on_select_action(TerminalAction::ContextMenu(
-                    ContextMenuAction::CopyAIBlock { ai_block_view_id },
-                ))
+                .with_on_select_action(TerminalAction::Copy)
+                .with_key_shortcut_label(keybinding_name_to_display_string("terminal:copy", ctx))
+                .with_disabled(!has_selection)
                 .into_item(),
-            MenuItemFields::new("Copy prompt")
-                .with_on_select_action(TerminalAction::ContextMenu(
-                    ContextMenuAction::CopyAIBlockQuery { ai_block_view_id },
-                ))
-                .into_item(),
-            MenuItemFields::new("Copy output as Markdown")
-                .with_on_select_action(TerminalAction::ContextMenu(
-                    ContextMenuAction::CopyAIBlockOutput { ai_block_view_id },
-                ))
+            MenuItemFields::new("Paste")
+                .with_on_select_action(TerminalAction::Paste)
+                .with_key_shortcut_label(keybinding_name_to_display_string("terminal:paste", ctx))
                 .into_item(),
         ];
 
-        if let Some(link) = hovered_link {
-            match link {
-                RichContentLink::Url(url) => {
-                    items.push(
-                        MenuItemFields::new("Copy URL")
-                            .with_on_select_action(TerminalAction::ContextMenu(
-                                ContextMenuAction::CopyUrl { url_content: url },
-                            ))
-                            .into_item(),
-                    );
-                }
-                #[cfg(feature = "local_fs")]
-                RichContentLink::FilePath { absolute_path, .. } => {
-                    items.push(
-                        MenuItemFields::new("Copy path")
-                            .with_on_select_action(TerminalAction::ContextMenu(
-                                ContextMenuAction::CopyUrl {
-                                    url_content: absolute_path.to_string_lossy().into_owned(),
-                                },
-                            ))
-                            .into_item(),
-                    );
-                }
-            }
-        }
-
-        let num_requested_commands = self
-            .rich_content_views
-            .iter()
-            .find_map(|rich_content| {
-                let ai_metadata = rich_content.ai_block_metadata()?;
-                if ai_metadata.ai_block_handle.id() == ai_block_view_id {
-                    return Some(ai_metadata.ai_block_handle.as_ref(ctx));
-                }
-                None
-            })
-            .map_or_else(|| 0, |ai_block| ai_block.num_requested_commands());
-
-        if num_requested_commands > 0 {
+        if has_selection {
             items.push(
-                MenuItemFields::new(String::from("Copy command"))
-                    .with_on_select_action(TerminalAction::ContextMenu(
-                        ContextMenuAction::CopyAgentCommand { ai_block_view_id },
-                    ))
+                MenuItemFields::new("Insert into input")
+                    .with_on_select_action(TerminalAction::InsertSelectedTextIntoInput)
                     .into_item(),
             );
         }
 
-        let action_ids: Vec<_> = self
-            .rich_content_views
-            .iter()
-            .find_map(|rich_content| {
-                let ai_metadata = rich_content.ai_block_metadata()?;
-                if ai_metadata.ai_block_handle.id() == ai_block_view_id {
-                    return Some(ai_metadata.ai_block_handle.as_ref(ctx));
-                }
-                None
-            })
-            .map(|ai_block| {
-                ai_block
-                    .requested_commands_iter()
-                    .map(|(action_id, _)| action_id)
-                    .collect()
-            })
-            .unwrap_or_default();
+        if let Some(block_index) = block_index {
+            let model = self.model.lock();
+            if let Some(block) = model.block_list().block_at(block_index) {
+                let command_is_empty = block.command_to_string().trim().is_empty();
+                let output_is_empty = block.output_to_string().trim().is_empty();
+                drop(model);
 
-        let has_git_branch = action_ids.iter().any(|action_id| {
-            model
-                .block_list()
-                .block_for_ai_action_id(action_id)
-                .is_some_and(|block| block.git_branch().is_some())
-        });
-        if has_git_branch {
-            items.push(
-                MenuItemFields::new(String::from("Copy git branch"))
-                    .with_on_select_action(TerminalAction::ContextMenu(
-                        ContextMenuAction::CopyAgentGitBranch { ai_block_view_id },
-                    ))
-                    .into_item(),
-            );
-        }
-        let has_query_timestamp = self.rich_content_views.iter().any(|rich_content| {
-            rich_content
-                .ai_block_metadata()
-                .filter(|metadata| metadata.ai_block_handle.id() == ai_block_view_id)
-                .is_some_and(|metadata| {
-                    metadata
-                        .ai_block_handle
-                        .as_ref(ctx)
-                        .query_sent_at(ctx)
-                        .is_some()
-                })
-        });
-        if has_query_timestamp {
-            items.push(
-                MenuItemFields::new("Copy timestamp")
-                    .with_on_select_action(TerminalAction::ContextMenu(
-                        ContextMenuAction::CopyAIBlockTimestamp { ai_block_view_id },
-                    ))
-                    .into_item(),
-            );
-        }
-        items.push(MenuItem::Separator);
-        items.push(
-            MenuItemFields::new("Save as prompt")
-                .with_on_select_action(TerminalAction::ContextMenu(
-                    ContextMenuAction::SavePromptAsAgentModeWorkflow { ai_block_view_id },
-                ))
-                .into_item(),
-        );
-        items.push(MenuItem::Separator);
-
-        if FeatureFlag::CloudConversations.is_enabled() {
-            let history_model = BlocklistAIHistoryModel::as_ref(ctx);
-            if history_model.can_conversation_be_shared(&ai_conversation_id) {
+                items.push(MenuItem::Separator);
                 items.push(
-                    MenuItemFields::new("Copy share link")
-                        .with_on_select_action(TerminalAction::ContextMenu(
-                            ContextMenuAction::CopyConversationShareLink {
-                                conversation_id: ai_conversation_id,
-                            },
-                        ))
+                    MenuItemFields::new("Copy command")
+                        .with_on_select_action(TerminalAction::CopyBlockCommand(block_index))
+                        .with_disabled(command_is_empty)
                         .into_item(),
                 );
                 items.push(
-                    MenuItemFields::new("Share conversation")
-                        .with_on_select_action(TerminalAction::ContextMenu(
-                            ContextMenuAction::OpenConversationShareDialog {
-                                conversation_id: ai_conversation_id,
-                            },
-                        ))
+                    MenuItemFields::new("Copy output")
+                        .with_on_select_action(TerminalAction::CopyBlockOutput(block_index))
+                        .with_disabled(output_is_empty)
+                        .into_item(),
+                );
+                items.push(
+                    MenuItemFields::new("Copy block")
+                        .with_on_select_action(TerminalAction::CopyBlock(block_index))
+                        .with_disabled(command_is_empty && output_is_empty)
                         .into_item(),
                 );
             }
         }
 
+        items.push(MenuItem::Separator);
         items.push(
-            MenuItemFields::new("Copy conversation text")
-                .with_on_select_action(TerminalAction::ContextMenu(
-                    ContextMenuAction::CopyAIBlockConversation { ai_block_view_id },
-                ))
+            MenuItemFields::new("Find in terminal")
+                .with_on_select_action(TerminalAction::ShowFindBar)
+                .with_key_shortcut_label(keybinding_name_to_display_string("terminal:find", ctx))
                 .into_item(),
         );
+        items.push(
+            MenuItemFields::new("Clear buffer")
+                .with_on_select_action(TerminalAction::ClearBuffer)
+                .into_item(),
+        );
+
+        let shell = self.model.lock().shell_launch_state().available_shell();
+        let mut pane_items = self.pane_context_menu_items(shell, ctx);
+        if !pane_items.is_empty() {
+            items.push(MenuItem::Separator);
+            items.append(&mut pane_items);
+        }
 
         items
     }
 
-    fn conversation_text(
+    /// Items for a right-click while a full-screen (alt screen) application is running.
+    /// The transcript is not addressable here, so only selection and pane actions apply.
+    pub(super) fn alt_screen_context_menu_items(
         &self,
-        conversation_id: AIConversationId,
-        ctx: &AppContext,
-    ) -> Option<String> {
-        let Some(conversation) =
-            BlocklistAIHistoryModel::as_ref(ctx).conversation(&conversation_id)
-        else {
-            log::warn!("No conversation found for conversation ID {conversation_id}");
-            return None;
-        };
-
-        let mut result = Vec::new();
-        for exchange in conversation.root_task_exchanges() {
-            let formatted_exchange =
-                exchange.format_for_copy(Some(self.ai_action_model.as_ref(ctx)));
-            if !formatted_exchange.is_empty() {
-                result.push(formatted_exchange);
-            }
-        }
-
-        if result.is_empty() {
-            log::warn!("No copyable conversation text found for conversation ID {conversation_id}");
-            return None;
-        }
-
-        Some(result.join("\n\n"))
-    }
-
-    pub(super) fn copy_conversation_text(
-        &self,
-        conversation_id: AIConversationId,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        if let Some(conversation_text) = self.conversation_text(conversation_id, ctx) {
-            ctx.clipboard()
-                .write(ClipboardContent::plain_text(conversation_text));
-        }
-    }
-
-    pub(super) fn fork_ai_conversation(
-        &self,
-        conversation_id: AIConversationId,
-        fork_from_exchange: Option<ForkFromExchange>,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        ctx.dispatch_global_action(
-            "workspace:fork_ai_conversation",
-            ForkAIConversationParams {
-                conversation_id,
-                fork_from_exchange,
-                summarize_after_fork: false,
-                summarization_prompt: None,
-                initial_prompt: None,
-                destination: ForkedConversationDestination::SplitPane,
-            },
-        );
-    }
-
-    fn conversation_server_token(
-        &self,
-        conversation_id: AIConversationId,
-        ctx: &AppContext,
-    ) -> Option<ServerConversationToken> {
-        let history_model = BlocklistAIHistoryModel::as_ref(ctx);
-        // Prefer loaded conversation data when available.
-        history_model
-            .conversation(&conversation_id)
-            .and_then(|conversation| conversation.debugging_server_conversation_token().cloned())
-            .or_else(|| {
-                // Restored entries may only have server metadata loaded.
-                history_model
-                    .get_server_conversation_metadata(&conversation_id)
-                    .map(|metadata| metadata.server_conversation_token.clone())
-            })
-    }
-
-    fn conversation_debug_request_id(
-        &self,
-        conversation_id: AIConversationId,
-        ctx: &AppContext,
-    ) -> Option<ServerOutputId> {
-        BlocklistAIHistoryModel::as_ref(ctx)
-            .conversation(&conversation_id)
-            .and_then(|conversation| conversation.root_task_exchanges().last())
-            .and_then(|exchange| exchange.output_status.server_output_id())
-    }
-
-    fn copy_debugging_menu_items(
-        &self,
-        conversation_token: ServerConversationToken,
-        server_output_id: Option<ServerOutputId>,
-    ) -> Vec<(String, ContextMenuAction)> {
-        if ChannelState::channel().is_dogfood() {
-            vec![
-                (
-                    "Copy debugging link".to_string(),
-                    ContextMenuAction::CopyAIDebuggingLink {
-                        conversation_token: conversation_token.clone(),
-                        request_id: server_output_id,
-                    },
-                ),
-                (
-                    "Copy conversation ID".to_string(),
-                    ContextMenuAction::CopyConversationId {
-                        conversation_id: conversation_token,
-                    },
-                ),
-            ]
-        } else {
-            vec![(
-                "Copy debugging ID".to_string(),
-                ContextMenuAction::CopyExternalDebuggingId {
-                    request_id: server_output_id,
-                    conversation_id: conversation_token,
-                },
-            )]
-        }
-    }
-
-    pub(super) fn create_copy_debugging_menu_item(
-        &self,
-        ai_exchange_id: AIAgentExchangeId,
-        ai_conversation_id: AIConversationId,
-        ctx: &mut ViewContext<Self>,
-    ) -> Vec<(String, ContextMenuAction)> {
-        let conversation_token = BlocklistAIHistoryModel::as_ref(ctx)
-            .conversation(&ai_conversation_id)
-            .and_then(|conversation| conversation.debugging_server_conversation_token());
-
-        let Some(conversation_token) = conversation_token else {
-            return Vec::new();
-        };
-
-        let server_output_id = self
-            .ai_block_for_exchange(&ai_exchange_id)
-            .and_then(|ai_block_handle| ai_block_handle.as_ref(ctx).server_output_id(ctx));
-        self.copy_debugging_menu_items(conversation_token.clone(), server_output_id)
-    }
-
-    fn conversation_menu_items(
-        &self,
-        conversation_id: AIConversationId,
         ctx: &mut ViewContext<Self>,
     ) -> Vec<MenuItem<TerminalAction>> {
         let mut items = Vec::new();
 
-        if FeatureFlag::CloudConversations.is_enabled()
-            && ShareableObject::AIConversation(conversation_id)
-                .link(ctx)
-                .is_some()
-        {
+        if self.selected_text(ctx).is_some_and(|text| !text.is_empty()) {
             items.push(
-                MenuItemFields::new("Copy share link")
-                    .with_on_select_action(TerminalAction::ContextMenu(
-                        ContextMenuAction::CopyConversationShareLink { conversation_id },
+                MenuItemFields::new("Copy")
+                    .with_on_select_action(TerminalAction::Copy)
+                    .with_key_shortcut_label(keybinding_name_to_display_string(
+                        "terminal:copy",
+                        ctx,
                     ))
                     .into_item(),
             );
         }
-
         items.push(
-            MenuItemFields::new("Copy conversation text")
-                .with_on_select_action(TerminalAction::ContextMenu(
-                    ContextMenuAction::CopyConversationText { conversation_id },
-                ))
+            MenuItemFields::new("Paste")
+                .with_on_select_action(TerminalAction::Paste)
+                .with_key_shortcut_label(keybinding_name_to_display_string("terminal:paste", ctx))
                 .into_item(),
         );
 
-        items.push(
-            MenuItemFields::new("Fork")
-                .with_on_select_action(TerminalAction::ContextMenu(
-                    ContextMenuAction::ForkAIConversation { conversation_id },
-                ))
-                .into_item(),
-        );
-
-        if let Some(conversation_token) = self.conversation_server_token(conversation_id, ctx) {
-            let server_output_id = self.conversation_debug_request_id(conversation_id, ctx);
-            let debugging_items =
-                self.copy_debugging_menu_items(conversation_token, server_output_id);
-            if !debugging_items.is_empty() {
-                if !items.is_empty() {
-                    items.push(MenuItem::Separator);
-                }
-                for (button_text, action) in debugging_items {
-                    items.push(
-                        MenuItemFields::new(button_text)
-                            .with_on_select_action(TerminalAction::ContextMenu(action))
-                            .into_item(),
-                    );
-                }
-            }
+        let shell = self.model.lock().shell_launch_state().available_shell();
+        let mut pane_items = self.pane_context_menu_items(shell, ctx);
+        if !pane_items.is_empty() {
+            items.push(MenuItem::Separator);
+            items.append(&mut pane_items);
         }
 
         items
     }
 
-    pub(super) fn open_agent_view_entry_context_menu(
-        &mut self,
-        conversation_id: AIConversationId,
-        agent_view_entry_block_id: EntityId,
-        position: Vector2F,
+    /// Split/maximize/close entries, shared by both menus. Restored from the pre-rewrite
+    /// implementation; every entry here is local.
+    pub(super) fn pane_context_menu_items(
+        &self,
+        shell: Option<AvailableShell>,
         ctx: &mut ViewContext<Self>,
-    ) {
-        self.show_context_menu(
-            ContextMenuState {
-                menu_type: ContextMenuType::AgentViewEntryConversation {
-                    agent_view_entry_block_id,
-                    position,
-                },
-            },
-            self.conversation_menu_items(conversation_id, ctx),
-            ctx,
-        );
-    }
+    ) -> Vec<MenuItem<TerminalAction>> {
+        let mut items = vec![];
 
-    pub(super) fn open_ai_block_overflow_context_menu(
-        &mut self,
-        ai_block_view_id: EntityId,
-        ai_exchange_id: AIAgentExchangeId,
-        ai_conversation_id: AIConversationId,
-        is_restored: bool,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        let mut menu_items = {
-            let model = self.model.lock();
-            self.ai_block_copying_menu_items(
-                ai_block_view_id,
-                ai_conversation_id,
-                None,
-                &model,
-                ctx,
-            )
-        };
+        if ContextFlag::CreateNewSession.is_enabled() {
+            items.extend([
+                MenuItemFields::new("Split pane right")
+                    .with_on_select_action(TerminalAction::SplitRight(shell.clone()))
+                    .with_key_shortcut_label(keybinding_name_to_display_string(
+                        "pane_group:add_right",
+                        ctx,
+                    ))
+                    .into_item(),
+                MenuItemFields::new("Split pane left")
+                    .with_on_select_action(TerminalAction::SplitLeft(shell.clone()))
+                    .with_key_shortcut_label(keybinding_name_to_display_string(
+                        "pane_group:add_left",
+                        ctx,
+                    ))
+                    .into_item(),
+                MenuItemFields::new("Split pane down")
+                    .with_on_select_action(TerminalAction::SplitDown(shell.clone()))
+                    .with_key_shortcut_label(keybinding_name_to_display_string(
+                        "pane_group:add_down",
+                        ctx,
+                    ))
+                    .into_item(),
+                MenuItemFields::new("Split pane up")
+                    .with_on_select_action(TerminalAction::SplitUp(shell))
+                    .with_key_shortcut_label(keybinding_name_to_display_string(
+                        "pane_group:add_up",
+                        ctx,
+                    ))
+                    .into_item(),
+            ]);
+        }
 
-        if !cfg!(target_family = "wasm") {
-            let fork_label = fork_label_for_query(
-                &self
-                    .rich_content_views
-                    .iter()
-                    .find_map(|rc| {
-                        let meta = rc.ai_block_metadata()?;
-                        (meta.ai_block_handle.id() == ai_block_view_id).then(|| {
-                            meta.ai_block_handle
-                                .as_ref(ctx)
-                                .get_preceding_user_query(ctx)
-                        })
-                    })
-                    .unwrap_or_default(),
-            );
-            menu_items.push(
-                MenuItemFields::new(fork_label)
-                    .with_on_select_action(TerminalAction::ContextMenu(
-                        ContextMenuAction::ForkAIConversationFromBlock {
-                            ai_block_view_id,
-                            exchange_id: ai_exchange_id,
-                            conversation_id: ai_conversation_id,
-                        },
+        let pane_state = self.split_pane_state(ctx);
+        if pane_state.is_in_split_pane() {
+            items.push(
+                MenuItemFields::toggle_pane_action(pane_state.is_maximized())
+                    .with_on_select_action(TerminalAction::ToggleMaximizePane)
+                    .with_key_shortcut_label(keybinding_name_to_display_string(
+                        "pane_group:toggle_maximize_pane",
+                        ctx,
                     ))
                     .into_item(),
             );
-
-            if ChannelState::channel().is_dogfood() {
-                menu_items.push(
-                    MenuItemFields::new("Fork from here")
-                        .with_on_select_action(TerminalAction::ContextMenu(
-                            ContextMenuAction::ForkAIConversationFromExactExchange {
-                                ai_block_view_id,
-                                exchange_id: ai_exchange_id,
-                                conversation_id: ai_conversation_id,
-                            },
-                        ))
-                        .into_item(),
-                );
-            }
-        }
-
-        // We can't revert restored blocks since we don't restore the full diff
-        if FeatureFlag::RevertToCheckpoints.is_enabled() && !is_restored {
-            menu_items.push(
-                MenuItemFields::new("Rewind to before here")
-                    .with_on_select_action(TerminalAction::RewindAIConversation {
-                        ai_block_view_id,
-                        exchange_id: ai_exchange_id,
-                        conversation_id: ai_conversation_id,
-                        entrypoint: AgentModeRewindEntrypoint::ContextMenu,
-                    })
+            items.push(
+                MenuItemFields::new("Close pane")
+                    .with_on_select_action(TerminalAction::Close)
+                    .with_key_shortcut_label(
+                        custom_tag_to_keystroke(CustomAction::CloseCurrentSession.into())
+                            .map(|keystroke| keystroke.displayed()),
+                    )
                     .into_item(),
             );
         }
 
-        let debugging_items =
-            self.create_copy_debugging_menu_item(ai_exchange_id, ai_conversation_id, ctx);
-        if !debugging_items.is_empty() {
-            if !menu_items.is_empty() {
-                menu_items.push(MenuItem::Separator);
-            }
-            for (button_text, action) in debugging_items {
-                menu_items.push(
-                    MenuItemFields::new(button_text)
-                        .with_on_select_action(TerminalAction::ContextMenu(action))
-                        .into_item(),
-                );
-            }
-        }
+        items
+    }
 
-        self.show_context_menu(
-            ContextMenuState {
-                menu_type: ContextMenuType::AIBlockOverflowMenu { ai_block_view_id },
-            },
-            menu_items,
-            ctx,
-        );
+    pub(super) fn split_pane_state(&self, app: &AppContext) -> SplitPaneState {
+        self.focus_handle
+            .as_ref()
+            .map_or(SplitPaneState::NotInSplitPane, |handle| {
+                handle.split_pane_state(app)
+            })
     }
 
     pub(super) fn show_context_menu(
         &mut self,
-        menu_state: ContextMenuState,
+        position: Vector2F,
         items: Vec<MenuItem<TerminalAction>>,
         ctx: &mut ViewContext<Self>,
     ) {
-        ctx.update_view(&self.context_menu, |context_menu, view_ctx| {
-            context_menu.set_origin(menu_state.menu_type.origin());
-            context_menu.set_width(CONTEXT_MENU_WIDTH);
-            // This will also reset the selection.
-            context_menu.set_items(items, view_ctx);
-        });
-
-        self.context_menu_state = Some(menu_state);
-        ctx.focus(&self.context_menu);
-        ctx.notify();
-
-        self.tips_completed.update(ctx, |tips, ctx| {
-            mark_feature_used_and_write_to_user_defaults(
-                Tip::Hint(TipHint::BlockAction),
-                tips,
-                ctx,
-            );
+        if items.is_empty() {
+            return;
+        }
+        self.context_menu_state = Some(ContextMenuState { position });
+        self.context_menu.update(ctx, move |menu, ctx| {
+            menu.set_width(CONTEXT_MENU_WIDTH);
+            menu.set_items(items, ctx);
             ctx.notify();
         });
+        ctx.notify();
+    }
+
+    pub(super) fn close_context_menu(&mut self, ctx: &mut ViewContext<Self>) {
+        if self.context_menu_state.take().is_some() {
+            ctx.notify();
+        }
     }
 }
