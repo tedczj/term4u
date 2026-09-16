@@ -217,7 +217,7 @@ jobs:
           fetch-depth: 0
 
       - name: Download cleanup patch
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: cleanup-patch
           path: ${{ runner.temp }}
