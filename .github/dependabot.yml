@@ -19,6 +19,12 @@ updates:
       interval: "daily"
     assignees:
       - "warpdotdev/tech-leads"
+    # Only send security updates, not general version updates. The workflows in
+    # this repo are inherited from upstream and are either inert here (guarded
+    # by `github.repository_owner == 'warpdotdev'`, or triggered on a `master`
+    # branch that does not exist in this repo), so routine action bumps produce
+    # PR noise without changing anything that actually runs.
+    open-pull-requests-limit: 0
     cooldown:
       # Don't update to any action release that is less than two weeks old.
       default-days: 14
