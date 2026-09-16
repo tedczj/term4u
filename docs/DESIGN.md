@@ -1,291 +1,328 @@
 # Term4u 完整设计与实施基准
 
-> 唯一设计、状态与施工依据。设计整理日期：2026-09-14（UTC）。
-> 实现评估基线：`eef716cd69b84e0676eb90ad3ee776397aa6b515`。
-> 本文的“最终设计”指唯一采用的目标方案，不表示产品已完成；当前 V1 尚未验收关闭。
+> 唯一设计、状态与施工依据；更新：2026-09-14。
+> 本轮分支审计：`dev-202609014` / `65a012a7ac344e05c7e09c51a253cbc661e5ac35`。
+> 原 R0/R1/R2 和原 GUI-shell 批次已关闭；本地交互保全 L0、R3–R6 与 V1 尚未关闭。
+> “最终设计”表示只采用这一套目标方案，不表示所有功能已经实现或验收。
 
 ## 导航
 
 - [1. 目标与边界](#goals)
-- [2. 最终架构与模块契约](#architecture)
+- [2. 最终架构与保留契约](#architecture)
 - [3. 数据、身份与资源](#data)
 - [4. 依赖与许可证边界](#dependencies)
-- [5. 唯一完成状态表](#status)
-- [6. 剩余施工步骤](#implementation)
+- [5. 唯一完成状态与分支审计](#status)
+- [6. 当前施工顺序与本地功能恢复](#implementation)
 - [7. 完整验证程序](#verification)
 - [8. 验收条件 C1–C10](#acceptance)
-- [9. 证据、文档与变更纪律](#evidence)
+- [9. 证据与变更纪律](#evidence)
 - [10. V2 发布与后续演进](#release)
 
 <a id="goals"></a>
 ## 1. 目标与边界
 
-Term4u 是 Warp 客户端的本地化衍生产品。上游来源为 `warpdotdev/warp`，基线为
-`066ec71b736fc3755e29f58f733deadbdac3d1af`；项目仓库为 `tedczj/term4u`。
-保留本地终端、分栏、文件树、预览、编辑与本地数据能力；删除云控制面，不能只关闭开关。
+Term4u 是 Warp 客户端的本地化衍生产品。上游 `warpdotdev/warp`，来源提交
+`066ec71b736fc3755e29f58f733deadbdac3d1af`；项目仓库 `tedczj/term4u`。
+保留本地终端、分栏、文件树、预览、编辑和数据能力；删除云控制面，而不是删除与云代码相邻的本地能力。
 
 | ID | 产品必须满足的条件 |
 |---|---|
 | H1 | 产品构建不包含遥测传输、崩溃上传、云 Agent、服务端认证、Drive 同步、共享、更新等已删除实现 |
-| H2 | 启动、恢复、空闲和退出均不创建 Warp Server HTTP/SSE/WebSocket 客户端或后台云重试任务 |
+| H2 | 启动、恢复、空闲和退出不创建 Warp Server HTTP/SSE/WebSocket 客户端或后台云重试任务 |
 | H3 | 产品网络出口只允许 loopback；非 loopback 请求在统一守卫中硬拒绝，不进行外部 DNS 解析 |
-| H4 | 将来新增的产品网络调用也必须经过守卫；构造器检查、依赖/产物扫描和运行观测共同防止回归 |
+| H4 | 新增产品网络调用必须经过守卫；构造器检查、依赖/产物扫描和运行观测共同防止回归 |
 | H5 | 用户主动运行的 shell、git、ssh、CLI agent 是独立 PTY 子进程；Term4u 不替用户限制其网络 |
 
-Term4u **不是沙箱**。静默运行的产品零外连指标与用户主动执行联网命令分开验证。
-构建工具下载依赖也不等于产品运行时联网，但不得恢复运行/构建脚本自动拉取并执行 skills 的链路。
+Term4u 不是沙箱。产品静默零外连、用户主动执行联网命令、构建工具下载依赖分别验证。
+不得恢复运行/构建脚本自动拉取并执行 skills 的链路，也不得把用户自己的 CLI agent 当作应删除的 Warp Agent。
 
-产品只支持 **macOS**，必验目标是 **macOS arm64**。不承诺 Linux、Windows 或 WASM 产品。
-Linux 专属源码、依赖和 CI/打包配置后续单独清理；当前不得以取消 Linux 验证冒充 Linux PASS。
-Windows 专属实现和依赖属于本轮收尾，保留共享路径处理例外及历史迁移。
+只支持 macOS，必验 macOS arm64；不承诺 Linux、Windows 或 WASM 产品。Windows 专属实现和
+依赖仍须清理并保留明确共享例外；Linux 专属代码/依赖/CI/打包后续清理，不把取消验证写成 PASS。
 
-唯一采用**路线 A**：物理删除 Warp Agent UI/SDK/执行层和云协议，不保留 ServerApi/OfflineApi
-双后端、假 URL、空 token、同名空壳或静默重试。阶段内不开发新的本地 Agent 协议。
+只采用路线 A：删除 Warp Agent UI/SDK/执行层和云协议；不恢复 ServerApi/OfflineApi 双后端、
+假 URL、空 token、同名空壳或静默重试。不新增本地 Agent 协议来替代本地终端功能。
 
-交付含义固定：V0 是本地可用；V1 是本地功能、云清理及 C1–C10 完整验收；V2 是品牌与发布。
-完整 MIT 重实现是独立后续战略，不等于 V2，也不自动纳入本轮施工。
+V0 表示本地可用，V1 表示本地保留契约、云清理和 C1–C10 完整验收，V2 表示品牌与发布。
+完整 MIT 重实现属于另行批准的后续战略，不属于本轮。批次关闭不等于整个产品的功能等价性认证。
 
 <a id="architecture"></a>
-## 2. 最终架构与模块契约
+## 2. 最终架构与保留契约
 
 ```text
-GUI: app/ (term4u)                 TUI: crates/warp_tui (term4u-tui)
-        │                                  │
-        ├── workspace / pane / settings ────┤
-        ├── terminal / editor / file search / local diff
-        ├── workflows / notebooks / local_objects / env_vars
-        └── 本地持久化、PATH LSP、本地日志、bundled skills
-                         │
-          warp_core / warpui / warpui_core / persistence / warp_terminal
-                         │
-       本地文件与 SQLite / macOS / PTY / 受守卫保护的 loopback 通信
+GUI app/ (term4u)                  TUI crates/warp_tui (term4u-tui)
+       |                                      |
+       +-- workspace / pane / local settings --+
+       +-- terminal / editor / search / local diff
+       +-- workflows / notebooks / local_objects / env_vars
+       +-- local persistence / PATH LSP / local logs / bundled skills
+                          |
+        warp_core / warpui / warpui_core / persistence / warp_terminal
+                          |
+      local files / SQLite / macOS / PTY / guarded loopback communication
 
-用户主动命令 ── PTY 子进程 ── 用户自行控制的网络（不属于产品云后端）
+User-requested command -> independent PTY child -> networking controlled by the user
 ```
 
-### 2.1 前端和公共层
+### 2.1 公共层与启动
 
-保留 `app/` 与 `crates/` 工作区结构及内部 `warp_*` 名称，不全仓重命名。
-GUI 使用 WarpUI 的 Element/View、GPU/WGSL 和 macOS `.app`；TUI 使用 cell-grid/TuiElement，
-不依赖 GUI 截图验证。两者共享本地实体、终端与持久化能力，而不是共享一个云账户后台。
+保留 `app/`、`crates/` 和内部 `warp_*` 名称。GUI 使用 Element/View、GPU/WGSL 与 `.app`；
+TUI 使用 cell-grid/TuiElement，不能用 GUI 截图代替真实 PTY。共享本地实体和数据，而非云账号后台。
 
-实体由 App/Entity/Handle 管理；View 使用已有 context、action 和锁传递。
-不得在终端调用链新增重入 `model.lock()`；跨异步更新确认实体仍有效，不能留下死锁或幽灵操作。
-GUI 鼠标状态在构造阶段持有，不能每次 render 创建新状态导致点击失效。
+沿用 App/Entity/Handle、context/action 和锁传递；不在终端调用链增加重入 `model.lock()`。
+GUI MouseStateHandle 在构造期持有；异步回调验证当前实体、会话和请求，不能用过期结果覆盖新输入。
 
-### 2.2 启动和恢复
+入口确定 Term4u 身份与离线 feature，再安装本地持久化和前端 manager；恢复设置、历史、窗口、
+pane 和本地对象。不得跳过恢复换取启动成功。旧云行原样保留但不启动云 singleton/同步队列。
+退出保存本地状态并停止任务，不创建待上传文件。
 
-入口先确定 Term4u 身份和离线 feature，再安装公共本地能力、持久化及前端所需 manager。
-读取设置、终端历史、窗口/pane 快照和本地对象后恢复 UI；不可跳过整个恢复流程换取启动成功。
-旧云对象保留为原始数据，但不再创建 cloud singleton、认证客户端、同步队列或 Agent pane。
-退出时保存本地编辑和窗口状态，停止产品工作任务，不生成待上传文件。
+### 2.2 必须保留的本地行为
 
-### 2.3 保留能力的可观察契约
-
-| 模块/入口 | 必须保留的行为与失败处理 |
+| 面 | 保留契约 |
 |---|---|
-| `terminal/`、`workspace/`、pane/root | PTY/shell、输出、Ctrl-C、退出、tab/split/window 恢复；split shell 退出只关闭自身；关闭/Undo 注册表一致 |
-| 终端输入与显示 | Tab 唯一补全/公共前缀/候选循环；保留光标后文字并丢弃过期异步结果；目录/Git/PS1 提示；clear 清可见区域但保留回滚历史；点击焦点与拖选互不破坏 |
-| editor/file tree/search/code review | 打开、全文搜索、编辑、保存、本地 diff、code review 和 Undo；未保存关闭允许取消，不能悄悄丢内容 |
-| `workflows/` | 本地及项目 `.warp/workflows` 加载、编辑、参数默认值/覆盖值、输入/执行；必填参数缺失留在输入框；保留名称/描述/参数字段 |
-| `notebooks/`、`local_objects/` | 旧 SQLite/JSON 加载、编辑、真实换行、保存、退出重开；本地新版本优先，不能被旧行反向覆盖 |
-| `env_vars/` | 保留本地值解析和 shell 展开；不保留 Drive collection、权限或分享语义 |
-| Settings/menu/URI | 保留 Appearance、Features、Keybindings 等本地设置及搜索；删除账户、团队、计费、推荐、Platform/API key、Environments、Agent Profiles、Drive/共享/cloud run/handoff/升级入口 |
-| Privacy/auth | Privacy 展示 LocalPrivacyPolicy 的固定本地值；不提供可开启云传输的开关；本地 auth 无云用户/凭据；旧解析所需值类型保持中立 |
-| TUI | 本地 zero state/transcript/tab、输出/Ctrl-C/快捷键/退出；`/` 是 shell 字符，不增加 slash 云菜单 |
-| LSP | 现有五种 server 只从 PATH 查找；命中、缺失、不可执行分别处理；缺失只提示手工安装，不查询版本或下载安装 |
-| 日志与 skills | 正常日志、debug Rust panic 日志、本地 UI ZIP 导出；bundled/local skills 只读本地文件，不上传或自动更新 |
+| PTY、shell、外部 CLI | 启动、输出、Ctrl-C/Ctrl-D、退出；普通 git/ssh/CLI agent、前后台程序、alternate screen、终端模式和尺寸变化可用 |
+| 命令输入 | Unicode、光标/选择处插入、Undo、多行/换行、自动增长、Vim/光标/字体/行高偏好；多行上下移动不能被历史抢走 |
+| 历史与补全 | 复用现有 History 的 shell/会话数据；上下回看及草稿恢复、历史搜索与本地建议；Tab 唯一/公共前缀/候选循环，保留后缀，丢弃过期结果 |
+| 提示符与输出 | 目录/Git/PS1 提示、clear 清可见区但保留历史、查找/选择/复制、块导航和折叠；大输出滚动与原生 CLI 不应退化 |
+| 菜单与焦点 | 右键菜单、按键导航、Esc 关闭、Enter 只执行所选动作；关闭恢复合理焦点，Find/编辑器主动获得的焦点不被抢回 |
+| 剪贴板与文件拖入 | 用户粘贴按光标/选区插入、路径按实际 shell 转义；拖入文件作为路径，不变成 Agent 附件；原生程序 bracketed paste 单独验证 |
+| 输出链接与本地文件 | 用户主动点击输出 URL、OSC 8 链接及文件/行号打开保留；与删除产品内建 Warp 推广/云入口严格区分 |
+| 窗口与 pane | tab/split/新窗/关窗/Undo/重启恢复；单个 shell 退出只关自身；注册表、宽度、左面板和标题一致 |
+| 编辑/文件树/搜索/diff | 打开、预览、全文搜索、编辑保存、未保存取消关闭、本地 code review 与 Undo |
+| workflow | 本地及项目 `.warp/workflows` 加载、编辑、参数默认/覆盖值和执行；缺少必填参数留在输入框；名称/描述/参数字段保留 |
+| notebook/env vars | 旧 SQLite/JSON 读写、真实换行、重启恢复、本地新值不被旧行覆盖；环境变量解析/展开保持，不保留 Drive 权限/分享语义 |
+| LSP/skills | 现有五种 server 只查 PATH，命中/缺失/不可执行均处理；缺失只提示手工安装，不查版本、不下载；skills 仅读已打包/本地内容 |
+| 日志与本地隐私 | 正常/debug Rust panic/UI ZIP 日志仍在本地；终端响铃与用户本地通知不属于遥测；本地隐私显示设置应真实作用于渲染 |
+| 设置与 UI | Appearance/Features/Keybindings/本地隐私与搜索有效；不能留下可点击但空操作的本地项；固定关闭云传输不等于删除本地设置 |
 
-### 2.4 删除面和网络出口
+该表是保留目标，不是全量通过声明。具体已验收项和仍需补回的项目只在 §5/§6 标记。
 
-删除 Drive/cloud object、云 Agent/blocklist、GraphQL/ServerApi/OfflineApi、Firebase、远程/共享会话、
-MCP、AWS provider、computer use、voice、遥测 collector/uploader、自动更新和在线 skills/LSP 下载链。
-允许确有本地消费者的 ID/值类型和无传输能力的 no-op 遥测兼容类型；不得保留云 provider。
-每个残留按消费者和模块挂载审计；未挂载孤儿源码要清理，但不能误报成当前编译错误。
+### 2.3 删除面和网络守卫
 
-`offline_hard` 的 HTTP/WebSocket/DNS 保护不得被默认 feature、测试依赖或 TUI feature unification
-绕过。IPv4/IPv6 loopback、主机名解析、代理、重定向和实际连接对端均纳入测试；禁止依赖域名黑名单
-代替默认拒绝。守卫拒绝是兜底，验收仍要求正常静默运行不发起外连、DNS 和重试。
+删除 Drive/cloud object、云 Agent/blocklist、GraphQL/ServerApi/OfflineApi、Firebase、远程/共享
+控制面、MCP、AWS provider、computer use、voice、遥测 collector/uploader、自动更新与在线下载链。
+允许确有本地消费者的中立 ID/值类型及无传输能力的 no-op 遥测兼容类型；不保留云 provider。
 
-删除产品内建 Privacy/Data Management/Docs/Issues/Slack/Drive/Oz/计费等上游跳转；
-用户主动点击终端输出或文件中的普通 URL 保留。外链扫描必须区分硬编码产品入口与用户数据。
+删除不能按旧目录名机械执行。混合模块先拆本地行为，再删云消费者；未挂载孤儿文件不等于活动功能，
+但替代实现缺少原本地行为仍是回归。每项本地能力都要追踪“动作/设置 -> 处理 -> 可观察结果 -> 测试”。
+
+`offline_hard` 的 HTTP/WebSocket/DNS 保护不能被 default、test-util 或 TUI feature unification
+绕过。IPv4/IPv6 loopback、域名、代理、重定向和实际连接对端均测试；不能用域名黑名单替代默认拒绝。
+守卫拒绝只是兜底，正常静默运行仍须不发起外连/DNS/重试。
+
+删除产品内建 Privacy/Data Management/Docs/Issues/Slack/Drive/Oz/计费等上游跳转；保留用户主动
+点击普通 URL。OSC 剪贴板读取等能力恢复时保留权限/信任边界，不为功能恢复盲目放开宿主数据读取。
 
 <a id="data"></a>
 ## 3. 数据、身份与资源
 
-### 3.1 不再变更的运行时身份
+### 3.1 固定运行时身份
 
 | 项 | 固定值 |
 |---|---|
 | AppId | `AppId::new("dev", "term4u", "Term4u")` |
-| GUI/TUI 二进制 | `term4u` / `term4u-tui` |
-| 日志名 | `term4u.log` / `term4u-tui.log` |
+| GUI/TUI | `term4u` / `term4u-tui` |
+| 日志 | `term4u.log` / `term4u-tui.log` |
 | macOS bundle id | `dev.term4u.Term4u` |
-| URL scheme | `term4u` |
-| keyring namespace | `term4u` |
+| URL scheme / keyring namespace | `term4u` / `term4u` |
 
-身份已在 `15a202db` 落地并已有真实使用，不再安排改名或重置数据目录。
-从当前实现确认数据/日志路径；debug 测试使用隔离 `WARP_DATA_PROFILE`，release 使用隔离 HOME。
-不得杜撰 `TERM4U_DATA_DIR`，不得测试用户真实目录或旧 Warp 凭据。
-Term4u keyring 仅用于实际需要的本地 secret，不读取/迁移旧 Warp keyring、`WARP_USER_SECRET`、
-Firebase/refresh token。
+身份已在 `15a202db` 落地并真实使用，不再改名或重置目录。数据/日志路径以当前实现为准；
+debug 用隔离 `WARP_DATA_PROFILE`，release 用隔离 HOME。不杜撰 `TERM4U_DATA_DIR`。
+只使用隔离数据副本；不读取/迁移旧 Warp keyring、`WARP_USER_SECRET`、Firebase/refresh token。
+Term4u keyring 仅用于实际需要的本地 secret。
 
-### 3.2 持久化契约
+### 3.2 持久化与回归输入
 
-保留历史 migrations、表、未知字段和原始云 JSON/列；不得清表、删除迁移或用新空库掩盖兼容性问题。
-迁移与开工 HEAD 及既定迁移保护基线 `94912b78` 对照，既审查删除，也审查修改。
-本地 JSON/TOML 的名称、命令、参数、缺省字段和未知字段兼容；workspace/LSP metadata 往返保留
-已有时间戳与 server 偏好。损坏/未知对象可跳过，但不能阻止其他数据恢复，warning 不含正文和 secret。
+保留历史 migrations、表、未知字段和原始云 JSON/列，不清表、不删迁移、不以空库掩盖兼容问题。
+迁移同时与开工 HEAD 和 `94912b78` 比较删除及修改。保留 JSON/TOML 名称、命令、参数、缺省/未知
+字段，以及 workspace/LSP 时间戳和偏好；损坏对象不阻断其他对象恢复，warning 不含正文/secret。
+Agent/云行保持 opaque 且不可见，不恢复旧协议解码。
 
-已删除的 Agent/云行保持 opaque、不可见，不引入旧协议依赖重新解码。
-每次回归使用只读原件的隔离副本，比较迁移前后关键字段、历史条数、写入及重启后的结果。
+| 输入 | 用途 |
+|---|---|
+| `test-data/localization/phase1-before.txt` | 不可重置的 9777 项原始测试 ID 基线 |
+| `test-data/localization/deleted-test-ids.txt` | 已批准累计消失 ID；新增删除必须另行批准 |
+| `test-data/localization/oracle-066ec71b/` | 原始 `original.sqlite`、settings TOML、snapshot 与 table-counts JSON |
+| `crates/persistence/fixtures/legacy/` | 15 个历史 SQLite fixture，保持原字节 |
 
-### 3.3 当前回归输入（不是历史施工记录）
+原真实样本来自 `066ec71b` OSS 程序，包含 2 个 tab、3 个 terminal pane、3 条命令；SQLite SHA256
+为 `5c88f21ed0ad702fe48237248ecdeab9e3602eddabef250f741e6f77dbcee5f0`。原 WAL 为空；不保留
+无内容 WAL/进程共享内存，测试从副本重新生成。旧自定义标题未成功持久化，不宣称该样本覆盖该行为。
+输入完整性检查不是 GUI 迁移/写入/重启验收；后者需对副本比较关键字段、历史条数和重启结果。
 
-- `test-data/localization/phase1-before.txt`：原始测试 ID 基线，9777 项；禁止改成当前清单规避丢失检测。
-- `test-data/localization/deleted-test-ids.txt`：已明确登记的累计消失 ID；新增删除需单独批准和理由。
-- `test-data/localization/oracle-066ec71b/`：真实旧版隔离样本的 `original.sqlite`、
-  `original-settings.toml`、`original-snapshot.json`、`original-table-counts.json`。
-- `crates/persistence/fixtures/legacy/`：已迁入的 15 个历史 SQLite fixture，保持原字节。
+### 3.3 平台与资源
 
-上述输入由原位置直接复用 Git blob 迁入，不重写数据库和 ID 内容。
-原始真实样本由上游 `066ec71b` 的 OSS 程序生成，含 2 个 tab、3 个 terminal pane、3 条命令；
-SQLite SHA256 为 `5c88f21ed0ad702fe48237248ecdeab9e3602eddabef250f741e6f77dbcee5f0`。
-原样本 WAL 为零长度；不保留无内容 WAL 和进程共享内存文件。测试时从副本启动并重新生成所需文件。
-旧自定义标题未成功持久化，不能将该样本当作旧自定义标题的运行时覆盖。
-
-### 3.4 平台和资源删除边界
-
-Windows 专属文件、模块挂载、纯 Windows target/build dependencies 应删除。
-例外只保留 `crates/command/src/windows.rs`、`crates/warp_util/src/path/windows.rs` 和历史 migrations；
-这些例外服务本地路径/命令兼容，不代表支持 Windows。混合依赖保留 macOS 必需部分。
-Linux 清理不得误删 macOS 共享分支；不全仓清洗无害内联 cfg。
-资源必须按真实消费者审计：bundled/local skills、字体和其他本地功能输入不能作为文档垃圾删除。
+清理 Windows 专属文件、模块挂载和纯 Windows target/build dependencies；仅保留
+`crates/command/src/windows.rs`、`crates/warp_util/src/path/windows.rs` 和历史 migrations 例外。
+混合依赖保留 macOS 必需部分；不全仓清洗无害 cfg。Linux 代码清理不得误删共享实现。
+字体、skills、shell 集成与本地功能资源按实际消费者保留，不当作文档垃圾删除。
 
 <a id="dependencies"></a>
 ## 4. 依赖与许可证边界
 
-工作区默认维持 AGPL-3.0-only，`crates/warpui` 和 `crates/warpui_core` 保留原 MIT 标识与版权；
-`warpui_extras` 不属于 MIT 岛。`LICENSE-AGPL`、`LICENSE-MIT` 和第三方声明不得随文档清理删除。
-MIT 岛当前不等于依赖闭包已经全为 MIT；`script/license_boundary_allowlist.txt` 仅登记既有精确边，
-不得扩大成整个目录/组织豁免。`crates-local/` 不接受搬运或改名后的 AGPL 实现。
+默认 AGPL-3.0-only；`crates/warpui`、`crates/warpui_core` 保留原 MIT 标识/版权，warpui_extras
+不属于 MIT 岛。保留 LICENSE-AGPL、LICENSE-MIT 与第三方声明；不能移动/改名 AGPL 代码冒充原创 MIT。
+MIT 岛不等于依赖闭包全为 MIT，`script/license_boundary_allowlist.txt` 仅登记已有精确边。
+`crates-local/` 不接受 AGPL 实现；不扩大为整个目录或组织豁免。
 
-清理失效 workspace/member/dependency/feature/patch，检查正常、开发和 test-util 依赖。
-TUI 对 warp 的正常/开发依赖保持 `default-features = false`，显式 local_only/tui，开发再含 test-util。
-`email_address` 固定 rev `b3e5205b4efdc83832f230d8eb6894fd00a9ec32`，manifest/lock 保持一致。
-删除 `deny.toml` 的组织级 allow-org，逐个登记保留 git URL、rev、用途、许可证来源和必要声明。
-同步 about/deny/NOTICES 输入，不进行无关版本升级，不手改 Cargo.lock checksum。
+清理失效 workspace/member/dependency/feature/patch，检查 normal/dev/test-util。
+TUI 对 warp 正常/开发依赖保持 default-features=false、local_only/tui，开发含 test-util。
+`email_address` 固定 rev `b3e5205b4efdc83832f230d8eb6894fd00a9ec32`，manifest/lock 一致。
+删除 deny.toml 的 allow-org，逐个记录 git URL/rev/用途/许可证来源及声明；同步 about/deny/NOTICES。
+不做无关升级、不手改 lockfile checksum。
 
-已删除八个云 crate 和两条协议依赖不再重新删除：应证明 workspace、正常依赖树、源码、lockfile、
-release 二进制及 bundle 全部无残留。`aws-lc-rs` / `aws-lc-sys` 属于 TLS 后端，不按 AWS SDK 误删。
-`sts.googleapis.com` 按实际用途审计，不能误分类为 AWS STS。
+八个云 crate 与两条协议依赖主体已删，剩余工作是证明 workspace、normal tree、source、lock、
+release/bundle 全闭包无残留。aws-lc-rs/aws-lc-sys 是 TLS 后端，不按 AWS SDK 误删；
+sts.googleapis.com 按实际消费者审查，不误分类为 AWS STS。
 
 <a id="status"></a>
-## 5. 唯一完成状态表
+## 5. 唯一完成状态与分支审计
 
-“批次已验收”仅对该批次记录的源码/产物有效；“实现已有”不等于最终验收；未执行/缺环境为未验证。
-以下是实现评估基线的状态，更新进度只修改本节，不再新增独立 status、milestone、handoff 或 todo。
+### 5.1 当前状态
 
-| ID | 当前状态 | 已有事实 | 剩余工作 |
-|---|---|---|---|
-| R0 | 基础条件已验证；每轮重做预检 | 本机 Rust/Cargo、受控抓包、系统 DNS 和完整进程树归因已建立 | 当前环境工具/空间/权限预检；不能沿用已消失的临时工具目录 |
-| R1 | 批次已验收 | 本地类型、初始化、终端/workspace/Settings 调用链收敛；GUI/TUI 和关联 targets 可构建 | 不重做接口接通；后续改动按 §7 回归 |
-| R2 | 批次已验收 | 本地功能、真实旧 DB 迁移/写入/重启、15 个 fixtures、日志/ZIP、PATH LSP、真实 GUI/TUI | 不重新寻找旧 DB；维护上述行为并在最终候选重验 |
-| GUI-shell 增量 | 实现与局部验证完成 | `eef716cd` 的补全、prompt、clear、焦点修复；12 focused tests、三组 Clippy、构建/bundle/codesign 有记录 | 该次完整 presubmit 在缺 clang-format 处中断；光标闪烁可见相位仍需人工确认 |
-| R3 | 部分实现，未关闭 | Settings 已以本地页面为主，Privacy 使用固定本地策略；TUI 本地化已有 | 云 UI/action/URI/认证/flag/keybinding 的全面负向测试与孤儿源码清理 |
-| R4 | 未关闭 | 产品身份已改；Windows 尾项仍存在 | 外链 checker/self-test/presubmit 接入、允许清单、Windows 例外审计 |
-| R5 | 部分实现，未关闭 | 云依赖主体删除、精确 pin/TUI features；R1/R2 测试删除 ID 已审计 | 显式 git 来源、当前 inventory、累计源码删除集及全闭包负证明 |
-| R6 / V1 | 未验收 | 部分批次工程/实机/网络证据可追溯 | 同一候选全部 §7 与 C1–C10；当前没有最终验收 manifest |
-| M7 / V2 | 未完成，不在本轮执行 | 运行时身份已完成；文档入口在本次统一 | macOS 品牌资源、许可证材料、发布流程与首个正式产物 |
-| 完整 MIT 路线 | 未启动 | 保留两个 MIT 岛与原创代码边界 | 仅在另行批准后启动独立重实现 |
+| ID | 状态 | 关闭范围或剩余工作 |
+|---|---|---|
+| R0 原批次 | CLOSED | 工具环境、受控采集、系统 DNS 与派生树归因的建设已验收；每轮预检属于维护，不重开原批次 |
+| R1 原批次 | CLOSED | 已核验的本地类型/初始化/编译调用链；后续新代码仍跑回归 |
+| R2 原批次 | CLOSED | 已有 GUI/TUI、本地数据与功能验收按原范围关闭；不是所有上游本地交互都已保留的证明 |
+| 原 GUI-shell | CLOSED | `eef716cd` 的补全/prompt/clear/基础焦点；完整 presubmit 与用户 H1/S8 已补齐，无遗留人工 H1 |
+| L0 本地交互保全 | IN_PROGRESS | 输入/历史/粘贴/设置/菜单第一批代码及 13 个新增测试已写入本变更；未在 macOS 编译运行，不能标 PASS；完整缺口见 §6.2 |
+| R3-F1 菜单焦点 | FIX_IMPLEMENTED_NOT_VERIFIED | 打开聚焦 Menu、统一关闭并有条件恢复焦点、避免完成事件抢焦点；Esc/Enter/Find 测试待运行 |
+| R3 | OPEN | 本地功能恢复后再收尾云 UI/action/URI/auth/flag/keybinding 与孤儿源码，正反向测试不能省略 |
+| R4 | OPEN | 外链检查器/self-test/presubmit 接入、允许清单、Windows 例外审计 |
+| R5 | PARTIAL | 云依赖主体/pin/TUI features 已有；供应链、当前测试清单和累计源码删除范围仍需按最终候选核验 |
+| R6 / V1 | NOT_ACCEPTED | 同一最终候选完整 §7 与 C1–C10，含 runtime/network/release/bundle，不拼历史 PASS |
+| M7 / V2 | NOT_STARTED | 品牌资源、许可证材料、macOS 发布流程和正式产物 |
+| 完整 MIT | NOT_STARTED | 仅在另行批准后独立重实现 |
 
-### 5.1 已确认的具体差距
+本轮新代码的实现状态与原批次关闭分开。不得把旧测试通过数写成修复后已通过，也不得因发现新的
+本地回归就要求用户重做无关旧数据/H1 验收；新增缺口有独立 ID、修复和自动测试。
 
-`persistence/block_list.rs` 已改成本地终端类型，不再把旧 Agent 导入列为当前编译错误。
-`settings_view/tab_menu.rs` 仍引用 CloudModel，但未由 Settings 根模块挂载，属于 R3 孤儿源码。
-`script/check_external_product_links` 不存在；`deny.toml` 仍有组织级放行；R4–R6 不能判完成。
-当前只整理文档和其依赖的回归工具/数据，不顺带实现上述产品清理。
+### 5.2 dev-202609014 已有变更
 
-R1/R2 的 `d3fd6fdc` 批次记录：app 1512 passed / 3 skipped，核心/TUI focused 703 / 2，
-workspace nextest 4752 / 20，completer v2 131 / 4，完整 presubmit 及三组严格 Clippy 通过。
-测试 ID 基线 9777、当时当前 4772、累计消失 5089、新增 84；这些不是最新 HEAD 的统计。
-用户当时已授权退役 integration 与迁移接口测试的整文件删除，并记录逐项 ID；不得恢复退役框架，
-也不得把该授权扩大为未来任意删保留行为测试的许可。
+审计时该分支 HEAD 为 `65a012a7ac344e05c7e09c51a253cbc661e5ac35`，与已测
+`000d17a7b2efb78e639882d803f57aba21ba7a73` 的 Git tree 都是
+`59432b0cc1d129d9a2e111a1625589524f40eb54`。这是源树等价，不是声称在分支合并提交上重新跑过测试。
 
-网络批次仅对指定 debug GUI/TUI 有效：GUI 620 秒、TUI 65 秒，含启动和正常退出的完整派生树
-未见包/DNS/重试/待发文件。这不替代 release/bundle、完整 S1–S13、系统防火墙或 C1–C10。
+相对 `e25f9c174eb38458fb4c4f7a3edcd9260fb6bc5b` 的 11 个变动路径为：
 
-### 5.2 状态依据
+| 文件组 | 分支已有工作 |
+|---|---|
+| resource_center/sections.rs | 本地面板标题调整 |
+| terminal/alt_screen/alt_screen_element.rs、blockgrid_element.rs、mod.rs | 原生/块输出的右键入口与菜单定位 |
+| terminal/view.rs、view/action.rs、view/context_menu.rs | 本地复制/粘贴/复制块/插入输入/查找/分栏菜单；未恢复云菜单 |
+| terminal/local_view_tests.rs | 六个新增菜单/鼠标/动作测试 |
+| block_list_viewport.rs、prompt_render_helper.rs、waterfall_gap_element.rs | 删除三份未挂载旧实现；删除这些孤儿不等于替代实现已有全部原功能 |
 
-以下为固定源码提交上的证据，只用于追溯以上完成声明，不是另一套设计或施工入口。
-当前分支不再保留过期设计、失败尝试日志和重复截图；Git 历史不重写。
+本轮恢复以该树为底稿，不覆盖分支既有工作。所发现的多项输入/显示退化早于这 11 个文件的增量，
+不能把所有丢失行为都归因于最后一次 merge 或三份孤儿文件删除。
 
-- [R0 采集与进程/DNS 归因](https://github.com/tedczj/term4u/blob/eef716cd69b84e0676eb90ad3ee776397aa6b515/docs/redesign/phase1-acceptance/m5-m6/recovery/network-es-20260912/README.md)
-- [R1/R2 批次 checkpoint 与原始日志索引](https://github.com/tedczj/term4u/blob/d3fd6fdc7b91dc42dca99348deaa5827917fc05a/docs/redesign/phase1-acceptance/m5-m6/recovery/r1-r2-20260912/current-checkpoint.json)
-- [最新 GUI-shell 局部验收及限制](https://github.com/tedczj/term4u/blob/eef716cd69b84e0676eb90ad3ee776397aa6b515/docs/redesign/phase1-acceptance/m5-m6/recovery/gui-shell-20260913/README.md)
-- [已授权测试删除审计](https://github.com/tedczj/term4u/blob/d3fd6fdc7b91dc42dca99348deaa5827917fc05a/docs/redesign/phase1-acceptance/m5-m6/recovery/r1-r2-20260912/test-removal-audit.json)
+### 5.3 原批次关闭依据
+
+[机器可读复核索引](../verification/000d17a7b2efb78e639882d803f57aba21ba7a73/batch-review.json)
+保存原始上传包、patch、两次结果和日志引用的 hash 及范围；原报告不改写。
+用户在 macOS 被测 `000d17a7` 上的结果：app 1525 passed/3 skipped，core/TUI 703/2，
+presubmit workspace 4765/20，completer v2 131/4；三组 Clippy、clang-format、WGSL、doc tests、
+完整 presubmit、GUI/TUI build、bundle/codesign 均通过。12 个原 GUI-shell 与 6 个菜单测试有 PASS；
+实际 inventory 9777 baseline、4785 current、5089 removed、97 added。H1/S8 用户 PASS，隔离实例正常退出。
+
+复核了 34 条自动命令、11 条续跑命令及其日志 SHA256、退出码和引用关系。用户报告不是签名远程
+证明；执行器指纹与会话挂载附件有差异且上传包不含实际执行器字节，因此不声明执行器/二进制的远程认证。
+本次 DB 记录是输入完整性；没有新网络捕获或 TUI 全流程。此前 R0/R2 原始实机验收按各自原范围保留：
+
+- [R0 归因与指定 debug 产物观测](https://github.com/tedczj/term4u/blob/eef716cd69b84e0676eb90ad3ee776397aa6b515/docs/redesign/phase1-acceptance/m5-m6/recovery/network-es-20260912/README.md)
+- [R1/R2 checkpoint](https://github.com/tedczj/term4u/blob/d3fd6fdc7b91dc42dca99348deaa5827917fc05a/docs/redesign/phase1-acceptance/m5-m6/recovery/r1-r2-20260912/current-checkpoint.json)
+- [原 GUI-shell 记录](https://github.com/tedczj/term4u/blob/eef716cd69b84e0676eb90ad3ee776397aa6b515/docs/redesign/phase1-acceptance/m5-m6/recovery/gui-shell-20260913/README.md)
+- [授权测试删除审计](https://github.com/tedczj/term4u/blob/d3fd6fdc7b91dc42dca99348deaa5827917fc05a/docs/redesign/phase1-acceptance/m5-m6/recovery/r1-r2-20260912/test-removal-audit.json)
+
+这些固定提交链接是证据，不是另一套活动设计。R0 的 GUI 620 秒/TUI 65 秒零包/DNS记录不能代替
+最终 release/bundle、S1–S13 和系统防火墙。过去授权退役 integration 不扩大为任意删本地测试。
 
 <a id="implementation"></a>
-## 6. 剩余施工步骤
+## 6. 当前施工顺序与本地功能恢复
 
-顺序固定：**环境预检 → R3 → R4/R5 → R6 → 关闭 V1 → 经授权进入 M7**。
-R1/R2 作为回归契约，不再重新大规模删除/重建；若回归失败，修复该失败再继续。
+顺序：**环境预检 -> L0 本地交互保全 -> R3 -> R4/R5 -> R6 -> V1 -> 经授权 M7**。
+L0 有未关闭的日常交互回归时，优先补回，不继续以大规模删代码追求“干净”。不重做原 R0/R1/R2 施工。
 
 ### 6.1 环境预检
 
-记录 HEAD、UTC、初始工作树、rust-toolchain.toml 指定工具链、空间和权限；先找已安装工具，
-不擅自升级或修改系统配置。确认 Cargo/nextest、clang-format、仓库指定 wgslfmt、GUI/PTY、
-macOS 捕获权限及隔离数据副本。历史 /tmp 工具消失需要恢复，不能删除检查绕过。
-先完成 §7.1 并重跑完整 presubmit 获取当前基线；按失败根因分组，不引用旧错误数量。
+记录 HEAD/UTC/初始 diff、pinned Rust、空间、Cargo/nextest、clang-format、指定 wgslfmt、GUI/PTY
+与隔离副本条件。先找已装工具，不擅自升级/安装或删门禁；新源码按 §7.1 与 presubmit 获取真实结果。
+本轮编辑环境没有 Cargo/macOS，也无法完整克隆；代码做了静态路径/API核对和差异检查，新增 Rust 测试
+尚未运行。缺环境为 INCOMPLETE，不因旧 candidate 曾 PASS 就将新修复判完成。
 
-### 6.2 R3：UI、认证、动作和 TUI 收尾
+### 6.2 L0：先保住本地交互
 
-按 Settings 页面/搜索 → Command Palette/keybindings → 菜单/workspace actions → URI/deeplink
-→ auth 值类型 → TUI 的顺序核对。先确认模块和消费者，再删未挂载孤儿文件、云 flag/快捷键。
-重点包含 `app/src/settings_view/`、`settings/`、`app_menus.rs`、workspace/root 和 URI 处理入口。
-对 `drive`、`team`、`billing`、`api key`、`warp agent` 搜索及对应 deeplink 加拒绝/不可见测试；
-对本地设置搜索、文件/终端操作加成功测试。不能留下灰色云按钮、“登录后使用”壳或幽灵结果。
-Privacy 固定本地值、auth 无云凭据；TUI 固定宽度 render-to-lines 与真实 PTY 操作均验证。
-出口：源码/注册表审计、正反向测试、GUI 可见结果与 TUI 屏幕文本齐全，且 R1/R2 不回归。
+| ID / 优先级 | 发现、实现位置与下一步 | 验收出口 |
+|---|---|---|
+| L0-01 / P1 | input.rs 忽略 Editor Navigate，上下历史未接入；本变更接回现有 History、会话内前缀回看、草稿/光标恢复，保持多行内部导航 | 真实 Up/Down 路由、跨会话、编辑后退出回看、无匹配/选区保护、新输入不被过期补全覆盖；历史搜索/本地建议仍需审查，不以基础回看替代全部历史 UI |
+| L0-02 / P1 | append_to_buffer 把输入追加末尾；本变更将用户插入/终端粘贴/选择插入切换到 editor UserInsert，使用现有 shell 路径转义 | 光标中部、替换选区、Unicode、多行、Undo、后缀保留且不自动执行；原生程序的 bracketed paste/控制字符策略另行补齐 |
+| L0-03 / P1 | 通用 EditorOptions 默认关闭本地终端需要的 autogrow/soft_wrap/行高/Vim/光标偏好；本变更接回 | 多行导航、长行布局、偏好变更和 Vim 输入/普通 PTY 分支回归；不能以 options 已设置冒充实机布局通过 |
+| L0-04 / P1 | 即 R3-F1；菜单没有接管键盘焦点，关闭未统一恢复；本变更打开聚焦 Menu、关闭按所有权恢复，命令完成不抢菜单/Find 焦点 | 实际聚焦状态下 Esc/Enter/Find 的按键路径测试；Enter 不能执行终端草稿；鼠标已有六测试继续保留 |
+| L0-05 / P1 | DragAndDropFiles 原为空操作；本变更补动作处理和 shell 转义插入；外部文件拖入 hit-test/DropTarget 完整链路尚未确认 | Finder 多文件、空格/引号路径、输入中部/原生程序、跨 pane；现有新增动作测试不代替 OS 投递测试；不恢复 Agent 图片附件 |
+| L0-06 / P1 | has_highlighted_link 固定 false，ClickOnGrid/MaybeLinkHover 等仍为空；未在本变更修复 | 接回普通 URL/OSC8/本地文件行号的解析、悬浮和用户点击；以替身 opener 断言点击才打开，恶意 scheme/无点击不触发；保留外链守卫边界 |
+| L0-07 / P1 | ClipboardStore/Load、Bell 等只 notify；MarkedText 分支为空；这证明处理链缺口，尚不等于所有输入法场景均失败 | 对模型事件逐项补消费者与权限；OSC 读取不得无条件开放；IME 组合/提交/取消分开测，使用受控 PTY/事件注入，不能整包恢复旧 view |
+| L0-08 / P1 | 简化渲染曾固定本地显示策略；本变更接回现有 get_secret_obfuscation_mode；块/图片/富内容/滚动和选择仍需保全审计 | 本地隐私设置应作用于画面；进一步核对检测/复制/导出路径。补图片、块导航/折叠、clear/Ctrl-L/Cmd-K、alt-screen 选择与大输出性能的正向验证 |
+| L0-09 / P2 | 设置/UI 入口、历史搜索/建议及其他本地菜单尚无全面等价审计 | 对 §2.2 逐项登记源码消费者与测试；入口有而 handler 无操作、设置有而 render 不使用均为失败；无证据项不得写“未丢失” |
 
-### 6.3 R4：产品外链和 Windows 尾项
+本变更只完成第一批接线，不宣称 L0-01–09 全部修好。新增 `input_local_tests.rs` 六个、
+`local_interaction_tests.rs` 七个测试；原 input_tests/local_view_tests 不删、不改断言。
+新测试覆盖插入/撤销/选择、历史草稿/会话、真实方向键、多行、粘贴不执行、菜单 Esc/Enter/Find、
+文件路径动作。尚缺的 OS 拖入、原生 PTY paste、链接、IME/OSC/响铃及渲染测试必须补齐。
 
-实现 `script/check_external_product_links`，包含允许/拒绝样例及 `--self-test`，区分产品硬编码跳转
-和用户 URL；扫描读文件/命令错误必须失败，不能 `|| true` 吞错。接入 presubmit 的 Clippy 之前。
-逐个保留外链登记路径、触发方式、理由与批准人，不能笼统允许整个域名/目录。
+首轮自动命令（过滤器必须实际命中；最终仍跑完整集合）：
 
-审计 app、warpui、warpui_extras、prevent_sleep、warp_terminal、warp_util 的 Windows 文件、
-模块及 target/build dependencies，剩余严格等于 §3.4 例外。检查 embed-resource、dunce 等
-失去消费者的依赖；已删除项不重做，混合 target 保留 macOS 所需部分。
-出口：network/external 两种 checker 正常检查和 self-test 全过，Windows 与外链表可逐项复核。
+```bash
+cargo nextest run -p warp --no-default-features --features local_only,test-util \
+  -E 'test(terminal::input::local_tests) | test(terminal::view::local_interaction_tests) | test(terminal::input::tests) | test(terminal::view::tests)'
+./script/format
+./script/format --check
+./script/test_inventory
+./script/presubmit
+```
 
-### 6.4 R5：依赖、供应链和删除清单
+未增加泛化人工清单。原 H1 已完成；新问题优先补自动事件/PTY/渲染测试。只有自动化不能证明的
+具体实屏行为才安排一次集中 smoke，注明候选和未覆盖点，不让用户再重跑无关 R0/R1/R2 手工场景。
+L0 已知阻塞关闭后才能继续按 R3–R6 宣告产品收敛。
 
-执行 §4 的 manifest/feature/git 来源收敛和 §7.3 负证明；不恢复 integration crate 或云协议。
-`script/deletion_set.txt` 是累计实际源码删除范围，不能继续使用单批快照或另建同名设计副本。
-测试分类工具 `script/lib/classify_tests.py` 只辅助识别 A（删除）、B（断裂候选）、C（行为漂移候选），
-不代替编译、真实测试 ID 或人工批准。它只读取同一份 deletion_set。
+### 6.3 R3：UI、认证、动作和 TUI
 
-运行实际 `script/test_inventory`，相对于原始 ID 基线精确核对消失集与已批准集，两者必须相等；
-新 ID 与保留行为覆盖另行审查。清单/JSON/编译生成失败不能发布空快照，旧快照不能被失败覆盖。
-新删除须理由与批准，保留行为测试不得通过 ignore、dead_code、弱断言或 blanket allowlist 变绿。
-出口：当前 ID 差异、逐项理由/授权、累计删除集、依赖来源/许可证及所有结构负证明齐全。
+先完成 L0，再按 Settings/搜索 -> Command Palette/keybindings -> 菜单/workspace -> URI/deeplink
+-> auth 值类型 -> TUI 收尾。先确认模块与消费者，再删云孤儿/flag/快捷键；不把本地处理器一并掏空。
+`settings_view/tab_menu.rs` 的 CloudModel 是未挂载孤儿，不是当前编译错误；本地 persistence/block_list
+已替换旧 Agent 导入，不重做该修复。
 
-### 6.5 R6：同一候选完整验收
+对 drive/team/billing/api key/warp agent 搜索及对应 deeplink 做拒绝/不可见测试，对本地设置、文件、
+终端操作做成功测试；无灰按钮、登录壳或幽灵搜索。Privacy 固定关闭云传输，保留真实本地设置。
+TUI `/` 保持 shell 字符，不增 slash 云菜单；固定宽度测试与真实 PTY 均必验。
+出口是源码/注册表、正反向测试、真实 GUI/TUI 证据完整，不只是云字符串搜索零命中。
 
-全部修复后经授权冻结源码/manifest/lock/测试/脚本/资源为 `SOURCE_HEAD`。
-针对同一候选执行 §7 全部命令和实机矩阵，逐项满足 C1–C10。任一输入变动即重新冻结重验。
-保存失败和修复关系，但当前状态只更新 §5；不能拼接旧批次 PASS，也不能宣布“只差验证所以完成”。
-正式证据 manifest 只索引观测结果与本文 ID，不复制另一份目标或验收条件。
+### 6.4 R4：内建外链与 Windows 尾项
+
+实现 script/check_external_product_links，提供允许/拒绝样例、--self-test、扫描出错失败；接入
+presubmit 的 Clippy 之前。区分内建上游跳转与用户 URL；保留项逐条记录路径、触发方式、理由、批准人。
+审计 app/warpui/warpui_extras/prevent_sleep/warp_terminal/warp_util 的 Windows 文件、模块与 target，
+剩余严格等于 §3.3 例外；清理失去消费者的 embed-resource/dunce 等，混合 target 不误删 macOS。
+出口：network/external checker 与 self-test 通过、外链和 Windows 审计表完整。
+
+### 6.5 R5：依赖、供应链与删除清单
+
+执行 §4 和 §7.3 全闭包审查；script/deletion_set.txt 表示累计实际删除范围，不是单批设计副本。
+分类工具只给 A/B/C 候选，不替代编译或人工授权。实际 test_inventory 对原始基线计算消失集，必须
+与批准集精确相等；新 ID 与行为覆盖另审。失败不能生成空清单或覆盖快照。
+禁止用 ignore/dead_code/弱断言/blanket allowlist/删保留行为测试获得 PASS；不恢复已退役 integration。
+
+### 6.6 R6：最终同一候选验收
+
+全部修复后冻结源码、manifest、lock、脚本、测试、样本、资源到 SOURCE_HEAD；执行 §7 全矩阵并满足
+C1–C10。输入变化重新冻结并跑受影响验证及最终门禁，不拼旧批次 PASS。manifest 只索引结果和设计 ID。
 
 <a id="verification"></a>
 ## 7. 完整验证程序
 
-全部在仓库根目录执行；记录命令、UTC、平台、工具版本、退出码和原始输出。
-管道使用 `set -euo pipefail`；未执行为 NOT_RUN，环境不足为 INCOMPLETE，产品失败为 FAIL。
-命令列在这里不表示已通过。临时 focused 过滤必须实际命中测试，最终不替代完整集合。
+从仓库根目录执行，记录命令、UTC、平台、工具、退出码及原始输出；管道 set -euo pipefail。
+未执行 NOT_RUN，环境不足 INCOMPLETE，产品失败 FAIL。以下命令列出不代表通过。
 
-### 7.1 预检、编译和 focused 全集
+### 7.1 预检、编译与 focused 全集
 
 ```bash
 git rev-parse HEAD
@@ -339,14 +376,14 @@ cargo build --release --locked -p warp_tui --bin term4u-tui \
   --no-default-features --features offline_hard,standalone
 ```
 
-presubmit 必须保留三组严格 Clippy：workspace（排除单独测的 warp_completer）、default GUI、
-default completer；还包括 clang-format、WGSL、workspace nextest（排除 command-signatures-v2）、
-completer v2 和 doc tests。inventory 失败处理单测不等于真实 ID 全集检查。
-TUI integration/bench 组合是额外门禁，不因 presubmit 未覆盖而省略；不使用不支持的 --all-features。
+presubmit 保留 workspace（排除单独测的 warp_completer）、default GUI、default completer 三组严格
+Clippy，以及 clang-format、WGSL、workspace nextest（排除 command-signatures-v2）、completer v2、
+doc tests。inventory 失败处理单测不代替真实 ID 全集。TUI integration/bench 是额外门禁，不能省略；
+不使用不支持的 --all-features 代替明确组合。
 
-### 7.3 结构、源码和依赖负证明
+### 7.3 结构、源码与依赖负证明
 
-以下代码在同一个 Bash 会话按序运行。`no_match` 只接受 rg 的“无匹配”退出码 1，不接受扫描错误。
+在同一 Bash 会话按序运行，扫描失败不能当无匹配：
 
 ```bash
 set -euo pipefail
@@ -386,12 +423,12 @@ for path in \
 done
 ```
 
-另归档 auth/UI/actions、Windows 文件及 target blocks、全部内建外链、features、下载脚本、
-迁移 diff 和真实测试 ID 扫描。文本无命中不代替运行与依赖闭包；旧表名/opaque JSON 不代表云实现。
+另归档 auth/UI/actions、Windows/target、内建外链、feature、下载脚本、迁移 diff 和测试 ID 审计。
+文本扫描不能替代运行/依赖闭包或 L0 本地行为保全，opaque JSON/旧表名不等于云实现。
 
 ### 7.4 发布产物与资源
 
-沿用 §7.3 的 E/no_match，扫描真实发布候选；记录 GUI/TUI 和 bundle 全资源文件 hash 清单。
+沿用 E/no_match，扫描实际发布候选；记录 GUI/TUI 与 bundle 全资源 hash：
 
 ```bash
 PATTERN='app\.warp\.dev|rtc\.app\.warp\.dev|sessions\.app\.warp\.dev|oz\.warp\.dev|releases\.warp\.dev|rudder|sentry|otlp|opentelemetry|firebase|AIzaSy|warp drive|session sharing|aws bedrock|mcp'
@@ -404,125 +441,108 @@ shasum -a 256 target/release/term4u target/release/term4u-tui
 codesign --verify --deep --strict target/release/bundle/osx/Term4u.app
 ```
 
-真实假阳性按精确字符串、来源、保留理由和负责人批准记录，保留原始命中和过滤后结果。
-不能整体忽略 warp/mcp、全部 resources 或某依赖组织。扫描产物必须与实机运行 hash 相同。
-签名校验不等于 Apple 公证或正式发布；身份/scheme/keyring 和签名状态单独记录。
+实际 target_directory 以 metadata/构建配置为准；用了自定义目录须在以上扫描命令中一致替换，
+不可扫描旧 target 下的其他产物。真实假阳性逐条记字符串、来源、理由、批准、原始命中和过滤结果；
+不整体忽略 warp/mcp/resources/组织。签名校验不等于 Apple 公证，身份/scheme/keyring 单独验证。
 
-### 7.5 GUI、TUI、数据与本地功能矩阵
+### 7.5 GUI、TUI、数据与本地行为
 
-| ID | macOS GUI 场景 | 最小观察 |
+| ID | GUI 场景 | 最小观察 |
 |---|---|---|
 | S1 | 冷启动 | 正确身份，无登录/云启动依赖 |
-| S2 | tab | 新建/切换/关闭/Undo，位置正确 |
-| S3 | split | 新建/调整/退出单个 shell，其他 pane 不丢 |
-| S4 | 命令与输入 | 输出、Ctrl-C、补全、prompt/PS1/Git、clear/回滚 |
-| S5 | 文件树 | 打开目录与文件，局部状态恢复 |
-| S6 | 文本预览/编辑 | 预览、编辑保存、未保存取消关闭、本地搜索/diff |
-| S7 | 设置与菜单 | 本地项可用，云搜索/菜单/URI 不可见不可调用 |
-| S8 | 失焦/聚焦 | 鼠标点击回输入，拖选保留，光标可见及闪烁人工确认 |
+| S2 | tab | 新建、切换、关闭、Undo 及位置 |
+| S3 | split | 新建、调整、退出一个 shell 不丢其他 pane |
+| S4 | 命令与输入 | 输出、Ctrl-C、历史、补全、PS1/Git、clear/回滚及 L0 输入/粘贴 |
+| S5 | 文件树 | 打开目录/文件和局部状态恢复 |
+| S6 | 预览/编辑 | 编辑保存、未保存取消关闭、搜索/diff |
+| S7 | 设置/菜单 | 本地项真实可用、云菜单/搜索/URI 不可用，菜单按键不泄漏到终端 |
+| S8 | 焦点 | 点击回输入、拖选保留、光标可见/闪烁；原用户 H1 即该项的既有批次确认 |
 | S9 | 睡眠/唤醒 | 会话与 UI 保留，无后台重连/重试 |
-| S10 | 关窗与恢复 | 注册表、tab/pane/左面板模式及宽度正确 |
-| S11 | 退出/重启 | 历史、notebook/workflow、本地编辑与窗口状态往返 |
-| S12 | debug Rust panic | 真实 panic 入本地日志；无崩溃上传，不能用 SIGSEGV 替代 |
-| S13 | 空闲十分钟 | 无外连/DNS/重试/待发文件，UI 与进程退出正常 |
+| S10 | 关窗/恢复 | 注册表、tab/pane/左面板模式和宽度 |
+| S11 | 退出/重启 | 历史、notebook/workflow、本地编辑及窗口状态往返 |
+| S12 | debug Rust panic | 真实 panic 写本地日志，无上传；不能用 SIGSEGV 替代 |
+| S13 | 空闲十分钟 | 无外连/DNS/重试/待发文件，UI 和退出正常 |
 
-另逐项验证 §2.3 所有保留契约，尤其 workflow 参数和项目加载、notebook 真实换行与重启、
-code review/Undo、日志 UI ZIP CRC、本地 env 展开、bundled skills 字节一致性。
-LSP 五种类型分别测试 PATH 命中/缺失/不可运行；伪 server 记录启动参数，伪 curl/wget/npx/npm
-下载调用日志应为空。真实旧 DB 和 fixtures 在隔离副本完成迁移/写入/再次启动，对照内容和字段。
+逐项验证 §2.2/§6.2，尤其 workflow 参数与项目加载、notebook 换行/重启、code review/Undo、
+UI ZIP CRC、本地 env 展开、skills 字节一致性。LSP 五种类型分别测 PATH 命中/缺失/不可执行；伪
+server 记录参数，伪 curl/wget/npx/npm 下载日志为空。旧 DB/fixture 副本迁移、写入、重启后对照字段。
 
-TUI 必须在真实交互 PTY 中运行 `./script/run-tui`，保存屏幕文本，验证启动、输出、Ctrl-C、
-tab/新 tab、外部 CLI 和正常退出；固定宽度 render-to-lines 仅是补充，GUI 测试不能代替 TUI。
-截图捕获缺字与实际物理窗口缺字必须区分，不能凭不可靠增量截图修改渲染器或虚报结果。
+TUI 在真实交互 PTY 运行 ./script/run-tui，保存屏幕文本，验证输出、Ctrl-C、tab/新 tab、外部 CLI、
+退出。render-to-lines 是补充，GUI 不代替 TUI；不恢复退役 integration。增量截图缺字与实际画面
+缺字要区分，不凭不可靠截图调整渲染器。原批次不重做不代表新修复或最终 R6 无需回归。
 
 ### 7.6 网络与第二道防线
 
-隔离 HOME/profile、干净 shell、恶意代理配置下运行真实候选 GUI/TUI，各至少 60 秒，另覆盖 S13。
-先验证捕获权限和受控流量可见：包、系统 DNS client PID/request ID、短命子进程三条链路可关联。
-`script/capture_macos_network.py` 从用户已授权终端手工 sudo 启动；应用必须由普通用户另行启动。
-脚本返回 COLLECTED_NOT_YET_VERIFIED 仅表示采集完成，必须继续分析才能判定。
+隔离 HOME/profile、干净 shell、恶意代理下运行候选 GUI/TUI，各至少 60 秒，另覆盖 S13。先验证
+采集权限和受控流量：包、系统 DNS client PID/request ID、短命子进程三条链路可关联。
+script/capture_macos_network.py 由用户授权终端手工 sudo 运行，应用另以普通用户启动。
+COLLECTED_NOT_YET_VERIFIED 只是采集完成，不是 PASS。
 
-捕获启动到正常退出及收尾窗口的主进程与完整派生树，包含 exec/PID 版本，不能只按进程名或
-进程组 grep；核对事件序号、解析错误、内核丢包、采集退出码和所有派生进程退出覆盖。
-检查 TCP/UDP/WebSocket、DNS 53/853、系统代理解析、后台重试以及待发遥测/崩溃文件。
-空文件必须与成功校准、归因、无丢包和正常收尾共同判读。零外连要求是零非 loopback 请求，
-不是被网络守卫拒绝若干次后无成功连接。
+捕获启动到正常退出及收尾窗口的主进程和完整派生树，包含 exec/PID 版本；核对事件序号、解析错误、
+内核丢包、采集退出码、全部派生进程退出。检查 TCP/UDP/WebSocket、DNS53/853、代理解析、后台重试
+和待发遥测/崩溃文件。空文件必须结合校准/归因/无丢包/正常收尾判断，不能只 grep 进程名或进程组。
+零外连是零非 loopback 请求，不是请求被守卫拒绝后没有连接成功。
 
-系统防火墙作为第二道防线，确认规则有效并保留空的拒绝日志；改规则需授权。
-静默场景不主动跑联网命令；用户 PTY 联网能力另外验证，不计入产品静默外连数。
-系统级 ES/网络日志可能含其他进程参数/环境，原始文件只留本机受限目录，不上传未经脱敏的全文。
+系统防火墙规则须有效并保留空拒绝日志，改规则需授权。静默场景不跑联网命令，用户 PTY 联网另测。
+原始系统 ES/网络日志可能含其他进程环境/参数，只留本机受限目录，不公开未经脱敏的全文。
 
 <a id="acceptance"></a>
 ## 8. 验收条件 C1–C10
 
-以下是唯一验收定义。当前最终候选各项均未整体关闭；§5 的批次通过不能直接填作最终 PASS。
+这是唯一最终验收定义。当前各项未整体关闭，§5 原批次关闭不可直接填作最终 PASS。
 
-| ID | 完成条件 | 证据要求 |
+| ID | 完成条件 | 证据 |
 |---|---|---|
-| C1 | GUI/TUI 及关联 crate 的 default/local_only/test-util 全组合通过 | §7.1/7.2 check/build、命令/退出码与候选身份 |
-| C2 | 终端、Ctrl-C、tab/split/window、编辑/文件/搜索/diff 行为保留 | 对应本地测试、GUI S1–S11 和真实 TUI |
-| C3 | workflows/notebooks/env-vars 和旧 DB 可读写恢复 | 样本/fixture、字段对照、迁移审计、写入/重启 |
-| C4 | 云 UI/auth/Agent/Drive/共享及动作死引用清零，本地设置/TUI 正常 | 正反向测试、注册表/源码扫描、可见结果 |
-| C5 | PATH LSP、skills/日志完整，外链和 Windows 尾项关闭 | 五种 LSP 分支/零下载、日志三场景、资源/外链/平台审计 |
-| C6 | 云 crate/协议/ServerApi 在所有闭包无残留且供应链明确 | metadata、GUI/TUI tree、source/lock、pin、显式 git 来源、cargo deny |
-| C7 | 无未批准测试消失，保留覆盖未弱化，完整工程门禁通过 | 实际 inventory、ID/批准对照、累计删除集、format/clippy/presubmit/workspace/doc/额外组合 |
-| C8 | release 二进制/bundle 无未批准黑名单；静默运行零外连/DNS/重试/待发文件 | hash、strings/resources、归因捕获、S1–S13、系统防火墙 |
-| C9 | macOS arm64 全部最小矩阵通过 | 同一源码的工程/实机/旧数据/网络/签名/身份/scheme/keyring 记录 |
-| C10 | R0–R6 全收敛且证据可追溯，不把缺环境/WIP 当完成 | 同一 SOURCE_HEAD manifest、输入 hash、初始/最终 diff/status、本文状态更新 |
+| C1 | GUI/TUI/关联 crate 的 default/local_only/test-util 组合通过 | §7.1/7.2 check/build、命令/退出码与身份 |
+| C2 | 终端/Ctrl-C/tab/split/window/编辑/文件/搜索/diff 及本地交互保留 | 本地测试、L0 关闭、GUI S1–S11、真实 TUI |
+| C3 | workflows/notebooks/env-vars 与旧 DB 可读写恢复 | fixture/字段对照/迁移审计/写入/重启 |
+| C4 | 云 UI/auth/Agent/Drive/共享及动作死引用清零，本地设置/TUI 正常 | 正反测试、注册表/源码与可见结果 |
+| C5 | PATH LSP、skills/日志完整，外链和 Windows 关闭 | 五种 LSP 分支/零下载、日志三场景、资源/外链/平台审计 |
+| C6 | 云 crate/协议/ServerApi 全闭包无残留且供应链明确 | metadata、GUI/TUI tree、source/lock、pin、显式 git 来源、cargo deny |
+| C7 | 无未批准测试消失、保留覆盖未弱化、完整工程门禁通过 | inventory/ID授权、累计删除集、format/clippy/presubmit/workspace/doc/额外组合 |
+| C8 | release/bundle 无未批准黑名单，静默零外连/DNS/重试/待发文件 | hash、strings/resources、归因捕获、S1–S13、防火墙 |
+| C9 | macOS arm64 全部最小矩阵通过 | 同一源码工程/实机/数据/网络/签名/身份/scheme/keyring |
+| C10 | 原批次保持关闭、L0/R3–R6 收敛且证据可追溯，不把缺环境/WIP 当完成 | 同一 SOURCE_HEAD manifest、输入hash、初始/最终diff/status、本文状态 |
 
-C1–C10 全部通过后，才能把 §5 的 V1 标为完成并关闭 V0 严格验收，不再维护第二个 V0 manifest。
-M7/V2 和完整 MIT 不因 V1 完成而自动完成。
+全部通过后方可把 V1 标为完成并关闭 V0 严格验收，不另维护第二个 V0 manifest。M7/V2/MIT 不自动完成。
 
 <a id="evidence"></a>
-## 9. 证据、文档与变更纪律
+## 9. 证据与变更纪律
 
-本文件同时承担目标、架构、已完成/未完成和施工验收说明。README 只提供介绍与入口；AGENTS/
-CONTRIBUTING 只提供工程/协作规则，不复制状态表或另建方案。更改设计直接更新本文，不创建
-带日期的替代设计、历史分支方案、handoff、milestone 或 todo。过期说明、孤儿截图/日志/临时脚本
-直接从工作树清理，历史需要时查看 Git；测试输入和产品资源按真实消费者保留。
+需求、架构、状态和施工只在本文维护；README 是入口，AGENTS/CONTRIBUTING 是工程协作规则。
+不创建日期版替代设计、handoff、milestone 或 todo。过期说明和孤儿日志/截图/临时脚本清理，历史查
+Git；真实测试输入和产品资源按消费者保留。复核 JSON 仅为本文引用的原始证据索引，不新增任务表。
 
-新验收原始输出放 `verification/<SOURCE_HEAD>/`，manifest 使用机器可读数据，至少包含：
-源码提交、设计版本、工具/平台、feature/build 参数、输入及产物 hash、C-ID、命令、UTC、退出码、
-日志路径、观察/限制、PASS/FAIL/NOT_RUN/INCOMPLETE。数据文件不重新定义设计或维护另一份待办。
-同一候选的失败尝试保留以解释最终结果；候选失效后不再保留成当前分支上的独立状态记录。
-归档前脱敏；不能用模型总结代替原始日志，也不需要在 manifest 写入它自身提交 hash。
+新原始输出归档 verification/<SOURCE_HEAD>/，机器可读 manifest 至少记录源码/设计版本、工具/平台、
+feature/build 参数、输入/产物hash、C-ID、命令、UTC、退出码、日志路径、观察/限制和结果状态。
+不得以模型总结替代原始日志，公开前脱敏。报告不要求写自己的提交hash；证据提交不得改变验证输入。
+候选变化时按新输入验证，不能自动套用旧 PASS，也不为文档-only归档反复让用户完成同一人工步骤。
 
-提交证据可在 SOURCE_HEAD 后作为不改变构建/测试/运行输入的提交；若脚本、样本、配置或资源
-变化，旧证据不自动覆盖新输入。本次文档清理也迁移了回归工具/数据路径，因此要重新验证工具，
-不冒称产品最终验收通过。
-
-不得覆盖用户已有工作树或真实数据。提交、push、PR、tag、发布、特权采集和系统安装各按用户
-授权范围执行；文档 PR 的授权不等于 merge/tag/发布授权。只清理已明确退役的仓库记录，不为了
-空 git status 删除其他用户文件。已有编码、终端锁与测试纪律继续适用，不能靠删门禁变绿。
+保护用户工作树/真实数据/.pi，不为干净状态 reset 或删用户文件。commit/push/PR/merge/tag/release/
+系统安装/特权采集按各自授权执行；PR授权不等于merge。源码含新修复时必须跑新回归，未执行就保持
+Draft/NOT_RUN，不降低 AGENTS 的 format/Clippy 和最终工程门禁。
 
 继续开发指令：
 
 ```text
-按 docs/DESIGN.md 执行环境预检、R3、R4/R5、R6，保留已验收的 R1/R2 行为，不恢复云空壳或退役 integration。完成全部 §7 并满足 C1–C10，按同一候选归档原始证据；只在本文件更新状态。缺环境/未执行如实记录，禁止削减验证。M7/V2、完整 MIT 和发布操作不自动展开；提交与特权操作按明确授权执行。
+按 docs/DESIGN.md 先完成 L0 本地功能保全，验证第一批输入/历史/菜单修复，并补齐链接、原生粘贴、文件拖入和本地终端事件。非云/非 Warp Agent 功能不因旧目录混合而删除。随后完成 R3、R4/R5、R6，满足全部 C1–C10；只在本设计更新状态。原 R0/R1/R2/原 GUI-shell 不重做施工，新的回归不能冒充已关闭。保留用户 PTY CLI、本地数据/日志/LSP，不恢复云空壳或退役 integration；提交/特权/发布按明确授权。
 ```
 
 <a id="release"></a>
 ## 10. V2 发布与后续演进
 
-### 10.1 M7 / V2：V1 关闭后执行的同一设计
+### 10.1 M7 / V2
 
-| 工作包 | 实施内容与出口 |
-|---|---|
-| macOS 品牌资源 | 从实际消费者出发处理 bundled Warp SVG、about/logo、channel 图标、安装图片、Dock 插件及字体品牌字形；用独立 Term4u 资产替换，验证构建/资源引用及可见结果；不再改 §3.1 身份 |
-| 文档与归属 | README/贡献/安全/行为准则及 authors/联系入口统一 Term4u；来源、基线和原版权保留；删除上游宣传/支持/发布承诺，不暗示获得上游背书 |
-| 许可证材料 | 生成目录许可证地图和 NOTICES、核对 MIT 岛声明与第三方依赖；保留 AGPL 源码与适用分发材料，不把 fork 改写成 MIT |
-| 构建与发布流程 | 清理依赖上游内部 secrets/服务的 CI 和发布脚本，建立 macOS 可复现打包、签名状态/公证策略与源码对应；不创建 Windows/Linux 新发布路线 |
-| 发布验收 | 复核名称/品牌、真实 `.app` 资源与身份、全部 V1 回归、许可证材料、源码/产物 hash；经单独授权创建首个 tag/release，记录实际执行结果 |
-
-现行工程门禁沿用 §7，M7 只增加品牌/许可证/发布检查，不另建冲突的最低标准。
-用户运行时保持本地离线，不增加自动更新。发布工作不能靠删除法律归属字符串达到品牌扫描零命中。
+V1 关闭后，按同一设计处理 macOS 品牌资源：SVG/logo/About/channel图标/安装图片/Dock插件/字体字形，
+先查消费者，再用独立 Term4u 资产替换；不再次改变运行时身份。README/贡献/安全/行为准则/authors/
+联系入口统一项目身份，保留上游来源、基线和版权，不暗示上游背书。
+生成许可证地图、MIT 岛声明和 NOTICES，保留 AGPL 分发材料。清理依赖上游 secrets/服务的 CI 与发布
+脚本，建立可复现 macOS 打包、签名/公证策略、源码与产物对应；不新增 Windows/Linux 发布路线。
+发布前跑完整 V1 回归及品牌/名称/资源/许可证检查，经独立授权才创建 tag/release；不加自动更新。
 
 ### 10.2 可选完整 MIT 重实现
 
-只有在 V1/V2 完成且另行批准后进入，当前无实施承诺和未经校验的工作量估计。
-先从本文保留行为确定新产品范围和黑盒验收；审计两座 MIT 岛的直接/传递依赖，再以独立实现或
-经核验的合适第三方替换 AGPL 依赖。保留来源、许可证和实现过程记录，不复制 AGPL 代码到 MIT。
-原版 MIT 部分仍需其版权声明；“MIT 岛存在”不是“最终应用已经 MIT”的证据。
-
-未来确需 agent_protocol/local_agent_bridge/local_fs_service 时，再定义协议、认证/权限、
-进程与文件边界和行为测试并更新本文；当前不创建空 crate，也不恢复 Warp 云 API 为其铺路。
+只有 V1/V2 完成且另行批准后进入。按本文保留行为写黑盒规格，审计两座 MIT 岛的直接/传递依赖，
+用独立实现或经核验的第三方替换 AGPL；不搬运 AGPL 到 MIT。保留来源、许可和实现过程记录。
+未来确需 agent_protocol/local_agent_bridge/local_fs_service 再在本文定义协议、权限、进程/文件边界
+与测试，当前不建空 crate、不恢复 Warp 云 API。MIT 岛存在不是最终应用已经 MIT 的证据。
