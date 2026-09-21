@@ -279,7 +279,7 @@ Git tree 与分支一致。macOS Apple Silicon 验证由 `.github/workflows/term
 
 本轮目标是恢复 §2.2 已承诺的本地行为，不扩展云 Agent、账号、Drive、远程控制面或新 Agent 协议。外部 CLI 仍是普通 PTY 子进程。旧数据库、迁移、未知字段、产品身份和已有测试保持不变。
 
-| ID | 当前可确认的进度 | 本轮完成出口 |
+| ID | 审查基线时可确认的进度（当前分支见 §6.2.15） | 本轮完成出口 |
 |---|---|---|
 | L0-01 | 基础历史回看、草稿/光标恢复及测试已写 | 历史来源与顺序明确；真实方向键、历史搜索、本地建议及异步失效完整 |
 | L0-02 | `Input::insert_text` 已使用编辑器插入语义 | 编辑器插入与原生 PTY paste 分开；bracketed paste、控制字符、Undo 完整 |
@@ -734,6 +734,9 @@ https://invisible-island.net/xterm/ctlseqs/ctlseqs.html
 参考代码仍以 §6.2.2 的 O1–O9 固定原提交为准；本轮不以新模块名称冒充上游原位置。
 
 **已取得的候选证据（不是本轮全部修复的 PASS）：**
+
+- `8abea95f3e4121a69fd79cb6155a854344ad1f97` 已提交完整 L0 设计；`6cda3cee60fd3cb51a9dc39a22423622ded24c40` 已提交本轮实现和 11 个新增测试。原生 apply run `35569723579` 的格式化、格式检查和 inventory 工具 9 项单测 PASS。
+- `5b22243026ead9aef9fb73eb2380822f1af3e50d`，macOS ARM run `35569900836`：格式、独立测试布局、许可证边界/配置、网络边界和 inventory 工具单测 PASS；GUI 编译发现生产代码缺 `PathBuf` 导入、测试缺 `TypedActionView` 导入，Rust 集成测试因此 NOT_RUN。当前增量补上这两处导入，不修改测试断言；修复候选仍须重新验证，不能沿用旧候选 PASS。
 
 - `bbcf5f95adc3024fe6f6aceb3a872362c12aa938`，macOS ARM run `35567568833`：
   GUI/TUI `cargo check --locked --all-targets --tests` 均 PASS；聚焦集合选中 29 项，11 passed、

@@ -16,7 +16,9 @@ use settings::Setting;
 use warp_core::features::FeatureFlag;
 use warpui::clipboard::ClipboardContent;
 use warpui::presenter::Presenter;
-use warpui::{App, EntityIdSet, Event as UiEvent, ViewHandle, WindowId, WindowInvalidation};
+use warpui::{
+    App, EntityIdSet, Event as UiEvent, TypedActionView, ViewHandle, WindowId, WindowInvalidation,
+};
 
 use super::*;
 use crate::terminal::model_events::ModelEvent;

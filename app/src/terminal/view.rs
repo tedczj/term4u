@@ -4,6 +4,7 @@ pub mod init;
 mod local_io;
 
 use std::borrow::Cow;
+use std::path::PathBuf;
 use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
 
