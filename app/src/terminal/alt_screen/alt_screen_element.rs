@@ -184,31 +184,36 @@ impl AltScreenElement {
     fn typed_characters(&mut self, chars: &str, ctx: &mut EventContext) -> bool {
         if self.is_terminal_focused && !chars.is_empty() {
             ctx.dispatch_typed_action(TerminalAction::TypedCharacters(chars.to_string()));
+            true
+        } else {
+            false
         }
-        true
     }
 
-    fn set_marked_text(&mut self, marked_text: &str, ctx: &mut EventContext) -> bool {
+    fn set_marked_text(
+        &mut self,
+        marked_text: &str,
+        selected_range: &Range<usize>,
+        ctx: &mut EventContext,
+    ) -> bool {
         if self.is_terminal_focused {
-            ctx.dispatch_typed_action(TerminalAction::SetMarkedText(marked_text.to_owned()));
+            ctx.dispatch_typed_action(TerminalAction::SetMarkedText {
+                text: marked_text.to_owned(),
+                selected_range: selected_range.clone(),
+            });
+            true
+        } else {
+            false
         }
-        true
     }
 
     fn clear_marked_text(&mut self, ctx: &mut EventContext) -> bool {
         if self.is_terminal_focused {
             ctx.dispatch_typed_action(TerminalAction::ClearMarkedText);
+            true
+        } else {
+            false
         }
-        true
-    }
-
-    fn drag_and_drop_file(&mut self, paths: &[String], ctx: &mut EventContext) -> bool {
-        if self.is_terminal_focused && !paths.is_empty() {
-            let paths = paths.iter().map(std::path::PathBuf::from).collect();
-            ctx.dispatch_typed_action(TerminalAction::DragAndDropFiles(paths));
-            return true;
-        }
-        false
     }
 
     fn middle_mouse_down(&self, local_position: Vector2F, ctx: &mut EventContext) -> bool {
@@ -833,13 +838,10 @@ impl Element for AltScreenElement {
                 self.middle_mouse_down(to_local(*position), ctx)
             }
             Event::TypedCharacters { chars } => self.typed_characters(chars, ctx),
-            Event::DragAndDropFiles { paths, .. } if in_bounds => {
-                self.drag_and_drop_file(paths, ctx)
-            }
             Event::SetMarkedText {
                 marked_text,
-                selected_range: _,
-            } => self.set_marked_text(marked_text, ctx),
+                selected_range,
+            } => self.set_marked_text(marked_text, selected_range, ctx),
             Event::ClearMarkedText => self.clear_marked_text(ctx),
             Event::ModifierKeyChanged { key_code, state } => {
                 if self.is_terminal_focused {

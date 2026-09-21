@@ -2,8 +2,8 @@ use warpui::App;
 use warpui::keymap::Keystroke;
 
 use super::*;
-use crate::terminal::{History, HistoryEvent};
 use crate::terminal::model::session::SessionInfo;
+use crate::terminal::{History, HistoryEvent};
 use crate::test_util::terminal::{
     add_window_with_id_and_terminal, initialize_app_for_terminal_view,
 };
@@ -33,11 +33,7 @@ fn arrow_keys_recall_session_history_and_restore_the_draft() {
                 }
             });
             history.update(ctx, |history, ctx| {
-                history.init_session_with(
-                    session,
-                    async { vec!["echo previous".to_owned()] },
-                    ctx,
-                );
+                history.init_session_with(session, async { vec!["echo previous".to_owned()] }, ctx);
             });
         });
         rx.recv().await.unwrap();
@@ -55,7 +51,9 @@ fn arrow_keys_recall_session_history_and_restore_the_draft() {
             false,
         )
         .unwrap();
-        input.read(&app, |input, ctx| assert_eq!(input.buffer_text(ctx), "echo previous"));
+        input.read(&app, |input, ctx| {
+            assert_eq!(input.buffer_text(ctx), "echo previous")
+        });
         app.dispatch_keystroke(
             window,
             &[terminal.id(), input.id(), editor.id()],
@@ -63,7 +61,9 @@ fn arrow_keys_recall_session_history_and_restore_the_draft() {
             false,
         )
         .unwrap();
-        input.read(&app, |input, ctx| assert_eq!(input.buffer_text(ctx), "echo"));
+        input.read(&app, |input, ctx| {
+            assert_eq!(input.buffer_text(ctx), "echo")
+        });
     });
 }
 
@@ -115,9 +115,13 @@ fn terminal_paste_inserts_at_the_cursor_without_executing() {
                     editor.select_ranges_by_byte_offset([5_usize.into()..5_usize.into()], ctx);
                 });
             });
-            ctx.clipboard().write(ClipboardContent::plain_text("new\nline ".to_owned()));
+            ctx.clipboard()
+                .write(ClipboardContent::plain_text("new\nline ".to_owned()));
             view.handle_action(&TerminalAction::Paste, ctx);
-            assert_eq!(view.input.as_ref(ctx).buffer_text(ctx), "echo new\nline tail");
+            assert_eq!(
+                view.input.as_ref(ctx).buffer_text(ctx),
+                "echo new\nline tail"
+            );
         });
         assert!(rx.try_recv().is_err());
     });
@@ -141,11 +145,12 @@ fn escape_closes_the_context_menu_and_restores_input_focus() {
                 },
                 ctx,
             );
-            assert!(view.context_menu.is_focused(ctx));
-            view.focus(ctx);
-            assert!(view.context_menu.is_focused(ctx));
             view.context_menu.clone()
         });
+        // ViewContext::focus queues an effect; observe focus after update has flushed it.
+        terminal.read(&app, |view, ctx| assert!(view.context_menu.is_focused(ctx)));
+        terminal.update(&mut app, |view, ctx| view.focus(ctx));
+        terminal.read(&app, |view, ctx| assert!(view.context_menu.is_focused(ctx)));
         app.dispatch_keystroke(
             window,
             &[terminal.id(), menu.id()],
@@ -167,8 +172,7 @@ fn menu_enter_runs_the_menu_action_not_the_draft_command() {
         initialize_app_for_terminal_view(&mut app);
         app.update(crate::menu::init);
         let block = SerializedBlock::new_for_test(b"echo original".to_vec(), b"out\r\n".to_vec());
-        let (window, terminal) =
-            add_window_with_id_and_terminal(&mut app, Some(&[block.into()]));
+        let (window, terminal) = add_window_with_id_and_terminal(&mut app, Some(&[block.into()]));
         let (tx, rx) = async_channel::unbounded();
         app.update(|ctx| {
             ctx.subscribe_to_view(&terminal, move |_, event, _| {
@@ -193,9 +197,9 @@ fn menu_enter_runs_the_menu_action_not_the_draft_command() {
             view.context_menu.update(ctx, |menu, ctx| {
                 assert!(menu.set_selected_by_name("Copy command", ctx));
             });
-            assert!(view.context_menu.is_focused(ctx));
             view.context_menu.clone()
         });
+        terminal.read(&app, |view, ctx| assert!(view.context_menu.is_focused(ctx)));
         app.dispatch_keystroke(
             window,
             &[terminal.id(), menu.id()],
@@ -206,7 +210,10 @@ fn menu_enter_runs_the_menu_action_not_the_draft_command() {
         terminal.update(&mut app, |view, ctx| {
             assert_eq!(ctx.clipboard().read().plain_text, "echo original");
             assert!(view.context_menu_state.is_none());
-            assert_eq!(view.input.as_ref(ctx).buffer_text(ctx), "echo DO_NOT_EXECUTE");
+            assert_eq!(
+                view.input.as_ref(ctx).buffer_text(ctx),
+                "echo DO_NOT_EXECUTE"
+            );
         });
         assert!(rx.try_recv().is_err());
     });
@@ -229,9 +236,9 @@ fn closing_the_menu_does_not_take_focus_back_from_find() {
             view.context_menu.update(ctx, |menu, ctx| {
                 assert!(menu.set_selected_by_name("Find in terminal", ctx));
             });
-            assert!(view.context_menu.is_focused(ctx));
             view.context_menu.clone()
         });
+        terminal.read(&app, |view, ctx| assert!(view.context_menu.is_focused(ctx)));
         app.dispatch_keystroke(
             window,
             &[terminal.id(), menu.id()],
@@ -275,7 +282,10 @@ fn dropping_paths_inserts_into_the_draft_without_running_it() {
                 ]),
                 ctx,
             );
-            assert_eq!(view.input.as_ref(ctx).buffer_text(ctx), "cat /tmp/one /tmp/two suffix");
+            assert_eq!(
+                view.input.as_ref(ctx).buffer_text(ctx),
+                "cat /tmp/one /tmp/two suffix"
+            );
         });
         assert!(rx.try_recv().is_err());
     });

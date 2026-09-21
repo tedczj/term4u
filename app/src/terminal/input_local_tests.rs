@@ -138,3 +138,46 @@ fn history_does_not_replace_a_selected_range() {
         });
     });
 }
+
+#[test]
+fn l0_01_history_keeps_the_latest_duplicate_without_losing_chronology() {
+    App::test((), |mut app| async move {
+        let input = new_input(&mut app);
+        input.update(&mut app, |input, ctx| {
+            input.navigate_history(
+                SessionId::from(1_u64),
+                vec!["echo first".into(), "echo last".into(), "echo first".into()],
+                true,
+                ctx,
+            );
+            assert_eq!(input.buffer_text(ctx), "echo first");
+            input.navigate_history(SessionId::from(1_u64), vec![], true, ctx);
+            assert_eq!(input.buffer_text(ctx), "echo last");
+            input.navigate_history(SessionId::from(1_u64), vec![], true, ctx);
+            assert_eq!(input.buffer_text(ctx), "echo last");
+        });
+    });
+}
+
+#[test]
+fn l0_01_programmatic_draft_changes_invalidate_async_results_synchronously() {
+    App::test((), |mut app| async move {
+        let input = new_input(&mut app);
+        input.update(&mut app, |input, ctx| {
+            // Test inside a single update: queued Editor events have not delivered yet.
+            let before = input.completion_request;
+            input.replace_buffer_content("new draft", ctx);
+            assert!(input.completion_request > before);
+            let before = input.completion_request;
+            input.clear_buffer_and_reset_undo_stack(ctx);
+            assert!(input.completion_request > before);
+            let before = input.completion_request;
+            input.append_to_buffer("replacement", ctx);
+            assert!(input.completion_request > before);
+            let before = input.completion_request;
+            input.invalidate_async_state();
+            assert!(input.completion_request > before);
+            assert_eq!(input.buffer_text(ctx), "replacement");
+        });
+    });
+}
