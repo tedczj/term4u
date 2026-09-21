@@ -1,0 +1,99 @@
+name: Term4u L0 macOS Apple Silicon
+
+on:
+  push:
+    branches: [dev-20260920]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: term4u-l0-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_BUILD_JOBS: 3
+  RUSTFLAGS: -C debuginfo=line-tables-only --cfg=web_sys_unstable_apis
+  WARPUI_USE_REAL_DISPLAY_IN_INTEGRATION_TESTS: '1'
+
+jobs:
+  local-interactions:
+    runs-on: macos-26
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+
+      - name: Record the native candidate and reproducible tracked sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(uname -s)" = Darwin
+          test "$(uname -m)" = arm64
+          mkdir -p verification/ci-l0
+          git rev-parse HEAD > verification/ci-l0/source-head.txt
+          sw_vers > verification/ci-l0/platform.txt
+          uname -a >> verification/ci-l0/platform.txt
+          git archive --format=tar.gz HEAD > verification/ci-l0/candidate-source.tar.gz
+
+      - name: Preserve candidate sources even if dependency setup fails
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: l0-source-${{ github.sha }}
+          path: verification/ci-l0/
+          retention-days: 3
+          if-no-files-found: error
+
+      - name: Materialize retained LFS resources
+        run: |
+          git lfs install --local
+          git lfs pull
+
+      - name: Install native build and test prerequisites
+        shell: bash
+        run: |
+          set -euo pipefail
+          rustup show
+          ./script/macos/install_build_deps
+          HOMEBREW_NO_AUTO_UPDATE=1 brew install protobuf fish bash
+
+      - name: Install nextest
+        uses: taiki-e/install-action@16b05812d776ae1dfaabc8277e421fb6d2506419 # v2.82.7
+        with:
+          tool: nextest
+
+      - name: Verify locked local GUI and TUI compilation
+        shell: bash
+        run: |
+          set -euo pipefail
+          cargo check --locked -p warp --all-targets --tests --no-default-features --features local_only 2>&1 | tee verification/ci-l0/gui-check.log
+          cargo check --locked -p warp_tui --all-targets --tests 2>&1 | tee verification/ci-l0/tui-check.log
+
+      - name: Run retained and added local interaction integration tests
+        shell: bash
+        env:
+          WARP_SHELL_PATH: /bin/zsh
+        run: |
+          set -euo pipefail
+          cargo nextest run --locked -p warp --no-default-features --features local_only,test-util \
+            -E 'test(terminal::input::local_tests) | test(terminal::input::tests) | test(terminal::view::local_interaction_tests) | test(terminal::view::tests) | test(terminal::terminal_size_element::tests) | test(terminal::view::local_)' \
+            2>&1 | tee verification/ci-l0/interactions.log
+
+      - name: Check formatting and retained test inventory
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./script/format --check 2>&1 | tee verification/ci-l0/format.log
+          ./script/test_inventory 2>&1 | tee verification/ci-l0/test-inventory.log
+
+      - name: Preserve execution evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: l0-verification-${{ github.sha }}
+          path: verification/ci-l0/
+          retention-days: 7
+          if-no-files-found: error
