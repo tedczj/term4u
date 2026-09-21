@@ -17,6 +17,7 @@ env:
   CARGO_BUILD_JOBS: 3
   RUSTFLAGS: -C debuginfo=line-tables-only --cfg=web_sys_unstable_apis
   WARPUI_USE_REAL_DISPLAY_IN_INTEGRATION_TESTS: '1'
+  WARP_SHELL_PATH: /bin/zsh
 
 jobs:
   local-interactions:
@@ -27,7 +28,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Record the native candidate and reproducible tracked sources
+      - name: Record the native candidate and tracked sources
         shell: bash
         run: |
           set -euo pipefail
@@ -39,7 +40,7 @@ jobs:
           uname -a >> verification/ci-l0/platform.txt
           GIT_LFS_SKIP_SMUDGE=1 git archive --format=tar.gz HEAD > verification/ci-l0/candidate-source.tar.gz
 
-      - name: Preserve candidate sources even if dependency setup fails
+      - name: Preserve candidate sources before dependency setup
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: l0-source-${{ github.sha }}
@@ -50,11 +51,10 @@ jobs:
       - name: Materialize retained macOS LFS resources
         run: |
           git lfs install --local
-          # Retired AI classifier weights and Windows debug symbols are not local macOS assets.
-          # Unexpected/new LFS resources are still fetched rather than silently skipped.
           git lfs pull --exclude='crates/input_classifier/models/**,*.pdb'
 
-      - name: Install native build and test prerequisites
+      - name: Install native build prerequisites
+        id: deps
         shell: bash
         run: |
           set -euo pipefail
@@ -72,7 +72,7 @@ jobs:
         with:
           cache-on-failure: true
 
-      - name: Reject retired classifier in either local dependency graph
+      - name: Reject retired classifier in local dependency graphs
         shell: bash
         run: |
           set -euo pipefail
@@ -84,27 +84,69 @@ jobs:
           fi
 
       - name: Verify locked local GUI and TUI compilation
+        id: compile
         shell: bash
         run: |
           set -euo pipefail
           cargo check --locked -p warp --all-targets --tests --no-default-features --features local_only 2>&1 | tee verification/ci-l0/gui-check.log
           cargo check --locked -p warp_tui --all-targets --tests 2>&1 | tee verification/ci-l0/tui-check.log
 
-      - name: Run retained and added local interaction integration tests
+      - name: Verify added test registration and run local integration tests
+        if: ${{ !cancelled() && steps.compile.outcome == 'success' }}
         shell: bash
-        env:
-          WARP_SHELL_PATH: /bin/zsh
         run: |
           set -euo pipefail
-          cargo nextest run --locked -p warp --no-default-features --features local_only,test-util \
+          cargo nextest list --locked -p warp --no-default-features --features local_only,test-util --message-format json > verification/ci-l0/app-test-inventory.json
+          python3 - <<'PY'
+          import json, pathlib, re
+          data = json.loads(pathlib.Path('verification/ci-l0/app-test-inventory.json').read_text())
+          actual = {name.rsplit('::', 1)[-1] for suite in data['rust-suites'].values() for name in suite['testcases']}
+          expected = set()
+          for path in ['app/src/terminal/input_local_tests.rs', 'app/src/terminal/view/local_io_tests.rs']:
+              expected.update(re.findall(r'^fn (l0_\w+)\(', pathlib.Path(path).read_text(), re.M))
+          assert len(expected) >= 11, expected
+          assert expected <= actual, sorted(expected - actual)
+          print('Registered L0 tests:', len(expected))
+          PY
+          cargo nextest run --no-fail-fast --locked -p warp --no-default-features --features local_only,test-util \
             -E 'test(terminal::input::local_tests) | test(terminal::input::tests) | test(terminal::view::local_interaction_tests) | test(terminal::view::tests) | test(terminal::terminal_size_element::tests) | test(terminal::view::local_)' \
             2>&1 | tee verification/ci-l0/interactions.log
 
-      - name: Check formatting and retained test inventory
+      - name: Run the broader retained terminal regression suite
+        if: ${{ !cancelled() && steps.compile.outcome == 'success' }}
+        timeout-minutes: 15
+        shell: bash
+        run: |
+          set -euo pipefail
+          cargo nextest run --no-fail-fast --locked -p warp --no-default-features --features local_only,test-util \
+            -E 'test(terminal::)' 2>&1 | tee verification/ci-l0/terminal-regression.log
+
+      - name: Run local TUI tests
+        if: ${{ !cancelled() && steps.compile.outcome == 'success' }}
+        timeout-minutes: 15
+        shell: bash
+        run: |
+          set -euo pipefail
+          cargo nextest run --no-fail-fast --locked -p warp_tui 2>&1 | tee verification/ci-l0/tui-tests.log
+
+      - name: Check formatting and structural boundaries
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         shell: bash
         run: |
           set -euo pipefail
           ./script/format --check 2>&1 | tee verification/ci-l0/format.log
+          ./script/check_no_inline_test_modules 2>&1 | tee verification/ci-l0/test-layout.log
+          ./script/check_license_boundaries 2>&1 | tee verification/ci-l0/license-boundaries.log
+          ./script/check_license_config_sync 2>&1 | tee verification/ci-l0/license-config.log
+          ./script/check_network_boundaries 2>&1 | tee verification/ci-l0/network-boundaries.log
+          python3 script/lib/test_inventory_tests.py 2>&1 | tee verification/ci-l0/inventory-unit-tests.log
+
+      - name: Verify retained workspace test inventory
+        if: ${{ !cancelled() && steps.compile.outcome == 'success' }}
+        timeout-minutes: 20
+        shell: bash
+        run: |
+          set -euo pipefail
           ./script/test_inventory 2>&1 | tee verification/ci-l0/test-inventory.log
 
       - name: Preserve execution evidence
