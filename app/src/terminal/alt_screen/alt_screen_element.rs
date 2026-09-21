@@ -42,7 +42,8 @@ use crate::terminal::model::terminal_model::WithinModel;
 use crate::terminal::safe_mode_settings::get_secret_obfuscation_mode;
 use crate::terminal::view::{ActiveSessionState, TerminalAction, TerminalViewRenderContext};
 use crate::terminal::{
-    SizeInfo, TerminalModel, grid_renderer, heights_approx_eq, should_right_click_paste,
+    SizeInfo, TerminalModel, context_menu_offset, grid_renderer, heights_approx_eq,
+    should_right_click_paste,
 };
 
 const CLI_SUBAGENT_HORIZONTAL_MARGIN: f32 = 8.;
@@ -82,6 +83,10 @@ pub struct AltScreenElement {
     /// Voice input toggle key code for CLI agent footer integration.
     #[cfg_attr(not(feature = "voice_input"), allow(unused))]
     voice_input_toggle_key_code: Option<KeyCode>,
+
+    /// `SavePosition` id of the terminal view's content container. Right-clicks report window
+    /// coordinates; the context menu overlay wants an offset from that container.
+    context_menu_position_id: Option<String>,
 }
 
 impl AltScreenElement {
@@ -150,7 +155,14 @@ impl AltScreenElement {
             cursor_hint_text,
             cli_subagent_view,
             voice_input_toggle_key_code: None,
+            context_menu_position_id: None,
         }
+    }
+
+    /// Anchors the context menu this element opens to the terminal view's content container.
+    pub fn with_context_menu_anchor(mut self, position_id: String) -> Self {
+        self.context_menu_position_id = Some(position_id);
+        self
     }
 
     /// Sets the voice input toggle key code for CLI agent footer integration.
@@ -258,6 +270,7 @@ impl AltScreenElement {
         &self,
         mouse_state: MouseState,
         local_position: Vector2F,
+        window_position: Vector2F,
         ctx: &mut EventContext,
         app: &AppContext,
     ) -> bool {
@@ -272,9 +285,12 @@ impl AltScreenElement {
             if should_right_click_paste(shift, app) {
                 ctx.dispatch_typed_action(TerminalAction::Paste);
             } else {
-                ctx.dispatch_typed_action(TerminalAction::AltScreenContextMenu {
-                    position: local_position,
-                });
+                let position = context_menu_offset(
+                    ctx,
+                    self.context_menu_position_id.as_deref(),
+                    window_position,
+                );
+                ctx.dispatch_typed_action(TerminalAction::AltScreenContextMenu { position });
             }
         } else {
             ctx.dispatch_typed_action(TerminalAction::AltMouseAction(mouse_state.set_point(point)));
@@ -778,6 +794,7 @@ impl Element for AltScreenElement {
                     },
                 ),
                 to_local(*position),
+                *position,
                 ctx,
                 app,
             ),
