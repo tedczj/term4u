@@ -115,7 +115,7 @@ fn terminal_paste_inserts_at_the_cursor_without_executing() {
                     editor.select_ranges_by_byte_offset([5_usize.into()..5_usize.into()], ctx);
                 });
             });
-            ctx.clipboard().write(ClipboardContent::plain_text("new\nline "));
+            ctx.clipboard().write(ClipboardContent::plain_text("new\nline ".to_owned()));
             view.handle_action(&TerminalAction::Paste, ctx);
             assert_eq!(view.input.as_ref(ctx).buffer_text(ctx), "echo new\nline tail");
         });
@@ -203,7 +203,7 @@ fn menu_enter_runs_the_menu_action_not_the_draft_command() {
             false,
         )
         .unwrap();
-        terminal.read(&app, |view, ctx| {
+        terminal.update(&mut app, |view, ctx| {
             assert_eq!(ctx.clipboard().read().plain_text, "echo original");
             assert!(view.context_menu_state.is_none());
             assert_eq!(view.input.as_ref(ctx).buffer_text(ctx), "echo DO_NOT_EXECUTE");
