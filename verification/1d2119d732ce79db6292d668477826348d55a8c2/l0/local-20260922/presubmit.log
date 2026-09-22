@@ -1,0 +1,920 @@
+Running ./script/format...
+Rust formatting succeeded...
+Checking for inline Rust test modules...
+Inline Rust test module check succeeded...
+Checking license boundaries...
+License boundary check succeeded...
+Checking license config sync...
+License config in sync.
+License config sync succeeded...
+Checking network boundaries...
+OK: network constructors stay inside guarded boundary crates
+Network boundary check succeeded...
+Checking test inventory failure handling...
+.........
+----------------------------------------------------------------------
+Ran 9 tests in 4.033s
+
+OK
+Test inventory failure handling succeeded...
+Running clippy...
+    Checking libc v0.2.186
+    Checking serde_core v1.0.228
+   Compiling jobserver v0.1.32
+    Checking cfg-if v1.0.4
+    Checking memchr v2.7.6
+    Checking itoa v1.0.18
+    Checking smallvec v1.15.1
+    Checking pin-project-lite v0.2.16
+   Compiling cc v1.2.56
+    Checking once_cell v1.21.3
+    Checking scopeguard v1.2.0
+    Checking futures-core v0.3.31
+    Checking regex-syntax v0.8.5
+    Checking libm v0.2.15
+    Checking aho-corasick v1.1.3
+    Checking futures-io v0.3.31
+    Checking zmij v1.0.21
+    Checking core-foundation-sys v0.8.7 (https://github.com/servo/core-foundation-rs?rev=6f844cf1a1a18e25b70fcdf1bcdc458555bd2eff#6f844cf1)
+    Checking parking_lot_core v0.9.12
+    Checking num-traits v0.2.19
+    Checking allocator-api2 v0.2.16
+    Checking slab v0.4.9
+    Checking foldhash v0.2.0
+    Checking equivalent v1.0.1
+    Checking signal-hook-registry v1.4.1
+    Checking crossbeam-utils v0.8.21
+    Checking hashbrown v0.16.0
+    Checking serde v1.0.228
+    Checking log v0.4.29
+    Checking bitflags v2.13.0
+    Checking regex-automata v0.4.9
+    Checking serde_json v1.0.150
+    Checking errno v0.3.10
+    Checking pin-utils v0.1.0
+    Checking futures-sink v0.3.31
+    Checking mio v1.1.1
+    Checking stable_deref_trait v1.2.0
+    Checking lock_api v0.4.14
+    Checking bytes v1.11.1
+    Checking typenum v1.20.0
+    Checking parking_lot v0.12.5
+    Checking thiserror v2.0.17
+    Checking futures-channel v0.3.31
+    Checking either v1.9.0
+    Checking futures-task v0.3.31
+    Checking subtle v2.6.1
+    Checking ryu v1.0.23
+    Checking indexmap v2.12.0
+    Checking futures-util v0.3.31
+    Checking parking v2.2.0
+    Checking fastrand v2.3.0
+    Checking generic-array v0.14.7
+    Checking concurrent-queue v2.5.0
+    Checking socket2 v0.6.0
+    Checking http v1.4.0
+    Checking tokio v1.50.0
+    Checking zerofrom v0.1.5
+    Checking crypto-common v0.1.6
+    Checking block-buffer v0.10.4
+    Checking rustix v1.1.2
+    Checking getrandom v0.2.16
+    Checking tracing-core v0.1.36
+    Checking base64 v0.22.1
+    Checking percent-encoding v2.3.1
+    Checking yoke v0.7.5
+    Checking cpufeatures v0.2.9
+    Checking atomic-waker v1.1.2
+    Checking simd-adler32 v0.3.7
+    Checking zerovec v0.10.4
+    Checking tracing v0.1.44
+   Compiling cmake v0.1.58
+    Checking anyhow v1.0.79
+    Checking fnv v1.0.7
+    Checking byteorder v1.5.0
+   Compiling aws-lc-sys v0.39.1
+    Checking digest v0.10.7
+    Checking futures-lite v2.6.1
+    Checking adler2 v2.0.0
+    Checking tinystr v0.7.6
+    Checking miniz_oxide v0.8.8
+    Checking crc32fast v1.5.0
+    Checking event-listener v5.4.0
+    Checking itertools v0.14.0
+    Checking litemap v0.7.4
+    Checking ppv-lite86 v0.2.17
+    Checking writeable v0.5.5
+    Checking zeroize v1.8.2
+    Checking event-listener-strategy v0.5.2
+    Checking icu_locid v1.5.0
+    Checking httparse v1.10.1
+    Checking http-body v1.0.1
+    Checking lazy_static v1.5.0
+    Checking regex v1.11.1
+    Checking form_urlencoded v1.2.1
+    Checking core-foundation v0.10.1 (https://github.com/servo/core-foundation-rs?rev=6f844cf1a1a18e25b70fcdf1bcdc458555bd2eff#6f844cf1)
+    Checking icu_provider v1.5.0
+    Checking icu_locid_transform_data v1.5.0
+    Checking tower-service v0.3.3
+    Checking flate2 v1.1.9
+    Checking icu_collections v1.5.0
+    Checking icu_locid_transform v1.5.0
+    Checking rand_core v0.6.4
+    Checking core-foundation v0.9.4
+    Checking httpdate v1.0.3
+    Checking utf-8 v0.7.6
+    Checking icu_properties_data v1.5.0
+    Checking tokio-util v0.7.18
+    Checking try-lock v0.2.4
+    Checking rand_chacha v0.3.1
+    Checking system-configuration-sys v0.6.0
+    Checking want v0.3.1
+    Checking rustls-pki-types v1.12.0
+    Checking icu_properties v1.5.1
+    Checking utf8_iter v1.0.4
+    Checking untrusted v0.9.0
+    Checking mime v0.3.17
+    Checking utf16_iter v1.0.5
+    Checking icu_normalizer_data v1.5.0
+    Checking h2 v0.4.15
+    Checking write16 v1.0.0
+    Checking system-configuration v0.6.1
+    Checking http-body-util v0.1.3
+    Checking ipnet v2.11.0
+    Checking thiserror v1.0.63
+    Checking getrandom v0.3.4
+    Checking unicase v2.7.0
+    Checking sync_wrapper v1.0.1
+    Checking tower-layer v0.3.3
+    Checking alloc-no-stdlib v2.0.4
+    Checking mime_guess v2.0.4
+    Checking alloc-stdlib v0.2.2
+    Checking pin-project v1.1.3
+    Checking iana-time-zone v0.1.64
+    Checking num_cpus v1.16.0
+    Checking futures-executor v0.3.31
+    Checking chrono v0.4.40
+    Checking brotli-decompressor v4.0.2
+    Checking tower v0.5.2
+   Compiling rand v0.8.6
+    Checking icu_normalizer v1.5.0
+    Checking serde_urlencoded v0.7.1
+    Checking idna_adapter v1.2.0
+    Checking idna v1.0.3
+    Checking security-framework-sys v2.15.0
+    Checking brotli v7.0.0
+    Checking futures v0.3.31
+    Checking url v2.5.4
+    Checking async-channel v2.3.1
+    Checking encoding_rs v0.8.35
+    Checking inventory v0.3.20
+    Checking async-task v4.7.1
+    Checking security-framework v3.5.1
+    Checking polling v3.11.0
+    Checking sha1 v0.10.6
+    Checking piper v0.2.1
+    Checking http-range-header v0.4.0
+    Checking data-encoding v2.10.0
+    Checking iri-string v0.7.8
+    Checking blocking v1.6.2
+    Checking hyper v1.8.1
+    Checking async-io v2.6.0
+    Checking siphasher v1.0.1
+    Checking futures-timer v3.0.2
+    Checking same-file v1.0.6
+    Checking powerfmt v0.2.0
+    Checking walkdir v2.4.0
+    Checking deranged v0.5.5
+   Compiling time-macros v0.2.27
+   Compiling phf_generator v0.11.3
+    Checking hyper-util v0.1.16
+    Checking async-lock v3.4.0
+    Checking async-compression v0.4.22
+    Checking num_threads v0.1.7
+    Checking time-core v0.1.8
+    Checking num-conv v0.2.0
+    Checking tower-http v0.6.8
+    Checking async-net v2.0.0
+    Checking offline_guard v0.1.0 (/Users/tedczj/workspace/term4u/crates-local/offline_guard)
+    Checking new_debug_unreachable v1.0.4
+    Checking unicode-segmentation v1.11.0
+   Compiling phf_codegen v0.11.3
+    Checking time v0.3.47
+   Compiling string_cache_codegen v0.5.4
+    Checking phf_shared v0.11.3
+    Checking fastrand v1.9.0
+    Checking waker-fn v1.1.1
+    Checking memoffset v0.9.0
+    Checking futures-lite v1.13.0
+    Checking dyn-clone v1.0.20
+   Compiling web_atoms v0.1.3
+    Checking sha1_smol v1.0.1
+    Checking precomputed-hash v0.1.1
+    Checking minimal-lexical v0.2.1
+    Checking mac v0.1.1
+    Checking futf v0.1.5
+    Checking string_cache v0.8.9
+    Checking nom v7.1.3
+    Checking uuid v1.19.0
+    Checking crossbeam-epoch v0.9.15
+    Checking phf v0.11.3
+    Checking memmap2 v0.9.7
+    Checking unicode-width v0.2.1
+    Checking arrayvec v0.7.6
+    Checking ref-cast v1.0.23
+    Checking crossbeam-deque v0.8.3
+    Checking tendril v0.4.3
+    Checking option-ext v0.2.0
+    Checking hashbrown v0.12.3
+    Checking dirs-sys v0.5.0
+    Checking async-signal v0.2.13
+    Checking static_assertions v1.1.0
+    Checking bytemuck v1.24.0
+    Checking linked-hash-map v0.5.6
+    Checking indexmap v1.9.3
+    Checking yaml-rust v0.4.5 (https://github.com/warpdotdev/yaml-rust.git?rev=51684719d0102ca85ff4b21cec39877a0c669e19#51684719)
+    Checking enum-iterator v1.4.1
+    Checking async-process v2.5.0
+    Checking rayon-core v1.12.1
+    Checking signal-hook v0.3.18
+    Checking tempfile v3.23.0
+    Checking castaway v0.2.4
+   Compiling strum_macros v0.28.0
+    Checking hashbrown v0.17.1
+    Checking dunce v1.0.5
+    Checking foreign-types-shared v0.3.1
+   Compiling indoc v2.0.7
+    Checking typed-path v0.10.0
+    Checking zerocopy v0.7.32
+   Compiling instability v0.3.12
+    Checking markup5ever v0.35.0
+    Checking ahash v0.8.11
+    Checking html5ever v0.35.0
+    Checking xml5ever v0.35.0
+    Checking lru v0.18.0
+    Checking foreign-types v0.5.0
+    Checking compact_str v0.9.0
+    Checking rayon v1.10.0
+    Checking signal-hook-mio v0.2.5
+    Checking derive_more v2.0.1
+    Checking pathfinder_simd v0.5.4 (https://github.com/warpdotdev/pathfinder.git?rev=34128a129ca6aee168fbc5060a4f21b4f7e486a9#34128a12)
+    Checking dirs v6.0.0
+    Checking unicode-truncate v2.0.1
+    Checking kasuari v0.4.11
+    Checking float-cmp v0.9.0
+    Checking core_maths v0.1.0
+    Checking strum v0.28.0
+    Checking instant v0.1.12
+    Checking hex v0.4.3
+    Checking critical-section v1.2.0
+    Checking strict-num v0.1.1
+    Checking ttf-parser v0.25.1
+    Checking crossterm v0.29.0
+    Checking markup5ever_rcdom v0.35.0+unofficial
+    Checking serde_yaml v0.8.26
+    Checking fdeflate v0.3.7
+    Checking ratatui-core v0.1.1
+    Checking content_inspector v0.2.4
+    Checking arrayref v0.3.9
+    Checking pathdiff v0.2.1
+    Checking is_executable v1.0.1
+    Checking tinyvec_macros v0.1.1
+    Checking tiny-skia-path v0.12.0
+    Checking tinyvec v1.6.0
+    Checking png v0.18.1
+    Checking slotmap v1.0.6
+    Checking schemars v1.0.4
+    Checking pathfinder_geometry v0.5.1
+    Checking kurbo v0.13.0
+   Compiling settings_value_derive v0.0.0 (/Users/tedczj/workspace/term4u/crates/settings_value_derive)
+    Checking core-graphics-types v0.2.0 (https://github.com/servo/core-foundation-rs?rev=6f844cf1a1a18e25b70fcdf1bcdc458555bd2eff#6f844cf1)
+    Checking line-clipping v0.3.7
+    Checking quick-error v2.0.1
+    Checking unicode-script v0.5.5
+    Checking unicode-ccc v0.4.0
+    Checking unicode-properties v0.1.3
+    Checking byteorder-lite v0.1.0
+    Checking zune-core v0.5.1
+    Checking weezl v0.1.12
+    Checking unicode-bidi-mirroring v0.4.0
+    Checking color_quant v1.1.0
+    Checking image-webp v0.2.4
+    Checking rustybuzz v0.20.1
+    Checking svgtypes v0.16.1
+    Checking zune-jpeg v0.5.12
+    Checking gif v0.14.1
+    Checking ratatui-widgets v0.3.1
+    Checking core-graphics v0.25.0 (https://github.com/servo/core-foundation-rs?rev=6f844cf1a1a18e25b70fcdf1bcdc458555bd2eff#6f844cf1)
+    Checking fontdb v0.23.0
+    Checking get-size v0.1.4
+    Checking markdown_parser v0.1.0 (/Users/tedczj/workspace/term4u/crates/markdown_parser)
+    Checking hashbrown v0.14.1
+    Checking hash32 v0.3.1
+    Checking simplecss v0.2.1
+    Checking dirs-sys-next v0.1.2
+    Checking roxmltree v0.21.1
+    Checking data-url v0.3.1
+    Checking xmlwriter v0.1.0
+    Checking pxfm v0.1.28
+    Checking imagesize v0.14.0
+    Checking pico-args v0.5.0
+    Checking unicode-bidi v0.3.15
+    Checking unicode-vo v0.1.0
+    Checking dashmap v6.1.0
+    Checking dirs-next v2.0.0
+    Checking heapless v0.8.0
+    Checking usvg v0.47.0
+    Checking core-text v21.1.0 (https://github.com/servo/core-foundation-rs?rev=6f844cf1a1a18e25b70fcdf1bcdc458555bd2eff#6f844cf1)
+    Checking nix v0.30.1
+    Checking settings_value v0.1.0 (/Users/tedczj/workspace/term4u/crates/settings_value)
+    Checking ratatui-macros v0.7.1
+    Checking ratatui-crossterm v0.1.1
+    Checking tiny-skia v0.12.0
+    Checking rgb v0.8.50
+    Checking cfb v0.7.3
+   Compiling warpui_core v0.1.0 (/Users/tedczj/workspace/term4u/crates/warpui_core)
+    Checking moxcms v0.7.11
+    Checking float-ord v0.3.2
+    Checking rustc-hash v2.1.1
+    Checking similar v2.7.0
+    Checking font-kit v0.12.0 (https://github.com/warpdotdev/font-kit?rev=a04b225ecb639bb850f21d05212cfdc7465000f3#a04b225e)
+    Checking resvg v0.47.0
+    Checking infer v0.19.0
+    Checking ctrlc v3.4.7
+    Checking ratatui v0.30.1
+    Checking rstar v0.12.2
+    Checking string-offset v0.0.0 (/Users/tedczj/workspace/term4u/crates/string-offset)
+    Checking pathfinder_color v0.5.0
+    Checking async-fs v2.1.2
+    Checking async-executor v1.13.1
+    Checking titlecase v1.1.0
+    Checking async-broadcast v0.7.2
+    Checking vec1 v1.10.1
+    Checking ordered-float v3.9.2
+    Checking strum v0.27.1
+    Checking bounded-vec-deque v0.1.1
+    Checking objc2-encode v4.1.0
+    Checking raw-window-handle v0.6.2
+    Checking rangemap v1.4.0
+    Checking sha2 v0.10.9
+    Checking winnow v1.0.0
+    Checking objc2 v0.6.3
+    Checking bitflags v1.3.2
+    Checking itertools v0.10.5
+    Checking toml_writer v1.1.0+spec-1.1.0
+    Checking toml_datetime v1.1.0+spec-1.1.0
+    Checking security-framework v2.9.2
+    Checking toml_parser v1.1.0+spec-1.1.0
+    Checking block2 v0.6.2
+    Checking serde_with v3.21.0
+    Checking rand_core v0.9.3
+    Checking dispatch2 v0.3.0
+    Checking rand_chacha v0.9.0
+    Checking toml_edit v0.25.6+spec-1.1.0
+    Checking warp_features v0.0.0 (/Users/tedczj/workspace/term4u/crates/warp_features)
+    Checking objc2-core-foundation v0.3.2
+    Checking rand v0.9.4
+   Compiling warp_core v0.0.0 (/Users/tedczj/workspace/term4u/crates/warp_core)
+    Checking assert-json-diff v2.0.2
+    Checking difflib v0.4.0
+    Checking colored v3.0.0
+    Checking image v0.25.9
+    Checking shlex v1.3.0
+    Checking version-compare v0.1.1
+    Checking mockito v1.7.1
+    Checking command-corrections v0.0.0 (https://github.com/warpdotdev/command-corrections.git?rev=eae08c8c51d9bc9741fcb17eef2c21f696aebbeb#eae08c8c)
+    Checking shellexpand v3.1.1
+    Checking directories v6.0.0
+    Checking line-ending v1.5.1
+    Checking bstr v1.9.0
+    Checking utf8parse v0.2.2
+    Checking anstyle v1.0.13
+    Checking globset v0.4.18
+    Checking is_terminal_polyfill v1.70.2
+    Checking objc2-foundation v0.3.2
+    Checking objc2-io-kit v0.3.1
+    Checking anstyle-query v1.1.5
+    Checking colorchoice v1.0.0
+    Checking anstyle-parse v0.2.3
+    Checking clap_lex v0.7.5
+    Checking sysinfo v0.37.0
+    Checking anstream v0.6.21
+    Checking strsim v0.11.1
+    Checking clap_builder v4.5.48
+    Checking serde_path_to_error v0.1.16
+    Checking humantime v2.1.0
+    Checking prost v0.14.3
+   Compiling rust-embed-utils v8.7.2
+   Compiling prevent_sleep v0.0.0 (/Users/tedczj/workspace/term4u/crates/prevent_sleep)
+   Compiling rust-embed-impl v8.7.2
+    Checking async-compat v0.2.5
+    Checking tree-sitter-language v0.1.2
+    Checking termcolor v1.4.1
+    Checking eventsource-stream v0.2.3
+    Checking async-stream v0.3.5
+    Checking oauth2 v5.0.0
+    Checking rust-embed v8.7.2
+    Checking clap v4.5.48
+   Compiling clang-sys v1.8.1
+    Checking core-graphics-types v0.2.0
+    Checking malloc_buf v0.0.6
+    Checking is-terminal v0.4.17
+    Checking objc v0.2.7 (https://github.com/warpdotdev/rust-objc.git?rev=5b656827fa9f863ef0eb22e444a3fedac009e78a#5b656827)
+    Checking block v0.1.6
+    Checking env_logger v0.10.2
+    Checking cocoa-foundation v0.2.1
+    Checking core-graphics v0.24.0
+    Checking objc2-metal v0.3.2
+    Checking objc2-av-foundation v0.3.2
+    Checking cocoa v0.26.0
+    Checking takecell v0.1.1
+   Compiling bindgen v0.70.1
+    Checking dispatch v0.2.0
+    Checking foldhash v0.1.5
+    Checking hashbrown v0.15.2
+    Checking num-integer v0.1.46
+    Checking unicode-width v0.1.14
+    Checking half v2.6.0
+    Checking objc2-quartz-core v0.3.2
+    Checking ciborium-io v0.2.2
+    Checking num-bigint v0.4.6
+    Checking ciborium-ll v0.2.2
+    Checking typed-arena v2.0.2
+    Checking objc2-app-kit v0.3.2
+    Checking jaq-core v3.0.0
+    Checking thread_local v1.1.7
+    Checking urlencoding v2.1.3
+    Checking regex-bites v0.1.6
+    Checking jiff v0.2.24
+    Checking hashlink v0.10.0
+    Checking self_cell v1.2.1
+    Checking hifijson v0.5.0
+    Checking arraydeque v0.5.1
+    Checking memoffset v0.7.1
+    Checking saphyr-parser v0.0.6
+    Checking anstyle-parse v1.0.0
+    Checking filetime v0.2.25
+    Checking toml-span v0.7.1
+    Checking xmlparser v0.13.6
+    Checking anstream v1.0.0
+    Checking nix v0.26.4
+   Compiling zstd-sys v2.0.15+zstd.1.5.7
+    Checking jaq-std v3.0.0
+   Compiling warp_cli v0.0.0 (/Users/tedczj/workspace/term4u/crates/warp_cli)
+    Checking escape8259 v0.5.3
+    Checking memo-map v0.3.2
+    Checking codesnake v0.3.0
+    Checking jaq-json v2.0.0
+    Checking libtest-mimic v0.8.2
+    Checking color-print v0.3.7
+    Checking jaq-fmts v0.1.0
+   Compiling warpui v0.0.0 (/Users/tedczj/workspace/term4u/crates/warpui)
+    Checking clap_complete v4.5.58
+    Checking bincode v1.3.3
+    Checking jaq-all v0.1.0
+   Compiling arborium-javascript v2.13.0
+   Compiling arborium-css v2.13.0
+    Checking fsevent-sys v4.1.0
+    Checking notify-types v2.0.0 (https://github.com/warpdotdev/notify?rev=91b719849bc04ef251bcb2cc61076b099204e970#91b71984)
+    Checking ordered_hashmap v0.0.3
+    Checking utf8-width v0.1.7
+    Checking notify v8.0.0 (https://github.com/warpdotdev/notify?rev=91b719849bc04ef251bcb2cc61076b099204e970#91b71984)
+    Checking graphlib_rust v0.0.2
+    Checking fuzzy-matcher v0.3.7
+    Checking ignore v0.4.24
+   Compiling rust-embed-utils v7.8.1
+   Compiling arborium-tree-sitter v2.13.0
+    Checking unindent v0.2.4
+    Checking file-id v0.2.2 (https://github.com/warpdotdev/notify?rev=91b719849bc04ef251bcb2cc61076b099204e970#91b71984)
+    Checking fixedbitset v0.5.7
+    Checking urlocator v0.1.4
+    Checking unsafe-libyaml v0.2.11
+    Checking serde_yaml v0.9.34+deprecated
+    Checking petgraph v0.8.3
+    Checking notify-debouncer-full v0.5.0 (https://github.com/warpdotdev/notify?rev=91b719849bc04ef251bcb2cc61076b099204e970#91b71984)
+   Compiling rust-embed-impl v6.8.1
+    Checking dagre_rust v0.0.5 (https://github.com/warpdotdev/mermaid-to-svg.git?rev=8d3f789c2eb49335d7bf247a06bb649f59b6d4ed#8d3f789c)
+    Checking html-escape v0.2.13
+   Compiling arborium-c v2.13.0
+   Compiling arborium-html v2.13.0
+    Checking warp-completion-metadata v0.0.0 (https://github.com/warpdotdev/command-signatures.git?rev=d3725aa42375cc229699c87be2b38f9d9f07080f#d3725aa4)
+    Checking rust-embed v6.8.1
+    Checking mermaid_to_svg v0.1.0 (https://github.com/warpdotdev/mermaid-to-svg.git?rev=8d3f789c2eb49335d7bf247a06bb649f59b6d4ed#8d3f789c)
+    Checking imara-diff v0.2.0
+    Checking ipynb_parser v0.1.0 (/Users/tedczj/workspace/term4u/crates/ipynb_parser)
+   Compiling repo_metadata v0.1.0 (/Users/tedczj/workspace/term4u/crates/repo_metadata)
+   Compiling arborium-scss v2.13.0
+   Compiling arborium-toml v2.13.0
+   Compiling arborium-typescript v2.13.0
+   Compiling arborium-yaml v2.13.0
+    Checking downcast-rs v2.0.2
+    Checking unicode-linebreak v0.1.5
+   Compiling warp_errors v0.0.0 (/Users/tedczj/workspace/term4u/crates/warp_errors)
+    Checking warp-command-signatures v0.0.0 (https://github.com/warpdotdev/command-signatures.git?rev=d3725aa42375cc229699c87be2b38f9d9f07080f#d3725aa4)
+   Compiling zstd-safe v7.2.4
+    Checking fuzzy_match v0.1.0 (/Users/tedczj/workspace/term4u/crates/fuzzy_match)
+   Compiling libsqlite3-sys v0.33.0
+    Checking rust-stemmers v1.2.0
+   Compiling arborium-bash v2.13.0
+   Compiling arborium-swift v2.13.0
+   Compiling arborium-hcl v2.13.0
+   Compiling arborium-json v2.13.0
+   Compiling arborium-rust v2.13.0
+   Compiling arborium-dockerfile v2.13.0
+   Compiling arborium-lua v2.13.0
+   Compiling arborium-kotlin v2.13.0
+   Compiling arborium-php v2.13.0
+   Compiling arborium-sql v2.13.0
+    Checking zstd v0.13.3
+   Compiling arborium-java v2.13.0
+   Compiling arborium-ruby v2.13.0
+   Compiling arborium-vue v2.13.0
+   Compiling arborium-elixir v2.13.0
+   Compiling arborium-cpp v2.13.0
+   Compiling arborium-c-sharp v2.13.0
+   Compiling arborium-tsx v2.13.0
+   Compiling arborium-nix v2.13.0
+   Compiling arborium-markdown v2.13.0
+   Compiling arborium-xml v2.13.0
+   Compiling arborium-python v2.13.0
+   Compiling arborium-starlark v2.13.0
+   Compiling arborium-powershell v2.13.0
+   Compiling arborium-scala v2.13.0
+   Compiling arborium-jq v2.13.0
+   Compiling arborium-objc v2.13.0
+   Compiling arborium-go v2.13.0
+    Checking smol_str v0.2.2
+    Checking streaming-iterator v0.1.9
+    Checking winnow v0.7.12
+   Compiling arborium v2.13.0
+   Compiling command v0.1.0 (/Users/tedczj/workspace/term4u/crates/command)
+    Checking channel_versions v0.1.0 (/Users/tedczj/workspace/term4u/crates/channel_versions)
+   Compiling lzma-sys v0.1.20
+   Compiling bzip2-sys v0.1.13+1.0.8
+    Checking axum-core v0.5.2
+    Checking arborium-theme v2.13.0
+    Checking matchit v0.8.4
+    Checking arborium-highlight v2.13.0
+    Checking axum v0.8.4
+    Checking crunchy v0.2.2
+    Checking inout v0.1.4
+    Checking ownedbytes v0.9.0
+    Checking toml_datetime v0.7.3
+    Checking serde_spanned v1.0.3
+    Checking grep-matcher v0.1.8
+    Checking crc-catalog v2.4.0
+    Checking toml v0.9.6
+    Checking tantivy-common v0.11.0
+    Checking crc v3.4.0
+    Checking cipher v0.4.4
+    Checking bitpacking v0.9.3
+   Compiling migrations_internals v2.3.0
+    Checking encoding_rs_io v0.1.7
+    Checking regex_dfas v0.0.0 (/Users/tedczj/workspace/term4u/crates/regex_dfas)
+    Checking hmac v0.12.1
+    Checking bumpalo v3.19.1
+    Checking utf8-ranges v1.0.5
+   Compiling migrations_macros v2.3.0
+    Checking tantivy-fst v0.5.0
+    Checking zopfli v0.8.3
+    Checking pbkdf2 v0.12.2
+    Checking diesel v2.3.10
+    Checking grep-searcher v0.1.16
+    Checking bzip2 v0.5.2
+    Checking aes v0.8.4
+    Checking tantivy-bitpacker v0.10.0
+    Checking lzma-rs v0.3.0
+    Checking xz2 v0.1.7
+    Checking typeid v1.0.3
+    Checking rust_decimal v1.35.0
+    Checking unicode-general-category v1.1.0
+   Compiling libz-sys v1.1.25
+    Checking prost-types v0.14.3
+    Checking sharded-slab v0.1.7
+    Checking matchers v0.2.0
+    Checking tracing-log v0.2.0
+    Checking gimli v0.32.3
+    Checking utf8parse v0.2.1 (https://github.com/warpdotdev/vte.git?rev=4b399c87b63ba88f45709edaa6383fc519f6c900#4b399c87)
+    Checking nu-ansi-term v0.50.3
+    Checking deflate64 v0.1.10
+    Checking murmurhash32 v0.3.1
+    Checking constant_time_eq v0.3.1
+   Compiling persistence v0.0.0 (/Users/tedczj/workspace/term4u/crates/persistence)
+    Checking tantivy-stacker v0.7.0
+    Checking zip v2.4.2
+    Checking tracing-subscriber v0.3.23
+    Checking addr2line v0.25.1
+    Checking vte v0.13.0 (https://github.com/warpdotdev/vte.git?rev=4b399c87b63ba88f45709edaa6383fc519f6c900#4b399c87)
+    Checking byte-unit v5.2.0
+    Checking erased-serde v0.4.10
+    Checking tantivy-sstable v0.7.0
+    Checking grep-printer v0.3.1
+    Checking object v0.37.3
+    Checking grep-regex v0.1.14
+    Checking axum-extra v0.10.1
+    Checking natural_language_detection v0.1.0 (/Users/tedczj/workspace/term4u/crates/natural_language_detection)
+   Compiling toml v0.5.11
+    Checking grep-cli v0.1.12
+   Compiling onig_sys v69.9.1
+    Checking fluent-uri v0.1.4
+   Compiling lsp v0.1.0 (/Users/tedczj/workspace/term4u/crates/lsp)
+    Checking gethostname v1.1.0
+    Checking bitflags-serde-legacy v0.1.1
+    Checking ordered-float v5.3.0
+    Checking cvt v0.1.2
+    Checking rustc-demangle v0.1.27
+    Checking fastdivide v0.4.2
+    Checking bimap v0.6.3
+    Checking tantivy-columnar v0.7.0
+   Compiling warp_util v0.1.0 (/Users/tedczj/workspace/term4u/crates/warp_util)
+    Checking tantivy-query-grammar v0.26.0
+    Checking typetag v0.2.21
+    Checking lsp-types v0.97.0
+    Checking backtrace v0.3.76
+   Compiling find-crate v0.6.3
+    Checking grep v0.4.1
+    Checking bon v3.7.1
+   Compiling counter v0.5.7
+   Compiling uneval v0.2.3 (https://github.com/warpdotdev/uneval?rev=df4d9fad372aedc447e6f93ca0f930fabaf9dd1a#df4d9fad)
+   Compiling libgit2-sys v0.18.3+1.9.2
+   Compiling ai v0.1.0 (/Users/tedczj/workspace/term4u/crates/ai)
+    Checking fs4 v0.13.1
+    Checking spinning v0.1.0
+    Checking lru v0.16.3
+    Checking tantivy-tokenizer-api v0.7.0
+    Checking sketches-ddsketch v0.4.0
+    Checking crossbeam-channel v0.5.8
+    Checking measure_time v0.9.0
+   Compiling memmap v0.7.0
+    Checking oneshot v0.1.13
+    Checking unicode-ident v1.0.12
+    Checking intmap v0.7.1
+    Checking diesel_migrations v2.3.1
+    Checking lz4_flex v0.13.0
+    Checking safemem v0.3.3
+    Checking to_method v1.1.0
+    Checking census v0.4.2
+    Checking htmlescape v0.3.1
+    Checking datasketches v0.2.0
+    Checking arc-swap v1.7.1
+    Checking levenshtein_automata v0.2.1
+    Checking enclose v1.1.8
+    Checking interprocess v1.2.1
+    Checking tantivy v0.26.0
+    Checking line-wrap v0.1.1
+   Compiling warp-workflows v0.1.0 (https://github.com/warpdotdev/workflows?rev=793a98ddda6ef19682aed66364faebd2829f0e01#793a98dd)
+   Compiling prost-build v0.14.3
+   Compiling cynic-codegen v3.8.0
+   Compiling aws-lc-rs v1.16.2
+    Checking log-panics v2.1.0
+   Compiling palette_derive v0.6.1
+    Checking prost-reflect v0.16.3
+   Compiling rustls v0.23.39
+    Checking interaction_types v0.1.0 (/Users/tedczj/workspace/term4u/crates-local/interaction_types)
+    Checking priority-queue v2.5.0
+    Checking rustls-webpki v0.103.13
+    Checking toml_datetime v0.6.11
+    Checking serde_spanned v0.6.9
+    Checking approx v0.5.1
+    Checking quick-xml v0.30.0
+    Checking base64 v0.21.7
+    Checking toml_write v0.1.2
+    Checking line-span v0.1.5
+    Checking base16ct v0.2.0
+    Checking psl-types v2.0.11
+    Checking toml_edit v0.22.27
+    Checking psl v2.1.4
+    Checking plist v1.5.1
+    Checking palette v0.6.1
+   Compiling cynic-proc-macros v3.8.0
+   Compiling warp v0.1.0 (/Users/tedczj/workspace/term4u/app)
+    Checking warp-workflows-types v0.1.0 (https://github.com/warpdotdev/workflows?rev=793a98ddda6ef19682aed66364faebd2829f0e01#793a98dd)
+    Checking tokio-rustls v0.26.4
+    Checking rustls-platform-verifier v0.6.2
+    Checking tungstenite v0.24.0
+    Checking hyper-rustls v0.27.7
+    Checking reqwest v0.13.3
+    Checking csv-core v0.1.11
+    Checking rustc-hash v1.1.0
+    Checking async-tungstenite v0.28.2
+    Checking graphql-ws-client v0.11.1
+   Compiling wasm-bindgen-shared v0.2.117
+    Checking websocket v0.1.0 (/Users/tedczj/workspace/term4u/crates/websocket)
+    Checking twox-hash v2.1.2
+    Checking bytecount v0.6.9
+    Checking aha-reqwest-eventsource v0.1.0
+    Checking local_control v0.0.0 (/Users/tedczj/workspace/term4u/crates/local_control)
+    Checking onig v6.5.1
+    Checking lz4_flex v0.11.6
+    Checking sum_tree v0.1.0 (/Users/tedczj/workspace/term4u/crates/sum_tree)
+    Checking app-installation-detection v0.1.0 (/Users/tedczj/workspace/term4u/crates/app-installation-detection)
+    Checking syntect v5.2.0
+    Checking difflib v0.4.0 (https://github.com/warpdotdev/difflib.git?rev=114177e7d8e1f8017baca397f943e11644b14d63#114177e7)
+    Checking csv v1.3.1
+    Checking kmeans_colors v0.5.0
+    Checking addr v0.15.6
+    Checking cynic v3.8.0
+    Checking toml v0.8.23
+    Checking field_mask v0.0.0 (/Users/tedczj/workspace/term4u/crates/field_mask)
+   Compiling asset_macro v0.1.0 (/Users/tedczj/workspace/term4u/crates/asset_macro)
+    Checking inquire v0.9.1
+    Checking lasso v0.7.3
+    Checking comfy-table v7.2.1
+    Checking serde-bytes-repr v0.3.0
+    Checking iso8601-duration v0.2.0
+    Checking tabwriter v1.4.1
+    Checking ai_types v0.1.0 (/Users/tedczj/workspace/term4u/crates/ai_types)
+    Checking validator v0.19.0
+    Checking tracing-futures v0.2.5
+    Checking serde_regex v1.1.0
+    Checking email_address v0.2.3 (https://github.com/warpdotdev/rust-email_address?rev=b3e5205b4efdc83832f230d8eb6894fd00a9ec32#b3e5205b)
+    Checking os_info v3.7.0
+    Checking counter v0.6.0
+    Checking serde_bytes v0.11.19
+    Checking permissions v0.4.1
+    Checking mach2 v0.5.0
+    Checking handlebars v0.0.0 (/Users/tedczj/workspace/term4u/crates/handlebars)
+    Checking embed_plist v1.2.2
+    Checking thousands v0.2.0
+    Checking shell-words v1.1.0
+    Checking alphanumeric-sort v1.5.7
+    Checking qrcode v0.14.1
+    Checking deltae v0.3.2
+    Checking siphasher v0.3.11
+    Checking unindent v0.1.11
+    Checking serial_test v0.8.0
+    Checking proc-macro2 v1.0.106
+   Compiling wasm-bindgen-macro-support v0.2.117
+    Checking num-rational v0.4.2
+    Checking num-iter v0.1.45
+   Compiling wasm-bindgen v0.2.117
+   Compiling rquickjs-sys v0.3.1
+    Checking num-complex v0.4.6
+    Checking predicates-core v1.0.6
+    Checking plotters-backend v0.3.5
+    Checking bit-vec v0.8.0
+    Checking borrow-or-share v0.2.4
+    Checking bit-set v0.8.0
+    Checking fluent-uri v0.4.1
+    Checking plotters-svg v0.3.5
+    Checking num v0.4.3
+    Checking quote v1.0.45
+    Checking virtual-fs v0.1.0 (/Users/tedczj/workspace/term4u/crates/virtual_fs)
+    Checking termtree v0.4.1
+    Checking cast v0.3.0
+    Checking warpui_extras v0.0.0 (/Users/tedczj/workspace/term4u/crates/warpui_extras)
+    Checking settings v0.0.0 (/Users/tedczj/workspace/term4u/crates/settings)
+    Checking watcher v0.1.0 (/Users/tedczj/workspace/term4u/crates/watcher)
+    Checking warp_assets v0.0.0 (/Users/tedczj/workspace/term4u/crates/warp_assets)
+    Checking jsonrpc v0.1.0 (/Users/tedczj/workspace/term4u/crates/jsonrpc)
+    Checking ipc v0.1.0 (/Users/tedczj/workspace/term4u/crates/ipc)
+   Compiling wasm-bindgen-macro v0.2.117
+    Checking outref v0.5.2
+    Checking vsimd v0.8.0
+    Checking http_client v0.0.0 (/Users/tedczj/workspace/term4u/crates/http_client)
+    Checking vim v0.1.0 (/Users/tedczj/workspace/term4u/crates/vim)
+    Checking asset_cache v0.0.0 (/Users/tedczj/workspace/term4u/crates/asset_cache)
+    Checking warp_editor v0.1.0 (/Users/tedczj/workspace/term4u/crates/editor)
+    Checking warp_isolation_platform v0.1.0 (/Users/tedczj/workspace/term4u/crates/isolation_platform)
+    Checking secret_redaction v0.0.0 (/Users/tedczj/workspace/term4u/crates/secret_redaction)
+    Checking simple_logger v0.1.0 (/Users/tedczj/workspace/term4u/crates/simple_logger)
+    Checking ui_components v0.0.0 (/Users/tedczj/workspace/term4u/crates/ui_components)
+    Checking build_cache v0.1.0 (/Users/tedczj/workspace/term4u/crates/build_cache)
+    Checking warp_files v0.1.0 (/Users/tedczj/workspace/term4u/crates/warp_files)
+    Checking warp_search_core v0.1.0 (/Users/tedczj/workspace/term4u/crates/warp_search_core)
+    Checking warp_logging v0.0.0 (/Users/tedczj/workspace/term4u/crates/warp_logging)
+    Checking http_server v0.0.0 (/Users/tedczj/workspace/term4u/crates/http_server)
+    Checking uuid-simd v0.8.0
+    Checking criterion-plot v0.5.0
+    Checking predicates-tree v1.0.9
+    Checking syn v2.0.117
+    Checking referencing v0.45.1
+    Checking languages v0.0.0 (/Users/tedczj/workspace/term4u/crates/languages)
+    Checking warp_completer v0.1.0 (/Users/tedczj/workspace/term4u/crates/warp_completer)
+    Checking warp_ripgrep v0.1.0 (/Users/tedczj/workspace/term4u/crates/warp_ripgrep)
+    Checking syntax_tree v0.1.0 (/Users/tedczj/workspace/term4u/crates/syntax_tree)
+    Checking fraction v0.15.3
+    Checking plotters v0.3.5
+    Checking fancy-regex v0.17.0
+    Checking predicates v3.1.3
+    Checking warp_terminal v0.0.0 (/Users/tedczj/workspace/term4u/crates/warp_terminal)
+    Checking ciborium v0.2.2
+    Checking tinytemplate v1.2.1
+    Checking email_address v0.2.9
+    Checking fragile v2.0.0
+    Checking oorandom v11.1.3
+    Checking downcast v0.11.0
+    Checking anes v0.1.6
+    Checking num-cmp v0.1.0
+    Checking criterion v0.5.1
+    Checking jsonschema v0.45.1
+    Checking mockall v0.13.1
+    Checking js-sys v0.3.94
+    Checking rquickjs-core v0.3.1
+   Compiling command-signatures-v2 v0.1.0 (/Users/tedczj/workspace/term4u/crates/command-signatures-v2)
+    Checking simplelog v0.12.2
+   Compiling node_runtime v0.1.0 (/Users/tedczj/workspace/term4u/crates/node_runtime)
+    Checking xattr v1.5.1
+    Checking tar v0.4.46
+    Checking rquickjs v0.3.1
+    Checking input_classifier v0.0.0 (/Users/tedczj/workspace/term4u/crates/input_classifier)
+    Checking convert_case v0.7.1
+    Checking semver v1.0.20
+    Checking futures-test-sink v0.1.1
+warning: command-signatures-v2@0.1.0: Failed to build command signatures JS. Proceeding with stale command signatures!
+    Checking warp_js v0.1.0 (/Users/tedczj/workspace/term4u/crates/warp_js)
+    Checking serde-wasm-bindgen v0.6.5
+    Checking warp_web_event_bus v0.0.0 (/Users/tedczj/workspace/term4u/crates/warp_web_event_bus)
+    Checking serve-wasm v0.1.0 (/Users/tedczj/workspace/term4u/crates/serve-wasm)
+    Checking git2 v0.20.4
+error: use of a disallowed type `std::time::Instant`
+ --> app/src/terminal/view/local_io.rs:4:27
+  |
+4 | use std::time::{Duration, Instant};
+  |                           ^^^^^^^
+  |
+  = note: std::time::Instant is not implemented for wasm targets. Use instant::Instant instead.
+  = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.92.0/index.html#disallowed_types
+  = note: `-D clippy::disallowed-types` implied by `-D warnings`
+  = help: to override `-D warnings` add `#[allow(clippy::disallowed_types)]`
+
+error: use of a disallowed type `std::time::Instant`
+  --> app/src/terminal/view/local_io.rs:26:23
+   |
+26 |     last_bell: Option<Instant>,
+   |                       ^^^^^^^
+   |
+   = note: std::time::Instant is not implemented for wasm targets. Use instant::Instant instead.
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.92.0/index.html#disallowed_types
+
+error: this boolean expression can be simplified
+   --> app/src/terminal/view/local_io.rs:130:12
+    |
+130 |           if !self
+    |  ____________^
+131 | |             .local_io
+132 | |             .pending_paste
+133 | |             .as_ref()
+134 | |             .is_some_and(|pending| pending.request == request)
+    | |______________________________________________________________^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.92.0/index.html#nonminimal_bool
+    = note: `-D clippy::nonminimal-bool` implied by `-D warnings`
+    = help: to override `-D warnings` add `#[allow(clippy::nonminimal_bool)]`
+help: try
+    |
+130 ~         if self
+131 +             .local_io
+132 +             .pending_paste
+133 +             .as_ref().is_none_or(|pending| pending.request != request)
+    |
+
+error: use of a disallowed type `std::time::Instant`
+   --> app/src/terminal/view/local_io.rs:236:19
+    |
+236 |         let now = Instant::now();
+    |                   ^^^^^^^
+    |
+    = note: std::time::Instant is not implemented for wasm targets. Use instant::Instant instead.
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.92.0/index.html#disallowed_types
+
+error: the borrowed expression implements the required traits
+    --> app/src/terminal/view.rs:1678:36
+     |
+1678 |         ctx.element_position_by_id(&format!("terminal_view:cursor_{}", self.view_id))
+     |                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: change this to: `format!("terminal_view:cursor_{}", self.view_id)`
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.92.0/index.html#needless_borrows_for_generic_args
+     = note: `-D clippy::needless-borrows-for-generic-args` implied by `-D warnings`
+     = help: to override `-D warnings` add `#[allow(clippy::needless_borrows_for_generic_args)]`
+
+error: could not compile `warp` (lib) due to 5 previous errors
+warning: build failed, waiting for other jobs to finish...
+error: use of a disallowed type `std::time::Instant`
+ --> app/src/terminal/view/local_io_tests.rs:9:27
+  |
+9 | use std::time::{Duration, Instant};
+  |                           ^^^^^^^
+  |
+  = note: std::time::Instant is not implemented for wasm targets. Use instant::Instant instead.
+  = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.92.0/index.html#disallowed_types
+
+error: use of a disallowed type `std::time::Instant`
+   --> app/src/terminal/view/local_io_tests.rs:164:24
+    |
+164 |         let deadline = Instant::now() + Duration::from_secs(2);
+    |                        ^^^^^^^
+    |
+    = note: std::time::Instant is not implemented for wasm targets. Use instant::Instant instead.
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.92.0/index.html#disallowed_types
+
+error: use of a disallowed type `std::time::Instant`
+   --> app/src/terminal/view/local_io_tests.rs:166:48
+    |
+166 |         while actual.len() < expected.len() && Instant::now() < deadline {
+    |                                                ^^^^^^^
+    |
+    = note: std::time::Instant is not implemented for wasm targets. Use instant::Instant instead.
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.92.0/index.html#disallowed_types
+
+error: could not compile `warp` (lib test) due to 8 previous errors

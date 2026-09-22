@@ -1,0 +1,98 @@
+Bundling app (bin: term4u)...
+    Blocking waiting for file lock on build directory
+   Compiling syn v1.0.109
+   Compiling hyper-util v0.1.16
+   Compiling ahash v0.8.11
+   Compiling warpui_core v0.1.0 (/Users/tedczj/workspace/term4u/crates/warpui_core)
+   Compiling warp_features v0.0.0 (/Users/tedczj/workspace/term4u/crates/warp_features)
+   Compiling warp_core v0.0.0 (/Users/tedczj/workspace/term4u/crates/warp_core)
+   Compiling num-integer v0.1.46
+   Compiling num-bigint v0.4.6
+   Compiling hyper-rustls v0.27.7
+   Compiling reqwest v0.13.3
+   Compiling websocket v0.1.0 (/Users/tedczj/workspace/term4u/crates/websocket)
+   Compiling jaq-json v2.0.0
+   Compiling warp_errors v0.0.0 (/Users/tedczj/workspace/term4u/crates/warp_errors)
+   Compiling command v0.1.0 (/Users/tedczj/workspace/term4u/crates/command)
+   Compiling warp_util v0.1.0 (/Users/tedczj/workspace/term4u/crates/warp_util)
+   Compiling sum_tree v0.1.0 (/Users/tedczj/workspace/term4u/crates/sum_tree)
+   Compiling jaq-fmts v0.1.0
+   Compiling aha-reqwest-eventsource v0.1.0
+   Compiling local_control v0.0.0 (/Users/tedczj/workspace/term4u/crates/local_control)
+   Compiling jaq-all v0.1.0
+   Compiling hashbrown v0.14.1
+   Compiling dashmap v6.1.0
+   Compiling repo_metadata v0.1.0 (/Users/tedczj/workspace/term4u/crates/repo_metadata)
+   Compiling axum v0.8.4
+   Compiling warpui v0.0.0 (/Users/tedczj/workspace/term4u/crates/warpui)
+   Compiling ai v0.1.0 (/Users/tedczj/workspace/term4u/crates/ai)
+   Compiling proc-macro-error v1.0.4
+   Compiling warp v0.1.0 (/Users/tedczj/workspace/term4u/app)
+   Compiling attribute-derive-macro v0.6.1
+   Compiling derive_more v0.99.17
+   Compiling derivative v2.2.0
+   Compiling attribute-derive v0.6.1
+   Compiling trait-set v0.3.0
+   Compiling getset v0.1.2
+   Compiling ouroboros_macro v0.18.0
+   Compiling derive-new v0.5.9
+   Compiling palette_derive v0.6.1
+   Compiling axum-extra v0.10.1
+   Compiling interaction_types v0.1.0 (/Users/tedczj/workspace/term4u/crates-local/interaction_types)
+   Compiling app-installation-detection v0.1.0 (/Users/tedczj/workspace/term4u/crates/app-installation-detection)
+   Compiling palette v0.6.1
+   Compiling ouroboros v0.18.0
+   Compiling variant_count v1.1.0
+   Compiling lasso v0.7.3
+   Compiling bytecount v0.6.9
+   Compiling get-size-derive v0.1.3
+   Compiling get-size v0.1.4
+   Compiling cynic-codegen v3.8.0
+   Compiling kmeans_colors v0.5.0
+   Compiling cynic-proc-macros v3.8.0
+   Compiling cynic v3.8.0
+   Compiling string-offset v0.0.0 (/Users/tedczj/workspace/term4u/crates/string-offset)
+   Compiling warpui_extras v0.0.0 (/Users/tedczj/workspace/term4u/crates/warpui_extras)
+   Compiling watcher v0.1.0 (/Users/tedczj/workspace/term4u/crates/watcher)
+   Compiling warp_assets v0.0.0 (/Users/tedczj/workspace/term4u/crates/warp_assets)
+   Compiling jsonrpc v0.1.0 (/Users/tedczj/workspace/term4u/crates/jsonrpc)
+   Compiling settings v0.0.0 (/Users/tedczj/workspace/term4u/crates/settings)
+   Compiling ipc v0.1.0 (/Users/tedczj/workspace/term4u/crates/ipc)
+   Compiling http_client v0.0.0 (/Users/tedczj/workspace/term4u/crates/http_client)
+   Compiling vim v0.1.0 (/Users/tedczj/workspace/term4u/crates/vim)
+   Compiling warp_cli v0.0.0 (/Users/tedczj/workspace/term4u/crates/warp_cli)
+   Compiling warp_isolation_platform v0.1.0 (/Users/tedczj/workspace/term4u/crates/isolation_platform)
+   Compiling secret_redaction v0.0.0 (/Users/tedczj/workspace/term4u/crates/secret_redaction)
+   Compiling asset_cache v0.0.0 (/Users/tedczj/workspace/term4u/crates/asset_cache)
+   Compiling simple_logger v0.1.0 (/Users/tedczj/workspace/term4u/crates/simple_logger)
+   Compiling warp_logging v0.0.0 (/Users/tedczj/workspace/term4u/crates/warp_logging)
+   Compiling build_cache v0.1.0 (/Users/tedczj/workspace/term4u/crates/build_cache)
+   Compiling warp_editor v0.1.0 (/Users/tedczj/workspace/term4u/crates/editor)
+   Compiling http_server v0.0.0 (/Users/tedczj/workspace/term4u/crates/http_server)
+   Compiling warp_files v0.1.0 (/Users/tedczj/workspace/term4u/crates/warp_files)
+   Compiling lsp v0.1.0 (/Users/tedczj/workspace/term4u/crates/lsp)
+   Compiling ui_components v0.0.0 (/Users/tedczj/workspace/term4u/crates/ui_components)
+   Compiling warp_search_core v0.1.0 (/Users/tedczj/workspace/term4u/crates/warp_search_core)
+   Compiling warp_completer v0.1.0 (/Users/tedczj/workspace/term4u/crates/warp_completer)
+   Compiling warp_ripgrep v0.1.0 (/Users/tedczj/workspace/term4u/crates/warp_ripgrep)
+   Compiling languages v0.0.0 (/Users/tedczj/workspace/term4u/crates/languages)
+   Compiling syntax_tree v0.1.0 (/Users/tedczj/workspace/term4u/crates/syntax_tree)
+   Compiling warp_terminal v0.0.0 (/Users/tedczj/workspace/term4u/crates/warp_terminal)
+    Finished `dev` profile [unoptimized] target(s) in 53.75s
+[1m[32m    Bundling(B[m Term4u.app
+[1m[32m    Finished(B[m 1 bundle at:
+        /Volumes/未命名/term4u-l0-20260922/target/debug/bundle/osx/Term4u.app
+Successfully bundled...
+Adding @executable_path/../Frameworks rpath to /Volumes/未命名/term4u-l0-20260922/target/debug/bundle/osx/Term4u.app/Contents/MacOS/term4u to support bundled macOS frameworks
+Updating plist to support a custom url scheme
+Updating plist with supported file types
+Updating plist with permissions descriptions
+Disabling use of Liquid Glass on macOS Tahoe
+Preparing bundled resources...
+Copying bundled resources to /Volumes/未命名/term4u-l0-20260922/target/debug/bundle/osx/Term4u.app/Contents/Resources/bundled
+Copying channel-gated skills for channel 'oss'...
+  Channel 'oss' has no gated skills, skipping
+Successfully prepared bundled resources in /Volumes/未命名/term4u-l0-20260922/target/debug/bundle/osx/Term4u.app/Contents/Resources
+Warning: no .icon bundle found for oss channel at /Users/tedczj/workspace/term4u/app/channels/oss/icon/AppIcon.icon; skipping adaptive icon compilation.
+Codesigning app...
+/Volumes/未命名/term4u-l0-20260922/target/debug/bundle/osx/Term4u.app: replacing existing signature

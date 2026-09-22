@@ -1,0 +1,73 @@
+    Updating git repository `https://github.com/wgsl-analyzer/wgsl-analyzer`
+  Installing wgslfmt v0.1.0 (https://github.com/wgsl-analyzer/wgsl-analyzer?tag=2025-06-28#7e34f03c)
+    Updating crates.io index
+    Updating git repository `https://github.com/rust-lang/rust-analyzer`
+From https://github.com/rust-lang/rust-analyzer
+ * [new ref]             80e9d014be07b265e948b7f477da6b21c7d1a417 -> refs/commit/80e9d014be07b265e948b7f477da6b21c7d1a417
+    Updating git repository `https://github.com/gfx-rs/wgpu`
+From https://github.com/gfx-rs/wgpu
+ * [new ref]             b32cbd4ea6b6b898b27b7837145b3cfe30ac1543 -> refs/commit/b32cbd4ea6b6b898b27b7837145b3cfe30ac1543
+    Blocking waiting for file lock on package cache
+warning: package `deranged v0.4.1` in Cargo.lock is yanked in registry `crates-io`, consider running without --locked
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+ Downloading crates ...
+warning: spurious network error (3 tries remaining): [35] SSL connect error (LibreSSL SSL_connect: SSL_ERROR_SYSCALL in connection to static.crates.io:443 )
+warning: spurious network error (3 tries remaining): [35] SSL connect error (LibreSSL SSL_connect: SSL_ERROR_SYSCALL in connection to static.crates.io:443 )
+warning: spurious network error (3 tries remaining): [35] SSL connect error (LibreSSL SSL_connect: SSL_ERROR_SYSCALL in connection to static.crates.io:443 )
+warning: spurious network error (3 tries remaining): [35] SSL connect error (LibreSSL SSL_connect: SSL_ERROR_SYSCALL in connection to static.crates.io:443 )
+warning: spurious network error (3 tries remaining): [35] SSL connect error (LibreSSL SSL_connect: SSL_ERROR_SYSCALL in connection to static.crates.io:443 )
+warning: spurious network error (3 tries remaining): [35] SSL connect error (LibreSSL SSL_connect: SSL_ERROR_SYSCALL in connection to static.crates.io:443 )
+warning: spurious network error (3 tries remaining): [35] SSL connect error (LibreSSL SSL_connect: SSL_ERROR_SYSCALL in connection to static.crates.io:443 )
+warning: spurious network error (3 tries remaining): [35] SSL connect error (LibreSSL SSL_connect: SSL_ERROR_SYSCALL in connection to static.crates.io:443 )
+warning: spurious network error (3 tries remaining): [35] SSL connect error (LibreSSL SSL_connect: SSL_ERROR_SYSCALL in connection to static.crates.io:443 )
+warning: spurious network error (2 tries remaining): [35] SSL connect error (LibreSSL SSL_connect: SSL_ERROR_SYSCALL in connection to static.crates.io:443 )
+warning: spurious network error (2 tries remaining): [35] SSL connect error (LibreSSL SSL_connect: SSL_ERROR_SYSCALL in connection to static.crates.io:443 )
+warning: spurious network error (3 tries remaining): [35] SSL connect error (LibreSSL SSL_connect: SSL_ERROR_SYSCALL in connection to static.crates.io:443 )
+warning: spurious network error (2 tries remaining): [35] SSL connect error (LibreSSL SSL_connect: SSL_ERROR_SYSCALL in connection to static.crates.io:443 )
+warning: spurious network error (2 tries remaining): [35] SSL connect error (LibreSSL SSL_connect: SSL_ERROR_SYSCALL in connection to static.crates.io:443 )
+warning: spurious network error (3 tries remaining): [35] SSL connect error (LibreSSL SSL_connect: SSL_ERROR_SYSCALL in connection to static.crates.io:443 )
+warning: spurious network error (2 tries remaining): [35] SSL connect error (LibreSSL SSL_connect: SSL_ERROR_SYSCALL in connection to static.crates.io:443 )
+warning: spurious network error (2 tries remaining): [35] SSL connect error (LibreSSL SSL_connect: SSL_ERROR_SYSCALL in connection to static.crates.io:443 )
+warning: spurious network error (3 tries remaining): [35] SSL connect error (LibreSSL SSL_connect: SSL_ERROR_SYSCALL in connection to static.crates.io:443 )
+warning: spurious network error (3 tries remaining): [35] SSL connect error (LibreSSL SSL_connect: SSL_ERROR_SYSCALL in connection to static.crates.io:443 )
+warning: spurious network error (2 tries remaining): [35] SSL connect error (LibreSSL SSL_connect: SSL_ERROR_SYSCALL in connection to static.crates.io:443 )
+warning: spurious network error (3 tries remaining): [35] SSL connect error (LibreSSL SSL_connect: SSL_ERROR_SYSCALL in connection to static.crates.io:443 )
+warning: spurious network error (1 try remaining): [35] SSL connect error (LibreSSL SSL_connect: SSL_ERROR_SYSCALL in connection to static.crates.io:443 )
+warning: spurious network error (3 tries remaining): [35] SSL connect error (LibreSSL SSL_connect: SSL_ERROR_SYSCALL in connection to static.crates.io:443 )
+warning: spurious network error (2 tries remaining): [35] SSL connect error (LibreSSL SSL_connect: SSL_ERROR_SYSCALL in connection to static.crates.io:443 )
+warning: spurious network error (1 try remaining): [35] SSL connect error (LibreSSL SSL_connect: SSL_ERROR_SYSCALL in connection to static.crates.io:443 )
+warning: spurious network error (2 tries remaining): [35] SSL connect error (LibreSSL SSL_connect: SSL_ERROR_SYSCALL in connection to static.crates.io:443 )
+warning: spurious network error (1 try remaining): [35] SSL connect error (LibreSSL SSL_connect: SSL_ERROR_SYSCALL in connection to static.crates.io:443 )
+warning: spurious network error (2 tries remaining): [35] SSL connect error (LibreSSL SSL_connect: SSL_ERROR_SYSCALL in connection to static.crates.io:443 )
+warning: spurious network error (1 try remaining): [35] SSL connect error (LibreSSL SSL_connect: SSL_ERROR_SYSCALL in connection to static.crates.io:443 )
+warning: spurious network error (2 tries remaining): [35] SSL connect error (LibreSSL SSL_connect: SSL_ERROR_SYSCALL in connection to static.crates.io:443 )
+warning: spurious network error (2 tries remaining): [35] SSL connect error (LibreSSL SSL_connect: SSL_ERROR_SYSCALL in connection to static.crates.io:443 )
+warning: spurious network error (3 tries remaining): [35] SSL connect error (LibreSSL SSL_connect: SSL_ERROR_SYSCALL in connection to static.crates.io:443 )
+warning: spurious network error (3 tries remaining): [35] SSL connect error (LibreSSL SSL_connect: SSL_ERROR_SYSCALL in connection to static.crates.io:443 )
+warning: spurious network error (1 try remaining): [35] SSL connect error (LibreSSL SSL_connect: SSL_ERROR_SYSCALL in connection to static.crates.io:443 )
+warning: spurious network error (2 tries remaining): [35] SSL connect error (LibreSSL SSL_connect: SSL_ERROR_SYSCALL in connection to static.crates.io:443 )
+warning: spurious network error (2 tries remaining): [35] SSL connect error (LibreSSL SSL_connect: SSL_ERROR_SYSCALL in connection to static.crates.io:443 )
+warning: spurious network error (2 tries remaining): [35] SSL connect error (LibreSSL SSL_connect: SSL_ERROR_SYSCALL in connection to static.crates.io:443 )
+warning: spurious network error (1 try remaining): [35] SSL connect error (LibreSSL SSL_connect: SSL_ERROR_SYSCALL in connection to static.crates.io:443 )
+warning: spurious network error (1 try remaining): [35] SSL connect error (LibreSSL SSL_connect: SSL_ERROR_SYSCALL in connection to static.crates.io:443 )
+warning: spurious network error (2 tries remaining): [35] SSL connect error (LibreSSL SSL_connect: SSL_ERROR_SYSCALL in connection to static.crates.io:443 )
+warning: spurious network error (2 tries remaining): [35] SSL connect error (LibreSSL SSL_connect: SSL_ERROR_SYSCALL in connection to static.crates.io:443 )
+warning: spurious network error (1 try remaining): [35] SSL connect error (LibreSSL SSL_connect: SSL_ERROR_SYSCALL in connection to static.crates.io:443 )
+warning: spurious network error (1 try remaining): [35] SSL connect error (LibreSSL SSL_connect: SSL_ERROR_SYSCALL in connection to static.crates.io:443 )
+warning: spurious network error (1 try remaining): [35] SSL connect error (LibreSSL SSL_connect: SSL_ERROR_SYSCALL in connection to static.crates.io:443 )
+warning: spurious network error (1 try remaining): [35] SSL connect error (LibreSSL SSL_connect: SSL_ERROR_SYSCALL in connection to static.crates.io:443 )
+warning: spurious network error (1 try remaining): [35] SSL connect error (LibreSSL SSL_connect: SSL_ERROR_SYSCALL in connection to static.crates.io:443 )
+warning: spurious network error (1 try remaining): [35] SSL connect error (LibreSSL SSL_connect: SSL_ERROR_SYSCALL in connection to static.crates.io:443 )
+warning: spurious network error (1 try remaining): [35] SSL connect error (LibreSSL SSL_connect: SSL_ERROR_SYSCALL in connection to static.crates.io:443 )
+warning: spurious network error (1 try remaining): [35] SSL connect error (LibreSSL SSL_connect: SSL_ERROR_SYSCALL in connection to static.crates.io:443 )
+warning: spurious network error (1 try remaining): [35] SSL connect error (LibreSSL SSL_connect: SSL_ERROR_SYSCALL in connection to static.crates.io:443 )
+warning: spurious network error (1 try remaining): [35] SSL connect error (LibreSSL SSL_connect: SSL_ERROR_SYSCALL in connection to static.crates.io:443 )
+error: failed to compile `wgslfmt v0.1.0 (https://github.com/wgsl-analyzer/wgsl-analyzer?tag=2025-06-28#7e34f03c)`, intermediate artifacts can be found at `/Volumes/未命名/term4u-l0-20260922/tools-target`.
+To reuse those artifacts with a future compilation, set the environment variable `CARGO_TARGET_DIR` to that path.
+
+Caused by:
+  failed to download from `https://static.crates.io/crates/anyhow/1.0.98/download`
+
+Caused by:
+  [35] SSL connect error (LibreSSL SSL_connect: SSL_ERROR_SYSCALL in connection to static.crates.io:443 )

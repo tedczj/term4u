@@ -6,8 +6,9 @@ use std::os::fd::{AsRawFd, FromRawFd};
 use std::os::unix::ffi::OsStringExt;
 use std::rc::Rc;
 use std::sync::atomic::{AtomicU64, Ordering};
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
+use instant::Instant;
 use nix::fcntl::{FcntlArg, OFlag, fcntl};
 use nix::pty::openpty;
 use nix::sys::termios::{SetArg, cfmakeraw, tcgetattr, tcsetattr};

@@ -1164,10 +1164,11 @@ impl TerminalModel {
     }
 
     pub fn terminal_input_state(&self) -> TerminalInputState {
-        if !self.block_list().is_bootstrapped() {
-            TerminalInputState::NotBootstrapped
-        } else if self.is_alt_screen_active() {
+        // An RC-file program can enter the alternate screen before shell integration is ready.
+        if self.is_alt_screen_active() {
             TerminalInputState::AltScreen
+        } else if !self.block_list().is_bootstrapped() {
+            TerminalInputState::NotBootstrapped
         } else if self
             .block_list()
             .active_block()

@@ -1,0 +1,199 @@
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+   Compiling aws-lc-sys v0.39.1
+   Compiling http-range-header v0.4.0
+   Compiling num_threads v0.1.7
+   Compiling web_atoms v0.1.3
+   Compiling castaway v0.2.4
+   Compiling lru v0.18.0
+   Compiling time v0.3.47
+   Compiling tower-http v0.6.8
+   Compiling compact_str v0.9.0
+   Compiling strum v0.28.0
+   Compiling unicode-truncate v2.0.1
+   Compiling kasuari v0.4.11
+   Compiling aws-lc-rs v1.16.2
+   Compiling markup5ever v0.35.0
+   Compiling critical-section v1.2.0
+   Compiling html5ever v0.35.0
+   Compiling xml5ever v0.35.0
+   Compiling ratatui-core v0.1.1
+   Compiling line-clipping v0.3.7
+   Compiling rustls-webpki v0.103.13
+   Compiling markup5ever_rcdom v0.35.0+unofficial
+   Compiling warpui_core v0.1.0 (/Users/tedczj/workspace/term4u/crates/warpui_core)
+   Compiling markdown_parser v0.1.0 (/Users/tedczj/workspace/term4u/crates/markdown_parser)
+   Compiling ratatui-widgets v0.3.1
+   Compiling ratatui-crossterm v0.1.1
+   Compiling rustls v0.23.39
+   Compiling rust-embed v8.7.2
+   Compiling warpui v0.0.0 (/Users/tedczj/workspace/term4u/crates/warpui)
+   Compiling anstyle-parse v1.0.0
+   Compiling anstream v1.0.0
+   Compiling escape8259 v0.5.3
+   Compiling ratatui-macros v0.7.1
+   Compiling ratatui v0.30.1
+   Compiling libtest-mimic v0.8.2
+   Compiling arborium-javascript v2.13.0
+   Compiling zstd-sys v2.0.15+zstd.1.5.7
+   Compiling rust-embed v6.8.1
+   Compiling zstd-safe v7.2.4
+   Compiling arborium-css v2.13.0
+   Compiling warp-command-signatures v0.0.0 (https://github.com/warpdotdev/command-signatures.git?rev=d3725aa42375cc229699c87be2b38f9d9f07080f#d3725aa4)
+   Compiling zstd v0.13.3
+   Compiling ipynb_parser v0.1.0 (/Users/tedczj/workspace/term4u/crates/ipynb_parser)
+   Compiling arborium-html v2.13.0
+   Compiling arborium-c v2.13.0
+   Compiling arborium-tree-sitter v2.13.0
+   Compiling arborium-typescript v2.13.0
+   Compiling arborium-yaml v2.13.0
+   Compiling arborium-scss v2.13.0
+   Compiling arborium-toml v2.13.0
+   Compiling arborium-vue v2.13.0
+   Compiling arborium-markdown v2.13.0
+   Compiling arborium-hcl v2.13.0
+   Compiling arborium-highlight v2.13.0
+   Compiling arborium-elixir v2.13.0
+   Compiling arborium-cpp v2.13.0
+   Compiling arborium-powershell v2.13.0
+   Compiling arborium-nix v2.13.0
+   Compiling arborium-swift v2.13.0
+   Compiling arborium-jq v2.13.0
+   Compiling arborium-c-sharp v2.13.0
+   Compiling arborium-sql v2.13.0
+   Compiling arborium-starlark v2.13.0
+   Compiling arborium-lua v2.13.0
+   Compiling arborium-go v2.13.0
+   Compiling arborium-scala v2.13.0
+   Compiling arborium-java v2.13.0
+   Compiling arborium-bash v2.13.0
+   Compiling arborium-tsx v2.13.0
+   Compiling arborium-python v2.13.0
+   Compiling arborium-rust v2.13.0
+   Compiling arborium-dockerfile v2.13.0
+   Compiling arborium-json v2.13.0
+   Compiling arborium-ruby v2.13.0
+   Compiling arborium-php v2.13.0
+   Compiling arborium-objc v2.13.0
+   Compiling arborium-kotlin v2.13.0
+   Compiling arborium-xml v2.13.0
+   Compiling channel_versions v0.1.0 (/Users/tedczj/workspace/term4u/crates/channel_versions)
+   Compiling arborium v2.13.0
+   Compiling bzip2-sys v0.1.13+1.0.8
+   Compiling tokio-rustls v0.26.4
+   Compiling rustls-platform-verifier v0.6.2
+   Compiling tungstenite v0.24.0
+   Compiling hyper-rustls v0.27.7
+   Compiling lzma-sys v0.1.20
+   Compiling libsqlite3-sys v0.33.0
+   Compiling reqwest v0.13.3
+   Compiling tantivy-common v0.11.0
+   Compiling graphql-ws-client v0.11.1
+   Compiling async-tungstenite v0.28.2
+   Compiling websocket v0.1.0 (/Users/tedczj/workspace/term4u/crates/websocket)
+   Compiling diesel v2.3.10
+   Compiling xz2 v0.1.7
+   Compiling warp_errors v0.0.0 (/Users/tedczj/workspace/term4u/crates/warp_errors)
+   Compiling aha-reqwest-eventsource v0.1.0
+   Compiling command v0.1.0 (/Users/tedczj/workspace/term4u/crates/command)
+   Compiling sum_tree v0.1.0 (/Users/tedczj/workspace/term4u/crates/sum_tree)
+   Compiling warp_util v0.1.0 (/Users/tedczj/workspace/term4u/crates/warp_util)
+   Compiling local_control v0.0.0 (/Users/tedczj/workspace/term4u/crates/local_control)
+   Compiling bzip2 v0.5.2
+   Compiling zip v2.4.2
+   Compiling tantivy-stacker v0.7.0
+   Compiling tantivy-sstable v0.7.0
+   Compiling ai v0.1.0 (/Users/tedczj/workspace/term4u/crates/ai)
+   Compiling tantivy-columnar v0.7.0
+   Compiling onig_sys v69.9.1
+   Compiling libz-sys v1.1.25
+   Compiling plist v1.5.1
+   Compiling palette v0.6.1
+   Compiling tantivy v0.26.0
+   Compiling libgit2-sys v0.18.3+1.9.2
+   Compiling onig v6.5.1
+   Compiling warp v0.1.0 (/Users/tedczj/workspace/term4u/app)
+   Compiling app-installation-detection v0.1.0 (/Users/tedczj/workspace/term4u/crates/app-installation-detection)
+   Compiling warpui_extras v0.0.0 (/Users/tedczj/workspace/term4u/crates/warpui_extras)
+   Compiling watcher v0.1.0 (/Users/tedczj/workspace/term4u/crates/watcher)
+   Compiling settings v0.0.0 (/Users/tedczj/workspace/term4u/crates/settings)
+   Compiling warp_assets v0.0.0 (/Users/tedczj/workspace/term4u/crates/warp_assets)
+   Compiling warp_core v0.0.0 (/Users/tedczj/workspace/term4u/crates/warp_core)
+   Compiling http_client v0.0.0 (/Users/tedczj/workspace/term4u/crates/http_client)
+   Compiling warp_cli v0.0.0 (/Users/tedczj/workspace/term4u/crates/warp_cli)
+   Compiling asset_cache v0.0.0 (/Users/tedczj/workspace/term4u/crates/asset_cache)
+   Compiling vim v0.1.0 (/Users/tedczj/workspace/term4u/crates/vim)
+   Compiling repo_metadata v0.1.0 (/Users/tedczj/workspace/term4u/crates/repo_metadata)
+   Compiling warp_editor v0.1.0 (/Users/tedczj/workspace/term4u/crates/editor)
+   Compiling secret_redaction v0.0.0 (/Users/tedczj/workspace/term4u/crates/secret_redaction)
+   Compiling warp_isolation_platform v0.1.0 (/Users/tedczj/workspace/term4u/crates/isolation_platform)
+   Compiling diesel_migrations v2.3.1
+   Compiling simple_logger v0.1.0 (/Users/tedczj/workspace/term4u/crates/simple_logger)
+   Compiling warp_completer v0.1.0 (/Users/tedczj/workspace/term4u/crates/warp_completer)
+   Compiling jsonrpc v0.1.0 (/Users/tedczj/workspace/term4u/crates/jsonrpc)
+   Compiling persistence v0.0.0 (/Users/tedczj/workspace/term4u/crates/persistence)
+   Compiling lsp v0.1.0 (/Users/tedczj/workspace/term4u/crates/lsp)
+   Compiling languages v0.0.0 (/Users/tedczj/workspace/term4u/crates/languages)
+   Compiling warp_terminal v0.0.0 (/Users/tedczj/workspace/term4u/crates/warp_terminal)
+   Compiling syntax_tree v0.1.0 (/Users/tedczj/workspace/term4u/crates/syntax_tree)
+   Compiling warp_ripgrep v0.1.0 (/Users/tedczj/workspace/term4u/crates/warp_ripgrep)
+   Compiling build_cache v0.1.0 (/Users/tedczj/workspace/term4u/crates/build_cache)
+   Compiling ui_components v0.0.0 (/Users/tedczj/workspace/term4u/crates/ui_components)
+   Compiling warp_search_core v0.1.0 (/Users/tedczj/workspace/term4u/crates/warp_search_core)
+   Compiling warp_files v0.1.0 (/Users/tedczj/workspace/term4u/crates/warp_files)
+   Compiling http_server v0.0.0 (/Users/tedczj/workspace/term4u/crates/http_server)
+   Compiling warp_logging v0.0.0 (/Users/tedczj/workspace/term4u/crates/warp_logging)
+   Compiling ipc v0.1.0 (/Users/tedczj/workspace/term4u/crates/ipc)
+   Compiling asset_macro v0.1.0 (/Users/tedczj/workspace/term4u/crates/asset_macro)
+   Compiling syntect v5.2.0
+   Compiling warp-workflows v0.1.0 (https://github.com/warpdotdev/workflows?rev=793a98ddda6ef19682aed66364faebd2829f0e01#793a98dd)
+   Compiling cynic v3.8.0
+   Compiling git2 v0.20.4
+   Compiling kmeans_colors v0.5.0
+   Compiling wasm-bindgen v0.2.117
+   Compiling rquickjs-sys v0.3.1
+   Compiling plotters-backend v0.3.5
+   Compiling plotters-svg v0.3.5
+   Compiling js-sys v0.3.94
+   Compiling rquickjs-core v0.3.1
+   Compiling simplelog v0.12.2
+   Compiling xattr v1.5.1
+   Compiling node_runtime v0.1.0 (/Users/tedczj/workspace/term4u/crates/node_runtime)
+   Compiling cast v0.3.0
+   Compiling criterion-plot v0.5.0
+   Compiling rquickjs v0.3.1
+   Compiling tar v0.4.46
+   Compiling plotters v0.3.5
+   Compiling ciborium v0.2.2
+   Compiling tinytemplate v1.2.1
+   Compiling anes v0.1.6
+   Compiling oorandom v11.1.3
+   Compiling input_classifier v0.0.0 (/Users/tedczj/workspace/term4u/crates/input_classifier)
+   Compiling criterion v0.5.1
+   Compiling futures-test-sink v0.1.1
+   Compiling warp_js v0.1.0 (/Users/tedczj/workspace/term4u/crates/warp_js)
+   Compiling serde-wasm-bindgen v0.6.5
+   Compiling warp_web_event_bus v0.0.0 (/Users/tedczj/workspace/term4u/crates/warp_web_event_bus)
+   Compiling warp_tui v0.0.0 (/Users/tedczj/workspace/term4u/crates/warp_tui)
+   Compiling field_mask v0.0.0 (/Users/tedczj/workspace/term4u/crates/field_mask)
+   Compiling serve-wasm v0.1.0 (/Users/tedczj/workspace/term4u/crates/serve-wasm)
+   Compiling natural_language_detection v0.1.0 (/Users/tedczj/workspace/term4u/crates/natural_language_detection)
+   Compiling fuzzy_match v0.1.0 (/Users/tedczj/workspace/term4u/crates/fuzzy_match)
+   Compiling interaction_types v0.1.0 (/Users/tedczj/workspace/term4u/crates-local/interaction_types)
+   Compiling prevent_sleep v0.0.0 (/Users/tedczj/workspace/term4u/crates/prevent_sleep)
+   Compiling virtual-fs v0.1.0 (/Users/tedczj/workspace/term4u/crates/virtual_fs)
+   Compiling settings_value v0.1.0 (/Users/tedczj/workspace/term4u/crates/settings_value)
+   Compiling string-offset v0.0.0 (/Users/tedczj/workspace/term4u/crates/string-offset)
+   Compiling warp_features v0.0.0 (/Users/tedczj/workspace/term4u/crates/warp_features)
+   Compiling offline_guard v0.1.0 (/Users/tedczj/workspace/term4u/crates-local/offline_guard)
+   Compiling ai_types v0.1.0 (/Users/tedczj/workspace/term4u/crates/ai_types)
+   Compiling settings_value_derive v0.0.0 (/Users/tedczj/workspace/term4u/crates/settings_value_derive)
+   Compiling regex_dfas v0.0.0 (/Users/tedczj/workspace/term4u/crates/regex_dfas)
+   Compiling handlebars v0.0.0 (/Users/tedczj/workspace/term4u/crates/handlebars)
+    Finished `test` profile [unoptimized] target(s) in 1m 08s
+OK: every disappeared test is explicitly listed in deleted-test-ids.txt
+Baseline tests: 9777
+Current tests: 4809
+Deleted tests: 5089
