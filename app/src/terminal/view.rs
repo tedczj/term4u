@@ -1675,7 +1675,7 @@ impl View for TerminalView {
         if self.input_is_visible() || !ctx.is_self_focused() {
             return None;
         }
-        ctx.element_position_by_id(&format!("terminal_view:cursor_{}", self.view_id))
+        ctx.element_position_by_id(format!("terminal_view:cursor_{}", self.view_id))
             .map(|position| warpui::CursorInfo {
                 position,
                 font_size: Appearance::as_ref(ctx).monospace_font_size(),

@@ -20,6 +20,22 @@ use crate::workspace::ToastStack;
 use crate::workspace::sync_inputs::SyncedInputState;
 
 impl EditorView {
+    pub(crate) fn set_mock_layout_for_test(&self, lines: &[&str], ctx: &AppContext) {
+        let layouts = FrameLayouts::new(
+            lines
+                .iter()
+                .map(|line| Arc::new(TextFrame::mock(line)))
+                .collect(),
+            0,
+            lines.len() as u32,
+        );
+        self.editor_model
+            .as_ref(ctx)
+            .display_map(ctx)
+            .soft_wrap_state()
+            .update(layouts);
+    }
+
     fn selected_ranges(&self, app: &AppContext) -> Vec<Range<DisplayPoint>> {
         self.editor_model
             .as_ref(app)

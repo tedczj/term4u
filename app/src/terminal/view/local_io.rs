@@ -1,8 +1,9 @@
 //! Local input and host-clipboard boundaries. Payloads must never be logged here.
 
 use std::path::PathBuf;
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
+use instant::Instant;
 use warpui::clipboard::ClipboardContent;
 use warpui::modals::{AlertDialogWithCallbacks, ModalButton};
 use warpui::{SingletonEntity, ViewContext};
@@ -127,11 +128,11 @@ impl TerminalView {
         accepted: bool,
         ctx: &mut ViewContext<Self>,
     ) {
-        if !self
+        if self
             .local_io
             .pending_paste
             .as_ref()
-            .is_some_and(|pending| pending.request == request)
+            .is_none_or(|pending| pending.request != request)
         {
             return;
         }

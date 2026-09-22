@@ -81,6 +81,12 @@ fn multiline_vertical_navigation_stays_inside_the_editor() {
                 editor.select_ranges_by_byte_offset([7_usize.into()..7_usize.into()], ctx);
             });
         });
+        // App::test's font backend produces empty glyphs. Use the same layout fixture as
+        // the editor movement tests while retaining real terminal keybinding dispatch.
+        editor.read(&app, |editor, ctx| {
+            assert_eq!(editor.end_byte_index_of_last_selection(ctx).as_usize(), 7);
+            editor.set_mock_layout_for_test(&["one", "two"], ctx);
+        });
         app.dispatch_keystroke(
             window,
             &[terminal.id(), input.id(), editor.id()],
@@ -91,6 +97,18 @@ fn multiline_vertical_navigation_stays_inside_the_editor() {
         editor.read(&app, |editor, ctx| {
             assert_eq!(editor.buffer_text(ctx), "one\ntwo");
             assert_eq!(editor.end_byte_index_of_last_selection(ctx).as_usize(), 3);
+            editor.set_mock_layout_for_test(&["one", "two"], ctx);
+        });
+        app.dispatch_keystroke(
+            window,
+            &[terminal.id(), input.id(), editor.id()],
+            &Keystroke::parse("down").unwrap(),
+            false,
+        )
+        .unwrap();
+        editor.read(&app, |editor, ctx| {
+            assert_eq!(editor.buffer_text(ctx), "one\ntwo");
+            assert_eq!(editor.end_byte_index_of_last_selection(ctx).as_usize(), 7);
         });
     });
 }

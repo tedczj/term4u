@@ -199,8 +199,8 @@ sts.googleapis.com 按实际消费者审查，不误分类为 AWS STS。
 | R1 原批次 | CLOSED | 已核验的本地类型/初始化/编译调用链；后续新代码仍跑回归 |
 | R2 原批次 | CLOSED | 已有 GUI/TUI、本地数据与功能验收按原范围关闭；不是所有上游本地交互都已保留的证明 |
 | 原 GUI-shell | CLOSED | `eef716cd` 的补全/prompt/clear/基础焦点；完整 presubmit 与用户 H1/S8 已补齐，无遗留人工 H1 |
-| L0 本地交互保全 | IN_PROGRESS | 输入/历史/粘贴/设置/菜单第一批代码及 13 个新增测试已写入本变更；未在 macOS 编译运行，不能标 PASS；完整缺口见 §6.2 |
-| R3-F1 菜单焦点 | FIX_IMPLEMENTED_NOT_VERIFIED | 打开聚焦 Menu、统一关闭并有条件恢复焦点、避免完成事件抢焦点；Esc/Enter/Find 测试待运行 |
+| L0 本地交互保全 | IN_PROGRESS | 本地输入、粘贴、菜单及 IME 聚焦测试、完整 presubmit 和集中 GUI/PTY 复核已通过；本轮五项失败已消除，完整未关闭范围见 §6.2.15 |
+| R3-F1 菜单焦点 | PARTIALLY_VERIFIED | 打开/关闭焦点与 Esc/Enter/Find 路由测试已通过；跨 pane、目标销毁及完整实机矩阵仍待验收 |
 | R3 | OPEN | 本地功能恢复后再收尾云 UI/action/URI/auth/flag/keybinding 与孤儿源码，正反向测试不能省略 |
 | R4 | OPEN | 外链检查器/self-test/presubmit 接入、允许清单、Windows 例外审计 |
 | R5 | PARTIAL | 云依赖主体/pin/TUI features 已有；供应链、当前测试清单和累计源码删除范围仍需按最终候选核验 |
@@ -713,10 +713,11 @@ L0 关闭要求：L0-01–09 及 L0-07A/B/C 全部有结果；无保留功能的
 协议参考：XTerm Control Sequences，bracketed paste 与 OSC 52：
 https://invisible-island.net/xterm/ctlseqs/ctlseqs.html
 
-#### 6.2.15 dev-20260920 本轮实现台账
+#### 6.2.15 本地交互实现及验证结果
 
-**本轮没有关闭整个 L0。** 下列实现为增量候选，原测试 ID 与断言保留，不恢复旧云/Agent view；
-表中“已实现”初始为 IMPLEMENTED_NOT_VERIFIED，只有对应候选的 CI/artifact 才能改为 PASS。
+**本轮五项失败已消除，整个 L0 仍未关闭。** 以下实现已在本地 macOS Apple Silicon 编译、
+运行聚焦回归及完整 presubmit；集中 GUI/PTY 验证结果列于表后。原测试 ID 与断言保留，
+未列入本轮实测的场景仍按 OPEN / NOT_RUN 管理。
 
 | 范围 | 本轮实际修改位置及实现 | 验证映射与仍未关闭的内容 |
 |---|---|---|
@@ -733,20 +734,37 @@ https://invisible-island.net/xterm/ctlseqs/ctlseqs.html
 
 参考代码仍以 §6.2.2 的 O1–O9 固定原提交为准；本轮不以新模块名称冒充上游原位置。
 
-**已取得的候选证据（不是本轮全部修复的 PASS）：**
+**本地验证结论（2026-09-22）：**
 
-- `8abea95f3e4121a69fd79cb6155a854344ad1f97` 已提交完整 L0 设计；`6cda3cee60fd3cb51a9dc39a22423622ded24c40` 已提交本轮实现和 11 个新增测试。原生 apply run `35569723579` 的格式化、格式检查和 inventory 工具 9 项单测 PASS。
-- `5b22243026ead9aef9fb73eb2380822f1af3e50d`，macOS ARM run `35569900836`：格式、独立测试布局、许可证边界/配置、网络边界和 inventory 工具单测 PASS；GUI 编译发现生产代码缺 `PathBuf` 导入、测试缺 `TypedActionView` 导入，Rust 集成测试因此 NOT_RUN。当前增量补上这两处导入，不修改测试断言；修复候选仍须重新验证，不能沿用旧候选 PASS。
+验证基于 `1d2119d732ce79db6292d668477826348d55a8c2` 加本轮源码差异执行；运行时的
+未提交工作树由证据中的 `source.patch` 及 SHA-256 固定，提交/合并后通过源文件一致性核对关联。
+在 macOS 26.2 / Apple Silicon / Rust 1.92.0 复现本轮五项失败后完成以下修复：
 
-- `bbcf5f95adc3024fe6f6aceb3a872362c12aa938`，macOS ARM run `35567568833`：
-  GUI/TUI `cargo check --locked --all-targets --tests` 均 PASS；聚焦集合选中 29 项，11 passed、
-  3 failed、15 因 fail-fast 未执行；另外 1512 为过滤器排除，不能算执行通过。三项失败都先在
-  update 内的菜单焦点断言停止。后续候选已修正观察时机及 deferred focus 恢复，需重新运行。
-- 本地 `python3 script/lib/test_inventory_tests.py`：9 passed；`git diff --check` PASS。
-  这两项不是实际 Rust inventory / GUI / PTY 验收。
-- 后续 CI 必须使用 `--no-fail-fast` 收集完整失败，核对新增 test ID 实际命中；同一候选的
-  source-head、完整 stdout/stderr 与退出码随 artifact 保存。CI 不对 Finder、系统中文输入法、
-  真实用户数据迁移、网络捕获或性能预算作未执行的声明。
+- `terminal_input_state` 优先识别已激活的备用屏幕，允许 shell 初始化期间的原生程序接收输入；
+  退出备用屏幕后仍按原有 bootstrap 状态选择编辑器或运行中命令。粘贴、旧确认失效及 IME
+  共用这一判断，不以修改测试 bootstrap 状态避开实际路由缺陷。
+- 多行导航测试补齐字形布局夹具：`App::test` 的字体后端返回空字形，原用例因此把上一行末列
+  算成 0。复用编辑器已有 `TextFrame::mock`，保留原 Up 光标 3 的断言及真实按键分发，增加
+  初始光标 7 和 Down 返回 7 的断言；生产导航算法未改。真实 GUI 显示 `oneX` / `twoY`。
+- 修正同批 local I/O / IME 代码的 Clippy 问题，使用已有 `instant::Instant`，简化过期请求
+  判断及 cursor anchor 的多余借用；无新增 ignore、删除测试或改动测试删除基线。
+
+最终 `local_only,test-util` 应用测试 1549 passed / 3 原有 ignored，包含全部五项；
+`./script/presubmit` exit 0（workspace 4789 passed / 20 原有 skipped，completer v2
+131 passed / 4 原有 skipped，三组严格 Clippy、全部格式和 doc tests 通过）；额外
+`local_only` Clippy 通过。真实 inventory 通过，当前 4809 项，原批准删除 5089 项。
+
+最终 Debug GUI 经签名校验并使用隔离 profile 实测：初始化前的 raw PTY 收到精确 bracketed
+中文多行字节；编辑器 Up/Down 保留多行草稿；原生确认框 Cancel 后收到零字节，Paste 后仅收到
+一份完整文本。系统简体拼音在原最终二进制上实测 PASS：可见带下划线的组合文本，提交
+“中文”仅增加 6 个 UTF-8 字节，Escape 取消下一段组合后零新增字节。初次实机出现直接发送
+字母的现象，诊断确认当时窗口实际输入源为 ABC；全局拼音设置不能代替窗口输入上下文检查。
+切换窗口输入源后完成复核。macOS `host_view.m`、`objc/window.m`、`mac/window.rs` 与固定
+Warp 原版一致，临时诊断已移除，恢复后的最终二进制 SHA-256 与原受测构建一致。
+真实 TUI 交互、其他 L0 项及 R6 全矩阵不在这次关闭范围。
+
+[本地原始证据与候选哈希](../verification/1d2119d732ce79db6292d668477826348d55a8c2/l0/local-20260922/manifest.json)
+绑定源码 diff、构建产物、命令/退出码和 PTY 捕获；初始失败与中间诊断日志不作为最终 PASS。
 
 ### 6.3 R3：UI、认证、动作和 TUI
 
