@@ -1,0 +1,360 @@
+   Compiling warp v0.1.0 (/Users/tedczj/workspace/term4u/app)
+    Finished `test` profile [unoptimized] target(s) in 21.35s
+────────────
+ Nextest run ID 77659741-df92-426c-8f20-3e26e75afee6 with nextest profile: default
+    Starting 353 tests across 1 binary (1199 tests skipped)
+        PASS [   0.017s] (  1/353) warp terminal::event::tests::pluggable_notification_debug_redacts_content
+        PASS [   0.017s] (  2/353) warp terminal::available_shells::tests::test_command_name_matches_unix
+        PASS [   0.017s] (  3/353) warp terminal::available_shells::tests::test_command_name_matches_windows
+        PASS [   0.019s] (  4/353) warp terminal::available_shells::tests::test_find_by_command_name_returns_none_for_unknown_name
+        PASS [   0.019s] (  5/353) warp terminal::available_shells::tests::test_find_by_command_name_skips_system_default
+        PASS [   0.020s] (  6/353) warp terminal::available_shells::tests::test_find_by_command_name_matches_known_shell
+        PASS [   0.020s] (  7/353) warp terminal::available_shells::tests::test_find_by_command_name_matches_msys2_shell
+        PASS [   0.020s] (  8/353) warp terminal::find::model::async_find::tests::test_absolute_match_is_truncated
+        PASS [   0.022s] (  9/353) warp terminal::find::model::async_find::tests::test_async_find_config_from_options
+        PASS [   0.024s] ( 10/353) warp terminal::available_shells::tests::test_find_by_command_name_is_case_sensitive_on_unix
+        PASS [   0.029s] ( 11/353) warp terminal::available_shells::tests::test_load_known_shells_with_empty_path_var
+        PASS [   0.035s] ( 12/353) warp terminal::available_shells::tests::test_dedupe_symlinks_when_discovering_paths
+        PASS [   0.036s] ( 13/353) warp terminal::find::model::alt_screen::tests::test_run_find_on_alt_screen
+        PASS [   0.036s] ( 14/353) warp terminal::find::model::alt_screen::tests::test_run_find_on_alt_screen_regex
+        PASS [   0.036s] ( 15/353) warp terminal::find::model::alt_screen::tests::test_run_find_on_alt_screen_case_sensitive
+        PASS [   0.018s] ( 16/353) warp terminal::find::model::async_find::tests::test_block_find_results_remove_block
+        PASS [   0.021s] ( 17/353) warp terminal::find::model::async_find::tests::test_async_find_status_display
+        PASS [   0.023s] ( 18/353) warp terminal::find::model::async_find::tests::test_block_find_results_total_count
+        PASS [   0.020s] ( 19/353) warp terminal::find::model::async_find::tests::test_focused_ai_match_resolves_only_ai_block
+        PASS [   0.024s] ( 20/353) warp terminal::find::model::async_find::tests::test_focus_next_match_wraps_around
+        PASS [   0.026s] ( 21/353) warp terminal::find::model::async_find::tests::test_block_invalidation_with_dirty_range
+        PASS [   0.048s] ( 22/353) warp terminal::find::model::async_find::tests::test_async_find_cancellation
+        PASS [   0.026s] ( 23/353) warp terminal::find::model::async_find::tests::test_focused_ai_match_most_recent_first_preserves_storage_order
+        PASS [   0.020s] ( 24/353) warp terminal::find::model::async_find::tests::test_focused_match_index_walks_across_terminal_and_ai_blocks
+        PASS [   0.013s] ( 25/353) warp terminal::find::model::async_find::tests::test_update_dirty_matches_prepend
+        PASS [   0.017s] ( 26/353) warp terminal::find::model::async_find::tests::test_is_query_refinement
+        PASS [   0.016s] ( 27/353) warp terminal::find::model::async_find::tests::test_update_dirty_matches_empty_existing
+        PASS [   0.019s] ( 28/353) warp terminal::find::model::async_find::tests::test_update_dirty_matches_append
+        PASS [   0.013s] ( 29/353) warp terminal::find::model::async_find::tests::test_update_dirty_matches_replace_middle
+        PASS [   0.020s] ( 30/353) warp terminal::find::model::async_find::tests::test_update_dirty_matches_clear_range
+        PASS [   0.021s] ( 31/353) warp terminal::find::model::async_find::tests::test_message_processing_updates_state
+        PASS [   0.016s] ( 32/353) warp terminal::find::model::block_list::tests::test_rerun_on_block_preserves_focused_match_in_active_block
+        PASS [   0.042s] ( 33/353) warp terminal::find::model::async_find::tests::test_async_focused_order_matches_sync_most_recent_last
+        PASS [   0.017s] ( 34/353) warp terminal::find::model::block_list::tests::test_run_find_on_block_list
+        PASS [   0.046s] ( 35/353) warp terminal::find::model::async_find::tests::test_async_find_produces_same_results_as_sync_find
+        PASS [   0.011s] ( 36/353) warp terminal::grid_renderer::box_drawing::tests::heavy_line_is_thicker_than_light
+        PASS [   0.015s] ( 37/353) warp terminal::find::model::block_list::tests::test_run_find_on_block_list_case_sensitive
+        PASS [   0.047s] ( 38/353) warp terminal::find::model::async_find::tests::test_async_focused_order_matches_sync_most_recent_first
+        PASS [   0.013s] ( 39/353) warp terminal::grid_renderer::box_drawing::tests::cross_covers_all_edges
+        PASS [   0.016s] ( 40/353) warp terminal::find::model::block_list::tests::test_run_find_on_block_list_regex_enabled
+        PASS [   0.022s] ( 41/353) warp terminal::find::model::block_list::tests::test_rerun_on_block_preserves_focused_match_in_older_block
+        PASS [   0.018s] ( 42/353) warp terminal::find::model::block_list::tests::test_run_find_on_block_list_pin_to_top
+        PASS [   0.010s] ( 43/353) warp terminal::grid_renderer::box_drawing::tests::stroke_thickness_is_stable_across_snapped_cell_widths
+        PASS [   0.012s] ( 44/353) warp terminal::grid_renderer::box_drawing::tests::horizontal_line_fills_cell_width
+        PASS [   0.012s] ( 45/353) warp terminal::grid_renderer::box_drawing::tests::junction_rects_do_not_overlap
+        PASS [   0.017s] ( 46/353) warp terminal::find::model::block_list::tests::test_run_find_on_block_list_with_filtered_block
+        PASS [   0.016s] ( 47/353) warp terminal::grid_renderer::box_drawing::tests::mixed_weight_transitions_preserve_each_arm_weight
+        PASS [   0.014s] ( 48/353) warp terminal::grid_renderer::box_drawing::tests::supported_glyphs_have_rects
+        PASS [   0.013s] ( 49/353) warp terminal::grid_renderer::box_drawing::tests::unsupported_glyphs_return_no_rects
+        PASS [   0.012s] ( 50/353) warp terminal::grid_renderer::box_drawing::tests::vertical_line_fills_cell_height
+        PASS [   0.011s] ( 51/353) warp terminal::grid_renderer::tests::test_calculate_background_bounds
+        PASS [   0.011s] ( 52/353) warp terminal::grid_renderer::tests::test_calculate_grid_baseline_position
+        PASS [   0.015s] ( 53/353) warp terminal::grid_renderer::box_drawing::tests::vertical_line_has_no_stacked_seam
+        PASS [   0.012s] ( 54/353) warp terminal::grid_renderer::tests::test_calculate_selection_bounds
+        PASS [   0.015s] ( 55/353) warp terminal::grid_renderer::tests::test_active_or_next_match_point_before_next_match
+        PASS [   0.013s] ( 56/353) warp terminal::grid_renderer::tests::test_next_match_same_row_matches
+        PASS [   0.013s] ( 57/353) warp terminal::grid_renderer::tests::test_next_match_multi_row_matches
+        PASS [   0.017s] ( 58/353) warp terminal::history::tests::append_command_with_rich_history_data
+        PASS [   0.017s] ( 59/353) warp terminal::history::tests::append_restored_command_doesnt_overwrite_rich_history
+        PASS [   0.017s] ( 60/353) warp terminal::history::tests::test_append_commands
+        PASS [   0.020s] ( 61/353) warp terminal::history::tests::test_append_multiple_sessions
+        PASS [   0.019s] ( 62/353) warp terminal::history::tests::test_len
+        PASS [   0.016s] ( 63/353) warp terminal::history::tests::test_sessions_same_shell_same_machine
+        PASS [   0.017s] ( 64/353) warp terminal::history::tests::test_sessions_no_dupes_new_session
+        PASS [   0.019s] ( 65/353) warp terminal::history::tests::test_multiple_shells
+        PASS [   0.033s] ( 66/353) warp terminal::history::tests::is_appendable_vs_is_queryable
+        PASS [   0.027s] ( 67/353) warp terminal::history::tests::test_multiple_machines
+        PASS [   0.015s] ( 68/353) warp terminal::local_shell::tests::empty_path_between_markers
+        PASS [   0.014s] ( 69/353) warp terminal::local_shell::tests::extracts_clean_path
+        PASS [   0.017s] ( 70/353) warp terminal::local_shell::tests::ignores_startup_banner_output
+        PASS [   0.037s] ( 71/353) warp terminal::input::local_tests::changing_sessions_does_not_reuse_another_sessions_history
+        PASS [   0.034s] ( 72/353) warp terminal::input::local_tests::inserting_at_a_cursor_preserves_the_suffix_and_undo
+        PASS [   0.035s] ( 73/353) warp terminal::input::local_tests::history_does_not_replace_a_selected_range
+        PASS [   0.036s] ( 74/353) warp terminal::input::local_tests::history_navigation_restores_the_draft_and_original_cursor
+        PASS [   0.035s] ( 75/353) warp terminal::input::local_tests::insertion_replaces_the_selected_range_without_submitting
+        PASS [   0.030s] ( 76/353) warp terminal::input::local_tests::l0_01_programmatic_draft_changes_invalidate_async_results_synchronously
+        PASS [   0.014s] ( 77/353) warp terminal::local_shell::tests::missing_end_marker_returns_none
+        PASS [   0.013s] ( 78/353) warp terminal::local_shell::tests::missing_markers_returns_none
+        PASS [   0.039s] ( 79/353) warp terminal::input::local_tests::editing_a_history_result_starts_a_new_traversal
+        PASS [   0.034s] ( 80/353) warp terminal::input::local_tests::l0_01_history_keeps_the_latest_duplicate_without_losing_chronology
+        PASS [   0.014s] ( 81/353) warp terminal::meta_shortcuts::tests::test_handle_keystroke_despite_composing
+        PASS [   0.018s] ( 82/353) warp terminal::local_shell::tests::preserves_colons_and_surrounding_noise
+        PASS [   0.014s] ( 83/353) warp terminal::model::alt_screen::tests::test_accumulate_lines_to_scroll
+        PASS [   0.014s] ( 84/353) warp terminal::model::alt_screen::tests::test_alt_screen_resize_clears_selection
+        PASS [   0.012s] ( 85/353) warp terminal::model::block::serialized_block::tests::from_json_accepts_integer_array_bytes
+        PASS [   0.014s] ( 86/353) warp terminal::model::alt_screen::tests::test_alt_screen_single_cell_selection
+        PASS [   0.016s] ( 87/353) warp terminal::model::block::serialized_block::tests::from_json_accepts_base64_encoded_bytes
+        PASS [   0.014s] ( 88/353) warp terminal::model::block::tests::test_background_block
+        PASS [   0.014s] ( 89/353) warp terminal::model::block::tests::test_block_height_non_bootstrapped_block
+        PASS [   0.013s] ( 90/353) warp terminal::model::block::tests::test_calculate_optimal_row_counts_narrow_terminal
+        PASS [   0.049s] ( 91/353) warp terminal::input::tests::ambiguous_directory_completions_cycle_and_preserve_text_after_cursor
+        PASS [   0.019s] ( 92/353) warp terminal::model::block::tests::test_block_duration_formatting
+        PASS [   0.017s] ( 93/353) warp terminal::model::block::tests::test_block_emits_block_completed_event_for_in_band_command
+        PASS [   0.011s] ( 94/353) warp terminal::model::block::tests::test_calculate_optimal_row_counts_very_narrow_terminal
+        PASS [   0.014s] ( 95/353) warp terminal::model::block::tests::test_calculate_optimal_row_counts_wide_terminal
+        PASS [   0.049s] ( 96/353) warp terminal::input::tests::late_completion_does_not_replace_new_input
+        PASS [   0.013s] ( 97/353) warp terminal::model::block::tests::test_clone_command_from_blockgrid_long
+        PASS [   0.015s] ( 98/353) warp terminal::model::block::tests::test_clone_command_from_blockgrid_from_empty
+        PASS [   0.016s] ( 99/353) warp terminal::model::block::tests::test_clone_command_from_blockgrid
+        PASS [   0.012s] (100/353) warp terminal::model::block::tests::test_clone_command_from_blockgrid_to_empty
+        PASS [   0.012s] (101/353) warp terminal::model::block::tests::test_command_and_output_to_string_excludes_warp_prompt
+        PASS [   0.013s] (102/353) warp terminal::model::block::tests::test_command_and_output_to_string_includes_ps1_prompt_command_rprompt_and_output
+        PASS [   0.056s] (103/353) warp terminal::input::tests::tab_completes_a_directory_through_the_terminal_editor
+        PASS [   0.014s] (104/353) warp terminal::model::block::tests::test_command_grid_bold
+        PASS [   0.014s] (105/353) warp terminal::model::block::tests::test_command_is_empty_combined_grid_prompt_and_command
+        PASS [   0.014s] (106/353) warp terminal::model::block::tests::test_command_is_empty_combined_grid
+        PASS [   0.014s] (107/353) warp terminal::model::block::tests::test_command_grid_bold_after_reset
+        PASS [   0.014s] (108/353) warp terminal::model::block::tests::test_command_is_empty_warp_prompt
+        PASS [   0.012s] (109/353) warp terminal::model::block::tests::test_deserialize_legacy_agent_view_visibility_agent_variant
+        PASS [   0.016s] (110/353) warp terminal::model::block::tests::test_command_is_not_empty_combined_grid
+        PASS [   0.014s] (111/353) warp terminal::model::block::tests::test_elapsed_duration_for_background_block_is_not_live
+        PASS [   0.014s] (112/353) warp terminal::model::block::tests::test_elapsed_duration_requires_executing_state
+        PASS [   0.014s] (113/353) warp terminal::model::block::tests::test_failed_block
+        PASS [   0.016s] (114/353) warp terminal::model::block::tests::test_empty_command
+        PASS [   0.016s] (115/353) warp terminal::model::block::tests::test_elapsed_duration_rounds_down_to_whole_seconds
+        PASS [   0.013s] (116/353) warp terminal::model::block::tests::test_find
+        PASS [   0.012s] (117/353) warp terminal::model::block::tests::test_non_error_exit_codes
+        PASS [   0.012s] (118/353) warp terminal::model::block::tests::test_restored_block_was_local
+        PASS [   0.014s] (119/353) warp terminal::model::block::tests::test_mark_end_of_prompt_with_some_rows_in_flat_storage
+        PASS [   0.016s] (120/353) warp terminal::model::block::tests::test_image_completion_before_execution_routes_to_output_grid
+        PASS [   0.014s] (121/353) warp terminal::model::block::tests::test_precmd_no_preexec
+        PASS [   0.017s] (122/353) warp terminal::model::block::tests::test_image_completion_drops_in_warp_input_stage
+        PASS [   0.012s] (123/353) warp terminal::model::block::tests::test_selection_bounds_all_grids_multiline_lprompt_no_command
+        PASS [   0.013s] (124/353) warp terminal::model::block::tests::test_selection_bounds_all_grids_multiline_lprompt_command
+        PASS [   0.012s] (125/353) warp terminal::model::block::tests::test_selection_bounds_all_grids_single_line_lprompt_command_starting_newline
+        PASS [   0.016s] (126/353) warp terminal::model::block::tests::test_selection_bounds_all_grids_single_line_lprompt_command
+        PASS [   0.014s] (127/353) warp terminal::model::block::tests::test_top_level_command
+        PASS [   0.015s] (128/353) warp terminal::model::block::tests::test_set_current_working_directory_updates_pwd_and_emits_cwd_event
+        PASS [   0.016s] (129/353) warp terminal::model::block::tests::test_selection_bounds_all_grids_single_line_lprompt_trailing_newline_command
+        PASS [   0.015s] (130/353) warp terminal::model::block::tests::test_top_level_command_with_aliases
+        PASS [   0.012s] (131/353) warp terminal::model::blocks::selection::tests::test_selection_changes_if_end_within_active_truncated_block
+        PASS [   0.016s] (132/353) warp terminal::model::blocks::selection::tests::test_rect_selection_multi_block
+        PASS [   0.015s] (133/353) warp terminal::model::blocks::selection::tests::test_rect_selection_single_block
+        PASS [   0.015s] (134/353) warp terminal::model::blocks::selection::tests::test_select_left_select_right
+        PASS [   0.016s] (135/353) warp terminal::model::blocks::selection::tests::test_rect_selection_inverted_multi_block
+        PASS [   0.013s] (136/353) warp terminal::model::blocks::selection::tests::test_selection_is_removed_if_contained_within_active_truncated_block
+        PASS [   0.015s] (137/353) warp terminal::model::blocks::selection::tests::test_selection_doesnt_change_if_not_within_active_truncated_block
+        PASS [   0.014s] (138/353) warp terminal::model::blocks::selection::tests::test_selection_range_cleared_when_block_finishes
+        PASS [   0.070s] (139/353) warp terminal::model::block::tests::non_empty_pre_bootstrap_block_can_be_long_running
+        PASS [   0.071s] (140/353) warp terminal::model::block::tests::empty_pre_bootstrap_block_is_not_long_running
+        PASS [   0.014s] (141/353) warp terminal::model::blocks::selection::tests::test_selection_ranges_single_output_grid
+        PASS [   0.015s] (142/353) warp terminal::model::blocks::selection::tests::test_selection_ranges_across_grids
+        PASS [   0.015s] (143/353) warp terminal::model::blocks::selection::tests::test_selection_ranges_single_command_grid
+        PASS [   0.015s] (144/353) warp terminal::model::blocks::selection::tests::test_selection_to_string
+        PASS [   0.014s] (145/353) warp terminal::model::blocks::selection::tests::test_selection_to_string_hidden_blocks
+        PASS [   0.019s] (146/353) warp terminal::model::blocks::selection::tests::test_selection_to_string_inverted_blocklist
+        PASS [   0.018s] (147/353) warp terminal::model::blocks::selection::tests::test_smart_selection_override
+        PASS [   0.016s] (148/353) warp terminal::model::blocks::tests::clear_blocks_resets_index
+        PASS [   0.020s] (149/353) warp terminal::model::blocks::selection::tests::test_semantic_selection_with_custom_boundaries
+        PASS [   0.013s] (150/353) warp terminal::model::blocks::tests::test_basic_bootstrapping
+        PASS [   0.014s] (151/353) warp terminal::model::blocks::tests::test_banner_insertion_and_removal
+        PASS [   0.019s] (152/353) warp terminal::model::blocks::tests::clear_places_gap_after_command_even_before_header_is_visible
+        PASS [   0.018s] (153/353) warp terminal::model::blocks::tests::deferred_fields_resolve_by_block_id_after_reindex
+        PASS [   0.016s] (154/353) warp terminal::model::blocks::tests::test_background_blocks_finished
+        PASS [   0.022s] (155/353) warp terminal::model::blocks::tests::classifies_next_block_ids_relative_to_the_active_block
+        PASS [   0.015s] (156/353) warp terminal::model::blocks::tests::test_block_heights_combined_prompt_command_grid_ps1
+        PASS [   0.017s] (157/353) warp terminal::model::blocks::tests::test_block_height_update_shifts_indices
+        PASS [   0.016s] (158/353) warp terminal::model::blocks::tests::test_block_heights_combined_prompt_command_grid_warp_prompt
+        PASS [   0.012s] (159/353) warp terminal::model::blocks::tests::test_cursor_seeking_in_sumtree_with_floating_point_inconsistency
+        PASS [   0.013s] (160/353) warp terminal::model::blocks::tests::test_device_status_uses_active_block_if_no_typeahead
+        PASS [   0.014s] (161/353) warp terminal::model::blocks::tests::test_first_non_hidden_block_by_index_in_range
+        PASS [   0.016s] (162/353) warp terminal::model::blocks::tests::test_emits_after_block_completed_event
+        PASS [   0.014s] (163/353) warp terminal::model::blocks::tests::test_gap_after_banner
+        PASS [   0.012s] (164/353) warp terminal::model::blocks::tests::test_internal_consistency_of_block_height_summing
+        PASS [   0.068s] (165/353) warp terminal::model::block::tests::test_long_running_block_bottom_padding
+        PASS [   0.015s] (166/353) warp terminal::model::blocks::tests::test_iterm_image_early_output_routes_to_background_block
+        PASS [   0.017s] (167/353) warp terminal::model::blocks::tests::test_insert_non_block_item
+        PASS [   0.017s] (168/353) warp terminal::model::blocks::tests::test_interleaves_background_with_gaps
+        PASS [   0.018s] (169/353) warp terminal::model::blocks::tests::test_invalid_iterm_image_does_not_render_in_script_execution_block
+        PASS [   0.016s] (170/353) warp terminal::model::blocks::tests::test_iterm_image_renders_in_script_execution_block
+        PASS [   0.018s] (171/353) warp terminal::model::blocks::tests::test_kitty_image_renders_in_script_execution_block
+        PASS [   0.019s] (172/353) warp terminal::model::blocks::tests::test_kitty_image_early_output_routes_to_background_block
+        PASS [   0.015s] (173/353) warp terminal::model::blocks::tests::test_kitty_store_only_early_output_does_not_create_background_block
+        PASS [   0.018s] (174/353) warp terminal::model::blocks::tests::test_kitty_store_only_does_not_render_in_script_execution_block
+        PASS [   0.016s] (175/353) warp terminal::model::blocks::tests::test_matching_block_by_index
+        PASS [   0.015s] (176/353) warp terminal::model::blocks::tests::test_remove_background_block_with_active_gap
+        PASS [   0.015s] (177/353) warp terminal::model::blocks::tests::test_removed_gap_with_banner
+        PASS [   0.015s] (178/353) warp terminal::model::blocks::tests::test_remove_rich_content_block
+        PASS [   0.052s] (179/353) warp terminal::model::blocks::selection::tests::test_smart_selection_in_single_block
+        PASS [   0.055s] (180/353) warp terminal::model::blocks::selection::tests::test_smart_selection_in_multiple_blocks
+        PASS [   0.017s] (181/353) warp terminal::model::blocks::tests::test_restore_block_that_wasnt_completed
+        PASS [   0.017s] (182/353) warp terminal::model::blocks::tests::test_restore_blocks_with_local_status
+        PASS [   0.017s] (183/353) warp terminal::model::blocks::tests::test_restore_completed_blocks
+        PASS [   0.015s] (184/353) warp terminal::model::blocks::tests::test_seek_down_to_next_grid
+        PASS [   0.016s] (185/353) warp terminal::model::blocks::tests::test_script_execution_block
+        PASS [   0.015s] (186/353) warp terminal::model::blocks::tests::test_seek_up_to_next_grid
+        PASS [   0.016s] (187/353) warp terminal::model::blocks::tests::test_seek_down_to_next_grid_inverted_blocklist
+        PASS [   0.017s] (188/353) warp terminal::model::blocks::tests::test_seek_up_to_next_grid_inverted_blocklist
+        PASS [   0.016s] (189/353) warp terminal::model::blocks::tests::test_zero_sized_kitty_early_output_does_not_create_background_block
+        PASS [   0.015s] (190/353) warp terminal::model::blocks::tests::unfiltered_transcript_scope_shows_restored_blocks_with_legacy_visibility
+        PASS [   0.017s] (191/353) warp terminal::model::blocks::tests::test_update_padding_block_heights
+        PASS [   0.018s] (192/353) warp terminal::model::early_output::tests::test_background_triggers_wakeup
+        PASS [   0.014s] (193/353) warp terminal::model::early_output::tests::test_queued_typeahead_input_matching
+        PASS [   0.015s] (194/353) warp terminal::model::early_output::tests::test_lazy_background_insertion
+        PASS [   0.013s] (195/353) warp terminal::model::lifecycle::tests::lifecycle_coordinator_records_only_conservative_or_recovery_transitions
+        PASS [   0.031s] (196/353) warp terminal::model::blocks::tests::test_restore_block_that_wasnt_started
+        PASS [   0.014s] (197/353) warp terminal::model::lifecycle::tests::lifecycle_coordinator_gates_novel_completion_recovery
+        PASS [   0.016s] (198/353) warp terminal::model::lifecycle::tests::lifecycle_coordinator_accepts_novel_completion_recovery_when_enabled
+        PASS [   0.027s] (199/353) warp terminal::model::blocks::tests::test_session_restoration_separator
+        PASS [   0.023s] (200/353) warp terminal::model::blocks::tests::visible_bootstrap_block_event_fires_when_script_execution_becomes_visible
+        PASS [   0.011s] (201/353) warp terminal::model::lifecycle::tests::transition_matrix_preserves_normal_flow_and_plans_safe_completion_recovery
+        PASS [   0.013s] (202/353) warp terminal::model::lifecycle::tests::lifecycle_phase_reconciliation_requires_compatible_live_evidence
+        PASS [   0.012s] (203/353) warp terminal::model::lifecycle::tests::lifecycle_telemetry_is_rate_limited_per_transition_key
+        PASS [   0.022s] (204/353) warp terminal::model::early_output::tests::test_queued_typeahead_shell_reported
+        PASS [   0.014s] (205/353) warp terminal::model::session::command_executor::in_band_command_executor::tests::test_clears_running_and_pending_commands_on_cancellation
+        PASS [   0.016s] (206/353) warp terminal::model::session::command_executor::in_band_command_executor::tests::test_cancelling_command_queues_up_next_command_command
+        PASS [   0.016s] (207/353) warp terminal::model::session::command_executor::in_band_command_executor::tests::test_commands_are_cleared_if_controller_cancels_command
+        PASS [   0.016s] (208/353) warp terminal::model::session::command_executor::in_band_command_executor::tests::test_emits_error_command_output
+        PASS [   0.016s] (209/353) warp terminal::model::session::command_executor::in_band_command_executor::tests::test_commands_are_not_cleared_if_controller_cancels_different_command
+        PASS [   0.016s] (210/353) warp terminal::model::session::command_executor::in_band_command_executor::tests::test_runs_commands_serially_after_failed_command
+        PASS [   0.017s] (211/353) warp terminal::model::session::command_executor::in_band_command_executor::tests::test_emits_successful_command_output
+        PASS [   0.018s] (212/353) warp terminal::model::session::command_executor::in_band_command_executor::tests::test_commands_are_cleared_if_execute_command_future_is_aborted
+        PASS [   0.015s] (213/353) warp terminal::model::session::test::can_resolve_cwd_to_native_path_accepts_posix_path
+        PASS [   0.021s] (214/353) warp terminal::model::session::command_executor::in_band_command_executor::tests::test_runs_commands_serially
+        PASS [   0.017s] (215/353) warp terminal::model::session::test::test_set_env_var_emits_event
+        PASS [   0.016s] (216/353) warp terminal::model::session::test::test_set_env_var_emits_no_event_when_no_change
+        PASS [   0.013s] (217/353) warp terminal::model::terminal_model::tests::compare_within_block_points
+        PASS [   0.015s] (218/353) warp terminal::model::terminal_model::tests::command_finished_recovers_unknown_started_block_with_real_exit_code
+        PASS [   0.022s] (219/353) warp terminal::model::session::test::test_malicious_histfile_path_does_not_execute_injected_commands
+        PASS [   0.017s] (220/353) warp terminal::model::terminal_model::tests::accepted_precmd_and_preexec_target_the_block_list_while_the_alt_screen_is_active
+        PASS [   0.014s] (221/353) warp terminal::model::terminal_model::tests::completion_replacement_span_saturates_an_out_of_range_pair_rather_than_panicking
+        PASS [   0.027s] (222/353) warp terminal::model::session::command_executor::local_command_executor::tests::unix::dropping_command_future_kills_descendant_process
+        PASS [   0.016s] (223/353) warp terminal::model::terminal_model::tests::completions_are_emitted_in_the_order_the_shell_sent_them
+        PASS [   0.014s] (224/353) warp terminal::model::terminal_model::tests::duplicate_and_colliding_completion_evidence_is_ignored
+        PASS [   0.015s] (225/353) warp terminal::model::terminal_model::tests::empty_and_syntax_error_commands_without_preexec_complete_as_execution
+        PASS [   0.014s] (226/353) warp terminal::model::terminal_model::tests::ignores_multipart_non_inline_iterm_file_payload_without_overwriting_cwd_file
+        PASS [   0.014s] (227/353) warp terminal::model::terminal_model::tests::ignores_non_inline_iterm_file_payload_without_overwriting_cwd_file
+        PASS [   0.017s] (228/353) warp terminal::model::terminal_model::tests::local_terminal_rejects_dcs_hook_with_unregistered_session_id
+        PASS [   0.014s] (229/353) warp terminal::model::terminal_model::tests::precmd_with_completion_metadata_completion_recovery_is_disabled_by_default
+        PASS [   0.014s] (230/353) warp terminal::model::terminal_model::tests::normal_lifecycle_pipeline_emits_completion_and_prompt_side_effects_once
+        PASS [   0.014s] (231/353) warp terminal::model::terminal_model::tests::precmd_with_completion_metadata_recovers_in_band_completion_and_reuses_cached_prompt
+        PASS [   0.015s] (232/353) warp terminal::model::terminal_model::tests::precmd_with_completion_metadata_recovers_missing_completion_with_exact_side_effects
+        PASS [   0.014s] (233/353) warp terminal::model::terminal_model::tests::precmd_with_completion_metadata_recovery_cleans_up_alt_screen_and_bracketed_paste
+        PASS [   0.040s] (234/353) warp terminal::model::session::command_executor::local_command_executor::tests::unix::cancel_active_commands_kills_descendant_process
+        PASS [   0.013s] (235/353) warp terminal::model::terminal_model::tests::repeated_precmd_with_completion_metadata_and_prompt_only_precmd_are_ignored
+        PASS [   0.015s] (236/353) warp terminal::model::terminal_model::tests::recovery_advances_finished_active_block_without_republishing_completion
+        PASS [   0.042s] (237/353) warp terminal::model::session::command_executor::local_command_executor::tests::unix::completed_command_is_not_canceled_later
+        PASS [   0.018s] (238/353) warp terminal::model::terminal_model::tests::precmd_with_completion_metadata_records_completion_mismatch_without_overwriting_completed_block
+        PASS [   0.015s] (239/353) warp terminal::model::terminal_model::tests::repeated_and_executing_command_starts_are_safely_gated
+        PASS [   0.015s] (240/353) warp terminal::model::terminal_model::tests::set_custom_title
+        PASS [   0.017s] (241/353) warp terminal::model::terminal_model::tests::repeated_precmd_with_completion_metadata_and_prompt_only_precmd_are_ignored_when_recovery_is_disabled
+        PASS [   0.015s] (242/353) warp terminal::model::terminal_model::tests::ssh_bootstraps_if_blocklist_empty_and_reconciles_parent_return
+        PASS [   0.015s] (243/353) warp terminal::model::terminal_model::tests::terminal_exit_absorbs_later_lifecycle_inputs
+        PASS [   0.016s] (244/353) warp terminal::model::terminal_model::tests::take_typeahead_for_input_advances_incremental_typeahead
+        PASS [   0.016s] (245/353) warp terminal::model::terminal_model::tests::take_typeahead_for_input_is_none_when_typeahead_is_empty
+        PASS [   0.014s] (246/353) warp terminal::model::terminal_model::tests::test_rect_selection_in_alt_screen
+        PASS [   0.017s] (247/353) warp terminal::model::terminal_model::tests::test_alt_screen_selection_tracks_scroll
+        PASS [   0.017s] (248/353) warp terminal::model::terminal_model::tests::test_alt_screen_toggle
+        PASS [   0.014s] (249/353) warp terminal::model::terminal_model::tests::test_selected_block_range_contains
+        PASS [   0.017s] (250/353) warp terminal::model::terminal_model::tests::test_exit_alt_screen_on_command_finished
+        PASS [   0.016s] (251/353) warp terminal::model::terminal_model::tests::test_reset_state
+        PASS [   0.014s] (252/353) warp terminal::model::terminal_model::tests::test_selected_blocks_is_selected
+        PASS [   0.017s] (253/353) warp terminal::model::terminal_model::tests::test_restored_empty_command_block
+        PASS [   0.018s] (254/353) warp terminal::model::terminal_model::tests::test_restored_blocks_on_different_host
+        PASS [   0.014s] (255/353) warp terminal::model::terminal_model::tests::test_selected_blocks_reset
+        PASS [   0.015s] (256/353) warp terminal::model::terminal_model::tests::test_selected_blocks_range_select
+        PASS [   0.014s] (257/353) warp terminal::model::terminal_model::tests::test_selected_blocks_sorted_ranges
+        PASS [   0.014s] (258/353) warp terminal::model::terminal_model::tests::test_selected_blocks_toggle_off
+        PASS [   0.015s] (259/353) warp terminal::model::terminal_model::tests::test_selected_blocks_toggle_on
+        PASS [   0.016s] (260/353) warp terminal::model::terminal_model::tests::test_selected_blocks_tail
+        PASS [   0.020s] (261/353) warp terminal::ref_tests::clear_underline
+        PASS [   0.023s] (262/353) warp terminal::ref_tests::decaln_reset
+        PASS [   0.027s] (263/353) warp terminal::ref_tests::alt_reset
+        PASS [   0.027s] (264/353) warp terminal::model::terminal_model::tests::test_unset_bracketed_paste_mode_on_command_finished
+        PASS [   0.023s] (265/353) warp terminal::ref_tests::delete_chars_reset
+        PASS [   0.025s] (266/353) warp terminal::ref_tests::csi_rep
+        PASS [   0.021s] (267/353) warp terminal::ref_tests::erase_chars_reset
+        PASS [   0.024s] (268/353) warp terminal::ref_tests::delete_lines
+        PASS [   0.029s] (269/353) warp terminal::ref_tests::deccolm_reset
+        PASS [   0.032s] (270/353) warp terminal::ref_tests::colored_reset
+        PASS [   0.027s] (271/353) warp terminal::ref_tests::fish_cc
+        PASS [   0.024s] (272/353) warp terminal::ref_tests::insert_blank_reset
+        PASS [   0.027s] (273/353) warp terminal::ref_tests::indexed_256_colors
+        PASS [   0.029s] (274/353) warp terminal::ref_tests::issue_855
+        PASS [   0.026s] (275/353) warp terminal::ref_tests::scroll_up_reset
+        PASS [   0.025s] (276/353) warp terminal::ref_tests::selective_erasure
+        PASS [   0.031s] (277/353) warp terminal::ref_tests::ll
+        PASS [   0.031s] (278/353) warp terminal::ref_tests::newline_with_cursor_beyond_scroll_region
+        PASS [   0.031s] (279/353) warp terminal::ref_tests::saved_cursor
+        PASS [   0.030s] (280/353) warp terminal::ref_tests::tmux_git_log
+        PASS [   0.037s] (281/353) warp terminal::ref_tests::saved_cursor_alt
+        PASS [   0.032s] (282/353) warp terminal::ref_tests::tab_rendering
+        PASS [   0.029s] (283/353) warp terminal::ref_tests::tmux_htop
+        PASS [   0.037s] (284/353) warp terminal::ref_tests::sgr
+        PASS [   0.033s] (285/353) warp terminal::ref_tests::underline
+        PASS [   0.030s] (286/353) warp terminal::ref_tests::vim_simple_edit
+        PASS [   0.029s] (287/353) warp terminal::ref_tests::vttest_cursor_movement_1
+        PASS [   0.029s] (288/353) warp terminal::ref_tests::vttest_origin_mode_1
+        PASS [   0.031s] (289/353) warp terminal::ref_tests::vttest_insert
+        PASS [   0.027s] (290/353) warp terminal::ref_tests::vttest_origin_mode_2
+        PASS [   0.026s] (291/353) warp terminal::ref_tests::zerowidth
+        PASS [   0.033s] (292/353) warp terminal::ref_tests::vttest_scroll
+        PASS [   0.033s] (293/353) warp terminal::ref_tests::vttest_tab_clear_set
+        PASS [   0.032s] (294/353) warp terminal::ref_tests::wrapline_alt_toggle
+        PASS [   0.026s] (295/353) warp terminal::ref_tests::zsh_tab_completion
+        PASS [   0.015s] (296/353) warp terminal::settings::tests::osc52_default_is_deny
+        PASS [   0.017s] (297/353) warp terminal::settings::tests::osc52_deserializes_all_variants_from_settings_value
+        PASS [   0.015s] (298/353) warp terminal::settings::tests::osc52_rejects_unknown_variant
+        PASS [   0.016s] (299/353) warp terminal::settings::tests::osc52_read_write_allows_both
+        PASS [   0.018s] (300/353) warp terminal::settings::tests::osc52_deny_blocks_read_and_write
+        PASS [   0.016s] (301/353) warp terminal::settings::tests::osc52_write_only_allows_write_but_not_read
+        PASS [   0.015s] (302/353) warp terminal::size_update_tests::headless_layout_update_uses_cell_dimensions
+        PASS [   0.015s] (303/353) warp terminal::size_update_tests::unchanged_headless_layout_has_no_dimension_change
+        PASS [   0.017s] (304/353) warp terminal::ssh::util::tests::ssh_gcloud_ssh_parsing
+        PASS [   0.018s] (305/353) warp terminal::ssh::util::tests::ssh_alias_expanded_commands
+        PASS [   0.018s] (306/353) warp terminal::ssh::util::tests::ssh_digital_ocean_droplet_parsing
+        PASS [   0.016s] (307/353) warp terminal::ssh::util::tests::ssh_interactive_shell_parsing
+        PASS [   0.073s] (308/353) warp terminal::ref_tests::vim_large_window_scroll
+        PASS [   0.035s] (309/353) warp terminal::view::local_interaction_tests::closing_the_menu_does_not_take_focus_back_from_find
+        PASS [   0.038s] (310/353) warp terminal::view::local_interaction_tests::dropping_paths_inserts_into_the_draft_without_running_it
+        PASS [   0.020s] (311/353) warp terminal::view::local_io::tests::l0_02_paste_plan_preserves_editor_text_and_rejects_native_control_injection
+        PASS [   0.035s] (312/353) warp terminal::view::local_interaction_tests::multiline_vertical_navigation_stays_inside_the_editor
+        PASS [   0.038s] (313/353) warp terminal::view::local_interaction_tests::escape_closes_the_context_menu_and_restores_input_focus
+        PASS [   0.044s] (314/353) warp terminal::view::local_interaction_tests::arrow_keys_recall_session_history_and_restore_the_draft
+        PASS [   0.037s] (315/353) warp terminal::view::local_interaction_tests::menu_enter_runs_the_menu_action_not_the_draft_command
+        PASS [   0.034s] (316/353) warp terminal::view::local_interaction_tests::terminal_paste_inserts_at_the_cursor_without_executing
+        PASS [   0.194s] (317/353) warp terminal::model::terminal_model::tests::handles_inline_iterm_image_payload
+        PASS [   0.015s] (318/353) warp terminal::view::local_io::tests::l0_07_clipboard_event_debug_does_not_disclose_payload
+        PASS [   0.026s] (319/353) warp terminal::view::tests::clear_moves_output_into_scrollback_without_deleting_history
+        PASS [   0.064s] (320/353) warp terminal::view::local_io::tests::l0_02_multiline_confirmation_cancels_and_rejects_stale_requests
+        PASS [   0.030s] (321/353) warp terminal::view::tests::alt_screen_wheel_and_mouse_events_reach_pty_without_holding_model_lock
+        PASS [   0.032s] (322/353) warp terminal::view::tests::alt_screen_right_click_opens_a_menu_that_close_dismisses
+        PASS [   0.038s] (323/353) warp terminal::view::local_io::tests::l0_05_platform_drop_hits_input_and_output_once_but_not_outside
+        PASS [   0.036s] (324/353) warp terminal::view::local_io::tests::l0_07_osc52_parser_obeys_separate_read_write_policy_and_exact_response
+        PASS [   0.027s] (325/353) warp terminal::view::tests::clicking_output_without_dragging_returns_focus_to_the_input
+        PASS [   0.049s] (326/353) warp terminal::view::local_io::tests::l0_05_non_utf8_drop_is_atomic_and_never_lossy
+        PASS [   0.140s] (327/353) warp terminal::ref_tests::vim_24bitcolors_bce
+        PASS [   0.051s] (328/353) warp terminal::view::tests::block_menu_copies_command_output_and_both
+        PASS [   0.016s] (329/353) warp terminal::writeable_pty::pty_controller::command_bytes_tests::bracketed_paste_command_execution_preserves_crlf_for_posix_shells_off_windows
+        PASS [   0.026s] (330/353) warp terminal::view::tests::insert_into_input_moves_the_selection_into_the_input_box
+        PASS [   0.030s] (331/353) warp terminal::view::tests::commands_submitted_during_bootstrap_wait_for_the_shell
+        PASS [   0.025s] (332/353) warp terminal::view::tests::right_clicking_a_block_opens_a_menu_with_local_entries_only
+        PASS [   0.031s] (333/353) warp terminal::view::tests::copy_entries_are_disabled_without_a_selection_or_block_text
+        PASS [   0.095s] (334/353) warp terminal::view::local_io::tests::l0_02_native_paste_uses_parsed_mode_and_a_real_raw_pty
+        PASS [   0.013s] (335/353) warp terminal::writeable_pty::pty_controller::command_bytes_tests::powershell_command_execution_normalizes_linefeeds_to_carriage_returns
+        PASS [   0.034s] (336/353) warp terminal::view::tests::prompt_tracks_directory_branch_and_leaving_a_repository
+        PASS [   0.012s] (337/353) warp terminal::writeable_pty::pty_controller::command_bytes_tests::split_kill_buffer_write_handles_a_command_with_no_content_gracefully
+        PASS [   0.014s] (338/353) warp terminal::writeable_pty::pty_controller::command_bytes_tests::split_kill_buffer_write_does_not_split_the_other_three_shells
+        PASS [   0.101s] (339/353) warp terminal::view::local_io::tests::l0_02_parsed_mode_changes_invalidate_a_pending_confirmation
+        PASS [   0.034s] (340/353) warp terminal::view::tests::right_mouse_down_opens_the_menu_anywhere_in_the_transcript
+        PASS [   0.013s] (341/353) warp terminal::writeable_pty::pty_controller::command_bytes_tests::split_kill_buffer_write_returns_none_when_the_kill_buffer_is_not_the_prefix
+        PASS [   0.042s] (342/353) warp terminal::view::tests::page_keys_scroll_transcript_while_input_editor_is_focused
+        PASS [   0.014s] (343/353) warp terminal::writeable_pty::pty_controller::command_bytes_tests::split_kill_buffer_write_splits_powershell_off_from_the_rest
+        PASS [   0.012s] (344/353) warp terminal::writeable_pty::pty_controller::command_bytes_tests::unbracketed_paste_command_execution_preserves_lf_for_posix_shells
+        PASS [   0.014s] (345/353) warp terminal::writeable_pty::pty_controller::lifecycle_tests::native_shell_completions_queues_the_generator_command_for_the_active_sessions_shell
+        PASS [   0.080s] (346/353) warp terminal::view::local_io::tests::l0_07_ime_platform_composition_commits_once_and_cancels_without_bytes
+        PASS [   0.014s] (347/353) warp terminal::writeable_pty::pty_controller::lifecycle_tests::rejected_and_coalesced_starts_do_not_mutate_controller_or_write_bytes
+        PASS [   0.015s] (348/353) warp terminal::writeable_pty::pty_controller::lifecycle_tests::native_shell_completions_reports_no_matches_without_an_active_session
+        PASS [   0.041s] (349/353) warp terminal::view::tests::terminal_find_searches_output_scrolls_and_closes
+        PASS [   0.014s] (350/353) warp terminal::writeable_pty::pty_controller::lifecycle_tests::rejected_queued_in_band_start_is_cancelled_without_writing_bytes
+        PASS [   0.240s] (351/353) warp terminal::ref_tests::grid_reset
+        PASS [   0.240s] (352/353) warp terminal::ref_tests::history
+        PASS [   0.254s] (353/353) warp terminal::ref_tests::region_scroll_down
+────────────
+     Summary [   0.589s] 353 tests run: 353 passed, 1199 skipped

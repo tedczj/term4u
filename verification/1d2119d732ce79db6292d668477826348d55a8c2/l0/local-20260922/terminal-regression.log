@@ -1,0 +1,16 @@
+   Compiling warp v0.1.0 (/Users/tedczj/workspace/term4u/app)
+error[E0603]: module `soft_wrap` is private
+ --> app/src/terminal/local_interaction_tests.rs:8:20
+  |
+8 | use crate::editor::soft_wrap::FrameLayouts;
+  |                    ^^^^^^^^^ private module
+  |
+note: the module `soft_wrap` is defined here
+ --> app/src/editor/mod.rs:3:1
+  |
+3 | mod soft_wrap;
+  | ^^^^^^^^^^^^^^
+
+For more information about this error, try `rustc --explain E0603`.
+error: could not compile `warp` (lib test) due to 1 previous error
+error: command `/Users/tedczj/.rustup/toolchains/1.92.0-aarch64-apple-darwin/bin/cargo '--color=auto' test --no-run --message-format json-render-diagnostics --package warp --lib --features local_only,test-util --no-default-features --locked` exited with code 101

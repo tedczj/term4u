@@ -1,0 +1,10 @@
+## fix/l0-local-20260922...origin/dev-20260920
+ M .pi/goal-events.jsonl
+ M app/src/editor/view/mod_tests.rs
+ M app/src/terminal/local_interaction_tests.rs
+ M app/src/terminal/model/terminal_model.rs
+ M app/src/terminal/view.rs
+ M app/src/terminal/view/local_io.rs
+ M app/src/terminal/view/local_io_tests.rs
+ M docs/DESIGN.md
+?? verification/1d2119d732ce79db6292d668477826348d55a8c2/

@@ -1,0 +1,279 @@
+Running ./script/format...
+Rust formatting succeeded...
+Checking for inline Rust test modules...
+Inline Rust test module check succeeded...
+Checking license boundaries...
+License boundary check succeeded...
+Checking license config sync...
+License config in sync.
+License config sync succeeded...
+Checking network boundaries...
+OK: network constructors stay inside guarded boundary crates
+Network boundary check succeeded...
+Checking test inventory failure handling...
+.........
+----------------------------------------------------------------------
+Ran 9 tests in 3.614s
+
+OK
+Test inventory failure handling succeeded...
+Running clippy...
+    Checking warp v0.1.0 (/Users/tedczj/workspace/term4u/app)
+warning: command-signatures-v2@0.1.0: Failed to build command signatures JS. Proceeding with stale command signatures!
+    Checking warp_tui v0.0.0 (/Users/tedczj/workspace/term4u/crates/warp_tui)
+    Finished `dev` profile [unoptimized] target(s) in 15.13s
+    Checking aws-lc-sys v0.39.1
+    Checking tower-http v0.6.8
+    Checking web_atoms v0.1.3
+   Compiling warpui_core v0.1.0 (/Users/tedczj/workspace/term4u/crates/warpui_core)
+   Compiling warp_core v0.0.0 (/Users/tedczj/workspace/term4u/crates/warp_core)
+    Checking time v0.3.47
+    Checking aws-lc-rs v1.16.2
+    Checking markup5ever v0.35.0
+    Checking xml5ever v0.35.0
+    Checking html5ever v0.35.0
+    Checking arborium-javascript v2.13.0
+    Checking arborium-css v2.13.0
+    Checking zstd-sys v2.0.15+zstd.1.5.7
+    Checking zstd-safe v7.2.4
+    Checking rustls-webpki v0.103.13
+    Checking arborium-html v2.13.0
+    Checking arborium-c v2.13.0
+    Checking zstd v0.13.3
+    Checking markup5ever_rcdom v0.35.0+unofficial
+    Checking arborium-tree-sitter v2.13.0
+    Checking tantivy-common v0.11.0
+    Checking markdown_parser v0.1.0 (/Users/tedczj/workspace/term4u/crates/markdown_parser)
+    Checking rust-embed v8.7.2
+    Checking arborium-typescript v2.13.0
+    Checking arborium-yaml v2.13.0
+    Checking rustls v0.23.39
+    Checking arborium-toml v2.13.0
+    Checking arborium-scss v2.13.0
+   Compiling repo_metadata v0.1.0 (/Users/tedczj/workspace/term4u/crates/repo_metadata)
+    Checking arborium-highlight v2.13.0
+    Checking arborium-vue v2.13.0
+    Checking arborium-markdown v2.13.0
+    Checking rust-embed v6.8.1
+   Compiling command v0.1.0 (/Users/tedczj/workspace/term4u/crates/command)
+    Checking arborium-tsx v2.13.0
+    Checking arborium-ruby v2.13.0
+    Checking arborium-swift v2.13.0
+    Checking ipynb_parser v0.1.0 (/Users/tedczj/workspace/term4u/crates/ipynb_parser)
+    Checking arborium-scala v2.13.0
+    Checking arborium-elixir v2.13.0
+    Checking arborium-dockerfile v2.13.0
+    Checking arborium-go v2.13.0
+    Checking arborium-nix v2.13.0
+    Checking arborium-rust v2.13.0
+    Checking arborium-python v2.13.0
+    Checking arborium-jq v2.13.0
+    Checking arborium-sql v2.13.0
+    Checking arborium-starlark v2.13.0
+    Checking arborium-kotlin v2.13.0
+    Checking arborium-php v2.13.0
+    Checking arborium-bash v2.13.0
+    Checking arborium-cpp v2.13.0
+    Checking arborium-c-sharp v2.13.0
+    Checking arborium-java v2.13.0
+    Checking arborium-json v2.13.0
+    Checking arborium-powershell v2.13.0
+    Checking arborium-lua v2.13.0
+    Checking arborium-xml v2.13.0
+    Checking arborium-objc v2.13.0
+    Checking arborium-hcl v2.13.0
+    Checking libsqlite3-sys v0.33.0
+   Compiling warp_util v0.1.0 (/Users/tedczj/workspace/term4u/crates/warp_util)
+    Checking tantivy-stacker v0.7.0
+    Checking arborium v2.13.0
+    Checking tantivy-sstable v0.7.0
+    Checking diesel v2.3.10
+    Checking warp-command-signatures v0.0.0 (https://github.com/warpdotdev/command-signatures.git?rev=d3725aa42375cc229699c87be2b38f9d9f07080f#d3725aa4)
+    Checking lzma-sys v0.1.20
+    Checking bzip2-sys v0.1.13+1.0.8
+   Compiling persistence v0.0.0 (/Users/tedczj/workspace/term4u/crates/persistence)
+    Checking tantivy-columnar v0.7.0
+    Checking bzip2 v0.5.2
+    Checking xz2 v0.1.7
+    Checking onig_sys v69.9.1
+   Compiling warpui v0.0.0 (/Users/tedczj/workspace/term4u/crates/warpui)
+    Checking tokio-rustls v0.26.4
+    Checking rustls-platform-verifier v0.6.2
+    Checking hyper-rustls v0.27.7
+    Checking tungstenite v0.24.0
+    Checking reqwest v0.13.3
+    Checking channel_versions v0.1.0 (/Users/tedczj/workspace/term4u/crates/channel_versions)
+    Checking libz-sys v1.1.25
+   Compiling lsp v0.1.0 (/Users/tedczj/workspace/term4u/crates/lsp)
+    Checking graphql-ws-client v0.11.1
+    Checking async-tungstenite v0.28.2
+   Compiling ai v0.1.0 (/Users/tedczj/workspace/term4u/crates/ai)
+    Checking tantivy v0.26.0
+    Checking websocket v0.1.0 (/Users/tedczj/workspace/term4u/crates/websocket)
+    Checking aha-reqwest-eventsource v0.1.0
+    Checking warp_errors v0.0.0 (/Users/tedczj/workspace/term4u/crates/warp_errors)
+    Checking local_control v0.0.0 (/Users/tedczj/workspace/term4u/crates/local_control)
+    Checking sum_tree v0.1.0 (/Users/tedczj/workspace/term4u/crates/sum_tree)
+    Checking plist v1.5.1
+    Checking zip v2.4.2
+    Checking palette v0.6.1
+    Checking libgit2-sys v0.18.3+1.9.2
+    Checking onig v6.5.1
+   Compiling warp v0.1.0 (/Users/tedczj/workspace/term4u/app)
+    Checking warp-workflows v0.1.0 (https://github.com/warpdotdev/workflows?rev=793a98ddda6ef19682aed66364faebd2829f0e01#793a98dd)
+    Checking app-installation-detection v0.1.0 (/Users/tedczj/workspace/term4u/crates/app-installation-detection)
+    Checking cynic v3.8.0
+    Checking syntect v5.2.0
+    Checking kmeans_colors v0.5.0
+    Checking git2 v0.20.4
+   Compiling asset_macro v0.1.0 (/Users/tedczj/workspace/term4u/crates/asset_macro)
+    Checking warpui_extras v0.0.0 (/Users/tedczj/workspace/term4u/crates/warpui_extras)
+    Checking watcher v0.1.0 (/Users/tedczj/workspace/term4u/crates/watcher)
+    Checking warp_assets v0.0.0 (/Users/tedczj/workspace/term4u/crates/warp_assets)
+    Checking diesel_migrations v2.3.1
+    Checking settings v0.0.0 (/Users/tedczj/workspace/term4u/crates/settings)
+    Checking jsonrpc v0.1.0 (/Users/tedczj/workspace/term4u/crates/jsonrpc)
+    Checking ipc v0.1.0 (/Users/tedczj/workspace/term4u/crates/ipc)
+    Checking http_client v0.0.0 (/Users/tedczj/workspace/term4u/crates/http_client)
+    Checking warp_cli v0.0.0 (/Users/tedczj/workspace/term4u/crates/warp_cli)
+    Checking asset_cache v0.0.0 (/Users/tedczj/workspace/term4u/crates/asset_cache)
+    Checking vim v0.1.0 (/Users/tedczj/workspace/term4u/crates/vim)
+    Checking warp_editor v0.1.0 (/Users/tedczj/workspace/term4u/crates/editor)
+    Checking secret_redaction v0.0.0 (/Users/tedczj/workspace/term4u/crates/secret_redaction)
+    Checking warp_isolation_platform v0.1.0 (/Users/tedczj/workspace/term4u/crates/isolation_platform)
+    Checking simple_logger v0.1.0 (/Users/tedczj/workspace/term4u/crates/simple_logger)
+    Checking warp_files v0.1.0 (/Users/tedczj/workspace/term4u/crates/warp_files)
+    Checking http_server v0.0.0 (/Users/tedczj/workspace/term4u/crates/http_server)
+    Checking build_cache v0.1.0 (/Users/tedczj/workspace/term4u/crates/build_cache)
+    Checking ui_components v0.0.0 (/Users/tedczj/workspace/term4u/crates/ui_components)
+    Checking warp_search_core v0.1.0 (/Users/tedczj/workspace/term4u/crates/warp_search_core)
+    Checking warp_logging v0.0.0 (/Users/tedczj/workspace/term4u/crates/warp_logging)
+    Checking warp_completer v0.1.0 (/Users/tedczj/workspace/term4u/crates/warp_completer)
+    Checking languages v0.0.0 (/Users/tedczj/workspace/term4u/crates/languages)
+    Checking warp_ripgrep v0.1.0 (/Users/tedczj/workspace/term4u/crates/warp_ripgrep)
+    Checking syntax_tree v0.1.0 (/Users/tedczj/workspace/term4u/crates/syntax_tree)
+    Checking warp_terminal v0.0.0 (/Users/tedczj/workspace/term4u/crates/warp_terminal)
+    Finished `dev` profile [unoptimized] target(s) in 24.73s
+    Checking stable_deref_trait v1.2.0
+    Checking mio v1.1.1
+    Checking regex-automata v0.4.9
+   Compiling rand_core v0.6.4
+    Checking futures-util v0.3.31
+    Checking zeroize v1.8.2
+    Checking yoke v0.7.5
+   Compiling rand v0.8.6
+    Checking aws-lc-rs v1.16.2
+    Checking zerovec v0.10.4
+    Checking tokio v1.50.0
+   Compiling phf_generator v0.11.3
+   Compiling phf_codegen v0.11.3
+   Compiling string_cache_codegen v0.5.4
+    Checking tinystr v0.7.6
+    Checking rustls-pki-types v1.12.0
+    Checking parking_lot v0.12.5
+    Checking tracing-core v0.1.36
+    Checking hashbrown v0.16.0
+   Compiling web_atoms v0.1.3
+    Checking tracing v0.1.44
+    Checking icu_locid v1.5.0
+    Checking indexmap v2.12.0
+    Checking rustls-webpki v0.103.13
+   Compiling memchr v2.7.6
+    Checking string_cache v0.8.9
+    Checking icu_provider v1.5.0
+    Checking getrandom v0.3.4
+    Checking rustls v0.23.39
+    Checking icu_collections v1.5.0
+    Checking icu_locid_transform v1.5.0
+    Checking regex v1.11.1
+    Checking icu_properties v1.5.1
+    Checking bstr v1.9.0
+    Checking uuid v1.19.0
+    Checking png v0.18.1
+    Checking rustybuzz v0.20.1
+    Checking tokio-util v0.7.18
+    Checking h2 v0.4.15
+    Checking futures-executor v0.3.31
+    Checking core-graphics v0.25.0 (https://github.com/servo/core-foundation-rs?rev=6f844cf1a1a18e25b70fcdf1bcdc458555bd2eff#6f844cf1)
+    Checking icu_normalizer v1.5.0
+    Checking markup5ever v0.35.0
+    Checking system-configuration v0.6.1
+    Checking idna_adapter v1.2.0
+    Checking html5ever v0.35.0
+    Checking xml5ever v0.35.0
+    Checking tokio-rustls v0.26.4
+    Checking heapless v0.8.0
+    Checking usvg v0.47.0
+    Checking idna v1.0.3
+    Checking get-size v0.1.4
+    Checking nix v0.30.1
+    Checking core-text v21.1.0 (https://github.com/servo/core-foundation-rs?rev=6f844cf1a1a18e25b70fcdf1bcdc458555bd2eff#6f844cf1)
+    Checking futures v0.3.31
+    Checking tiny-skia v0.12.0
+    Checking markup5ever_rcdom v0.35.0+unofficial
+    Checking cfb v0.7.3
+    Checking security-framework v3.5.1
+   Compiling aho-corasick v1.1.3
+    Checking hyper v1.8.1
+   Compiling warpui_core v0.1.0 (/Users/tedczj/workspace/term4u/crates/warpui_core)
+    Checking sha1 v0.10.6
+   Compiling regex-syntax v0.8.5
+    Checking hashbrown v0.14.1
+    Checking font-kit v0.12.0 (https://github.com/warpdotdev/font-kit?rev=a04b225ecb639bb850f21d05212cfdc7465000f3#a04b225e)
+    Checking rustls-platform-verifier v0.6.2
+    Checking dashmap v6.1.0
+    Checking tower v0.5.2
+    Checking hyper-util v0.1.16
+    Checking warp_util v0.1.0 (/Users/tedczj/workspace/term4u/crates/warp_util)
+    Checking tungstenite v0.24.0
+    Checking resvg v0.47.0
+    Checking ctrlc v3.4.7
+    Checking infer v0.19.0
+    Checking markdown_parser v0.1.0 (/Users/tedczj/workspace/term4u/crates/markdown_parser)
+    Checking url v2.5.4
+    Checking string-offset v0.0.0 (/Users/tedczj/workspace/term4u/crates/string-offset)
+    Checking rstar v0.12.2
+    Checking async-compression v0.4.22
+    Checking image v0.25.9
+    Checking sum_tree v0.1.0 (/Users/tedczj/workspace/term4u/crates/sum_tree)
+    Checking titlecase v1.1.0
+    Checking tempfile v3.23.0
+    Checking num-integer v0.1.46
+    Checking ordered-float v3.9.2
+   Compiling log v0.4.29
+    Checking jaq-std v3.0.0
+    Checking tower-http v0.6.8
+    Checking num-bigint v0.4.6
+    Checking hyper-rustls v0.27.7
+    Checking objc2-foundation v0.3.2
+    Checking objc2-core-foundation v0.3.2
+    Checking graphql-ws-client v0.11.1
+   Compiling globset v0.4.18
+    Checking objc2-io-kit v0.3.1
+    Checking jaq-json v2.0.0
+   Compiling rust-embed-utils v7.8.1
+   Compiling nom v7.1.3
+    Checking reqwest v0.13.3
+   Compiling warp_core v0.0.0 (/Users/tedczj/workspace/term4u/crates/warp_core)
+    Checking async-tungstenite v0.28.2
+    Checking warp_features v0.0.0 (/Users/tedczj/workspace/term4u/crates/warp_features)
+    Checking async-net v2.0.0
+    Checking jaq-fmts v0.1.0
+    Checking websocket v0.1.0 (/Users/tedczj/workspace/term4u/crates/websocket)
+    Checking command-corrections v0.0.0 (https://github.com/warpdotdev/command-corrections.git?rev=eae08c8c51d9bc9741fcb17eef2c21f696aebbeb#eae08c8c)
+   Compiling rust-embed-impl v6.8.1
+    Checking sysinfo v0.37.0
+    Checking jaq-all v0.1.0
+    Checking local_control v0.0.0 (/Users/tedczj/workspace/term4u/crates/local_control)
+    Checking rust-embed v6.8.1
+   Compiling color-print-proc-macro v0.3.7
+    Checking color-print v0.3.7
+    Checking warp-command-signatures v0.0.0 (https://github.com/warpdotdev/command-signatures.git?rev=d3725aa42375cc229699c87be2b38f9d9f07080f#d3725aa4)
+    Checking warpui_extras v0.0.0 (/Users/tedczj/workspace/term4u/crates/warpui_extras)
+    Checking settings v0.0.0 (/Users/tedczj/workspace/term4u/crates/settings)
+    Checking warp_cli v0.0.0 (/Users/tedczj/workspace/term4u/crates/warp_cli)
+    Checking warp_completer v0.1.0 (/Users/tedczj/workspace/term4u/crates/warp_completer)
+    Finished `dev` profile [unoptimized] target(s) in 9.36s
+clippy succeeded...
+Running clang-format...
+run-clang-format.py: error: Command 'clang-format --version' failed to start: [Errno 2] No such file or directory: 'clang-format'

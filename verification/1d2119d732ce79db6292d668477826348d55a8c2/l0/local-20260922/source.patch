@@ -1,0 +1,139 @@
+diff --git a/app/src/editor/view/mod_tests.rs b/app/src/editor/view/mod_tests.rs
+index b8a3c6fb..6f6ce4a4 100644
+--- a/app/src/editor/view/mod_tests.rs
++++ b/app/src/editor/view/mod_tests.rs
+@@ -20,6 +20,22 @@ use crate::workspace::ToastStack;
+ use crate::workspace::sync_inputs::SyncedInputState;
+ 
+ impl EditorView {
++    pub(crate) fn set_mock_layout_for_test(&self, lines: &[&str], ctx: &AppContext) {
++        let layouts = FrameLayouts::new(
++            lines
++                .iter()
++                .map(|line| Arc::new(TextFrame::mock(line)))
++                .collect(),
++            0,
++            lines.len() as u32,
++        );
++        self.editor_model
++            .as_ref(ctx)
++            .display_map(ctx)
++            .soft_wrap_state()
++            .update(layouts);
++    }
++
+     fn selected_ranges(&self, app: &AppContext) -> Vec<Range<DisplayPoint>> {
+         self.editor_model
+             .as_ref(app)
+diff --git a/app/src/terminal/local_interaction_tests.rs b/app/src/terminal/local_interaction_tests.rs
+index c3b9603c..64d1d0aa 100644
+--- a/app/src/terminal/local_interaction_tests.rs
++++ b/app/src/terminal/local_interaction_tests.rs
+@@ -81,6 +81,12 @@ fn multiline_vertical_navigation_stays_inside_the_editor() {
+                 editor.select_ranges_by_byte_offset([7_usize.into()..7_usize.into()], ctx);
+             });
+         });
++        // App::test's font backend produces empty glyphs. Use the same layout fixture as
++        // the editor movement tests while retaining real terminal keybinding dispatch.
++        editor.read(&app, |editor, ctx| {
++            assert_eq!(editor.end_byte_index_of_last_selection(ctx).as_usize(), 7);
++            editor.set_mock_layout_for_test(&["one", "two"], ctx);
++        });
+         app.dispatch_keystroke(
+             window,
+             &[terminal.id(), input.id(), editor.id()],
+@@ -91,6 +97,18 @@ fn multiline_vertical_navigation_stays_inside_the_editor() {
+         editor.read(&app, |editor, ctx| {
+             assert_eq!(editor.buffer_text(ctx), "one\ntwo");
+             assert_eq!(editor.end_byte_index_of_last_selection(ctx).as_usize(), 3);
++            editor.set_mock_layout_for_test(&["one", "two"], ctx);
++        });
++        app.dispatch_keystroke(
++            window,
++            &[terminal.id(), input.id(), editor.id()],
++            &Keystroke::parse("down").unwrap(),
++            false,
++        )
++        .unwrap();
++        editor.read(&app, |editor, ctx| {
++            assert_eq!(editor.buffer_text(ctx), "one\ntwo");
++            assert_eq!(editor.end_byte_index_of_last_selection(ctx).as_usize(), 7);
+         });
+     });
+ }
+diff --git a/app/src/terminal/model/terminal_model.rs b/app/src/terminal/model/terminal_model.rs
+index 4270d1c9..169b8ca3 100644
+--- a/app/src/terminal/model/terminal_model.rs
++++ b/app/src/terminal/model/terminal_model.rs
+@@ -1164,10 +1164,11 @@ impl TerminalModel {
+     }
+ 
+     pub fn terminal_input_state(&self) -> TerminalInputState {
+-        if !self.block_list().is_bootstrapped() {
+-            TerminalInputState::NotBootstrapped
+-        } else if self.is_alt_screen_active() {
++        // An RC-file program can enter the alternate screen before shell integration is ready.
++        if self.is_alt_screen_active() {
+             TerminalInputState::AltScreen
++        } else if !self.block_list().is_bootstrapped() {
++            TerminalInputState::NotBootstrapped
+         } else if self
+             .block_list()
+             .active_block()
+diff --git a/app/src/terminal/view.rs b/app/src/terminal/view.rs
+index d7ce71e5..81cb4dbf 100644
+--- a/app/src/terminal/view.rs
++++ b/app/src/terminal/view.rs
+@@ -1675,7 +1675,7 @@ impl View for TerminalView {
+         if self.input_is_visible() || !ctx.is_self_focused() {
+             return None;
+         }
+-        ctx.element_position_by_id(&format!("terminal_view:cursor_{}", self.view_id))
++        ctx.element_position_by_id(format!("terminal_view:cursor_{}", self.view_id))
+             .map(|position| warpui::CursorInfo {
+                 position,
+                 font_size: Appearance::as_ref(ctx).monospace_font_size(),
+diff --git a/app/src/terminal/view/local_io.rs b/app/src/terminal/view/local_io.rs
+index c0d5379a..606102f3 100644
+--- a/app/src/terminal/view/local_io.rs
++++ b/app/src/terminal/view/local_io.rs
+@@ -1,8 +1,9 @@
+ //! Local input and host-clipboard boundaries. Payloads must never be logged here.
+ 
+ use std::path::PathBuf;
+-use std::time::{Duration, Instant};
++use std::time::Duration;
+ 
++use instant::Instant;
+ use warpui::clipboard::ClipboardContent;
+ use warpui::modals::{AlertDialogWithCallbacks, ModalButton};
+ use warpui::{SingletonEntity, ViewContext};
+@@ -127,11 +128,11 @@ impl TerminalView {
+         accepted: bool,
+         ctx: &mut ViewContext<Self>,
+     ) {
+-        if !self
++        if self
+             .local_io
+             .pending_paste
+             .as_ref()
+-            .is_some_and(|pending| pending.request == request)
++            .is_none_or(|pending| pending.request != request)
+         {
+             return;
+         }
+diff --git a/app/src/terminal/view/local_io_tests.rs b/app/src/terminal/view/local_io_tests.rs
+index 81feb95e..5f3392b0 100644
+--- a/app/src/terminal/view/local_io_tests.rs
++++ b/app/src/terminal/view/local_io_tests.rs
+@@ -6,8 +6,9 @@ use std::os::fd::{AsRawFd, FromRawFd};
+ use std::os::unix::ffi::OsStringExt;
+ use std::rc::Rc;
+ use std::sync::atomic::{AtomicU64, Ordering};
+-use std::time::{Duration, Instant};
++use std::time::Duration;
+ 
++use instant::Instant;
+ use nix::fcntl::{FcntlArg, OFlag, fcntl};
+ use nix::pty::openpty;
+ use nix::sys::termios::{SetArg, cfmakeraw, tcgetattr, tcsetattr};

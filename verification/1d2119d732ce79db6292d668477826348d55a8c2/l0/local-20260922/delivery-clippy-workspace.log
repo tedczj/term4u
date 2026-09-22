@@ -1,0 +1,9 @@
+   Compiling warpui v0.0.0 (/Users/tedczj/workspace/term4u/crates/warpui)
+warning: command-signatures-v2@0.1.0: Failed to build command signatures JS. Proceeding with stale command signatures!
+    Checking warp v0.1.0 (/Users/tedczj/workspace/term4u/app)
+    Checking syntax_tree v0.1.0 (/Users/tedczj/workspace/term4u/crates/syntax_tree)
+    Checking warp_editor v0.1.0 (/Users/tedczj/workspace/term4u/crates/editor)
+    Checking ui_components v0.0.0 (/Users/tedczj/workspace/term4u/crates/ui_components)
+    Checking repo_metadata v0.1.0 (/Users/tedczj/workspace/term4u/crates/repo_metadata)
+    Checking warp_tui v0.0.0 (/Users/tedczj/workspace/term4u/crates/warp_tui)
+    Finished `dev` profile [unoptimized] target(s) in 17.78s

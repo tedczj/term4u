@@ -1,0 +1,5 @@
+Collecting clang-format==20.1.8
+  Downloading clang_format-20.1.8-py2.py3-none-macosx_11_0_arm64.whl (1.4 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.4/1.4 MB 112.2 kB/s eta 0:00:00
+Installing collected packages: clang-format
+Successfully installed clang-format-20.1.8

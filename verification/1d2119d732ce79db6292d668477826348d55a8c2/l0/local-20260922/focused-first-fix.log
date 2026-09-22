@@ -1,0 +1,38 @@
+   Compiling warp v0.1.0 (/Users/tedczj/workspace/term4u/app)
+    Finished `test` profile [unoptimized] target(s) in 21.67s
+────────────
+ Nextest run ID b268ee94-d731-4314-874e-04f75f6935f5 with nextest profile: default
+    Starting 6 tests across 1 binary (1546 tests skipped)
+        PASS [   0.020s] (1/6) warp terminal::view::local_io::tests::l0_02_paste_plan_preserves_editor_text_and_rejects_native_control_injection
+        FAIL [   0.077s] (2/6) warp terminal::view::local_interaction_tests::multiline_vertical_navigation_stays_inside_the_editor
+  stdout ───
+
+    running 1 test
+    test terminal::view::local_interaction_tests::multiline_vertical_navigation_stays_inside_the_editor ... FAILED
+
+    failures:
+
+    failures:
+        terminal::view::local_interaction_tests::multiline_vertical_navigation_stays_inside_the_editor
+
+    test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 1551 filtered out; finished in 0.06s
+
+  stderr ───
+    23:01:25.903 [INFO] [warpui_core::core::app] Starting test app...
+    23:01:25.906 [INFO] [warpui_core::core::app] Executing test...
+    23:01:25.939 [INFO] [warpui_core::core::app] dispatching typed action: warp::editor::view::EditorAction::Up
+
+    thread 'terminal::view::local_interaction_tests::multiline_vertical_navigation_stays_inside_the_editor' (48514420) panicked at app/src/terminal/local_interaction_tests.rs:112:13:
+    assertion `left == right` failed
+      left: 0
+     right: 3
+    note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+        PASS [   0.079s] (3/6) warp terminal::view::local_io::tests::l0_02_multiline_confirmation_cancels_and_rejects_stale_requests
+        PASS [   0.082s] (4/6) warp terminal::view::local_io::tests::l0_02_native_paste_uses_parsed_mode_and_a_real_raw_pty
+        PASS [   0.084s] (5/6) warp terminal::view::local_io::tests::l0_02_parsed_mode_changes_invalidate_a_pending_confirmation
+        PASS [   0.095s] (6/6) warp terminal::view::local_io::tests::l0_07_ime_platform_composition_commits_once_and_cancels_without_bytes
+────────────
+     Summary [   0.096s] 6 tests run: 5 passed, 1 failed, 1546 skipped
+        FAIL [   0.077s] (2/6) warp terminal::view::local_interaction_tests::multiline_vertical_navigation_stays_inside_the_editor
+error: test run failed

@@ -1,0 +1,129 @@
+    Updating git repository `https://github.com/wgsl-analyzer/wgsl-analyzer`
+  Installing wgslfmt v0.1.0 (https://github.com/wgsl-analyzer/wgsl-analyzer?tag=2025-06-28#7e34f03c)
+    Updating crates.io index
+warning: package `deranged v0.4.1` in Cargo.lock is yanked in registry `crates-io`, consider running without --locked
+ Downloading crates ...
+  Downloaded anyhow v1.0.98
+  Downloaded either v1.15.0
+  Downloaded lexopt v0.3.1
+  Downloaded owo-colors v4.2.0
+  Downloaded proc-macro2 v1.0.94
+  Downloaded serde v1.0.219
+  Downloaded is-terminal v0.4.16
+  Downloaded cfg-if v1.0.0
+  Downloaded pad v0.1.6
+  Downloaded itoa v1.0.15
+  Downloaded prettydiff v0.8.0
+  Downloaded ryu v1.0.20
+  Downloaded csv-core v0.1.12
+  Downloaded memchr v2.7.5
+  Downloaded unicode-ident v1.0.18
+  Downloaded quote v1.0.40
+  Downloaded libc v0.2.173
+   Compiling proc-macro2 v1.0.94
+   Compiling unicode-ident v1.0.18
+   Compiling libc v0.2.173
+   Compiling syn v1.0.109
+   Compiling serde v1.0.219
+   Compiling regex-syntax v0.6.29
+   Compiling beef v0.5.2
+   Compiling fnv v1.0.7
+   Compiling rustc-hash v1.1.0
+   Compiling hashbrown v0.14.5
+   Compiling quote v1.0.40
+   Compiling cfg-if v1.0.0
+   Compiling text-size v1.1.1
+   Compiling memchr v2.7.5
+   Compiling dirs-sys-next v0.1.2
+   Compiling countme v3.0.1
+   Compiling dirs-next v2.0.0
+   Compiling rowan v0.16.1
+   Compiling csv-core v0.1.12
+   Compiling owo-colors v4.2.0
+   Compiling either v1.15.0
+   Compiling unicode-width v0.1.14
+   Compiling itoa v1.0.15
+   Compiling edition v0.0.0 (/Users/tedczj/.cargo/git/checkouts/wgsl-analyzer-3be45a7933ee846a/7e34f03/crates/edition)
+   Compiling drop_bomb v0.1.5
+   Compiling ryu v1.0.20
+   Compiling itertools v0.14.0
+   Compiling logos-derive v0.12.1
+   Compiling csv v1.3.1
+   Compiling term v0.7.0
+   Compiling is-terminal v0.4.16
+   Compiling anyhow v1.0.98
+   Compiling logos v0.12.1
+   Compiling encode_unicode v1.0.0
+   Compiling lazy_static v1.5.0
+   Compiling prettytable-rs v0.10.0
+   Compiling parser v0.0.0 (/Users/tedczj/.cargo/git/checkouts/wgsl-analyzer-3be45a7933ee846a/7e34f03/crates/parser)
+   Compiling pad v0.1.6
+   Compiling prettydiff v0.8.0
+   Compiling lexopt v0.3.1
+warning: enum `WgslLanguage` is never used
+   --> crates/parser/src/syntax_kind.rs:469:17
+    |
+469 | pub(crate) enum WgslLanguage {}
+    |                 ^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: hiding a lifetime that's elided elsewhere is confusing
+  --> crates/parser/src/source.rs:35:30
+   |
+35 |     pub(crate) fn peek_token(&mut self) -> Option<&Token<SyntaxKind>> {
+   |                              ^^^^^^^^^            ^^^^^^^^^^^^^^^^^^
+   |                              |                    ||
+   |                              |                    |the same lifetime is hidden here
+   |                              |                    the same lifetime is elided here
+   |                              the lifetime is elided here
+   |
+   = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+   = note: `#[warn(mismatched_lifetime_syntaxes)]` on by default
+help: use `'_` for type paths
+   |
+35 |     pub(crate) fn peek_token(&mut self) -> Option<&Token<'_, SyntaxKind>> {
+   |                                                          +++
+
+warning: hiding a lifetime that's elided elsewhere is confusing
+  --> crates/parser/src/source.rs:62:23
+   |
+62 |     fn peek_token_raw(&self) -> Option<&Token<SyntaxKind>> {
+   |                       ^^^^^            ^^^^^^^^^^^^^^^^^^
+   |                       |                ||
+   |                       |                |the same lifetime is hidden here
+   |                       |                the same lifetime is elided here
+   |                       the lifetime is elided here
+   |
+   = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+help: use `'_` for type paths
+   |
+62 |     fn peek_token_raw(&self) -> Option<&Token<'_, SyntaxKind>> {
+   |                                               +++
+
+warning: hiding a lifetime that's elided elsewhere is confusing
+  --> crates/parser/src/source.rs:67:26
+   |
+67 |     fn peek_compound_raw(&self) -> Option<(&Token<SyntaxKind>, &Token<SyntaxKind>)> {
+   |                          ^^^^^             ^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^
+   |                          |                 ||                  ||
+   |                          |                 ||                  |the same lifetime is hidden here
+   |                          |                 ||                  the same lifetime is elided here
+   |                          |                 |the same lifetime is hidden here
+   |                          |                 the same lifetime is elided here
+   |                          the lifetime is elided here
+   |
+   = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+help: use `'_` for type paths
+   |
+67 |     fn peek_compound_raw(&self) -> Option<(&Token<'_, SyntaxKind>, &Token<'_, SyntaxKind>)> {
+   |                                                   +++                     +++
+
+   Compiling syntax v0.0.0 (/Users/tedczj/.cargo/git/checkouts/wgsl-analyzer-3be45a7933ee846a/7e34f03/crates/syntax)
+   Compiling wgsl-formatter v0.0.0 (/Users/tedczj/.cargo/git/checkouts/wgsl-analyzer-3be45a7933ee846a/7e34f03/crates/wgsl_formatter)
+warning: `parser` (lib) generated 4 warnings (run `cargo fix --lib -p parser` to apply 3 suggestions)
+   Compiling wgslfmt v0.1.0 (/Users/tedczj/.cargo/git/checkouts/wgsl-analyzer-3be45a7933ee846a/7e34f03/crates/wgslfmt)
+    Finished `release` profile [optimized] target(s) in 44.29s
+  Installing /Volumes/未命名/term4u-l0-20260922/tools/bin/wgslfmt
+   Installed package `wgslfmt v0.1.0 (https://github.com/wgsl-analyzer/wgsl-analyzer?tag=2025-06-28#7e34f03c)` (executable `wgslfmt`)
+warning: be sure to add `/Volumes/未命名/term4u-l0-20260922/tools/bin` to your PATH to be able to run the installed binaries

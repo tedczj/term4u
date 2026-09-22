@@ -1,0 +1,370 @@
+{
+  "source_head": "1d2119d732ce79db6292d668477826348d55a8c2",
+  "branch": "fix/l0-local-20260922",
+  "source_patch": "source.patch",
+  "source_patch_sha256": "9324f63cad1a1bf40e7ca32a89237d11dc7de2c2594a9f569c43ddd26a6cf781",
+  "lockfile_sha256": "98984826e0fda0e0ccc3a2c08bdef6ca64b332b9fa82b0960093023c8d762dc5",
+  "generated_utc": "2026-09-22T15:20:07.904912+00:00",
+  "platform": "ProductName:\t\tmacOS\nProductVersion:\t\t26.2\nBuildVersion:\t\t25C56",
+  "arch": "arm64",
+  "rust": "1.92.0",
+  "environment": {
+    "CARGO_TARGET_DIR": "/Volumes/未命名/term4u-l0-20260922/target",
+    "CARGO_PROFILE_DEV_DEBUG": "0",
+    "CARGO_INCREMENTAL": "0",
+    "CARGO_BUILD_JOBS": "6",
+    "WARP_SHELL_PATH": "/bin/zsh",
+    "clang_format": "20.1.8 (isolated venv)",
+    "wgslfmt": "2025-06-28, commit 7e34f03c (isolated cargo install)"
+  },
+  "checks": [
+    {
+      "name": "app_local_only",
+      "command": "cargo nextest run --locked -p warp --lib --no-default-features --features local_only,test-util --no-fail-fast",
+      "exit_code": 0,
+      "status": "PASS",
+      "log": "app-full-final.log",
+      "log_sha256": "97cc8f82b34e899fcfc2e82a931b49a71e16a48a7fa61824b757ed9b54bbc771",
+      "completed_utc": "2026-09-22T15:10:43.245951+00:00"
+    },
+    {
+      "name": "clippy_local_only",
+      "command": "cargo clippy --locked -p warp --all-targets --tests --no-default-features --features local_only -- -D warnings",
+      "exit_code": 0,
+      "status": "PASS",
+      "log": "clippy-local.log",
+      "log_sha256": "9dde239e5ca091b2a64a077610d338023e8f7dc4f7dc4385c900d050444f3d91",
+      "completed_utc": "2026-09-22T15:10:10.561378+00:00"
+    },
+    {
+      "name": "test_inventory",
+      "command": "./script/test_inventory",
+      "exit_code": 0,
+      "status": "PASS",
+      "log": "inventory.log",
+      "log_sha256": "566dca5732c7f21d717e6951dd3a89970dd1bdad527a4a54cedb0a61f60ab4b7",
+      "completed_utc": "2026-09-22T15:12:59.456057+00:00"
+    },
+    {
+      "name": "presubmit",
+      "command": "./script/presubmit",
+      "exit_code": 0,
+      "status": "PASS",
+      "log": "presubmit-complete.log",
+      "log_sha256": "30c14ff4cb47b146ef09a19e97b83fd6a66ada800b7b065489572f859a93352f",
+      "completed_utc": "2026-09-22T15:14:44.992038+00:00"
+    },
+    {
+      "name": "gui_build",
+      "command": "./script/run --dont-open",
+      "exit_code": 0,
+      "status": "PASS",
+      "log": "gui-build-final.log",
+      "log_sha256": "88fb054252bb44529caf732b72f88f4a332be074b16e106e02a5c3faaeac7e96",
+      "completed_utc": "2026-09-22T15:14:13.814215+00:00"
+    }
+  ],
+  "requested_tests": {
+    "multiline_vertical_navigation_stays_inside_the_editor": "PASS",
+    "l0_02_multiline_confirmation_cancels_and_rejects_stale_requests": "PASS",
+    "l0_02_native_paste_uses_parsed_mode_and_a_real_raw_pty": "PASS",
+    "l0_02_parsed_mode_changes_invalidate_a_pending_confirmation": "PASS",
+    "l0_07_ime_platform_composition_commits_once_and_cancels_without_bytes": "PASS"
+  },
+  "test_counts": {
+    "app": {
+      "passed": 1549,
+      "existing_ignored": 3
+    },
+    "workspace": {
+      "passed": 4789,
+      "existing_skipped": 20
+    },
+    "completer_v2": {
+      "passed": 131,
+      "existing_skipped": 4
+    },
+    "inventory": {
+      "current": 4809,
+      "baseline": 9777,
+      "approved_deleted": 5089
+    }
+  },
+  "gui": {
+    "launch": {
+      "pid": 60884,
+      "profile": "l0-final-20260922",
+      "binary": "/Volumes/未命名/term4u-l0-20260922/target/debug/bundle/osx/Term4u.app/Contents/MacOS/term4u",
+      "binary_sha256": "68b20a97e6099f6d15288a927cf05c972e18a6fb02abe0780586b259af3a1d84"
+    },
+    "startup_alt_screen_bracketed_paste": "PASS: exact captured bytes",
+    "multiline_navigation": "PASS: one/two -> Up X Down Y -> oneX/twoY, confirmed visually and by copied PTY payload",
+    "cancel": "PASS: empty PTY capture",
+    "accept": "PASS: one complete payload",
+    "system_pinyin": "PASS on original final binary: marked composition visible; commit appended exactly one Chinese UTF-8 payload (6 bytes); Escape cancellation appended zero bytes.",
+    "screenshots": "Visible in the computer-use conversation; no standalone screenshot file saved.",
+    "ime_setup": "Initial attempted input ran under ABC. Native diagnostic confirmed the window source, distinct from global preferences. Control-Space switched the final window to SCIM.ITABC. The baseline ASCII setup bytes are isolated in gui-final-ime-before-commit-bytes.json.",
+    "ime_final_pid": 64057,
+    "ime_final_profile": "l0-ime-final-20260922",
+    "ime_final_verified_utc": "2026-09-22T15:34:39.201387+00:00",
+    "native_warp_reference": "host_view.m, objc/window.m and mac/window.rs unchanged from fixed original 066ec71b736fc3755e29f58f733deadbdac3d1af. Diagnostic logging removed from source; original final binary restored and its SHA256 rechecked."
+  },
+  "limits": [
+    "Tests were executed on the recorded uncommitted source patch. Delivery source commit is linked by an exact patch comparison. Existing .pi/goal-events.jsonl changes are preserved and excluded from delivery.",
+    "No final L0/R6 or release acceptance claimed; no new TUI interactive session or network capture.",
+    "Presubmit warns command-signatures-v2 reused stale generated signatures; regeneration is not verified.",
+    "baseline-external.log records the original five failures at source_head. Intermediate diagnostic logs are not final acceptance.",
+    "Design prose updated after execution; source.patch contains only tested Rust source differences."
+  ],
+  "artifacts": {
+    "app-full-final.exit": {
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    "app-full-final.log": {
+      "bytes": 183597,
+      "sha256": "97cc8f82b34e899fcfc2e82a931b49a71e16a48a7fa61824b757ed9b54bbc771"
+    },
+    "app-full.exit": {
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    "app-full.log": {
+      "bytes": 183651,
+      "sha256": "454890b01a7cfc7a78b379b2674915fb8b7fbee6c0462b29b001dcc434783ef8"
+    },
+    "baseline-external.log": {
+      "bytes": 39659,
+      "sha256": "2faffc69f6bc6e250e07cf0cbdf3ac41b8584ca4a74e3b76d909512a2f96bd39"
+    },
+    "baseline.log": {
+      "bytes": 9050,
+      "sha256": "a6b6a799d637091bd5f61d0a2dfa55c3c23df6f11afa6fa60cd16a17bf2ba173"
+    },
+    "clang-format-install.log": {
+      "bytes": 357,
+      "sha256": "919d01f038c9a5c76ce0567273cd5f242ae2519ad43ef90f9600b22fe2b94d06"
+    },
+    "clang-format.exit": {
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    "clang-format.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "clippy-local.exit": {
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    "clippy-local.log": {
+      "bytes": 2133,
+      "sha256": "9dde239e5ca091b2a64a077610d338023e8f7dc4f7dc4385c900d050444f3d91"
+    },
+    "delivery-clippy-completer.exit": {
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    "delivery-clippy-completer.log": {
+      "bytes": 60,
+      "sha256": "7e8397b3c3d5ef73830e57f61ffa6f2cfd565f338d3d371aefe79dbf3b020764"
+    },
+    "delivery-clippy-gui.exit": {
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    "delivery-clippy-gui.log": {
+      "bytes": 197,
+      "sha256": "0e176e600a04546fee728c95e0425365674af59b27a7554d5c6770d53809a5ca"
+    },
+    "delivery-clippy-workspace.exit": {
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    "delivery-clippy-workspace.log": {
+      "bytes": 733,
+      "sha256": "69c3519c318ddec72d46ac195db6ad7d1c3018895aa4c3e236bb11ecb1a5daed"
+    },
+    "delivery-format.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "final-format-check.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "final-worktree-status.txt": {
+      "bytes": 383,
+      "sha256": "1c24f3844e20f671c332a2c9cb3a7f5aeb2032765b6708cbda817a3d58c3c70b"
+    },
+    "focused-first-fix.log": {
+      "bytes": 2359,
+      "sha256": "d54bc0e156f7e0c5137ec1bc9031c9f5e31c343ab2c6d86fe2f256535837ef1e"
+    },
+    "format-baseline.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "format-final.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "format.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "gui-build-final.exit": {
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    "gui-build-final.log": {
+      "bytes": 1413,
+      "sha256": "88fb054252bb44529caf732b72f88f4a332be074b16e106e02a5c3faaeac7e96"
+    },
+    "gui-build.log": {
+      "bytes": 5991,
+      "sha256": "eab9b681f73a94a04027538afc1eddd1e1f013330ebde61a94003be6c4120951"
+    },
+    "gui-final-accept-bytes.json": {
+      "bytes": 51,
+      "sha256": "fbd1a78077231fbf5230aa8e7d7b24f565b2fafd1f73a023ccf603f1e66f24d2"
+    },
+    "gui-final-bracketed-bytes.json": {
+      "bytes": 111,
+      "sha256": "d44f878718fdcefce96ea949ed6c302ae64f27427d1f7deaea47f292075c8399"
+    },
+    "gui-final-cancel-bytes.json": {
+      "bytes": 23,
+      "sha256": "962de084e1de1f385dd9d3aecefcb0cc9fc91e3c0fb9afa1ea6a142b46033ba8"
+    },
+    "gui-final-ime-after-cancel-bytes.json": {
+      "bytes": 65,
+      "sha256": "644b1a157cd19272010d45d4a85d689106cd5c1a4f40b4f8d5bf1500ee88ab76"
+    },
+    "gui-final-ime-after-commit-bytes.json": {
+      "bytes": 65,
+      "sha256": "644b1a157cd19272010d45d4a85d689106cd5c1a4f40b4f8d5bf1500ee88ab76"
+    },
+    "gui-final-ime-before-commit-bytes.json": {
+      "bytes": 47,
+      "sha256": "982c4608b3231917670d1b96a4eeda01182bd00e5b6a1ce378695e905276f909"
+    },
+    "gui-final-launch.json": {
+      "bytes": 258,
+      "sha256": "e3a932b20cf35c3a7fef7736698bd5a3bc30ab37bb600b898b4371ebeddf375b"
+    },
+    "gui-ime-diagnostic-commit-cancel-bytes.json": {
+      "bytes": 41,
+      "sha256": "3ba64ba6ad48f3d55b9427f8ab30ba448b3c5c6e285b116346bc700fc4b7bd09"
+    },
+    "gui-initial-bracketed-bytes.json": {
+      "bytes": 135,
+      "sha256": "f2768fed5236f1bf21e1cd8dcad3eb598ed890949ae639dcb39e6c349ff31d8a"
+    },
+    "gui-initial-cancel-bytes.json": {
+      "bytes": 23,
+      "sha256": "962de084e1de1f385dd9d3aecefcb0cc9fc91e3c0fb9afa1ea6a142b46033ba8"
+    },
+    "gui-pty-probe.py": {
+      "bytes": 1109,
+      "sha256": "826aa985dd1c055a0c2817eeed757a7e9ea9df97e24e794f84067ef6ea17fab7"
+    },
+    "gui-system-pinyin-failure-bytes.json": {
+      "bytes": 92,
+      "sha256": "70e3cb69c112e70cae68cd2b96684df053fb0c290254f8e46c47602bc77f5f6d"
+    },
+    "gui-system-pinyin-user-failure.png": {
+      "bytes": 97590,
+      "sha256": "6ef04a468c8480a28c23724a668808b0affc5ccaacd788089788663f3e1e0b4f"
+    },
+    "ime-context-diagnostic.patch": {
+      "bytes": 881,
+      "sha256": "b9e4d5c10f8e65fe3b36828b53f4d131f62377724ddd95bba135d5463a352f34"
+    },
+    "ime-context-runtime.log": {
+      "bytes": 2636,
+      "sha256": "5904d396cbb4c67d2088ef33e15b8e336fd1307e98a680f77882e3c6b39ab2cd"
+    },
+    "ime-diagnostic-runtime.log": {
+      "bytes": 1998,
+      "sha256": "b04e435865fd10aa3a40c6189ab9dc595a1ad1855820d1378132075b53d851d2"
+    },
+    "ime-diagnostic.patch": {
+      "bytes": 1347,
+      "sha256": "75aa24ddade0dc7fcbb8d22bd7d5e2676b3f6943f4ec8195b2d02762b18ddb81"
+    },
+    "inventory.exit": {
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    "inventory.log": {
+      "bytes": 10246,
+      "sha256": "566dca5732c7f21d717e6951dd3a89970dd1bdad527a4a54cedb0a61f60ab4b7"
+    },
+    "presubmit-complete.exit": {
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    "presubmit-complete.log": {
+      "bytes": 582546,
+      "sha256": "30c14ff4cb47b146ef09a19e97b83fd6a66ada800b7b065489572f859a93352f"
+    },
+    "presubmit-final.exit": {
+      "bytes": 2,
+      "sha256": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3"
+    },
+    "presubmit-final.log": {
+      "bytes": 13040,
+      "sha256": "3ca05b9e769c64d1b893bd1c6876dde213ea632a49ae21613f669a576598083e"
+    },
+    "presubmit.exit": {
+      "bytes": 4,
+      "sha256": "39b8dc3fc8b44765c8e6f1adee04c5b465e555ab791cc42d0d9e810d5b64297c"
+    },
+    "presubmit.log": {
+      "bytes": 36756,
+      "sha256": "5e0e6cf80679277c5390f6e55f0c18179e2ab05722e00407b30a905e937ef93d"
+    },
+    "review.patch": {
+      "bytes": 8947,
+      "sha256": "8580fe06d5464d63bfa1a0a486d36b86e5fe76f9960dd24fba3d612a62fe6d1e"
+    },
+    "source.patch": {
+      "bytes": 5691,
+      "sha256": "9324f63cad1a1bf40e7ca32a89237d11dc7de2c2594a9f569c43ddd26a6cf781"
+    },
+    "terminal-regression-final.log": {
+      "bytes": 42352,
+      "sha256": "a6753a88bf3756a5e4610d5340e67481c9467ad481ee47f67fc5edfeec27cbc5"
+    },
+    "terminal-regression.log": {
+      "bytes": 781,
+      "sha256": "7e2e9f58a0afa725fddfa79829432846e6530e7d8ba2c71b16326d5b2e44570c"
+    },
+    "warp-native-reference-diff.txt": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "wgslfmt-install-direct.log": {
+      "bytes": 6071,
+      "sha256": "e93d8582c5220cfc97c0f606c6374e4942b9751ece58b5f4cfab80c025600e72"
+    },
+    "wgslfmt-install-retry.log": {
+      "bytes": 8857,
+      "sha256": "777776b8a07c89e2d400706e1772eb3373de8484e309dcab99706497cc705a95"
+    },
+    "wgslfmt-install.log": {
+      "bytes": 9476,
+      "sha256": "4bcc698de0cbce8e42a28f75cae9c27dabb3602723290d36c092a7e0f0d99c0c"
+    }
+  },
+  "design_sha256": "aa87fe6391af1e9b7ca7700520d01c9f2373fb5000fa00d5cc503c09fb0d3127",
+  "execution_worktree_committed": false,
+  "delivery": {
+    "source_commit": "9069a0e146b4b213072dc9c9a46cc8c1c8f34b1e",
+    "source_patch_identical_to_tested_candidate": true,
+    "target_branch": "main",
+    "authorization": "Repository owner explicitly requested document replacement, commit, push, PR and merge to the primary branch. Remote has main and no master.",
+    "recorded_utc": "2026-09-22T15:41:51.177521+00:00"
+  }
+}

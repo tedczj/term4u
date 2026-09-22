@@ -1,0 +1,181 @@
+diff --git a/app/src/editor/view/mod_tests.rs b/app/src/editor/view/mod_tests.rs
+index b8a3c6fb..6f6ce4a4 100644
+--- a/app/src/editor/view/mod_tests.rs
++++ b/app/src/editor/view/mod_tests.rs
+@@ -20,6 +20,22 @@ use crate::workspace::ToastStack;
+ use crate::workspace::sync_inputs::SyncedInputState;
+ 
+ impl EditorView {
++    pub(crate) fn set_mock_layout_for_test(&self, lines: &[&str], ctx: &AppContext) {
++        let layouts = FrameLayouts::new(
++            lines
++                .iter()
++                .map(|line| Arc::new(TextFrame::mock(line)))
++                .collect(),
++            0,
++            lines.len() as u32,
++        );
++        self.editor_model
++            .as_ref(ctx)
++            .display_map(ctx)
++            .soft_wrap_state()
++            .update(layouts);
++    }
++
+     fn selected_ranges(&self, app: &AppContext) -> Vec<Range<DisplayPoint>> {
+         self.editor_model
+             .as_ref(app)
+diff --git a/app/src/terminal/local_interaction_tests.rs b/app/src/terminal/local_interaction_tests.rs
+index c3b9603c..64d1d0aa 100644
+--- a/app/src/terminal/local_interaction_tests.rs
++++ b/app/src/terminal/local_interaction_tests.rs
+@@ -81,6 +81,12 @@ fn multiline_vertical_navigation_stays_inside_the_editor() {
+                 editor.select_ranges_by_byte_offset([7_usize.into()..7_usize.into()], ctx);
+             });
+         });
++        // App::test's font backend produces empty glyphs. Use the same layout fixture as
++        // the editor movement tests while retaining real terminal keybinding dispatch.
++        editor.read(&app, |editor, ctx| {
++            assert_eq!(editor.end_byte_index_of_last_selection(ctx).as_usize(), 7);
++            editor.set_mock_layout_for_test(&["one", "two"], ctx);
++        });
+         app.dispatch_keystroke(
+             window,
+             &[terminal.id(), input.id(), editor.id()],
+@@ -91,6 +97,18 @@ fn multiline_vertical_navigation_stays_inside_the_editor() {
+         editor.read(&app, |editor, ctx| {
+             assert_eq!(editor.buffer_text(ctx), "one\ntwo");
+             assert_eq!(editor.end_byte_index_of_last_selection(ctx).as_usize(), 3);
++            editor.set_mock_layout_for_test(&["one", "two"], ctx);
++        });
++        app.dispatch_keystroke(
++            window,
++            &[terminal.id(), input.id(), editor.id()],
++            &Keystroke::parse("down").unwrap(),
++            false,
++        )
++        .unwrap();
++        editor.read(&app, |editor, ctx| {
++            assert_eq!(editor.buffer_text(ctx), "one\ntwo");
++            assert_eq!(editor.end_byte_index_of_last_selection(ctx).as_usize(), 7);
+         });
+     });
+ }
+diff --git a/app/src/terminal/model/terminal_model.rs b/app/src/terminal/model/terminal_model.rs
+index 4270d1c9..169b8ca3 100644
+--- a/app/src/terminal/model/terminal_model.rs
++++ b/app/src/terminal/model/terminal_model.rs
+@@ -1164,10 +1164,11 @@ impl TerminalModel {
+     }
+ 
+     pub fn terminal_input_state(&self) -> TerminalInputState {
+-        if !self.block_list().is_bootstrapped() {
+-            TerminalInputState::NotBootstrapped
+-        } else if self.is_alt_screen_active() {
++        // An RC-file program can enter the alternate screen before shell integration is ready.
++        if self.is_alt_screen_active() {
+             TerminalInputState::AltScreen
++        } else if !self.block_list().is_bootstrapped() {
++            TerminalInputState::NotBootstrapped
+         } else if self
+             .block_list()
+             .active_block()
+diff --git a/app/src/terminal/view.rs b/app/src/terminal/view.rs
+index d7ce71e5..81cb4dbf 100644
+--- a/app/src/terminal/view.rs
++++ b/app/src/terminal/view.rs
+@@ -1675,7 +1675,7 @@ impl View for TerminalView {
+         if self.input_is_visible() || !ctx.is_self_focused() {
+             return None;
+         }
+-        ctx.element_position_by_id(&format!("terminal_view:cursor_{}", self.view_id))
++        ctx.element_position_by_id(format!("terminal_view:cursor_{}", self.view_id))
+             .map(|position| warpui::CursorInfo {
+                 position,
+                 font_size: Appearance::as_ref(ctx).monospace_font_size(),
+diff --git a/app/src/terminal/view/local_io.rs b/app/src/terminal/view/local_io.rs
+index c0d5379a..606102f3 100644
+--- a/app/src/terminal/view/local_io.rs
++++ b/app/src/terminal/view/local_io.rs
+@@ -1,8 +1,9 @@
+ //! Local input and host-clipboard boundaries. Payloads must never be logged here.
+ 
+ use std::path::PathBuf;
+-use std::time::{Duration, Instant};
++use std::time::Duration;
+ 
++use instant::Instant;
+ use warpui::clipboard::ClipboardContent;
+ use warpui::modals::{AlertDialogWithCallbacks, ModalButton};
+ use warpui::{SingletonEntity, ViewContext};
+@@ -127,11 +128,11 @@ impl TerminalView {
+         accepted: bool,
+         ctx: &mut ViewContext<Self>,
+     ) {
+-        if !self
++        if self
+             .local_io
+             .pending_paste
+             .as_ref()
+-            .is_some_and(|pending| pending.request == request)
++            .is_none_or(|pending| pending.request != request)
+         {
+             return;
+         }
+diff --git a/app/src/terminal/view/local_io_tests.rs b/app/src/terminal/view/local_io_tests.rs
+index 81feb95e..5f3392b0 100644
+--- a/app/src/terminal/view/local_io_tests.rs
++++ b/app/src/terminal/view/local_io_tests.rs
+@@ -6,8 +6,9 @@ use std::os::fd::{AsRawFd, FromRawFd};
+ use std::os::unix::ffi::OsStringExt;
+ use std::rc::Rc;
+ use std::sync::atomic::{AtomicU64, Ordering};
+-use std::time::{Duration, Instant};
++use std::time::Duration;
+ 
++use instant::Instant;
+ use nix::fcntl::{FcntlArg, OFlag, fcntl};
+ use nix::pty::openpty;
+ use nix::sys::termios::{SetArg, cfmakeraw, tcgetattr, tcsetattr};
+diff --git a/docs/DESIGN.md b/docs/DESIGN.md
+index a4a6cf6f..08b13e6a 100644
+--- a/docs/DESIGN.md
++++ b/docs/DESIGN.md
+@@ -748,6 +748,37 @@ https://invisible-island.net/xterm/ctlseqs/ctlseqs.html
+   source-head、完整 stdout/stderr 与退出码随 artifact 保存。CI 不对 Finder、系统中文输入法、
+   真实用户数据迁移、网络捕获或性能预算作未执行的声明。
+ 
++**2026-09-22 本地修复复核（未提交候选）：**
++
++基于 `1d2119d732ce79db6292d668477826348d55a8c2` 的 `fix/l0-local-20260922` 工作树，
++在 macOS 26.2 / Apple Silicon / Rust 1.92.0 复现本轮五项失败后完成以下修复：
++
++- `terminal_input_state` 优先识别已激活的备用屏幕，允许 shell 初始化期间的原生程序接收输入；
++  退出备用屏幕后仍按原有 bootstrap 状态选择编辑器或运行中命令。粘贴、旧确认失效及 IME
++  共用这一判断，不以修改测试 bootstrap 状态避开实际路由缺陷。
++- 多行导航测试补齐字形布局夹具：`App::test` 的字体后端返回空字形，原用例因此把上一行末列
++  算成 0。复用编辑器已有 `TextFrame::mock`，保留原 Up 光标 3 的断言及真实按键分发，增加
++  初始光标 7 和 Down 返回 7 的断言；生产导航算法未改。真实 GUI 显示 `oneX` / `twoY`。
++- 修正同批 local I/O / IME 代码的 Clippy 问题，使用已有 `instant::Instant`，简化过期请求
++  判断及 cursor anchor 的多余借用；无新增 ignore、删除测试或改动测试删除基线。
++
++最终 `local_only,test-util` 应用测试 1549 passed / 3 原有 ignored，包含全部五项；
++`./script/presubmit` exit 0（workspace 4789 passed / 20 原有 skipped，completer v2
++131 passed / 4 原有 skipped，三组严格 Clippy、全部格式和 doc tests 通过）；额外
++`local_only` Clippy 通过。真实 inventory 通过，当前 4809 项，原批准删除 5089 项。
++
++最终 Debug GUI 经签名校验并使用隔离 profile 实测：初始化前的 raw PTY 收到精确 bracketed
++中文多行字节；编辑器 Up/Down 保留多行草稿；原生确认框 Cancel 后收到零字节，Paste 后仅收到
++一份完整文本。系统简体拼音在原最终二进制上实测 PASS：可见带下划线的组合文本，提交
++“中文”仅增加 6 个 UTF-8 字节，Escape 取消下一段组合后零新增字节。初次实机出现直接发送
++字母的现象，诊断确认当时窗口实际输入源为 ABC；全局拼音设置不能代替窗口输入上下文检查。
++切换窗口输入源后完成复核。macOS `host_view.m`、`objc/window.m`、`mac/window.rs` 与固定
++Warp 原版一致，临时诊断已移除，恢复后的最终二进制 SHA-256 与原受测构建一致。真实 TUI 交互、其他
++L0 项及 R6 全矩阵不在这次关闭范围。
++
++[本地原始证据与候选哈希](../verification/1d2119d732ce79db6292d668477826348d55a8c2/l0/local-20260922/manifest.json)
++绑定源码 diff、构建产物、命令/退出码和 PTY 捕获；初始失败与中间诊断日志不作为最终 PASS。
++
+ ### 6.3 R3：UI、认证、动作和 TUI
+ 
+ 先完成 L0，再按 Settings/搜索 -> Command Palette/keybindings -> 菜单/workspace -> URI/deeplink

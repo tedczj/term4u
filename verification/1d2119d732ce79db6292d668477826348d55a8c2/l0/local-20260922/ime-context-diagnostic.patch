@@ -1,0 +1,18 @@
+diff --git a/crates/warpui/src/platform/mac/objc/host_view.m b/crates/warpui/src/platform/mac/objc/host_view.m
+index b9333956..065d6ceb 100644
+--- a/crates/warpui/src/platform/mac/objc/host_view.m
++++ b/crates/warpui/src/platform/mac/objc/host_view.m
+@@ -163,6 +163,13 @@ - (void)keyDown:(NSEvent *)event {
+ }
+ 
+ - (BOOL)keyDownImpl:(NSEvent *)event {
++    if (getenv("TERM4U_L0_IME_DIAGNOSTICS")) {
++        NSLog(@"L0_IME context source=%@ current=%@ same=%d first=%d",
++              self.inputContext.selectedKeyboardInputSource,
++              NSTextInputContext.currentInputContext.selectedKeyboardInputSource,
++              self.inputContext == NSTextInputContext.currentInputContext,
++              self.window.firstResponder == self);
++    }
+     BOOL wasComposing = [self hasMarkedText];
+     [textToInsert setString:@""];
+     imeTouchedMarkedTextDuringInterpret = NO;
