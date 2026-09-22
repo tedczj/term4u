@@ -1,6 +1,6 @@
 # Term4u
 
-A local terminal for macOS, derived from Warp.
+A local terminal for macOS on Apple Silicon (ARM64), derived from Warp.
 
 **[完整设计、完成状态、剩余施工与验收](docs/DESIGN.md)** 是唯一实施依据。
 仓库不维护并行的历史方案、施工单或进度文档；变更直接更新该设计。
@@ -15,7 +15,10 @@ Term4u 不提供 Warp 的云账户、内建云 Agent、Drive 同步、共享会�
 
 ## Build and run
 
-Only macOS is a supported product platform. Use the pinned toolchain and prerequisites described in
+Only macOS on Apple Silicon (`aarch64-apple-darwin`) is currently supported.
+Intel Macs, Linux, Windows and other targets are not supported product configurations.
+Inherited compatibility code is not a support commitment; its removal is deferred and tracked in
+[the design](docs/DESIGN.md#platform). Use the pinned toolchain and prerequisites described in
 [the design](docs/DESIGN.md#verification) and [AGENTS.md](AGENTS.md).
 
 ```bash

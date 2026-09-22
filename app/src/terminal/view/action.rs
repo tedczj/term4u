@@ -32,6 +32,10 @@ pub enum TerminalAction {
         block_index: Option<BlockIndex>,
     },
     CloseContextMenu,
+    /// Runs after queued focus effects from a selected menu action.
+    RestoreContextMenuFocus {
+        generation: u64,
+    },
     CopyBlockCommand(BlockIndex),
     CopyBlockOutput(BlockIndex),
     CopyBlock(BlockIndex),
@@ -67,7 +71,10 @@ pub enum TerminalAction {
     TypedCharacters(String),
     CtrlC,
     ClearMarkedText,
-    SetMarkedText(String),
+    SetMarkedText {
+        text: String,
+        selected_range: std::ops::Range<usize>,
+    },
     Close,
     ToggleMaximizePane,
     SplitRight(Option<AvailableShell>),

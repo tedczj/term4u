@@ -397,7 +397,7 @@ impl Debug for Event {
             Event::BackgroundBlockStarted => write!(f, "BackgroundBlockStarted"),
             Event::VisibleBootstrapBlock => write!(f, "VisibleBootstrapBlock"),
             Event::Title(title) => write!(f, "Title({title})"),
-            Event::ClipboardStore(_, text) => write!(f, "ClipboardStore({text})"),
+            Event::ClipboardStore(_, _) => write!(f, "ClipboardStore(<redacted>)"),
             Event::ClipboardLoad(_, _) => write!(f, "ClipboardLoad()"),
             Event::TerminalClear => write!(f, "TerminalClear"),
             Event::Bell => write!(f, "Bell"),

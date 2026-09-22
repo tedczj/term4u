@@ -7,7 +7,10 @@ specification, roadmap, handoff, TODO, status report or historical design direct
 
 ## Scope and authorization
 
-Follow the design's local-only, data-preservation, platform and license boundaries. Repository history
+Follow the design's local-only, data-preservation, platform and license boundaries.
+The current product target is macOS on Apple Silicon (`aarch64-apple-darwin`) only, for both GUI and
+TUI. Do not add Intel/Rosetta/universal or other-platform compatibility. Existing surplus compatibility
+is deferred cleanup under DESIGN §3.3; do not delete shared macOS code or data migrations by name. Repository history
 and inherited skills do not authorize restoring retired cloud APIs, Agent interfaces or integration
 harnesses. Use only the applicable local engineering techniques from those skills; do not follow their
 old instructions to create parallel specs or call removed services.

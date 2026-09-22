@@ -218,6 +218,9 @@ impl TerminalView {
         if items.is_empty() {
             return;
         }
+        self.context_menu_generation += 1;
+        self.context_menu_return_to_find =
+            self.find_bar_open && self.find_bar.is_self_or_child_focused(ctx);
         self.context_menu_state = Some(ContextMenuState { position });
         self.context_menu.update(ctx, move |menu, ctx| {
             menu.set_width(CONTEXT_MENU_WIDTH);
@@ -230,10 +233,11 @@ impl TerminalView {
 
     pub(super) fn close_context_menu(&mut self, ctx: &mut ViewContext<Self>) {
         if self.context_menu_state.take().is_some() {
-            // Find and other menu actions may have deliberately moved focus elsewhere.
-            if self.context_menu.is_focused(ctx) {
-                self.focus(ctx);
-            }
+            // Focus changes are queued effects. Restore only after the selected action's
+            // focus effects have flushed, and never after a newer menu was opened.
+            ctx.dispatch_typed_action_deferred(TerminalAction::RestoreContextMenuFocus {
+                generation: self.context_menu_generation,
+            });
             ctx.notify();
         }
     }

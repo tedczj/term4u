@@ -1,7 +1,8 @@
 # Term4u 完整设计与实施基准
 
-> 唯一设计、状态与施工依据；更新：2026-09-14。
-> 本轮分支审计：`dev-202609014` / `65a012a7ac344e05c7e09c51a253cbc661e5ac35`。
+> 唯一设计、状态与施工依据；更新：2026-09-20。
+> 当前实施分支：`dev-20260920`；当前产品范围仅 macOS Apple Silicon / ARM64。
+> 原已完成批次审计：`dev-202609014` / `65a012a7ac344e05c7e09c51a253cbc661e5ac35`；不是本轮候选证据。
 > 原 R0/R1/R2 和原 GUI-shell 批次已关闭；本地交互保全 L0、R3–R6 与 V1 尚未关闭。
 > “最终设计”表示只采用这一套目标方案，不表示所有功能已经实现或验收。
 
@@ -36,8 +37,10 @@ Term4u 是 Warp 客户端的本地化衍生产品。上游 `warpdotdev/warp`，�
 Term4u 不是沙箱。产品静默零外连、用户主动执行联网命令、构建工具下载依赖分别验证。
 不得恢复运行/构建脚本自动拉取并执行 skills 的链路，也不得把用户自己的 CLI agent 当作应删除的 Warp Agent。
 
-只支持 macOS，必验 macOS arm64；不承诺 Linux、Windows 或 WASM 产品。Windows 专属实现和
-依赖仍须清理并保留明确共享例外；Linux 专属代码/依赖/CI/打包后续清理，不把取消验证写成 PASS。
+**当前只支持 macOS + Apple Silicon（ARM64，Rust target `aarch64-apple-darwin`）。**
+Intel Mac / `x86_64-apple-darwin`、Rosetta、Universal Binary、Linux、Windows、WASM 均不属于当前
+产品支持或验收范围。GUI 与 TUI 都遵守这一范围。历史兼容代码仍在不代表承诺支持；其后续清理见
+[§3.3](#platform)。本次 L0 不要求完成兼容层清理，也不得把未验证平台记为 PASS。
 
 只采用路线 A：删除 Warp Agent UI/SDK/执行层和云协议；不恢复 ServerApi/OfflineApi 双后端、
 假 URL、空 token、同名空壳或静默重试。不新增本地 Agent 协议来替代本地终端功能。
@@ -149,7 +152,18 @@ Agent/云行保持 opaque 且不可见，不恢复旧协议解码。
 无内容 WAL/进程共享内存，测试从副本重新生成。旧自定义标题未成功持久化，不宣称该样本覆盖该行为。
 输入完整性检查不是 GUI 迁移/写入/重启验收；后者需对副本比较关键字段、历史条数和重启结果。
 
+<a id="platform"></a>
 ### 3.3 平台与资源
+
+**平台决策（2026-09-20）：macOS Apple Silicon only。** 本轮只为 `aarch64-apple-darwin`
+实现、集成验证和产出候选；开发容器为 Linux 不会使 Linux 成为产品平台。
+
+兼容清理作为后续工作保留，不在本次 L0 扩大施工：审计并移除 Intel/Rosetta/universal 构建与打包、
+非目标平台专属 GUI/backend、target dependencies、CI/安装/发布流程，以及仅服务这些目标的兼容抽象。
+先追踪真实消费者再删除；macOS ARM64 必需的 POSIX/Unix 共享层、SSH/远端路径语义、历史持久化数据、
+migrations 和许可证声明不得按平台名称误删。保留例外需有具体消费者，不得永久保留无用途兼容层。
+
+以下为已有平台清理约束；其未关闭状态继续追踪，本轮可以不做：
 
 清理 Windows 专属文件、模块挂载和纯 Windows target/build dependencies；仅保留
 `crates/command/src/windows.rs`、`crates/warp_util/src/path/windows.rs` 和历史 migrations 例外。
@@ -247,42 +261,492 @@ L0 有未关闭的日常交互回归时，优先补回，不继续以大规模�
 
 记录 HEAD/UTC/初始 diff、pinned Rust、空间、Cargo/nextest、clang-format、指定 wgslfmt、GUI/PTY
 与隔离副本条件。先找已装工具，不擅自升级/安装或删门禁；新源码按 §7.1 与 presubmit 获取真实结果。
-本轮编辑环境没有 Cargo/macOS，也无法完整克隆；代码做了静态路径/API核对和差异检查，新增 Rust 测试
-尚未运行。缺环境为 INCOMPLETE，不因旧 candidate 曾 PASS 就将新修复判完成。
+本轮本地编辑环境是 Linux，无 Cargo/macOS；通过分支 CI 的源码归档取得完整源码，已核对归档
+Git tree 与分支一致。macOS Apple Silicon 验证由 `.github/workflows/term4u-l0.yml` 执行；
+必须按该次 artifact 的 source-head 判定结果，不能把编译成功、旧候选通过或框架事件测试等同于实屏验收。
 
-### 6.2 L0：先保住本地交互
+### 6.2 L0：本地交互保全的开发与验收设计
 
-| ID / 优先级 | 发现、实现位置与下一步 | 验收出口 |
+> 本节是本文件的唯一 L0 设计；已合并原详细交付件，不另维护 roadmap。
+> 本轮实施在 `dev-20260920`，从 `ff4b67a3afed9f72203ea2ef3f8cb8b72d7af1c2` 增量修改。
+> 设计审查基线：`main / 24abe29d372c1f1cd607615de48ba2bc741852f0`。
+> 上游行为和代码参考基线：`066ec71b736fc3755e29f58f733deadbdac3d1af`。
+> 本节含实施规格与 §6.2.15 当前实现台账；台账没有关闭的场景仍为 OPEN/NOT_RUN。
+> “代码已写”与“同一候选验证通过”分开登记；66 个场景 ID 不是声称已有 66 个通过的测试。
+> 原 R0/R1/R2/原 GUI-shell 不重开施工；L0 关闭也不替代最终 R6/C1–C10。
+
+#### 6.2.1 范围与现状
+
+本轮目标是恢复 §2.2 已承诺的本地行为，不扩展云 Agent、账号、Drive、远程控制面或新 Agent 协议。外部 CLI 仍是普通 PTY 子进程。旧数据库、迁移、未知字段、产品身份和已有测试保持不变。
+
+| ID | 审查基线时可确认的进度（当前分支见 §6.2.15） | 本轮完成出口 |
 |---|---|---|
-| L0-01 / P1 | input.rs 忽略 Editor Navigate，上下历史未接入；本变更接回现有 History、会话内前缀回看、草稿/光标恢复，保持多行内部导航 | 真实 Up/Down 路由、跨会话、编辑后退出回看、无匹配/选区保护、新输入不被过期补全覆盖；历史搜索/本地建议仍需审查，不以基础回看替代全部历史 UI |
-| L0-02 / P1 | append_to_buffer 把输入追加末尾；本变更将用户插入/终端粘贴/选择插入切换到 editor UserInsert，使用现有 shell 路径转义 | 光标中部、替换选区、Unicode、多行、Undo、后缀保留且不自动执行；原生程序的 bracketed paste/控制字符策略另行补齐 |
-| L0-03 / P1 | 通用 EditorOptions 默认关闭本地终端需要的 autogrow/soft_wrap/行高/Vim/光标偏好；本变更接回 | 多行导航、长行布局、偏好变更和 Vim 输入/普通 PTY 分支回归；不能以 options 已设置冒充实机布局通过 |
-| L0-04 / P1 | 即 R3-F1；菜单没有接管键盘焦点，关闭未统一恢复；本变更打开聚焦 Menu、关闭按所有权恢复，命令完成不抢菜单/Find 焦点 | 实际聚焦状态下 Esc/Enter/Find 的按键路径测试；Enter 不能执行终端草稿；鼠标已有六测试继续保留 |
-| L0-05 / P1 | DragAndDropFiles 原为空操作；本变更补动作处理和 shell 转义插入；外部文件拖入 hit-test/DropTarget 完整链路尚未确认 | Finder 多文件、空格/引号路径、输入中部/原生程序、跨 pane；现有新增动作测试不代替 OS 投递测试；不恢复 Agent 图片附件 |
-| L0-06 / P1 | has_highlighted_link 固定 false，ClickOnGrid/MaybeLinkHover 等仍为空；未在本变更修复 | 接回普通 URL/OSC8/本地文件行号的解析、悬浮和用户点击；以替身 opener 断言点击才打开，恶意 scheme/无点击不触发；保留外链守卫边界 |
-| L0-07 / P1 | ClipboardStore/Load、Bell 等只 notify；MarkedText 分支为空；这证明处理链缺口，尚不等于所有输入法场景均失败 | 对模型事件逐项补消费者与权限；OSC 读取不得无条件开放；IME 组合/提交/取消分开测，使用受控 PTY/事件注入，不能整包恢复旧 view |
-| L0-08 / P1 | 简化渲染曾固定本地显示策略；本变更接回现有 get_secret_obfuscation_mode；块/图片/富内容/滚动和选择仍需保全审计 | 本地隐私设置应作用于画面；进一步核对检测/复制/导出路径。补图片、块导航/折叠、clear/Ctrl-L/Cmd-K、alt-screen 选择与大输出性能的正向验证 |
-| L0-09 / P2 | 设置/UI 入口、历史搜索/建议及其他本地菜单尚无全面等价审计 | 对 §2.2 逐项登记源码消费者与测试；入口有而 handler 无操作、设置有而 render 不使用均为失败；无证据项不得写“未丢失” |
+| L0-01 | 基础历史回看、草稿/光标恢复及测试已写 | 历史来源与顺序明确；真实方向键、历史搜索、本地建议及异步失效完整 |
+| L0-02 | `Input::insert_text` 已使用编辑器插入语义 | 编辑器插入与原生 PTY paste 分开；bracketed paste、控制字符、Undo 完整 |
+| L0-03 | autogrow、soft wrap、行高、Vim、光标选项已接回 | 真实布局、偏好动态变化、尺寸通知与不同输入分支验证 |
+| L0-04 | 菜单焦点修复及 Esc/Enter/Find 测试已写 | 菜单、Find、编辑器、跨 pane 与命令完成的焦点所有权闭合 |
+| L0-05 | 路径动作处理和 `TerminalSizeElement` OS 事件入口均已存在 | 命中/事件冒泡/反馈/跨 pane/真实 Finder 投递正确；不是从零搭建拖入 |
+| L0-06 | 点击/悬浮关键动作仍有空分支 | URL、OSC 8、文件/行号完整；只有用户动作才能打开 |
+| L0-07 | MarkedText 空分支；剪贴板/响铃事件在 view 中仅 notify | 分别关闭 IME、OSC 剪贴板权限、本地响铃/通知三个子项 |
+| L0-08 | 本地隐私渲染选项已接回 | 块/图片/选择/查找/clear/滚动语义及可测性能完整 |
+| L0-09 | 尚无完整入口到结果清单 | 所有保留的设置/菜单/快捷键都有实际消费者及正向测试 |
 
-本变更只完成第一批接线，不宣称 L0-01–09 全部修好。新增 `input_local_tests.rs` 六个、
-`local_interaction_tests.rs` 七个测试；原 input_tests/local_view_tests 不删、不改断言。
-新测试覆盖插入/撤销/选择、历史草稿/会话、真实方向键、多行、粘贴不执行、菜单 Esc/Enter/Find、
-文件路径动作。尚缺的 OS 拖入、原生 PTY paste、链接、IME/OSC/响铃及渲染测试必须补齐。
+现有 `input_local_tests.rs` 6 个和 `local_interaction_tests.rs` 7 个测试必须先验证；旧 `input_tests.rs`、`local_view_tests.rs` 及批准测试基线不删除、不弱化。
 
-首轮自动命令（过滤器必须实际命中；最终仍跑完整集合）：
+#### 6.2.2 原始代码参考索引
+
+所有 O 编号链接固定到原始提交；不是当前 main 的文件存在性声明。大文件用符号定位，不依赖可能漂移的行号。
+
+| 编号 | 原始文件及定位点 | 参考用途 | 不可整体带回的内容 |
+|---|---|---|---|
+| O1 | [terminal/input.rs][o1]；`EditorOptions`、编辑器事件、历史/补全、`InputDropTargetData` | 输入路由、选项、菜单与输入框组合 | AI input、Agent 状态、附件、云建议 |
+| O2 | [terminal/input/classic.rs][o2]；`render_classic_input`、`DropTarget::new`、`add_input_suggestions_overlays`、Vim 状态 | 原始输入布局、提示符、DropTarget 接线 | AgentView/AI attachment 分支；不能只恢复旧 import 使之编译 |
+| O3 | [terminal/history.rs][o3]；`History`、`ShellHost`、`ReadHistoryFileState`、`HistoryEvent` | shell 文件和 SQLite 历史、并发加载、会话隔离 | CloudModel/CloudViewModel、云 workflow ID 解码 |
+| O4 | [terminal/history/up_arrow.rs][o4]；`sort_and_dedupe_suggestions`、`up_arrow_suggestions_for_terminal_surface` | 命令历史去重、排序、忽略项和跨会话语义 | AIQuery、BlocklistAIHistoryModel、AISettings、Agent feature |
+| O5 | [util/clipboard.rs][o5]；`clipboard_content_with_escaped_paths` | 区分纯文本与文件路径，只对路径做 shell 转义 | 不适用；仍需验证消费者传入参数 |
+| O6 | [terminal/terminal_size_element.rs][o6]；`dispatch_event`、`mouse_position_is_in_bounds` | DragFiles/DragFileExit/DragAndDropFiles、区域判断和布局通知 | 原有事件消费方式也要重新审查，不能因为上游如此就认定正确 |
+| O7 | [terminal/links.rs][o7]；`should_directly_open_link`、`directly_open_link_keybinding_string` | macOS Cmd-click 与普通点击/提示的区别 | 此文件只是修饰键助手，不能当成完整链接解析器 |
+| O8 | [terminal/view.rs][o8]；按 Paste、MarkedText、ClipboardStore、ClipboardLoad、Bell、ClickOnGrid、MaybeLinkHover、ContextMenu 定位相关处理和调用者 | 原生 paste、IME、模型事件、链接和焦点的旧行为对照 | 大型文件混有云/Agent；禁止整文件恢复或将旧接口做空壳 |
+| O9 | [terminal/block_list_viewport.rs][o9]；`ScrollState::update`、`ScrollLines`、`ScrollPosition`、`ViewportState` | 滚动锚点、顶部/底部/瀑布输入、可见范围和高度索引 | 与当前不保留功能绑定的分支；只迁移本地算法 |
+
+当前实现优先复用：`app/src/terminal/input.rs`、`history.rs`、`view.rs`、`view/context_menu.rs`、`view/action.rs`、`terminal_size_element.rs`、`blockgrid_element.rs`、`alt_screen/alt_screen_element.rs`、`app/src/util/clipboard.rs`。
+
+特别说明：main 中虽然仍有 `history/up_arrow.rs` 的旧源码，但不能因路径存在就重新挂载。它含 AI/云关联；当前 `history.rs` 已采用本地化依赖。先复用当前 History，对 O4 只提取命令排序/去重规则并补测试。
+
+可在本地仓库执行以下只读定位，不 checkout 历史版本覆盖工作树：
 
 ```bash
-cargo nextest run -p warp --no-default-features --features local_only,test-util \
-  -E 'test(terminal::input::local_tests) | test(terminal::view::local_interaction_tests) | test(terminal::input::tests) | test(terminal::view::tests)'
-./script/format
-./script/format --check
-./script/test_inventory
-./script/presubmit
+ORIGINAL=066ec71b736fc3755e29f58f733deadbdac3d1af
+BASE=24abe29d372c1f1cd607615de48ba2bc741852f0
+git cat-file -e "$ORIGINAL^{commit}"
+git show "$ORIGINAL:app/src/terminal/view.rs" \
+  | rg -n 'Paste|MarkedText|ClipboardStore|ClipboardLoad|Bell|ClickOnGrid|MaybeLinkHover|ContextMenu'
+git show "$ORIGINAL:app/src/terminal/input.rs" \
+  | rg -n 'EditorOptions|Navigate|History|InputDropTargetData|Completion'
+git diff "$ORIGINAL" "$BASE" -- \
+  app/src/terminal/input.rs app/src/terminal/history.rs \
+  app/src/terminal/view.rs app/src/terminal/terminal_size_element.rs
 ```
 
-未增加泛化人工清单。原 H1 已完成；新问题优先补自动事件/PTY/渲染测试。只有自动化不能证明的
-具体实屏行为才安排一次集中 smoke，注明候选和未覆盖点，不让用户再重跑无关 R0/R1/R2 手工场景。
-L0 已知阻塞关闭后才能继续按 R3–R6 宣告产品收敛。
+`git cat-file` 失败只表示该对象本地不可用，不得把不存在当成已审阅。参考原文件时记录实际采用的符号/行为及新测试 ID。AGPL 原实现只在对应 AGPL 代码区域内迁移，不移入 MIT `crates-local/`。
+
+#### 6.2.3 共用工程约束与接口
+
+**不新增第二个 TerminalModel，不新建通用事件总线。** 模式、会话、焦点、编辑器 revision 能从现有模型读取就直接使用；新状态仅补现有结构不能表达的局部信息。
+
+事件流固定为：平台/PTY 事件 → 已有 Element/ModelEvent → TerminalView/Input → 决策 → 编辑器或 PTY/平台副作用。禁止 OS 事件直接拼 shell 命令执行，也禁止同一输入同时写编辑器和 PTY。
+
+| 输入/焦点情况 | 文本/粘贴接收者 | Up/Down、Enter、Esc 归属 |
+|---|---|---|
+| 命令编辑器 | 现有 EditorView，单个用户编辑事务 | 编辑器/历史；明确提交才 ExecuteCommand |
+| 原生程序或 alternate screen | PTY 输入策略 | 程序终端协议；不被 GUI 历史截获 |
+| 菜单/Find/其他编辑器获得焦点 | 实际焦点拥有者 | 不泄漏到终端草稿，不在后台命令完成时抢回 |
+| IME composing | 当前拥有焦点的输入组件 | 候选确认不等于命令提交；原生分支只在 commit 时写 PTY |
+| 已退出/被替换的 session | 无旧请求副作用 | 旧补全、权限回调、拖入目标全部失效 |
+
+新增异步操作需绑定 `(terminal_view_id, session_id, session_generation, request_id)`；修改编辑内容的结果再绑定编辑器内容和选择区 revision。已有请求计数可扩展，禁止重复造两套失效机制。shell 重建、tab/pane 关闭、历史导航、输入编辑、焦点转移按实际副作用使相应请求失效。
+
+所有 `model.lock()` 内只读取/修改模型并生成小型快照；释放锁后才能更新其他 view、调用系统剪贴板/opener、弹权限提示或发跨实体事件。不能用测试能编译替代死锁路径审查。
+
+建议只在逻辑实际需要时拆出以下**新拟**私有子模块；不是声称文件已存在：
+
+| 新拟模块 | 职责与约束 |
+|---|---|
+| `terminal/view/local_paste.rs` | 单一粘贴规划函数，返回编辑器插入或 PTY 字节；键盘输入不能绕道此模块 |
+| `terminal/view/local_links.rs` | 已解析 Link → 允许的用户动作；opener 可替换，不发预取请求 |
+| `terminal/view/local_ime.rs` | 原生终端组合态和候选定位适配；不重写通用 Editor IME |
+| `terminal/view/local_clipboard.rs` | OSC 读写授权、大小限制、回调绑定 |
+| `terminal/view/local_viewport.rs` | 本地可见范围和高度/滚动锚点；优先复用现有索引 |
+
+提取模块的同时在 `view.rs` 显式 `mod` 挂载。测试使用独立 `*_tests.rs`，禁止仅添加未挂载文件。拟新增测试名统一 `l0_01_...` 到 `l0_09_...`，便于真实 inventory 与过滤器核对；已有测试不为统一命名而删除重建。
+
+本地 debug 日志按 `l0_id / view_id / session_generation / request_id / route / outcome / reason / elapsed_ms` 记录。不得记录命令正文、剪贴板、IME 组合文本、完整 URL、文件真实路径或 OSC payload。测试断言也不得通过把用户私密内容写入公开日志获得证据。
+
+#### 6.2.4 L0-01：历史导航、历史搜索和本地建议
+
+**参考：O1、O3、O4；落点：当前 `input.rs`、`history.rs`、`view.rs::handle_input_event`，以及实际挂载的本地历史/建议 UI。**
+
+实施步骤：
+
+1. 保留当前 `HistoryNavigation`、`Input::navigate_history` 与 History 数据源。回看从当前会话映射的 ShellHost 取得命令；不新建 JSON/SQLite 历史副本，不混入 Agent query，也不跨主机错用命令。
+2. 将顺序/去重写成可单测的本地命令策略。既有会话历史语义为准；O4 仅用于对照“重复项保留最新、忽略项、会话顺序”。不能把字符串排序替代历史时间顺序。跨会话是否包含、匹配模式以已保留的设置为准，不静默移除设置。
+3. 第一次 Up 固定本次候选快照、草稿和光标；前缀匹配使用进入遍历时的草稿，不随着候选文本变化。Down 越过最新项恢复原草稿/光标，选区不被覆盖；无匹配不改文本。
+4. 多行编辑器只在真实导航边界传播历史动作。软换行边界、逻辑行边界与 Vim 上下键分别测试；不能所有 Up/Down 都交给 History。
+5. 用户编辑历史结果后结束本次遍历；新的遍历以编辑后的内容为草稿。单纯移动光标的处理与当前编辑器语义一致；异步补全不得覆盖草稿或历史项。
+6. 历史文件加载过程中执行的新命令必须保留，复用 History 的加载/合并机制。候选快照不会在一次回看中途重排；下一轮回看可获取新增历史。
+7. 本地历史搜索必须提供查询、选择、取消、填回输入框和草稿恢复。若旧 UI 混有云类型，保留现有本地搜索模型、做本地适配，不重新挂载整套旧菜单。选中结果默认填回输入，不隐式执行。
+8. 本地建议复用当前 completer；Tab 的唯一命中/公共前缀/循环候选/后缀保留与历史状态互斥，取消或输入改变立即失效。只恢复文件/命令/历史等本地建议，不调用云服务。
+
+| 测试 ID | 输入/操作 | 必须断言 |
+|---|---|---|
+| L0-01-T01 | Up/Up/Down/Down | 候选顺序正确；草稿和原光标完全恢复 |
+| L0-01-T02 | Unicode 前缀、无匹配、非空选区 | 不破坏 UTF-8/选择区；无匹配无变化 |
+| L0-01-T03 | 多行首/中/末行与软换行真实按键 | 只在规定边界进入历史；其他情况只移动光标 |
+| L0-01-T04 | 会话 A 回看后切换 B | 不复用 A 的遍历状态；ShellHost/会话策略正确 |
+| L0-01-T05 | 编辑历史结果，再 Down/Up | 不恢复已废弃的旧遍历状态 |
+| L0-01-T06 | 历史异步加载期间执行命令 | 新命令不丢失、不重复、不被旧数据覆盖 |
+| L0-01-T07 | 请求补全→开始历史回看→旧结果返回 | 旧结果被丢弃；草稿不被覆盖 |
+| L0-01-T08 | 搜索→选择/取消；Tab 候选循环 | 选择只填回；取消恢复；补全保留后缀 |
+
+新增测试扩展 `input_local_tests.rs` 和 `local_interaction_tests.rs`；History 合并/排序测试放在实际模型对应测试模块。既有 6 个 input 新测试继续保留。
+
+#### 6.2.5 L0-02：光标插入与原生终端粘贴
+
+**参考：O1、O5、O8 的 Paste 分支；落点：`Input::insert_text`、`TerminalView` Paste/DragAndDropFiles 分支、新拟 `local_paste.rs`。**
+
+粘贴规划接口表达为以下语义，而非引入新业务框架：
+
+```text
+prepare_local_paste(input_snapshot, payload, source, paste_policy)
+  -> EditorInsert(text)
+   | PtyWrite(bytes, session_identity)
+   | NeedsConfirmation(reason, request_identity)
+   | Rejected(reason)
+```
+
+`source` 区分剪贴板文本、剪贴板文件、Finder 文件；禁止对普通文本进行 shell escape，禁止把文件当 Agent 附件。剪贴板只读取一次。文本尺寸限制沿用现有约束；没有约束的新增入口必须先定义可配置上限并测试，不能无限分配。
+
+编辑器分支：复用 `EditorAction::UserInsert`，在选择区/光标插入；一次 paste 为一个 Undo 事务，保留后缀和换行，不调用 submit/ExecuteCommand。不通过先 `set_buffer_text` 再移动光标拼接来模拟插入。
+
+原生 PTY 分支：从当前 TerminalModel 读取 bracketed-paste 模式。开启时以 `ESC[200~` 开始、`ESC[201~` 结束；关闭时不额外套标记。整个 paste 必须在 PTY 写队列中作为一个逻辑事务排队，禁止首尾标记与另一次按键/粘贴交错。不得把 clipboard paste 当成输入按键逐字符模拟。
+
+默认兼容策略：普通文本保留字面内容；不要为方便测试擅自把换行变为空格。换行转换若已有明确平台/终端设置则保留该策略并单测；没有现有转换契约时沿用当前输入字节，不新加隐式 CR/LF 转换。含 ESC、NUL 或 bracket 终止序列的粘贴进入明确的拒绝/确认路径，默认不写 PTY；界面展示风险类别而不是自动删除字节后悄悄执行。多行且 bracket 模式关闭时使用已有安全确认偏好；缺少该偏好时新入口默认确认一次，用户确认才按字面交给程序。
+
+注意：**“粘贴不执行命令”只可作为命令编辑器的硬断言。** 原生 shell/程序收到换行后的行为由它控制，不能对 mode-off 的原生程序宣称绝不会执行。Term4u 自己不得额外发 Enter/ExecuteCommand。
+
+| 测试 ID | 场景 | 必须断言 |
+|---|---|---|
+| L0-02-T01 | 光标中部 Unicode/多行 paste | 选区、后缀正确；一次 Undo 恢复 |
+| L0-02-T02 | 输入带文件样式但实际纯文本 | 不错误 shell escape |
+| L0-02-T03 | bracketed mode on | 精确字节 `200~ + payload + 201~`，仅一组 |
+| L0-02-T04 | mode off、普通单行 | 无标记、不额外追加换行 |
+| L0-02-T05 | mode off、多行确认/取消 | 取消零 PTY 写；确认仅原定 payload |
+| L0-02-T06 | ESC/NUL/嵌入终止序列 | 默认不写；无静默截断/隐藏改写 |
+| L0-02-T07 | 空内容、mode 在确认前变化、session 重建 | 空内容零写；过期请求取消，不能发到新 session |
+| L0-02-T08 | paste 同时发生输入/第二次 paste | 写队列保持事务边界和次序 |
+
+除 planner 单测外，至少从 `TerminalAction::Paste` 进入、订阅真实 `WriteBytesToPty`；再用受控 PTY 子进程切换模式并记录字节。不可只测试一个与真实分支无关的 helper。
+
+#### 6.2.6 L0-03：输入布局、光标与本地偏好
+
+**参考：O1 的 EditorOptions、O2 的输入布局/Vim/prompt；落点：当前 `Input::new/render`、`TerminalView::after_layout`、`TerminalSizeElement`。**
+
+保留 autogrow、soft wrap、settings line-height、Vim 和 cursor preferences 接线，补齐设置变更订阅及布局验证。禁止把 options=true 当成完成。
+
+使用现有 EditorView 计算输入实际高度；输入增高后输出区真实尺寸变化，PTY resize 只基于完成布局后的有效尺寸，不出现负数/零尺寸抖动，也不因同尺寸重复通知形成循环。输入超高时由编辑器内部滚动，不将输出区无限压缩。
+
+字体、字号、行高、光标形状/闪烁、Vim 状态栏、PS1 与输入定位模式使用当前设置值。PinnedToTop/Bottom/Waterfall 若仍作为保留的可选项存在，必须接到当前 renderer；不得选择只修默认布局而保留其他可点击空设置。
+
+| 测试 ID | 场景 | 必须断言 |
+|---|---|---|
+| L0-03-T01 | 一行→多行→Undo | 输入增高/回缩，输出区尺寸随之变化 |
+| L0-03-T02 | 长英文/CJK/emoji，窄 pane | 软换行与光标位置一致，没有截断/越界 |
+| L0-03-T03 | 字号/行高动态修改、重启 | 当场生效且持久化；相同尺寸不重复 resize |
+| L0-03-T04 | Vim insert/normal，上下键 | 普通导航不误入历史，键盘行为与编辑模式一致 |
+| L0-03-T05 | 光标形状/闪烁、焦点 A→B | 只有实际焦点拥有者按设置显示活动光标 |
+| L0-03-T06 | PS1 与所有保留输入定位模式 | 提示符、菜单和编辑器位置正确，设置不是空操作 |
+
+布局/状态测试之外，真实 macOS 检查一次 CJK+emoji、字体切换、分栏缩放；截图不能替代 geometry、caret 和 resize 断言。
+
+#### 6.2.7 L0-04：菜单与焦点所有权
+
+**参考：O8 的菜单/焦点行为；优先继续完善当前 `view/context_menu.rs`、`view.rs`、已有 Menu 组件，而不是恢复旧 view。**
+
+菜单打开时记录有效的返回目标并取得键盘焦点。关闭时仅当当前焦点仍归该菜单/其子 view 所有才恢复；如果菜单动作已打开 Find/编辑器或用户已点击另一 pane，则新焦点优先。返回目标已销毁时回到当前有效 pane，不能使用过期 handle。
+
+Enter 只执行当前菜单项；菜单关闭和业务动作有确定次序，不能关闭后把同一个 Enter 再传播给终端。Esc 关闭但保留草稿。菜单禁用项不得执行。打开第二个菜单时替换旧菜单状态，不留下第二个键盘拥有者。
+
+命令完成、补全返回、wakeup、布局变化和 shell determined 都不能从菜单/Find/其他 pane 抢焦点。焦点判定统一复用现有 FocusContext/句柄，不能维护与框架焦点相矛盾的布尔值。
+
+| 测试 ID | 场景 | 必须断言 |
+|---|---|---|
+| L0-04-T01 | 打开→Esc | 菜单关闭；草稿不变；返回原合法目标 |
+| L0-04-T02 | 打开 Copy command→Enter | 仅复制；ExecuteCommand 计数为 0 |
+| L0-04-T03 | 菜单 Find→Enter | Find 保持焦点；关闭菜单不抢回 |
+| L0-04-T04 | 菜单/Find 打开时命令完成/补全返回 | 焦点不变 |
+| L0-04-T05 | 菜单打开→点另一个 pane→关闭旧菜单 | 另一 pane 保持焦点 |
+| L0-04-T06 | 禁用项、无选中项、目标 pane 关闭 | 不执行草稿；无悬空引用；无 panic |
+| L0-04-T07 | 菜单上下键、鼠标选择、外部点击 | 路由正确；原有六个鼠标测试继续通过 |
+
+测试必须走 `app.dispatch_keystroke` 并断言当前焦点和副作用；直接调用 `close_context_menu` 的测试只是补充。
+
+#### 6.2.8 L0-05：文件拖入的完整投递链
+
+**参考：O2 的 DropTarget 与 O6 的 OS 事件分发、O5 的路径转义；落点：当前 `terminal_size_element.rs`、`view.rs`、`input.rs`。**
+
+main 已存在 DragFiles/DragFileExit/DragAndDropFiles 入口。重点补全而非重建：
+
+1. 明确区域归属：输出区域、输入区域均可作为本 pane 的文件投递区；菜单等前景控件有优先权。用实际布局 rect 和坐标变换进行 hit-test，不能将子元素内容 bounds 当作整个 pane 的可投递区。
+2. `DragFiles` 在本区域内时更新本 pane 的 hover；离开时清理。`Drop` 未命中本区域且子元素没有消费时必须继续冒泡/分发，不能返回 true 吞掉其他 pane 的投递。`DragFileExit` 清理相关 transient 状态，不执行输入。
+3. 确认当前 Element 与 InputDropTarget 不会各消费一次，保证一次 OS drop 只产生一次插入。原生/编辑器模式用同一目标选择策略；关闭/切换会话使旧目标失效。
+4. 只接受 OS 文件路径列表；多文件逐个按实际 shell 转义，再用空格连接。不要手写只适用于 bash 的引号替换。无法无损表示的路径不得 `to_string_lossy` 后悄悄插入；使用已有可无损转义能力，无法表达则明确拒绝该路径并保留草稿。
+5. 编辑器按原光标/选区插入；原生程序复用 L0-02 的 PTY paste 策略。hover 不抢焦点；成功 drop 可聚焦目标 pane，但不自动提交命令。图片文件也是路径，不是 Agent attachment。
+6. Start/StopFileDropTarget 驱动真实可见的投递反馈，文件离开、drop、取消、pane 销毁时都清除。
+
+| 测试 ID | 场景 | 必须断言 |
+|---|---|---|
+| L0-05-T01 | OS DragFiles→DragExit | 反馈出现/清除；输入和 PTY 均无副作用 |
+| L0-05-T02 | 输出/输入区与区域边缘投递 | 每个合法区域恰好插入一次 |
+| L0-05-T03 | A/B pane，先经过 A 后投到 B | A 不吞事件、不插入；只有 B 收到 |
+| L0-05-T04 | 空格、单引号、双引号、CJK、换行路径 | 按 shell 得到原路径；不产生额外命令 |
+| L0-05-T05 | 原生程序、bracketed mode on/off | 复用 paste 字节策略，不额外执行 |
+| L0-05-T06 | 非文件载荷、空列表、无法无损表示的路径 | 拒绝/忽略有明确定义，不污染草稿 |
+| L0-05-T07 | 投递前关闭 pane/切换 session | 过期请求无效果，无 panic |
+
+先走 Element 的真实分发/hit-test 自动测试，再做一次 Finder 多文件拖入的 macOS smoke；当前直接调用 DragAndDropFiles 的测试不能替代前者。
+
+#### 6.2.9 L0-06：输出链接与本地文件打开
+
+**参考：O7 的修饰键规则、O8 的点击/悬浮处理；复用当前模型 `grid_handler::Link` 及文件目标类型，不从零为输出添加另一套正则解析器。**
+
+职责分成“坐标命中/现有模型识别→链接分类→动作策略→opener”。BlockGridElement 和 AltScreenElement 都将模型坐标、block 身份、修饰键传入当前 view；selection drag 与 link click 互斥，拖选结束不能顺便打开链接。
+
+普通 URL、OSC 8 显式链接、本地文件与行/列分别保留。OSC 8 的实际 target 和显示文本不一致时，提示实际 target；绝不按显示文本替换 target。相对文件路径使用产出该 block 的 cwd，不使用后来切换的 cwd；旧 session/SSH 路径不能错误当成本机文件。
+
+macOS Cmd-click 直接执行允许的打开动作；普通点击沿用“展示提示/选择”的交互，不能全部变成自动打开。hover 只改变指针/本地提示，不联网、不 DNS、不读取整文件。鼠标移走、内容变更、block 移除时清理 tooltip，并使旧请求失效。
+
+URL 默认允许 http/https；其他 scheme 只有在保留契约明确且有对应安全实现时逐项支持，不泛化允许任意 scheme。`javascript:`、`data:` 和恢复已删除云入口的 deep link 禁止。文件打开走现有 `OpenFileWithTarget`/代码编辑器事件，不拼接 `open ...` shell 字符串；本地文件不存在时提示，不自动下载。
+
+打开系统浏览器是用户触发的外部动作，不把浏览器流量伪装成产品静默流量，也不能借此恢复内建 Warp 跳转。自动测试使用 fake opener，不启动浏览器或外联。
+
+| 测试 ID | 场景 | 必须断言 |
+|---|---|---|
+| L0-06-T01 | URL hover、普通点击、Cmd-click | hover 0 次打开；只有规定动作 1 次 |
+| L0-06-T02 | OSC 8 显示文本和 target 不同 | 使用真实 target；提示可见真实目标 |
+| L0-06-T03 | file:line:column、含空格相对路径、旧 cwd | 正确 FileTarget 与行列；不错误绑定新 cwd |
+| L0-06-T04 | 拖选 URL 后抬鼠标 | 不打开链接，选区保持 |
+| L0-06-T05 | 危险 scheme、缺文件、不可定位远端路径 | 拒绝/提示，0 shell 执行和 0 外部请求 |
+| L0-06-T06 | block 删除/重排、resize、切换 session | 不用旧坐标打开另一个链接 |
+| L0-06-T07 | alt-screen 与普通 block 各重复测试 | 两条渲染路径都可用；鼠标报告程序不被误截获 |
+
+#### 6.2.10 L0-07：IME、OSC 剪贴板与本地终端事件
+
+拆成三个独立子项；不能以“已处理 ModelEvent”笼统关闭。
+
+**L0-07A：IME。参考 O1/O8 的编辑器和 MarkedText 行为；落点：平台已分发事件→TerminalSizeElement/TerminalView→原生组合态，通用 Editor IME 继续由 EditorView 负责。**
+
+原生组合态至少表达 Idle/Composing 和当前所属 session。SetMarkedText 仅更新组合显示，不写 PTY；commit 将最终文本写入一次并清理 marked 状态；cancel 清理且零写。不能把 composition 中的 KeyDown 和随后 TypedCharacters 都发送，造成候选确认时重复输入或意外 Enter。
+
+候选窗口定位从真实 caret/grid bounds 转为平台坐标；复用现有平台文本范围转换，不能把 UTF-16 offset 直接用作 UTF-8 切片。跨 pane/关闭/转入菜单时按平台已确认的 commit/cancel 语义结束，绝不把 A pane 未提交组合发送到 B。IME Open 时历史、补全、Enter-submit 的快捷键不能抢候选操作。
+
+**L0-07B：OSC 剪贴板。参考 O8 的 ClipboardStore/Load；落点：现有 ANSI 解析/模型事件与 view 消费者，新拟 local_clipboard。**
+
+写宿主剪贴板和读取宿主剪贴板是不同授权；复用已经存在的本地信任/权限设置，绝不能为了补功能统一设为允许。没有已建立授权时默认拒绝读取；写入默认需要明确允许或一次交互授权。静默/后台场景不自动弹出持续权限请求。
+
+授权以请求和当前 PTY/session 身份绑定；权限回调延迟时原 session 已退出则取消，不发到新进程。使用现有 OSC 解析与响应编码，不在 UI 再写一套半兼容 parser。读取在允许后才调用宿主 clipboard；拒绝/超时按现有协议编码发空响应或终止，但不得返回正文。限制解码后 payload 大小、未完成序列缓冲及排队数；无原限额时本轮建议采用 1 MiB payload、每 session 最多 1 个待授权请求，超限明确拒绝并单测。该数值是本轮新增策略，不声称是旧实现的值。
+
+复合 `Pc` selection、无效 Base64、分段到达、BEL/ST 终止必须沿用 parser 支持规则并覆盖；不支持的目标不得偷偷映射到宿主剪贴板。TUI 不能不经审核把原始 OSC 直接透传给外层终端绕过本轮权限。
+
+**L0-07C：响铃/通知/光标。参考 O8 的 Bell/PluggableNotification/CursorBlinkingChange；落点：现有本地设置与通知服务。**
+
+逐项登记唯一消费者，避免 parser/model/view 双重响铃。按本地设置决定声音、视觉提示和通知；区分前台 pane/后台 pane/非活动窗口，不强制聚焦。高频 Bell 合并/限流；错误仅本地记录，不增加上传能力。光标模式变化影响实际渲染。ImageReceived 在 L0-08 处理；其他 notify-only 事件逐项判定是否已有其他消费者，不能全部重复实现。
+
+| 测试 ID | 场景 | 必须断言 |
+|---|---|---|
+| L0-07-T01 | IME 多次更新→commit | 更新期 PTY 0 字节，最终文本恰好 1 次 |
+| L0-07-T02 | IME cancel、候选 Enter/Esc | 不误提交命令，不重复写入 |
+| L0-07-T03 | 中文、组合重音、emoji、跨 pane | 字符/光标范围正确，组合不串 pane |
+| L0-07-T04 | OSC write 允许/拒绝 | fake clipboard 只在允许时修改 |
+| L0-07-T05 | OSC read 允许/拒绝/无交互能力 | 未授权不读取 clipboard，不泄漏内容 |
+| L0-07-T06 | 授权前 session 退出/重建 | 旧响应不写新 PTY |
+| L0-07-T07 | OSC 无效编码、超限、分段、不同终止符 | 有界内存、正确拒绝/组帧，不阻塞后续输出 |
+| L0-07-T08 | Bell 开关、前后台、连续一百次 | 按设置生效、限流、不抢焦点、不重复消费 |
+| L0-07-T09 | TUI 收到 OSC/Bell | 不绕过权限；终端显示/退出正常 |
+
+自动测试需从平台事件/ANSI 字节进入，而不仅手工构造最终 ModelEvent。macOS 实机只补自动化不能证明的系统输入法候选定位/组合行为，不要求用户重跑所有旧场景。
+
+#### 6.2.11 L0-08：块、图片、选择、隐私与滚动性能
+
+**参考：O9 的滚动锚点和高度索引、O8 的本地输出行为；落点：当前 `clear_gap_rows`、`handle_wakeup`、`render_blocks`、`render_alt_screen`、BlockGridElement/AltScreenElement。**
+
+先明确几何与索引，再恢复 UI：模型 block 身份、原始 grid 坐标、显示坐标、viewport 坐标之间只保留一套可测转换。折叠、soft wrap、clear gap、恢复分隔符、图片高度变化都通过它影响选择、查找跳转和鼠标命中。不能让渲染、Find 和 selection 各自维护一份行数算法。
+
+滚动有两种基本状态：跟随最新输出、固定用户阅读锚点。用户上滚后新输出不拉回底部；回到底部才恢复跟随。折叠或图片高度变化时锚定同一模型位置，不仅保存会随布局漂移的像素值。当前 `render_alt_screen` 的焦点、pane/session 状态和 view id 必须来自真实状态，不能保留固定 true/默认 pane 状态替代判断。
+
+clear/Ctrl-L/Cmd-K 不是同义词：分别确认 shell 发来的清屏序列、原生程序控制键、现有 GUI 清屏 action 的原行为；不得把原生程序的 Ctrl-L 强行截获成 GUI 清屏。清可见区不删除 History 或数据库，clear 后输出、查找、滚动的范围按既有保留行为测试。
+
+恢复本地块导航、展开/折叠、文本选择与复制；图片只消费已解析的本地图片数据，不根据输出 URL 自动下载。图片尺寸、解码内存与缓存设上限，损坏图不影响后续文字，异步解码完成后校验 block/session 身份。
+
+隐私显示设置必须影响渲染；但不能仅因为画面打码就宣称剪贴板/导出已打码。复制原文、复制脱敏文本、日志/导出的策略逐入口登记，沿用明确的旧行为；新安全默认不允许后台导出泄漏正文。用户明确复制原文的能力不得被无声替换为不可用。测试使用合成 secret，不用真实凭据。
+
+性能实施顺序：
+
+1. 对当前全 blocks 构造和 gap 后缀扫描加计数器/基准，先记录真实开销。
+2. `clear_gap_rows` 使用一次后缀累计或现有高度索引，避免每个 gap 再扫一遍后续 blocks。
+3. 优先复用 `BlockHeightSummary`/现有树索引查可见范围；只构造 viewport 加小范围 overscan 元素，不把 ClippedScrollable 当成已实现虚拟化。
+4. 输出追加、折叠、resize、图片完成分别增量更新高度；全量重算只有在确实影响整个布局时使用。避免渲染期长时间持有 TerminalModel 锁。
+5. 拆分后运行旧选择/清屏/Find 测试，不靠删除场景换性能。
+
+| 测试 ID | 场景 | 必须断言 |
+|---|---|---|
+| L0-08-T01 | clear 后执行新命令、滚动与重启 | 可见行为正确；历史和数据库未删除 |
+| L0-08-T02 | 跨 block/CJK/换行/矩形选择 | 复制文本与模型范围一致，画面高亮正确 |
+| L0-08-T03 | 查找→跳转→折叠/展开→resize | 仍定位同一内容，不跳错行/错 block |
+| L0-08-T04 | 用户上滚时连续输出；重新到底部 | 阅读位置保持；显式到底后恢复跟随 |
+| L0-08-T05 | 合法/损坏/超限图片，异步完成 | 位置/高度正确，错误局部化，无网络下载 |
+| L0-08-T06 | 隐私设置开关、hover、复制、导出 | 每个入口符合已登记策略，没有虚假的全链路脱敏声明 |
+| L0-08-T07 | alt screen 选择、鼠标报告、退出恢复 | 不串状态、焦点真实，普通输出恢复正确 |
+| L0-08-T08 | 100/1000/10000 个 block，每个 20 行，重复 clear | 元素构造数量随可见区而非总历史线性增长；无 G×N 后缀扫描 |
+| L0-08-T09 | 同一候选持续输出、滚动、输入 | 记录输入延迟/帧耗时/CPU/内存及原始数据 |
+
+性能不是本轮已测结论。建议在固定 macOS arm64 机器、相同 build/profile/字号/窗口尺寸下预热后测 3 次，记录中位数与 P95。提出的交互目标为输入可见响应 P95 ≤50ms、滚动帧 P95 ≤33ms；这是待实测的工程预算，不是产品已达成指标。CI 自动门禁优先采用工作量计数/复杂度断言；实际机器未达预算不得直接标 PASS，应定位瓶颈或经明确设计变更调整预算。
+
+#### 6.2.12 L0-09：本地设置、菜单与入口保全
+
+**参考：O1/O2/O8 中纯本地消费者，以及当前 Settings/Command Palette/keybindings；不是恢复所有上游 UI。**
+
+实施时建立机器可读的行为证据清单，结果放 `verification/<SOURCE_HEAD>/l0/local-contract.json`，仅记录对应本节条目、源码位置、测试结果，不另存需求/施工状态。对每个保留项登记：
+
+```text
+local_behavior_id → setting/action ID → 注册处 → handler → 状态/渲染/OS结果
+                  → 持久化键（如有）→ 测试 ID → GUI/TUI 适用范围
+```
+
+至少覆盖历史搜索/本地建议、编辑/粘贴、右键偏好、字体/行高/光标/Vim、PS1/输入定位、块操作、查找、文件打开、剪贴板权限、响铃通知、本地隐私。对窗口/tab/split/本地编辑/文件树等其他 §2.2 契约做受影响回归，不为 L0 重新实施已关闭的数据批次。
+
+入口有而 handler no-op、设置保存成功但渲染不读取、快捷键只在错误 context 生效、重启恢复回默认，都判失败。不能为了“没有空操作”直接删除本来承诺保留的功能；超出本轮能力必须保持 OPEN 并明确说明，不冒充完成。
+
+| 测试 ID | 场景 | 必须断言 |
+|---|---|---|
+| L0-09-T01 | 逐个保留 action 从菜单/快捷键进入 | 到达同一真实效果；错误 context 不执行 |
+| L0-09-T02 | 设置修改→立即观察→重启 | 显示/行为真实变化且持久化 |
+| L0-09-T03 | Settings 搜索与 Command Palette 搜索 | 本地项可用；不把云历史/Agent 项重新带回 |
+| L0-09-T04 | 输入/渲染各保留选项组合 | 不出现可点击空分支和互相覆盖的设置 |
+| L0-09-T05 | GUI/TUI 适用项分别验证 | GUI 测试不替代 TUI；不适用项有原因而非虚假 PASS |
+
+#### 6.2.13 测试设施、批次和执行命令
+
+**新增测试设施只服务本地行为。** 复用 `App::test`、`initialize_app_for_terminal_view`、`add_window_with_id_and_terminal`、`app.dispatch_keystroke` 与现有 PTY 能力，不恢复退役 integration crate。
+
+新拟受控 PTY fixture 只做：设置终端模式、输出固定 ANSI/OSC/OSC8、读原始输入字节、返回结构化记录并可靠退出。必须 raw/noecho、超时、finally 恢复 termios，所有内容为测试数据。它是普通子进程，不访问网络，不读取真实用户 clipboard/文件。测试模式应覆盖 bracket on/off、alternate screen、鼠标报告、OSC read/write、BEL、UTF-8。
+
+通过依赖注入或现有测试平台提供 fake clipboard/opener/通知/时钟。验证副作用次数、参数、当前会话及禁止行为；不能仅断言 notify 发生。OS file-drop 测试从 DispatchedEvent/hit-test 进入，IME 自动测试从平台事件适配层进入。
+
+| 批次 | 内容 | 依赖/退出条件 |
+|---|---|---|
+| A | 验证现有 13 个新增测试与旧输入/菜单测试；记录当前候选 | 先消除当前编译/格式错误；不能把旧候选 PASS 搬过来 |
+| B | 共用路由/请求失效，L0-01/02/03 | 确定编辑器与原生输入边界、粘贴 planner、历史策略 |
+| C | L0-04/05/07A | 在 B 上验证真实焦点、拖入及 IME；避免三处各写一种路由 |
+| D | L0-06/07B/07C | 链接和系统副作用独立授权，可在接口确定后并行 |
+| E | L0-08/09 | 恢复本地输出/设置并跑性能；所有入口与结果清单闭合 |
+| F | L0 全量集成和集中 macOS smoke | 关闭 L0 各子项；之后再进入 R3–R6 收敛，不提前宣称 V1 |
+
+开工只记录候选，不重置用户工作树：
+
+```bash
+set -euo pipefail
+SOURCE_HEAD=$(git rev-parse HEAD)
+git status --short --branch
+git diff --check
+rustc --version
+cargo --version
+cargo nextest --version
+```
+
+第一批使用现有测试名：
+
+```bash
+cargo check --locked -p warp --all-targets --tests \
+  --no-default-features --features local_only
+cargo check --locked -p warp_tui --all-targets --tests
+cargo nextest list -p warp --no-default-features --features local_only,test-util \
+  -E 'test(terminal::input::local_tests) | test(terminal::view::local_interaction_tests) | test(terminal::input::tests) | test(terminal::view::tests)'
+cargo nextest run -p warp --no-default-features --features local_only,test-util \
+  -E 'test(terminal::input::local_tests) | test(terminal::view::local_interaction_tests) | test(terminal::input::tests) | test(terminal::view::tests)'
+```
+
+本节新增测试实际挂载且命名完成之后，才使用以下过滤器；仅执行这些命令不表示测试已存在：
+
+```bash
+cargo nextest list -p warp --no-default-features --features local_only,test-util \
+  -E 'test(l0_)'
+cargo nextest run -p warp --no-default-features --features local_only,test-util \
+  -E 'test(l0_)'
+```
+
+执行者必须核对每个 T-ID 映射到了实际 test ID、测试数非零、没有非批准 skip/ignore。表中一个 T-ID 可由参数化多测试实现，不以机械凑用例数量替代行为覆盖。此表共有 66 个测试场景 ID，包含自动事件/PTY/布局测试及性能场景，另有集中实机检查。
+
+每个可合入批次保留完整工程门禁，最终 L0 执行下列全集及 §7 的受影响组合：
+
+```bash
+./script/format
+./script/format --check
+git diff --check
+./script/check_no_inline_test_modules
+./script/check_network_boundaries --self-test
+./script/check_network_boundaries
+./script/check_license_boundaries
+./script/check_license_config_sync
+python3 script/lib/test_inventory_tests.py
+./script/test_inventory
+./script/presubmit
+cargo nextest run -p warp --no-default-features --features local_only,test-util
+cargo nextest run -p warp_tui -p ai -p persistence -p warp_terminal -p lsp
+cargo test --workspace --doc
+cargo build --locked -p warp --bin term4u --no-default-features --features local_only
+cargo build --locked -p warp_tui --bin term4u-tui \
+  --no-default-features --features offline_hard,standalone
+```
+
+`presubmit` 的全部既定 Clippy/格式/测试要求不删；inventory 失败处理单测不能替代真实 inventory。遇到工具缺失标 INCOMPLETE，不能擅自安装/升级 pinned toolchain 或把测试改弱。这里的网络 checker 通过只是一层静态检查，不等于新功能已完成 R6 网络认证。
+
+集中 macOS smoke 仅补以下自动化空白：系统中文输入法的候选位置/确认/取消；Finder 跨 pane 多文件投递；真实字体/光标/缩放；原生编辑器或 CLI 的 paste；真实 TUI 输出/中断/退出。使用隔离数据副本，不要求再次完成无关旧 H1/R0/R1/R2 人工步骤。
+
+#### 6.2.14 L0 关闭条件
+
+每项 L0-ID 具备：当前实现位置、参考 O-ID、实际测试名、执行命令/退出码、候选源码/工具/feature、原始日志和限制。状态分别记录 IMPLEMENTED_NOT_VERIFIED、PASS、FAIL、NOT_RUN、INCOMPLETE；文档或方案完成不能填产品 PASS。
+
+证据写入 `verification/<SOURCE_HEAD>/l0/`：`manifest.json`、测试清单及输出、受控 PTY 记录、合成数据快照、脱敏实机结果、性能原始数据。未提交工作树执行必须同时保存 diff hash；冻结候选时工作树/资源/脚本/fixture 必须和测试输入对应，不能只记录 HEAD 忽略本地改动。
+
+L0 关闭要求：L0-01–09 及 L0-07A/B/C 全部有结果；无保留功能的空 handler/空设置；真实 OS/PTY 路径已覆盖；已知高频交互阻塞清零；旧测试与批准删除基线保持；没有为了恢复本地能力重新挂载云/Agent；日志和副作用不泄漏真实数据。最终 R6 仍对同一最终产品候选完成 C1–C10。
+
+[o1]: https://github.com/tedczj/term4u/blob/066ec71b736fc3755e29f58f733deadbdac3d1af/app/src/terminal/input.rs
+[o2]: https://github.com/tedczj/term4u/blob/066ec71b736fc3755e29f58f733deadbdac3d1af/app/src/terminal/input/classic.rs
+[o3]: https://github.com/tedczj/term4u/blob/066ec71b736fc3755e29f58f733deadbdac3d1af/app/src/terminal/history.rs
+[o4]: https://github.com/tedczj/term4u/blob/066ec71b736fc3755e29f58f733deadbdac3d1af/app/src/terminal/history/up_arrow.rs
+[o5]: https://github.com/tedczj/term4u/blob/066ec71b736fc3755e29f58f733deadbdac3d1af/app/src/util/clipboard.rs
+[o6]: https://github.com/tedczj/term4u/blob/066ec71b736fc3755e29f58f733deadbdac3d1af/app/src/terminal/terminal_size_element.rs
+[o7]: https://github.com/tedczj/term4u/blob/066ec71b736fc3755e29f58f733deadbdac3d1af/app/src/terminal/links.rs
+[o8]: https://github.com/tedczj/term4u/blob/066ec71b736fc3755e29f58f733deadbdac3d1af/app/src/terminal/view.rs
+[o9]: https://github.com/tedczj/term4u/blob/066ec71b736fc3755e29f58f733deadbdac3d1af/app/src/terminal/block_list_viewport.rs
+
+协议参考：XTerm Control Sequences，bracketed paste 与 OSC 52：
+https://invisible-island.net/xterm/ctlseqs/ctlseqs.html
+
+#### 6.2.15 dev-20260920 本轮实现台账
+
+**本轮没有关闭整个 L0。** 下列实现为增量候选，原测试 ID 与断言保留，不恢复旧云/Agent view；
+表中“已实现”初始为 IMPLEMENTED_NOT_VERIFIED，只有对应候选的 CI/artifact 才能改为 PASS。
+
+| 范围 | 本轮实际修改位置及实现 | 验证映射与仍未关闭的内容 |
+|---|---|---|
+| L0-01 | `input.rs`：历史按最新重复项去重但保留时间顺序；程序替换/清空/追加立即使补全失效；编辑器失焦和 shell 生命周期使旧结果失效 | 保留 `input::tests` 与原六个 local_tests；新增 `l0_01_history_keeps_the_latest_duplicate_without_losing_chronology`、`l0_01_programmatic_draft_changes_invalidate_async_results_synchronously`。完整历史搜索/建议等价审计仍 OPEN |
+| L0-02 | `view/local_io.rs`：统一编辑器/原生粘贴规划；bracketed paste 整组单次写入；拒绝 ESC/NUL 等控制注入；mode-off 多行必须确认；1 MiB 限制；请求/会话/块/模式/焦点变化拒绝过期确认；文件剪贴板共用路径插入 | `view::local_io::tests::l0_02_*` 验证 parser 模式、一次 PTY 写、原始内核 PTY 字节、拒绝/取消/过期确认。真实 vim/readline 等子程序行为仍需集中 smoke |
+| L0-03 | `terminal_size_element.rs`：输出尺寸与全 pane 文件投递区域分离；不投递零/非有限 resize；拖入提示使用 overlay，不挤压 PTY | 真实字体/偏好/软换行/resize 组合仍 OPEN；不能用上述接线代替布局全面通过 |
+| L0-04 | `view/context_menu.rs` 与 `view/action.rs`：关闭后以 deferred typed action 等待焦点队列；generation 阻止旧关闭回调处理新菜单；只在菜单仍拥有焦点时恢复；可返回原 Find | 修正原三项测试的观察时机：`ctx.focus` 是队列效果，先结束 update 再执行原焦点断言，不删除断言；继续使用真实 keystroke 分发。跨 pane/销毁目标完整矩阵仍 OPEN |
+| L0-05 | `terminal_size_element.rs`、`alt_screen_element.rs`、`view.rs`：全 pane 唯一文件入口，未命中不吞事件；半开边界；hover/exit 不阻断其他 pane；无效 UTF-8 路径整组拒绝；图片仅作普通路径 | `l0_05_platform_drop_hits_input_and_output_once_but_not_outside` 从 Presenter 平台事件进入；`l0_05_non_utf8_drop_is_atomic_and_never_lossy`。真实 Finder 及完整 split-pane smoke 仍 NOT_RUN |
+| L0-06 | 本轮仍未补回完整链接消费者 | URL/OSC8/文件行列、hover、拖选与 opener 替身测试仍 OPEN，不用安全守卫存在冒充功能恢复 |
+| L0-07A | 原生 SetMarkedText/ClearMarkedText/TypedCharacters 分路，传递 selected_range，组合态不写 PTY，提交写一次，取消/失焦清除；接回 alt-screen 已有 cursor anchor | `l0_07_ime_platform_composition_commits_once_and_cancels_without_bytes`；底层 selected_range 语义与非 alt-screen caret 的完整恢复、真实中文输入法候选位置仍 OPEN |
+| L0-07B/C | OSC52 消费者复用现有 Deny/WriteOnly/ReadWrite 设置和 parser 响应编码；默认不读剪贴板；限制 selection/长度；剪贴板 Debug 不打印内容；Bell 按现有设置且 250ms 限流 | `l0_07_osc52_parser_obeys_separate_read_write_policy_and_exact_response`、`l0_07_clipboard_event_debug_does_not_disclose_payload`；parser 输入缓存上限、授权 UI 全链路、TUI 外层透传防护、系统声音/通知实测仍 OPEN |
+| L0-08 | `view.rs::clear_gap_rows` 使用一次后缀统计，移除每个 gap 再扫全部后续 block 的重复工作 | 仅复杂度局部改进；虚拟化、折叠、图片、隐私所有出口及 P95 实机预算仍 OPEN |
+| L0-09 | README、AGENTS、本文 §3.3/#platform 明确仅 macOS Apple Silicon；多余平台兼容清理列为后续工作 | 保留设置/菜单所有入口消费者审计仍 OPEN；本轮不批量删除平台分支，不扩展其他平台 |
+
+参考代码仍以 §6.2.2 的 O1–O9 固定原提交为准；本轮不以新模块名称冒充上游原位置。
+
+**已取得的候选证据（不是本轮全部修复的 PASS）：**
+
+- `8abea95f3e4121a69fd79cb6155a854344ad1f97` 已提交完整 L0 设计；`6cda3cee60fd3cb51a9dc39a22423622ded24c40` 已提交本轮实现和 11 个新增测试。原生 apply run `35569723579` 的格式化、格式检查和 inventory 工具 9 项单测 PASS。
+- `5b22243026ead9aef9fb73eb2380822f1af3e50d`，macOS ARM run `35569900836`：格式、独立测试布局、许可证边界/配置、网络边界和 inventory 工具单测 PASS；GUI 编译发现生产代码缺 `PathBuf` 导入、测试缺 `TypedActionView` 导入，Rust 集成测试因此 NOT_RUN。当前增量补上这两处导入，不修改测试断言；修复候选仍须重新验证，不能沿用旧候选 PASS。
+
+- `bbcf5f95adc3024fe6f6aceb3a872362c12aa938`，macOS ARM run `35567568833`：
+  GUI/TUI `cargo check --locked --all-targets --tests` 均 PASS；聚焦集合选中 29 项，11 passed、
+  3 failed、15 因 fail-fast 未执行；另外 1512 为过滤器排除，不能算执行通过。三项失败都先在
+  update 内的菜单焦点断言停止。后续候选已修正观察时机及 deferred focus 恢复，需重新运行。
+- 本地 `python3 script/lib/test_inventory_tests.py`：9 passed；`git diff --check` PASS。
+  这两项不是实际 Rust inventory / GUI / PTY 验收。
+- 后续 CI 必须使用 `--no-fail-fast` 收集完整失败，核对新增 test ID 实际命中；同一候选的
+  source-head、完整 stdout/stderr 与退出码随 artifact 保存。CI 不对 Finder、系统中文输入法、
+  真实用户数据迁移、网络捕获或性能预算作未执行的声明。
 
 ### 6.3 R3：UI、认证、动作和 TUI
 
@@ -537,7 +1001,8 @@ V1 关闭后，按同一设计处理 macOS 品牌资源：SVG/logo/About/channel
 先查消费者，再用独立 Term4u 资产替换；不再次改变运行时身份。README/贡献/安全/行为准则/authors/
 联系入口统一项目身份，保留上游来源、基线和版权，不暗示上游背书。
 生成许可证地图、MIT 岛声明和 NOTICES，保留 AGPL 分发材料。清理依赖上游 secrets/服务的 CI 与发布
-脚本，建立可复现 macOS 打包、签名/公证策略、源码与产物对应；不新增 Windows/Linux 发布路线。
+脚本，建立可复现 macOS Apple Silicon（仅 `aarch64-apple-darwin`）打包、签名/公证策略、
+源码与产物对应；不新增 Intel/Rosetta/Universal Binary、Windows/Linux/WASM 发布路线。
 发布前跑完整 V1 回归及品牌/名称/资源/许可证检查，经独立授权才创建 tag/release；不加自动更新。
 
 ### 10.2 可选完整 MIT 重实现

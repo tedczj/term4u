@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::sync::Arc;
 
 use warp_completer::completer::{
@@ -139,9 +140,11 @@ impl Input {
                 ctx.emit(Event::NavigateHistory { previous: false });
             }
             EditorEvent::Edited(_) | EditorEvent::SelectionChanged => {
-                if input.history_navigation.as_ref().is_some_and(|navigation| {
-                    navigation.displayed != input.buffer_text(ctx)
-                }) {
+                if input
+                    .history_navigation
+                    .as_ref()
+                    .is_some_and(|navigation| navigation.displayed != input.buffer_text(ctx))
+                {
                     input.history_navigation = None;
                 }
                 if input.completions.as_ref().is_some_and(|menu| {
@@ -156,6 +159,10 @@ impl Input {
                 input.history_navigation = None;
                 input.completions = None;
                 input.completion_request += 1;
+                ctx.notify();
+            }
+            EditorEvent::Blurred => {
+                input.invalidate_async_state();
                 ctx.notify();
             }
             EditorEvent::Activate => ctx.emit(Event::EditorFocused),
@@ -203,8 +210,14 @@ impl Input {
         self.save_position_id()
     }
 
-    pub fn replace_buffer_content(&mut self, text: &str, ctx: &mut ViewContext<Self>) {
+    pub(crate) fn invalidate_async_state(&mut self) {
         self.history_navigation = None;
+        self.completions = None;
+        self.completion_request += 1;
+    }
+
+    pub fn replace_buffer_content(&mut self, text: &str, ctx: &mut ViewContext<Self>) {
+        self.invalidate_async_state();
         self.editor
             .update(ctx, |editor, ctx| editor.set_buffer_text(text, ctx));
     }
@@ -241,10 +254,15 @@ impl Input {
             if !previous {
                 return;
             }
-            let commands: Vec<_> = commands
+            // Keep each command's newest occurrence without sorting away chronology.
+            let mut seen = HashSet::new();
+            let mut commands: Vec<_> = commands
                 .into_iter()
+                .rev()
                 .filter(|command| !command.trim().is_empty() && command.starts_with(&buffer))
+                .filter(|command| seen.insert(command.clone()))
                 .collect();
+            commands.reverse();
             if commands.is_empty() {
                 return;
             }
@@ -285,6 +303,7 @@ impl Input {
     }
 
     pub fn append_to_buffer(&mut self, text: &str, ctx: &mut ViewContext<Self>) {
+        self.invalidate_async_state();
         self.editor.update(ctx, |editor, ctx| {
             let mut content = editor.buffer_text(ctx);
             content.push_str(text);
@@ -293,7 +312,7 @@ impl Input {
     }
 
     pub fn clear_buffer_and_reset_undo_stack(&mut self, ctx: &mut ViewContext<Self>) {
-        self.history_navigation = None;
+        self.invalidate_async_state();
         self.editor
             .update(ctx, |editor, ctx| editor.clear_buffer(ctx));
     }
