@@ -1,7 +1,7 @@
 {
   "source_head": "1d2119d732ce79db6292d668477826348d55a8c2",
   "branch": "fix/l0-local-20260922",
-  "source_patch": "source.patch",
+  "source_patch": "source.patch.gz",
   "source_patch_sha256": "9324f63cad1a1bf40e7ca32a89237d11dc7de2c2594a9f569c43ddd26a6cf781",
   "lockfile_sha256": "98984826e0fda0e0ccc3a2c08bdef6ca64b332b9fa82b0960093023c8d762dc5",
   "generated_utc": "2026-09-22T15:20:07.904912+00:00",
@@ -277,9 +277,9 @@
       "bytes": 97590,
       "sha256": "6ef04a468c8480a28c23724a668808b0affc5ccaacd788089788663f3e1e0b4f"
     },
-    "ime-context-diagnostic.patch": {
-      "bytes": 881,
-      "sha256": "b9e4d5c10f8e65fe3b36828b53f4d131f62377724ddd95bba135d5463a352f34"
+    "ime-context-diagnostic.patch.gz": {
+      "bytes": 433,
+      "sha256": "5176882a5e53eabf574f2fe6551fb0c529b31d28faeb380b1fd31e1839d91c42"
     },
     "ime-context-runtime.log": {
       "bytes": 2636,
@@ -289,9 +289,9 @@
       "bytes": 1998,
       "sha256": "b04e435865fd10aa3a40c6189ab9dc595a1ad1855820d1378132075b53d851d2"
     },
-    "ime-diagnostic.patch": {
-      "bytes": 1347,
-      "sha256": "75aa24ddade0dc7fcbb8d22bd7d5e2676b3f6943f4ec8195b2d02762b18ddb81"
+    "ime-diagnostic.patch.gz": {
+      "bytes": 598,
+      "sha256": "b00c1c619ce1c20b8319684bd36e13324e8194f14a05b44f691a2e5168cf5b25"
     },
     "inventory.exit": {
       "bytes": 2,
@@ -325,13 +325,13 @@
       "bytes": 36756,
       "sha256": "5e0e6cf80679277c5390f6e55f0c18179e2ab05722e00407b30a905e937ef93d"
     },
-    "review.patch": {
-      "bytes": 8947,
-      "sha256": "8580fe06d5464d63bfa1a0a486d36b86e5fe76f9960dd24fba3d612a62fe6d1e"
+    "review.patch.gz": {
+      "bytes": 4092,
+      "sha256": "a4963d973edaccf404aa70317dc11697be11ca7c3eed5db6c78a439b5714ea55"
     },
-    "source.patch": {
-      "bytes": 5691,
-      "sha256": "9324f63cad1a1bf40e7ca32a89237d11dc7de2c2594a9f569c43ddd26a6cf781"
+    "source.patch.gz": {
+      "bytes": 1917,
+      "sha256": "52fe0570ce9ea3667299eec95b7436252b6d59aa7027afcf0ce7b3621a924f11"
     },
     "terminal-regression-final.log": {
       "bytes": 42352,
@@ -358,7 +358,7 @@
       "sha256": "4bcc698de0cbce8e42a28f75cae9c27dabb3602723290d36c092a7e0f0d99c0c"
     }
   },
-  "design_sha256": "aa87fe6391af1e9b7ca7700520d01c9f2373fb5000fa00d5cc503c09fb0d3127",
+  "design_sha256": "0a0ac818324a5753ffabecbfbfb17531fa4dd881e067a6aeff28a4db036bb279",
   "execution_worktree_committed": false,
   "delivery": {
     "source_commit": "9069a0e146b4b213072dc9c9a46cc8c1c8f34b1e",
@@ -366,5 +366,6 @@
     "target_branch": "main",
     "authorization": "Repository owner explicitly requested document replacement, commit, push, PR and merge to the primary branch. Remote has main and no master.",
     "recorded_utc": "2026-09-22T15:41:51.177521+00:00"
-  }
+  },
+  "source_patch_encoding": "gzip; source_patch_sha256 hashes the decompressed patch bytes"
 }

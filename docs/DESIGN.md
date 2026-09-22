@@ -737,7 +737,7 @@ https://invisible-island.net/xterm/ctlseqs/ctlseqs.html
 **本地验证结论（2026-09-22）：**
 
 验证基于 `1d2119d732ce79db6292d668477826348d55a8c2` 加本轮源码差异执行；运行时的
-未提交工作树由证据中的 `source.patch` 及 SHA-256 固定，提交/合并后通过源文件一致性核对关联。
+未提交工作树由证据中的 `source.patch.gz` 解压内容及 SHA-256 固定，提交/合并后通过源文件一致性核对关联。
 在 macOS 26.2 / Apple Silicon / Rust 1.92.0 复现本轮五项失败后完成以下修复：
 
 - `terminal_input_state` 优先识别已激活的备用屏幕，允许 shell 初始化期间的原生程序接收输入；
