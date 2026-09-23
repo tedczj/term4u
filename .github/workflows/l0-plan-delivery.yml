@@ -1,0 +1,68 @@
+name: L0 test routing delivery
+on:
+  push:
+    branches: [dev-20260924-l0-delivery]
+    paths: [.github/l0-plan.json]
+permissions:
+  contents: read
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    concurrency:
+      group: l0-scoped-publication
+      cancel-in-progress: false
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          fetch-depth: 1
+      - name: Check patch, run tool tests, publish exact four-path change
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/l0-plan-evidence"
+          python3 - <<'PY' 2>&1 | tee "$RUNNER_TEMP/l0-plan-evidence/publish.log"
+          import base64, gzip, hashlib, io, json, os, pathlib, re, subprocess
+          def git(*args):
+              return subprocess.check_output(['git', *args], text=True).strip()
+          assert os.environ['GITHUB_REF'] == 'refs/heads/dev-20260924-l0-delivery'
+          spec = json.loads(pathlib.Path('.github/l0-plan.json').read_text())
+          expected = {'docs/DESIGN.md', 'script/l0_verify.py', 'script/lib/l0_verify_tests.py', 'test-data/localization/l0-cases.json'}
+          assert set(spec['paths']) == expected and len(spec['paths']) == len(expected)
+          assert spec['target'] == 'dev-20260924-l0'
+          assert re.fullmatch('[0-9a-f]{40}', spec['base'])
+          with gzip.GzipFile(fileobj=io.BytesIO(base64.b64decode(spec['patch_gzip_base64'], validate=True))) as stream:
+              patch = stream.read(2 * 1024 * 1024 + 1)
+          assert len(patch) <= 2 * 1024 * 1024
+          assert hashlib.sha256(patch).hexdigest() == spec['sha256']
+          patch_path = pathlib.Path(os.environ['RUNNER_TEMP']) / 'l0-plan.patch'
+          patch_path.write_bytes(patch)
+          git('fetch', 'origin', spec['target'])
+          actual = git('rev-parse', 'FETCH_HEAD')
+          assert actual == spec['base'], f'Target moved: {actual}'
+          git('checkout', '--detach', actual)
+          subprocess.run(['git', 'apply', '--check', '--whitespace=error', str(patch_path)], check=True)
+          subprocess.run(['git', 'apply', '--index', '--whitespace=error', str(patch_path)], check=True)
+          assert set(git('diff', '--cached', '--name-only').splitlines()) == expected
+          subprocess.run(['python3', 'script/l0_verify.py', 'validate'], check=True)
+          subprocess.run(['python3', 'script/lib/l0_verify_tests.py'], check=True)
+          subprocess.run(['git', 'diff', '--cached', '--check'], check=True)
+          git('config', 'user.name', 'github-actions[bot]')
+          git('config', 'user.email', '41898282+github-actions[bot]@users.noreply.github.com')
+          git('commit', '-m', spec['message'])
+          candidate = git('rev-parse', 'HEAD')
+          subprocess.run(['git', 'push', 'origin', f'HEAD:refs/heads/{spec["target"]}'], check=True)
+          evidence = pathlib.Path(os.environ['RUNNER_TEMP']) / 'l0-plan-evidence/result.json'
+          evidence.write_text(json.dumps({'source_head': candidate, 'parent': actual, 'patch_sha256': spec['sha256'], 'tool_tests': 'PASS', 'product_tests': 'NOT_RUN_BY_THIS_JOB', 'computer_use': 'NOT_RUN'}, indent=2) + '\n')
+          print('Published test-routing candidate', candidate)
+          PY
+      - name: Preserve tool test and publication evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: l0-plan-${{ github.sha }}
+          path: ${{ runner.temp }}/l0-plan-evidence/
+          retention-days: 30
+          if-no-files-found: error
