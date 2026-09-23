@@ -3364,11 +3364,6 @@ warp::terminal::view::ambient_agent::model::tests::viewed_task_config_preserves_
 warp::terminal::view::blocklist_filter::tests::test_exchanges_for_blocklist_excludes_warp_docs_subagent_exchanges
 warp::terminal::view::blocklist_filter::tests::test_should_show_task_in_blocklist_hides_conversation_search_subagent_task
 warp::terminal::view::blocklist_filter::tests::test_should_show_task_in_blocklist_hides_warp_docs_subagent_task
-warp::terminal::view::link_detection::tests::compute_valid_paths_excludes_trailing_fullwidth_sentence_punctuation
-warp::terminal::view::link_detection::tests::compute_valid_paths_excludes_trailing_sentence_period
-warp::terminal::view::link_detection::tests::compute_valid_paths_keeps_trailing_fullwidth_punctuation_when_it_is_the_filename
-warp::terminal::view::link_detection::tests::strips_only_sentence_periods
-warp::terminal::view::link_detection::tests::strips_trailing_fullwidth_sentence_punctuation
 warp::terminal::view::open_in_warp::tests::test_any_text_file_type_supported
 warp::terminal::view::open_in_warp::tests::test_compound_command
 warp::terminal::view::open_in_warp::tests::test_nonexistent_code_file

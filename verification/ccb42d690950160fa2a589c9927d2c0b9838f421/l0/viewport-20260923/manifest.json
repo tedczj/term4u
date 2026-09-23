@@ -1,0 +1,17 @@
+{
+  "evidence_path": "/Volumes/未命名/term4u-l0-20260922/l0-scroll-anchor-evidence.json",
+  "sha256": "3ef18fe5f90bb660ce3030a5665e8132ccec5480cc75b94110ee3e2bef4688da",
+  "status": "PARTIAL_L0_IN_PROGRESS",
+  "design_section": "6.2.11",
+  "source": {
+    "head": "ccb42d690950160fa2a589c9927d2c0b9838f421",
+    "patch_sha256": "cb51f97ebcc810f02cf3dca2e9517af0026cd87d2aee0b2ea2a9c15ed144dfe0"
+  },
+  "stages": [
+    "viewport-construction",
+    "reading-anchor",
+    "resize-wrap-mapping",
+    "output-following"
+  ],
+  "test_count": 10
+}

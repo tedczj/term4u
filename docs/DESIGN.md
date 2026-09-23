@@ -557,7 +557,7 @@ URL 默认允许 http/https；其他 scheme 只有在保留契约明确且有对
 
 #### 6.2.11 L0-08：块、图片、选择、隐私与滚动性能
 
-**参考：O9 的滚动锚点和高度索引、O8 的本地输出行为；落点：当前 `clear_gap_rows`、`handle_wakeup`、`render_blocks`、`render_alt_screen`、BlockGridElement/AltScreenElement。**
+**参考：O9 的滚动锚点和高度索引、O8 的本地输出行为；落点：`BlockHeightSummary`、`handle_wakeup`、`render_blocks`、`render_alt_screen`、BlockGridElement/AltScreenElement。**
 
 先明确几何与索引，再恢复 UI：模型 block 身份、原始 grid 坐标、显示坐标、viewport 坐标之间只保留一套可测转换。折叠、soft wrap、clear gap、恢复分隔符、图片高度变化都通过它影响选择、查找跳转和鼠标命中。不能让渲染、Find 和 selection 各自维护一份行数算法。
 
@@ -721,15 +721,15 @@ https://invisible-island.net/xterm/ctlseqs/ctlseqs.html
 
 | 范围 | 本轮实际修改位置及实现 | 验证映射与仍未关闭的内容 |
 |---|---|---|
-| L0-01 | `input.rs`：历史按最新重复项去重但保留时间顺序；程序替换/清空/追加立即使补全失效；编辑器失焦和 shell 生命周期使旧结果失效 | 保留 `input::tests` 与原六个 local_tests；新增 `l0_01_history_keeps_the_latest_duplicate_without_losing_chronology`、`l0_01_programmatic_draft_changes_invalidate_async_results_synchronously`。完整历史搜索/建议等价审计仍 OPEN |
+| L0-01 | `input.rs`：历史按最新重复项去重但保留时间顺序；程序替换/清空/追加立即使补全失效；编辑器失焦和 shell 生命周期使旧结果失效 | 保留 `input::tests` 与原六个 local_tests；新增 `l0_01_history_keeps_the_latest_duplicate_without_losing_chronology`、`l0_01_programmatic_draft_changes_invalidate_async_results_synchronously`。后续已补充历史搜索来源/修订绑定、加载刷新和原生 Ctrl-R 路由，见下方历史搜索验证记录；软换行/Vim 边界和全部设置组合审计仍 OPEN |
 | L0-02 | `view/local_io.rs`：统一编辑器/原生粘贴规划；bracketed paste 整组单次写入；拒绝 ESC/NUL 等控制注入；mode-off 多行必须确认；1 MiB 限制；请求/会话/块/模式/焦点变化拒绝过期确认；文件剪贴板共用路径插入 | `view::local_io::tests::l0_02_*` 验证 parser 模式、一次 PTY 写、原始内核 PTY 字节、拒绝/取消/过期确认。真实 vim/readline 等子程序行为仍需集中 smoke |
 | L0-03 | `terminal_size_element.rs`：输出尺寸与全 pane 文件投递区域分离；不投递零/非有限 resize；拖入提示使用 overlay，不挤压 PTY | 真实字体/偏好/软换行/resize 组合仍 OPEN；不能用上述接线代替布局全面通过 |
 | L0-04 | `view/context_menu.rs` 与 `view/action.rs`：关闭后以 deferred typed action 等待焦点队列；generation 阻止旧关闭回调处理新菜单；只在菜单仍拥有焦点时恢复；可返回原 Find | 修正原三项测试的观察时机：`ctx.focus` 是队列效果，先结束 update 再执行原焦点断言，不删除断言；继续使用真实 keystroke 分发。跨 pane/销毁目标完整矩阵仍 OPEN |
 | L0-05 | `terminal_size_element.rs`、`alt_screen_element.rs`、`view.rs`：全 pane 唯一文件入口，未命中不吞事件；半开边界；hover/exit 不阻断其他 pane；无效 UTF-8 路径整组拒绝；图片仅作普通路径 | `l0_05_platform_drop_hits_input_and_output_once_but_not_outside` 从 Presenter 平台事件进入；`l0_05_non_utf8_drop_is_atomic_and_never_lossy`。真实 Finder 及完整 split-pane smoke 仍 NOT_RUN |
-| L0-06 | 本轮仍未补回完整链接消费者 | URL/OSC8/文件行列、hover、拖选与 opener 替身测试仍 OPEN，不用安全守卫存在冒充功能恢复 |
-| L0-07A | 原生 SetMarkedText/ClearMarkedText/TypedCharacters 分路，传递 selected_range，组合态不写 PTY，提交写一次，取消/失焦清除；接回 alt-screen 已有 cursor anchor | `l0_07_ime_platform_composition_commits_once_and_cancels_without_bytes`；底层 selected_range 语义与非 alt-screen caret 的完整恢复、真实中文输入法候选位置仍 OPEN |
-| L0-07B/C | OSC52 消费者复用现有 Deny/WriteOnly/ReadWrite 设置和 parser 响应编码；默认不读剪贴板；限制 selection/长度；剪贴板 Debug 不打印内容；Bell 按现有设置且 250ms 限流 | `l0_07_osc52_parser_obeys_separate_read_write_policy_and_exact_response`、`l0_07_clipboard_event_debug_does_not_disclose_payload`；parser 输入缓存上限、授权 UI 全链路、TUI 外层透传防护、系统声音/通知实测仍 OPEN |
-| L0-08 | `view.rs::clear_gap_rows` 使用一次后缀统计，移除每个 gap 再扫全部后续 block 的重复工作 | 仅复杂度局部改进；虚拟化、折叠、图片、隐私所有出口及 P95 实机预算仍 OPEN |
+| L0-06 | 已挂载并适配 `view/link_detection.rs`；普通输出和备用屏幕接回 hover、点击与安全 opener；异步文件识别、历史 cwd/来源、内置编辑器列号转换已接通 | 11 项 `l0_06_*` 与恢复的 5 项原路径测试；macOS 点击、拖选、文件行列和重启复核见下。删除/重排与备用屏幕文件、鼠标报告组合仍待补齐，L0-06 不记全矩阵 PASS |
+| L0-07A | 原生组合事件分路、Cocoa 矩形 ABI、UTF-16 选区及延迟关闭会话已修正；普通/备用网格均发布当前帧 caret anchor；编辑器绘制和自动滚动共用映射后的组合子选区 | 多行范围/滚动自动回归及唯一 bundle/PID 的分步提交/取消、跨行长草稿实测见后续记录；旧身份不可靠样本不作为候选结论；系统候选窗精确位置与跨 pane 完整矩阵仍 OPEN |
+| L0-07B/C | OSC52 权限及最终写入保护、Bell/注意通知限流、原生光标模式见后续记录；长命令完成通知和绑定本次运行/终端身份的点击定位已接回 | 自动回归及未授权系统回调、TUI 不透传已验证；长命令开关/阈值 UI 已实测；系统授权投递/真实点击以及完整声音、光标实机矩阵仍未关闭 |
+| L0-08 | 高度树定位可见 block；构造 viewport 加 3 行 overscan，共用模型 padding/gap/Find/selection 坐标；按 block 身份锚定阅读位置并在隐藏、恢复、过滤和软换行 resize 后重映射 | 块级构造计数、隐藏块锚点、软换行 resize、输出暂停/跟随已自动验证；实机输出锚点、GUI 清屏快捷键/复制高亮、单个巨大 grid、折叠 UI、图片、隐私出口及输入/帧 P95 仍 OPEN |
 | L0-09 | README、AGENTS、本文 §3.3/#platform 明确仅 macOS Apple Silicon；多余平台兼容清理列为后续工作 | 保留设置/菜单所有入口消费者审计仍 OPEN；本轮不批量删除平台分支，不扩展其他平台 |
 
 参考代码仍以 §6.2.2 的 O1–O9 固定原提交为准；本轮不以新模块名称冒充上游原位置。
@@ -763,8 +763,361 @@ https://invisible-island.net/xterm/ctlseqs/ctlseqs.html
 Warp 原版一致，临时诊断已移除，恢复后的最终二进制 SHA-256 与原受测构建一致。
 真实 TUI 交互、其他 L0 项及 R6 全矩阵不在这次关闭范围。
 
+**后续链接恢复（2026-09-23，本地候选验证）：**
+
+本候选基于 `ccb42d69`，继续保持 L0 为 IN_PROGRESS。参考 O7/O8，重新挂载现有
+`link_detection.rs` 的文件候选验证与五项原路径测试；URL/OSC 8 仍由 TerminalModel 识别，
+未增加另一套输出正则或云依赖。当前改变如下：
+
+- BlockGridElement 与 AltScreenElement 传递实际网格身份、坐标和修饰键；普通点击只选择/提示，
+  Cmd-click 或点击提示才打开 http/https。OSC 8 提示显示真实 target，拒绝其他 scheme。
+  外部副作用在释放模型锁后执行，自动测试使用平台 fake opener。
+- 修复前方未命中网格在鼠标抬起时提前清掉共享拖选状态，以及备用屏幕一帧内拖选仍使用旧渲染
+  状态的问题；拖选抬起不会打开链接。原有菜单、焦点、输入回归继续保留。
+- 文件扫描在后台运行并可取消；结果核对请求代次、会话、块身份、原候选内容与 cwd。移走、
+  resize、会话变化或离开 pane 使旧请求失效；同 pane 内输出点击返回输入框不会误取消请求。
+  文件通过既有 OpenFileWithTarget 进入用户所选编辑器。内置编辑器转换为零基列号，
+  外部编辑器保持诊断文本的一基列号。
+- 块完成保存与窗口快照共用 `TerminalView::serialize_block`，从真实会话或既有恢复标记保存
+  本地/远端来源；不再把所有完成块直接标为本地。来源未知的历史块不推定为本地，也不回填旧数据。
+  实机已确认新块的来源保存在 SQLite 快照中，重启后历史文件链接仍可打开。
+- 五项恢复测试的原 ID 和断言未改名/删除；仅从 `deleted-test-ids.txt` 撤回这五项删除许可。
+  不可变 `phase1-before.txt` 未改，删除许可数由 5089 减为 5084，真实 inventory 为 4825 项。
+
+当前候选执行 `cargo nextest run --locked -p warp --no-default-features --features
+local_only,test-util`：1565 passed / 3 原有 skipped；严格 local_only Clippy、GUI build、
+真实 inventory 均 exit 0。`./script/presubmit` exit 0：workspace 4805 passed / 20 原有
+skipped，completer v2 131 passed / 4 原有 skipped，三组 Clippy、Rust/C/WGSL 格式与 doc tests
+均通过。前一候选曾出现一次 `test_pane_focus_on_close` 的 nextest LEAK 标记；聚焦复跑及
+本候选全量均未再出现，原始运行日志保留，不以该标记冒充内存泄漏结论。
+
+实机使用隔离 profile `l0-links-20260923` 和独立签名 Debug bundle：普通输出及备用屏幕
+均显示 URL/OSC 8 的真实目标；普通点击和拖选后本机 HTTP 日志无新增请求，显式点击提示后
+各目标只收到一次请求（另有浏览器自身 favicon 请求）。备用屏幕 Return 退出后正常输出恢复。
+文件设置搜索可找到编辑器选项，修改为内置编辑器立即生效并跨重启保留；含空格/CJK 路径
+`:7:3` 打开后，实际输入 X 得到第 7 行的 `liXne seven`，Undo 恢复，磁盘原文件未改。
+
+原始日志、各命令退出码、候选补丁/哈希和 GUI 测试脚本位于
+`/Volumes/未命名/term4u-l0-20260922/`：最终工程日志前缀为 `l0-links-verified-`，
+证据索引为 `l0-links-evidence.json`，GUI/HTTP 证据在 `links-gui/`；
+原始视觉观察为本线程 CUA 截图，未单独导出图片文件。此证据只覆盖上述场景，不是 L0 或 R6
+整体认证。L0-06 的块删除/重排完整矩阵、备用屏幕文件与鼠标报告交叉组合尚未关闭；
+L0-01 历史搜索、L0-03/04/05 实机矩阵、L0-07 余项、L0-08/09 仍按原台账继续推进。
+
+
 [本地原始证据与候选哈希](../verification/1d2119d732ce79db6292d668477826348d55a8c2/l0/local-20260922/manifest.json)
 绑定源码 diff、构建产物、命令/退出码和 PTY 捕获；初始失败与中间诊断日志不作为最终 PASS。
+
+
+**后续历史搜索与输入路由验证（2026-09-23，本地候选验证）：**
+
+在上面的链接候选上继续修复 L0-01。保留现有 CommandSearchView、History 和本地 completer，
+不新增历史存储或替换已有搜索 UI：
+
+- 搜索结果绑定发起终端的弱引用、会话、活动块及编辑器内容/选择区修订。接受结果前重新核对，
+  不把旧结果填到后来切换的 tab/pane；草稿修改后即使文本恢复原样，也拒绝旧结果。
+  普通 Enter 只填回命令，显式执行动作仍使用原有执行入口。
+- 搜索已经打开但 History 尚未加载完成时，订阅对应会话的 Initialized 事件，重建本地数据源并
+  重跑当前查询，保留用户已输入的查询与过滤器。旧会话的加载事件不会重置当前搜索。
+- Command History 的可用状态定义在拥有快捷键的 Workspace 上，使快捷键和 macOS 菜单分发
+  使用相同判定。此前只在终端子上下文判定时，父 Workspace 仍能截获 Ctrl-R；已通过菜单
+  分发的正反测试复现并修复。原生程序不再被历史搜索抢走 Ctrl-R。
+- EditorElement 的文本、IME 与修饰键事件使用当前窗口的实际焦点，不再依赖上一帧
+  ViewSnapshot.is_focused。使用完整旧 Presenter 画面，在搜索取消且真实焦点已回到输入框、
+  尚未重绘时发送 TypedCharacters，输入仍到达原草稿。旧缓存焦点比较候选在同一测试中失败；
+  未修改旧测试断言、忽略项或删除许可。
+
+新增六项实际测试位于 workspace/view_tests.rs 和 search/command_search/view_tests.rs：
+`l0_01_history_accept_fills_origin_without_execution_and_cancel_keeps_cursor`、
+`l0_01_history_result_does_not_follow_a_tab_switch`、
+`l0_01_history_result_rejects_a_changed_then_restored_draft`、
+`l0_01_ctrl_r_is_not_captured_by_history_in_a_native_program`、
+`l0_01_history_loading_refreshes_the_current_search_query`、
+`l0_01_cancelled_search_accepts_text_before_the_next_frame`。
+原有历史导航和异步/目录补全测试保留。
+
+当前候选 local_only,test-util 应用测试为 1571 passed / 3 原有 skipped；严格 local_only
+Clippy、GUI build、实际 inventory 均 exit 0。完整 presubmit exit 0：workspace 4811 passed /
+20 原有 skipped，completer v2 131 passed / 4 原有 skipped，全部既定 Clippy、格式和 doc tests
+通过。inventory 4831 项，删除许可仍为 5084 项，原始 baseline 不变。
+
+隔离 profile `l0-history-20260923` 的 GUI 实测：历史搜索可见独立 HISTFILE 的种子命令和
+本会话命令；Enter 只填回，SQLite 中两条已执行样本命令的次数均保持 1；取消保留草稿与光标。
+本地文件 Tab 菜单可从 alpha 循环至 beta，光标后的 SUFFIX 保留，未执行草稿。
+备用屏幕和普通输出模式中的真实 raw PTY 探针均收到精确单字节 `12`（十六进制 Ctrl-R），
+不打开搜索。原先 GUI 的单字符 x 观察受到系统拼音组合态影响：日志显示 SetMarkedText 后
+ClearMarkedText，不能据此声称普通字符丢失；切到直接输入拉丁字符的输入源后，Escape 紧接 x
+正确生成原光标位置的 `echo L0HISTORxY`。旧帧焦点缺陷以独立事件测试为准。
+
+日志前缀 `/Volumes/未命名/term4u-l0-20260922/l0-history-verified-`，证据索引
+`l0-history-evidence.json`，GUI 脚本和原始 PTY 字节在 `history-gui/`；
+截图为本线程 CUA 原始输出，未另行导出。L0 仍为 IN_PROGRESS：本轮不把 raw PTY Ctrl-R
+当作完整 vim/readline 验收，L0-01 的软换行/Vim/全部设置组合、L0-06 剩余矩阵、L0-07
+候选位置/OSC52/Bell/TUI、L0-08 渲染/性能和 L0-09 全入口审计均继续保留未关闭状态。
+
+
+**后续 OSC52 解析边界与 TUI 验证（2026-09-23，本地候选验证）：**
+
+在既有默认 Deny / WriteOnly / ReadWrite 策略上增加解析边界，没有提高默认授权：
+OSC52 只接受空 selection（按既有规则视为 c）或单个 c/p/s，拒绝复合/未知目标和多余参数，
+不再把 cp/c0 等首字符为 c 的请求静默映射成宿主剪贴板。p/s 仍是原有 Selection 类型，
+GUI 不把它们映射为宿主 Clipboard。
+
+新增共享常量约束 OSC52 解码后最多 1 MiB，并在解码前限制 Base64 长度、解码后再次核对长度，
+超限不产生 ClipboardStore 事件。VTE 的 std 配置使用动态 OSC 缓冲且没有逐字节 OSC 回调；
+Processor 现在限制连续没有 performer 回调的字节为 16 MiB，超限重建 VTE 并丢弃余下序列，
+直到 BEL、取消控制或新的 ESC 恢复解析，不派发截断前缀。普通可打印文本与逐字节 DCS/APC
+回调不会消耗这一累积预算；DCS/APC 消费者和图片整体资源预算仍属于后续对应验收。
+
+新增八项测试覆盖分段 BEL/ST、复合目标及额外参数、编码与解码边界、未终止超长 OSC、
+BEL/新 ESC 恢复、超过 16 MiB 的普通输出继续解析。1 MiB 的合法写入仍成功，1 MiB + 1
+被拒绝。保留 VTE 原有 ESC 结束 OSC 的语义，未另写一套终止符解析器。聚焦 L0-07 测试
+11 passed；local_only,test-util 应用测试 1573 passed / 3 原有 skipped；严格 local_only
+Clippy 与实际 inventory 均 exit 0。完整 presubmit exit 0：workspace 4819 passed（其中 1 项 leaky）/
+20 原有 skipped、completer v2 131 passed / 4 原有 skipped，所有既定 Clippy、格式和 doc tests
+通过；inventory 4839，删除许可仍为 5084，原始 baseline 未改。
+原有纯命令格式测试 `test_vscode_with_line_and_column` 在本轮 workspace 运行中带一次
+nextest LEAK 标记，聚焦复跑通过且无该标记；保留两次日志，不把它解释为已证实的内存泄漏，
+也不修改测试或放宽门禁。
+
+通过当前 `./script/run-tui --locked -- --help` 构建并准备 standalone/offline_hard 资源后，
+在独立 profile `l0-osc-tui-20260923` 和 120×40 的真实 PTY 中运行 TUI。子 shell 执行测试程序，
+发送 OSC52 写入、读取和 Bell，再输出 L0-TUI-DONE：外层原始输出没有 OSC52 序列，也没有
+测试命令后的 Bell；子程序读取响应为空；DONE 正常渲染，Ctrl-Q 退出码为 0。
+TUI 当前使用模型网格重绘、剪贴板 ModelEvent 没有宿主消费者，此次验证的是默认拒绝路径。
+
+工程日志前缀 `/Volumes/未命名/term4u-l0-20260922/l0-osc-`，证据索引
+`l0-osc-evidence.json`；`osc-tui/outer.raw` 保存外层原始字节，`outer-text.txt` 是用于
+阅读的去 CSI 文本，`response.json` 和 `result.json` 保存响应/退出结果。没有 tmux，使用
+tui-verify-change 技能的本地 PTY 后备方法，没有调用云服务或退役登录流程。
+
+L0 仍为 IN_PROGRESS。这里没有关闭 GUI 授权入口、待授权请求/排队上限与过期会话完整矩阵，
+也没有把默认静音的 TUI 样本当成 Bell 允许/禁用、前后台及限流全部通过；IME 候选定位、
+vim/readline、Finder、焦点/布局、图片/渲染性能与全设置入口继续按原台账验收。
+
+
+**后续 OSC52 权限入口与请求生命周期（2026-09-23，本地候选验证）：**
+
+Privacy 页增加独立可搜索的 OSC52 设置，使用原有 Deny / WriteOnly / ReadWrite，默认仍为
+Deny；标题放在 PageType 标题槽，原静态本地隐私说明保留为另一个 widget。界面说明写入会替换
+剪贴板、读写也允许读取，并明确适用于 GUI。不存在逐次授权弹窗，使用用户持久化的明确选择。
+
+ChannelEventListener 现在最多保留 8 个在途 OSC52 请求，在解码前申请队列位置；请求的共享
+生命周期标记一直保留到所有消费者和 PTY 回复结束，超限拒绝，不让后台事件队列无限积累内容。
+标记同时绑定原事件源与代次：创建 PTY 重置来源、实际切换 shell 会话推进代次，退出/重置及
+权限变化令旧请求失效。同会话的常规 prompt 不废弃请求，旧会话迟到的退出不影响当前会话。
+
+剪贴板读取回复不再退化成普通用户输入：ClipboardResponse 经 TerminalView、PtyIntent、
+PtyController、Message 一直携带来源标记到 EventLoop。最终写入及每次部分写入前均重新核对；
+过期的完整回复或剩余部分被丢弃，后续正常输入保持 FIFO。回复的 Debug 不包含正文。
+GUI 消费者仍在访问剪贴板前检查当前权限、来源和终端退出状态，系统剪贴板操作不持有模型锁。
+
+新增 11 项自动测试覆盖：独立筛选、三种设置动作到真实 OSC 消费者的完整路径（fake clipboard）、
+20 个排队读取只保留 8 个且消费后恢复、终端重置/退出与迟到事件、不同来源/会话、
+已编码回复遇权限撤回、最终 writer 拒绝过期回复、部分写入后的代次变化及回复脱敏。
+本轮聚焦 22 passed；local_only,test-util 应用测试 1581 passed / 3 原有 skipped；
+严格 local_only Clippy、GUI build、TUI build、实际 inventory 均 exit 0。
+完整 presubmit exit 0：workspace 4830 passed / 20 原有 skipped、completer v2 131 passed /
+4 原有 skipped，全部既定 Clippy、格式和 doc tests 通过。inventory 4850，删除许可仍为5084，
+原始 baseline 不变。
+
+隔离 GUI profile `l0-permission-20260923` 实测：OSC52 搜索仅留下 Privacy 的权限 widget，
+默认 Deny；Write only 与 Read and write 均能保存，重启后 Read and write 恢复，最后恢复
+Deny 并核对 TOML。真实 GUI 测试只改权限配置，剪贴板读写内容和协议回复通过 fake clipboard
+及最终 writer 测试验证。新 profile `l0-permission-tui-20260923` 的 120×40 真实 PTY 复核：
+写入/读取 OSC52 不透传外层，读取响应为空，DONE 继续显示，Ctrl-Q 退出码 0。
+
+**实机未关闭项：** Privacy 标题在部分筛选更新、下拉选择或恢复后不显示，重新选择 Privacy
+或打开下拉菜单会恢复；相同实例中 Features 的 audible → audible bell 对照未复现。
+PageType 的标题和过滤单测通过不能代替这项像素结果。该问题保留为 L0-09 显示差异待查，
+所以本轮不宣布权限页面全面验收或 L0 关闭。后续继续处理此项、IME 候选/范围、Bell/通知、
+vim/readline/Finder/分屏/字体与 resize、渲染/性能和全设置入口。
+
+后续隔离 profile `l0-title-20260923` 的诊断进一步区分了应用帧与桌面截图：标题消失时，
+布局、场景的 7 个字形、图集内容及最终 Metal 参数不变。启用 Metal API/GPU 校验，并在
+提交后等待完成、显式同步纹理后读回，22 帧的标题区域颜色和透明度均完整；导出的帧可见
+Privacy，但同期 CUA 截图仍缺标题。暂不能据此判定实际屏幕、窗口合成或截图环节中的
+故障归属，也不能将其标为 PASS。证据索引为
+`/Volumes/未命名/term4u-l0-20260922/l0-title-evidence.json`，包含同步读回帧、日志及诊断补丁。
+临时布局/场景/Metal 诊断已移除，没有据此修改产品渲染代码。
+
+日志前缀 `/Volumes/未命名/term4u-l0-20260922/l0-permission-final-`，索引
+`l0-permission-evidence.json`，GUI 记录在 `permission-gui/`，TUI 原始字节和结果在
+`permission-tui/`。本候选补丁包含两个新增测试文件，不只包含已跟踪文件的 diff。
+
+**后续 IME 范围、光标与原生会话（2026-09-23，本地候选验证）：**
+
+修正 `warp_ime_position` 的 Objective-C 声明/调用：与 Rust 一致按值传递 NSRect，原来错误地
+传入指针。Cocoa 客户端保留并返回实际 UTF-16 选区；平台边界转换为字符偏移，处理 surrogate
+边界、越界和长度溢出。终端组合光标使用选区终点的显示列宽，不再无条件移至整段文本末尾。
+普通输出网格接回唯一活动网格的原生光标，复用既有 cursor_display_point 的裁剪规则；
+普通/备用网格隐藏光标时仍更新 IME 锚点，锚点只保留当前帧，避免复用过期位置。
+
+macOS 延迟关闭 IME 绑定组合会话：旧关闭请求不取消其后新开始的组合，但同一旧会话的文本
+更新仍会关闭。主线程测试直接实例化隔离的原生 NSTextInputClient，并实际排空 GCD 队列；
+该竞态、原生选区、UTF-16 转换及组合光标均保留修复前失败结果。普通网格另用完整 Presenter
+事件/绘制路径检查选区移动、隐藏光标和取消恢复，使用已完成 bootstrap 的测试会话。
+原有裁剪测试的 `0..0` 改为真实末尾选区 `8..8`，保留原裁剪断言和测试 ID。
+
+新增测试共 5 项；聚焦 27 passed；local_only,test-util 全量应用测试 1582 passed /
+3 原有 skipped。两组额外 local_only Clippy、GUI/TUI build 与实际 inventory 均 exit 0。
+完整 presubmit exit 0：workspace 4835 passed / 20 原有 skipped、completer v2 131 passed /
+4 原有 skipped，既定格式、Clippy 与 doc tests 全部通过。inventory 4855，批准删除仍为5084，
+原始 baseline 未改。保留前一次因裁剪测试选区不匹配而失败的 presubmit 日志。
+
+最终 GUI profile `l0-ime-delivery-20260923` 的普通网格和备用屏幕实测：连续执行拼音输入、
+空格确认、另一段组合的 Escape 取消及退出，两个真实 PTY 均只收到一份“你好”的 6 字节
+UTF-8，取消没有新增字节。分步执行并在中间观察截图的编辑器组合曾有只得到空格的样本。
+**后续发现旧测试副本被重新启动且未带隔离变量，与其他副本共用 bundle ID；这些旧 GUI 样本
+缺少父进程链，不能可靠归属指定候选，已由下方身份复核替代。** 原始文件保留，不将旧样本
+解释为已证实的产品回归。原生候选窗口位置、多行和跨 pane 完整矩阵仍未验收。
+临时诊断已移除；L0 继续为 IN_PROGRESS。
+
+工程日志前缀 `/Volumes/未命名/term4u-l0-20260922/l0-ime-closed-`，证据索引
+`l0-ime-evidence.json`；最终 GUI 样本位于 `ime-delivery-gui/`，早期失败/诊断样本分别保留在
+`ime-gui/` 与 `ime-final-gui/`。TUI 构建不替代系统中文输入法验收。
+独立 profile `l0-ime-tui-final-20260923` 在 120×40 真实 PTY 中启动 TUI：外部 Python 子程序
+收到精确“中文”参数，原始输出中两个汉字位于同一行第 1/3 列，Ctrl-Q 退出码 0；证据保留在
+`ime-tui-final/`。该样本验证直接 UTF-8 输入与输出，不声称验证了 TUI 的系统拼音组合。
+
+后续唯一实例复核：停止意外重开的旧测试进程，保留其全部运行数据；使用独立 bundle ID
+`dev.term4u.l0.ime-ring`、profile `l0-ime-ring-production-20260923`，进程和子程序祖先链
+均核对到 GUI PID 62751。测试 bundle 与上述无诊断候选的 33 个可加载 Mach-O section
+逐项相同，差异仅为隔离身份及重新签名。编辑器的分步拼音提交收到精确“你好”；普通网格和
+备用屏幕在中间截图、读取回执后再确认，组合期均为零字节，确认恰好一份“你好”，随后
+Escape 取消不增加字节。证据索引 `l0-ime-identity-evidence.json` 保存身份、进程链和阶段回执。
+退出后使用进程清单核对，不再对已退出的应用调用会触发重新启动的绑定 API。
+Privacy 标题在该唯一实例截图中仍偶有缺失，继续按应用帧/截图差异待查，不据此改渲染器。
+
+**组合内范围与自动滚动（2026-09-23，本地候选验证）：**
+
+本地 drawable selection 先将 IME 字符偏移映射到缓冲区，再转换显示坐标；绘制时不再把偏移
+直接加到列，也不再取整段组合末尾所在的行。自动滚动使用相同的子选区，并继续只跟踪已完成
+的本地选择，保持待完成鼠标选择的原处理方式。缓冲区仍保留整段 marked selection，用于后续
+替换、提交或取消，不改变正文和撤销边界。
+
+新增 3 项回归分别覆盖三视觉行中的前段 caret、显式换行/emoji 的渲染位置，以及水平/垂直
+自动滚动；修复前均有失败记录。最终测试从 Presenter 平台 SetMarkedText 事件进入，再检查
+范围、绘制或滚动，不只直接调用内部更新方法。local_only,test-util 应用测试 1585 passed /
+3 原有 skipped；严格 local_only Clippy、GUI build、实际 inventory 均 exit 0。
+完整 presubmit exit 0：workspace 4838 passed / 20 原有 skipped，completer v2 131 passed /
+4 原有 skipped，全部既定格式、Clippy、doc tests 通过。inventory 4858，删除许可仍为5084，
+原始 baseline 不变。
+
+唯一 bundle `dev.term4u.l0.ime-wrap`、profile `l0-ime-wrap-20260923`、GUI PID 77990 实测：
+97 字符命令前缀后的拼音组合跨两行；执行组合内左移、Escape 取消、再次输入并确认后，子程序
+收到完整的 68 个前缀 x 加一份“你好”，共 74 个 UTF-8 字节，祖先链核对到该 GUI。
+这验证了长草稿保全和最终提交，不把截图中未可靠观察到的候选窗精确位置算作通过。
+日志前缀 `/Volumes/未命名/term4u-l0-20260922/l0-ime-wrap-verified-`，证据索引
+`l0-ime-wrap-evidence.json`，原始实机回执在 `ime-wrap-gui/`。L0 仍为 IN_PROGRESS。
+
+**响铃、注意通知与原生光标（2026-09-23，本地候选验证）：**
+
+Bell 使用现有声音开关并按终端 250ms 限流；后台注意通知复用
+`notifications.preferences.mode` / `is_needs_attention_enabled`。只有 Enabled 且发送终端不是
+活动窗口的当前 pane 时才发送桌面通知。OSC 9/777 使用通知声音偏好，Bell 的通知不再播放
+第二次声音。桌面通知按终端 1 秒限流，平台错误提示按 30 秒限流；不自动聚焦或在后台请求
+系统权限。Features 新增三个独立可搜索的控制项，保留既有复合偏好的其他字段。
+
+终端提供的通知标题/正文在进入 UI 队列前限制为既有的 40/120 个字符；有效 OSC 通知的
+解析日志不再记录内容，错误提示也不展示平台错误正文。允许后的 OSC 通知展示程序明确提供
+的消息，不读取或自动导出终端历史；这不构成终端所有复制/导出入口的脱敏验收。
+macOS 发送接口在成功和失败时都回收 Rust 回调；未配置权限单独返回相应结果。通知交给系统
+立即投递，避免连续更新同一标识时反复推迟显示，消费者负责限流。
+
+备用屏幕的 IME 光标锚点改为实际 TerminalView ID；焦点不再固定为 true。原生网格在程序
+请求闪烁、全局开关允许且当前窗口/终端有焦点时，以 500ms 半周期请求重绘；输入、焦点和
+模式变化重置周期，组合输入期间稳定显示，隐藏光标仍保留锚点。分屏与活动 session 的其余
+渲染状态仍需按 L0-08 的真实状态要求继续核对。
+
+新增 9 项自动回归覆盖 ANSI 通知/Bell、100 次限流、前台/后台及不抢焦点、入队前长度上限、
+平台错误与回调释放、设置筛选/字段保全、备用屏幕锚点和闪烁策略。另实际运行重绘计时器，
+在 Scene 中观察到可见/不可见两个阶段且锚点保留。local_only,test-util 应用测试 1593 passed /
+3 原有 skipped；严格 local_only Clippy、GUI/TUI build、实际 inventory 均 exit 0。
+完整 presubmit exit 0：workspace 4847 passed / 20 原有 skipped、completer v2 131 passed /
+4 原有 skipped，全部既定格式、Clippy、doc tests 通过。inventory 4867，删除许可5084，
+原始 baseline 保持不变。
+
+唯一 bundle `dev.term4u.l0.events` / profile `l0-terminal-events-20260923` 实测了独立搜索、
+声音偏好保存/重启以及真实 PTY 发送 100 BEL 后继续显示和返回。稳定光标、隐藏、重新显示
+模式已操作；连续截图未可靠覆盖完整闪烁周期，不以计时器单测替代该像素验收，也未做声学录音。
+GUI PID 18223 的子程序祖先链经核对后，从后台发出 OSC777；未授予系统通知权限时出现
+正确的本地提示，焦点保持在 Settings，没有自动权限申请。最终关闭该测试 profile 的通知
+意图和声音 Bell，并恢复通知声音偏好；没有修改系统通知权限。
+
+独立 TUI profile `l0-events-tui-20260923` 的 120×40 真实 PTY 验证：OSC9、OSC777、OSC52
+以及连续 BEL 不透传外层，剪贴板读取响应为空，中文参数/输出正确，Ctrl-Q 退出码 0。
+本轮不将系统允许后的通知展示、通知点击定位或长命令完成通知标为完成；后两者的消费者仍
+待补齐。工程日志前缀 `/Volumes/未命名/term4u-l0-20260922/l0-terminal-events-complete-`
+仅代表这轮工程检查，证据索引 `l0-terminal-events-evidence.json`；GUI/TUI 原始样本分别在
+`terminal-events-gui/`、`terminal-events-tui/`。系统授权后的投递、点击定位和实机通长命令样本仍 OPEN。
+L0 继续为 IN_PROGRESS。
+
+**完成通知与点击来源（2026-09-23，本地候选验证）：**
+
+只消费正常 User block 的 BlockCompleted：使用已结束 block 的真实起止时间计算时长，按
+`is_long_running_enabled` 与既有 `long_running_threshold` 判断，不与注意通知开关捆绑。
+完成通知有独立的限流记录，避免刚发生的 Bell/OSC 注意通知吞掉完成通知；正文使用通用提示，
+不导出命令或输出。序列化与时长读取完成后先释放 TerminalModel 锁，再发送通知和事件。
+Features 增加独立搜索的长命令通知开关，并显示现有阈值，不改动其他复合偏好。
+
+新通知携带本次运行的随机标识和 TerminalView ID。系统点击回调通过同一入口查找当前窗口、
+工作区和仍在 tab 列表中的 pane，使用现有 typed FocusPane 路径切换 tab、聚焦 pane 并显示窗口。
+旧运行、关闭目标、不存在的终端和无法证明运行身份的旧 BlockOrigin 数据均不触发定位。
+保留旧数据的反序列化形状，不把可跨进程复用的数字 ID 当作有效来源；此处没有删除历史数据。
+
+新增 2 项回归从 ANSI CommandFinished 或实际通知响应入口进入，覆盖短/长命令、独立开关、
+三个真实完成事件、释放模型锁、旧运行/旧格式/缺目标/关闭目标及当前 tab/pane 定位；既有
+注意通知与设置字段保全测试一起通过。local_only,test-util 应用测试 1595 passed /
+3 原有 skipped，严格 local_only Clippy、GUI build、实际 inventory 均 exit 0。
+完整 presubmit exit 0：workspace 4849 passed / 20 原有 skipped、completer v2 131 passed /
+4 原有 skipped，全部既定格式、Clippy、doc tests 通过。inventory 4869，删除许可5084，
+原始 baseline 未改。
+
+隔离 bundle `dev.term4u.l0.notification-routing`、profile `l0-notification-routing-20260923`
+的 GUI PID 42354 已验证长命令设置搜索只保留一项、显示配置的 1 秒阈值，关闭后正确保存，
+阈值与注意通知关闭值保持不变，随后恢复完成通知开关。系统通知主开关仍为 Unset；已提出
+测试应用的 macOS 通知权限授权问题，未收到确认前不授予权限。真实投递/点击样本尚未执行，
+准备好的子程序未启动；不以自动点击入口测试替代系统投递验收。
+日志前缀 `/Volumes/未命名/term4u-l0-20260922/l0-notification-routing-`，证据索引
+`l0-notification-routing-evidence.json`。L0 仍为 IN_PROGRESS，其他实机矩阵继续推进。
+
+
+**可见区构造、高度索引与阅读锚点（2026-09-23）：**
+
+`render_blocks` 按 `BlockHeightSummary` 定位窗口与上下各 3 行 overscan，只复制相交的 grid；
+跳过零高度历史子树，以空白元素保留完整滚动高度。已删除视图独立的 gap 后缀扫描；总高度、
+网格 padding/偏移和 Find 跳转使用模型索引，与 selection 的 BlockListPoint 坐标一致。
+隐藏/恢复历史块和过滤高度更新复用增量高度处理及 clear gap 调整；保留 live block 更新断言。
+alt screen 的 pane/session 状态取自 PaneFocusHandle，不再固定为默认/Active。
+
+固定 800×600、80 列、每块恰好 20 个显示行，分别测 100/1000/10000 块、0/1/2 次 clear、
+顶部/中部/底部，每组 3 次。10000 块旧版构造 20000 个 grid，新版最多 5 个、访问最多 3 个
+索引项；27 个样本中位数分别为 429690µs 与 89µs，P95 为 434465µs 与 130µs。
+这是构造/释放元素的测试耗时，不能替代输入可见延迟、GPU 帧、CPU/内存或 §6.2.11 实机预算。
+原始样本与旧/新源码快照存于 `/Volumes/未命名/term4u-l0-20260922/`，索引前缀
+`l0-viewport-`；初次非固定行宽基线由 `l0-viewport-baseline-20-rows` 严格夹具结果取代。
+
+隔离 GUI `dev.term4u.l0.viewport` / profile `l0-viewport-20260923` 已核对 PID、环境和命令
+父进程链：显示 250 行中英文输出、上滚中段、Find 定位/高亮 ROW-0040、shell clear 后执行新
+命令，以及 clear 后再次找到旧内容。最终构建 PID 67957 重启同一隔离 profile 后再次恢复并
+定位 ROW-0040。Cmd+K 未对应本仓库 clear 快捷键，相关画面作废；不把
+截图省略未变化内容当作清屏行为。GUI 清屏菜单/快捷键及跨行选择高亮仍需独立验收。
+新增 5 项回归覆盖构造量、隐藏索引、Find 坐标、非活动会话鼠标报告及 Clear hook→命令完成。
+最终 local_only,test-util 应用测试 1600 passed / 3 原有 skipped，严格 local_only Clippy、
+GUI build、实际 inventory 均 exit 0。完整 presubmit exit 0：workspace 4854 passed /
+20 原有 skipped，completer v2 131 passed / 4 原有 skipped；原始 baseline 9777、删除许可
+5084 未改，实际 inventory 4874。证据索引为 `l0-viewport-evidence.json`。
+新增锚点会按稳定 BlockId、grid 和原始文本位置保存读者所在行；隐藏更早 block、恢复、soft-wrap resize
+期间用 GridHandler 既有平铺文本偏移转换回映射位置，保留行内偏移。锚点被截断/删除时回落到原滚动值，
+不会解析成重排后的另一个 BlockIndex。追加输出测试确认用户上滚 0.75 行即暂停跟随，明确到底后
+恢复跟随。新增 5 项锚点回归覆盖隐藏/恢复、双向软换行、空行、宽字符、索引截断/无效位置和暂停跟随。
+最终 local_only,test-util 应用与 warp_terminal 测试 2157 passed / 5 原有 skipped；严格 local_only
+Clippy、GUI build、实际 inventory 均 exit 0。完整 presubmit exit 0：workspace 4859 passed /
+20 原有 skipped，completer v2 131 passed / 4 原有 skipped；inventory 4879，删除许可 5084，
+原始 baseline 9777 未变。锚点批次原始日志与源码快照在 `/Volumes/未命名/term4u-l0-20260922/`，
+索引 `l0-scroll-anchor-`。这些是自动模型回归；上滚、追加、窗口 resize 的 GUI 实机读线保持仍未验收。
+单个巨大 grid、折叠 UI、图片、隐私出口、清屏入口与最终 R6 同一候选矩阵继续 OPEN，L0 仍为 IN_PROGRESS。
 
 ### 6.3 R3：UI、认证、动作和 TUI
 
