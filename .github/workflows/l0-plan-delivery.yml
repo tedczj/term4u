@@ -33,7 +33,11 @@ jobs:
           assert set(spec['paths']) == expected and len(spec['paths']) == len(expected)
           assert spec['target'] == 'dev-20260924-l0'
           assert re.fullmatch('[0-9a-f]{40}', spec['base'])
-          with gzip.GzipFile(fileobj=io.BytesIO(base64.b64decode(spec['patch_gzip_base64'], validate=True))) as stream:
+          chunks = spec['patch_chunks']
+          assert chunks == [f'.github/l0-plan-{i}.b64' for i in range(4)]
+          encoded = ''.join(pathlib.Path(path).read_text().strip() for path in chunks)
+          assert len(encoded) <= 100000
+          with gzip.GzipFile(fileobj=io.BytesIO(base64.b64decode(encoded, validate=True))) as stream:
               patch = stream.read(2 * 1024 * 1024 + 1)
           assert len(patch) <= 2 * 1024 * 1024
           assert hashlib.sha256(patch).hexdigest() == spec['sha256']
