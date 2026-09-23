@@ -1,0 +1,8 @@
+{
+  "base": "abd94627476f6d68518de2c4bd37b8653b869fc6",
+  "target": "dev-20260924-l0",
+  "message": "test(l0): add 66-case routing and serial desktop evidence validation",
+  "sha256": "ddf0766e309acda6c22f6fe81f79f4f974b11cceff7a33c2d37fe770f5835052",
+  "paths": ["docs/DESIGN.md", "script/l0_verify.py", "script/lib/l0_verify_tests.py", "test-data/localization/l0-cases.json"],
+  "patch_chunks": [".github/l0-plan-0.b64", ".github/l0-plan-1.b64", ".github/l0-plan-2.b64", ".github/l0-plan-3.b64"]
+}
