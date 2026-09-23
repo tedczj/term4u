@@ -168,7 +168,7 @@ define_settings_group!(SessionSettings, settings: [
         toml_path: "general.should_confirm_close_session",
         description: "Whether to show a confirmation dialog when closing a session.",
     },
-    // Value is saved here but not shown in ui (can't be toggled in settings)
+    // Preserve the compound preference shape for existing settings files.
     notifications: Notifications {
         type: NotificationsSettings,
         default: NotificationsSettings::default(),

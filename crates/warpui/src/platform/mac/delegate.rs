@@ -477,15 +477,20 @@ pub unsafe extern "C-unwind" fn warp_on_request_notification_permissions_complet
 /// # Safety
 /// This function is marked unsafe because it retrieves the pointer to the callback
 /// function that we sent down to the Objective-C code.
-pub unsafe extern "C-unwind" fn warp_on_notification_send_error(
+pub unsafe extern "C-unwind" fn warp_on_notification_send_completed(
     error_type: NSUInteger,
     error_msg: id,
     callback: *mut c_void,
 ) {
     unsafe {
-        let notification_error = super::notification::send_error_from_native(error_type, error_msg);
-        if let Ok(notification_error) = notification_error {
-            let callback = Box::from_raw(callback as *mut NotificationSendErrorCallback);
+        let callback = Box::from_raw(callback as *mut NotificationSendErrorCallback);
+        // Native delivery completes exactly once, including successful scheduling.
+        if error_type == 2 {
+            return;
+        }
+        if let Ok(notification_error) =
+            super::notification::send_error_from_native(error_type, error_msg)
+        {
             callback(notification_error);
         }
     }
@@ -502,3 +507,7 @@ impl platform::DispatchDelegate for DispatchDelegate {
         });
     }
 }
+
+#[cfg(test)]
+#[path = "delegate_tests.rs"]
+mod tests;

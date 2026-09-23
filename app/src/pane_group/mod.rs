@@ -3733,7 +3733,7 @@ impl PaneGroup {
                     .rev()
                     .filter(|block| block.is_visible())
                     .take(100)
-                    .map(|block| crate::terminal::model::block::SerializedBlock::from(block).into())
+                    .map(|block| view.as_ref(app).serialize_block(block, app).into())
                     .collect::<Vec<_>>();
                 blocks.reverse();
                 (PaneUuid(pane.session_uuid()), blocks)

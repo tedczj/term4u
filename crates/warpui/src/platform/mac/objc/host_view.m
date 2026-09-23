@@ -12,7 +12,7 @@ void warp_update_ime_state(WarpHostView *, BOOL);
 void warp_handle_drag_and_drop(WarpHostView *, NSArray *, NSPoint);
 void warp_handle_file_drag(WarpHostView *, NSPoint);
 void warp_handle_file_drag_exit(WarpHostView *);
-NSRect warp_ime_position(WarpHostView *, NSRect *);
+NSRect warp_ime_position(WarpHostView *, NSRect);
 id warp_get_accessibility_contents(WarpHostView *);
 void warp_marked_text_updated(WarpHostView *, NSString *, NSRange);
 void warp_marked_text_cleared(WarpHostView *);
@@ -48,6 +48,8 @@ void warp_marked_text_cleared(WarpHostView *);
     id metalDevice;
 
     NSMutableAttributedString *markedText;
+    NSRange markedTextSelectedRange;
+    NSUInteger markedTextGeneration;
     NSMutableString *textToInsert;
 
     // Whether to have resize event callback called asynchronously.
@@ -361,7 +363,10 @@ void warp_marked_text_cleared(WarpHostView *);
 }
 
 - (void)closeIMEAsync {
+    NSUInteger generation = markedTextGeneration;
     dispatch_async(dispatch_get_main_queue(), ^{
+      // A deferred focus change must not cancel a composition that started afterward.
+      if (generation != self->markedTextGeneration) return;
       NSTextInputContext *inputContext = [self inputContext];
       [inputContext discardMarkedText];
 
@@ -425,7 +430,7 @@ void warp_marked_text_cleared(WarpHostView *);
     NSWindow *window = self.window;
     if (self.readyForWarp) {
         NSRect contentRect = [window contentRectForFrameRect:[window frame]];
-        NSRect rect = warp_ime_position(self, &contentRect);
+        NSRect rect = warp_ime_position(self, contentRect);
         return rect;
     } else {
         return NSZeroRect;
@@ -479,7 +484,7 @@ void warp_marked_text_cleared(WarpHostView *);
 }
 
 - (NSRange)selectedRange {
-    return NSMakeRange(0, 0);
+    return markedTextSelectedRange;
 }
 
 - (void)setMarkedText:(id)string
@@ -489,14 +494,19 @@ void warp_marked_text_cleared(WarpHostView *);
         imeTouchedMarkedTextDuringInterpret = YES;
     }
 
+    BOOL wasComposing = [self hasMarkedText];
     [markedText release];
     if ([string isKindOfClass:[NSAttributedString class]])
         markedText = [[NSMutableAttributedString alloc] initWithAttributedString:string];
     else
         markedText = [[NSMutableAttributedString alloc] initWithString:string];
 
+    if (!wasComposing && markedText.length > 0) markedTextGeneration++;
+    NSUInteger selectionStart = MIN(selectedRange.location, markedText.length);
+    markedTextSelectedRange =
+        NSMakeRange(selectionStart, MIN(selectedRange.length, markedText.length - selectionStart));
     if (self.readyForWarp) {
-        warp_marked_text_updated(self, markedText.string, selectedRange);
+        warp_marked_text_updated(self, markedText.string, markedTextSelectedRange);
         if ([markedText length] > 0) {
             warp_update_ime_state(self, YES);
         } else {
@@ -510,6 +520,8 @@ void warp_marked_text_cleared(WarpHostView *);
         imeTouchedMarkedTextDuringInterpret = YES;
     }
     [[markedText mutableString] setString:@""];
+    markedTextGeneration++;
+    markedTextSelectedRange = NSMakeRange(0, 0);
     if (self.readyForWarp) {
         warp_update_ime_state(self, NO);
         warp_marked_text_cleared(self);

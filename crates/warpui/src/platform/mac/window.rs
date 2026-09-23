@@ -1569,12 +1569,28 @@ extern "C-unwind" fn warp_update_ime_state(this: &mut Object, ime_active: bool) 
     state.ime_active.set(ime_active);
 }
 
-/// Converts an NSRange to a Rust Range<usize>
-/// NSRange has location (start) and length, while Rust Range has start and end
-fn nsrange_to_rust_range(ns_range: NSRange) -> std::ops::Range<usize> {
-    let start = ns_range.location;
-    let end = start + ns_range.length;
-    start..end
+/// Converts Cocoa UTF-16 offsets to character offsets within the marked text.
+fn nsrange_to_rust_range(ns_range: NSRange, text: &str) -> std::ops::Range<usize> {
+    let end_utf16 = ns_range.location.saturating_add(ns_range.length);
+    let mut utf16_offset = 0;
+    let mut start = 0;
+    let mut end = 0;
+    for character in text.chars() {
+        let next_offset = utf16_offset + character.len_utf16();
+        if next_offset <= ns_range.location {
+            start += 1;
+        }
+        if utf16_offset < end_utf16 {
+            end += 1;
+        }
+        utf16_offset = next_offset;
+    }
+    // A caret inside a surrogate pair stays collapsed at the preceding character boundary.
+    if ns_range.length == 0 {
+        start..start
+    } else {
+        start..end
+    }
 }
 
 #[unsafe(no_mangle)]
@@ -1586,7 +1602,7 @@ extern "C-unwind" fn warp_marked_text_updated(
     let state = unsafe { get_window_state(this) };
     // SAFETY: `marked_text` is a valid `NSString`.
     let marked_text = unsafe { &*marked_text.cast::<NSString>() }.to_string();
-    let selected_range = nsrange_to_rust_range(selected_range);
+    let selected_range = nsrange_to_rust_range(selected_range, &marked_text);
     app::callback_dispatcher()
         .for_window(&Window(state.clone()))
         .dispatch_event(Event::SetMarkedText {
@@ -1777,3 +1793,7 @@ fn as_objc_object(object: &AnyObject) -> &Object {
     // to the same Objective-C instance; only the Rust view of it differs.
     unsafe { &*(object as *const AnyObject).cast::<Object>() }
 }
+
+#[cfg(test)]
+#[path = "window_tests.rs"]
+mod tests;

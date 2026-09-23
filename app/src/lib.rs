@@ -156,7 +156,6 @@ use crate::default_terminal::DefaultTerminal;
 pub use crate::global_resource_handles::{GlobalResourceHandles, GlobalResourceHandlesProvider};
 use crate::gpu_state::GPUState;
 use crate::notebooks::manager::NotebookManager;
-use crate::notification::NotificationContext;
 use crate::palette::PaletteMode;
 use crate::persistence::PersistenceWriter;
 use crate::root_view::OpenFromRestoredArg;
@@ -1254,34 +1253,8 @@ pub(crate) fn app_callbacks(
                 );
             });
         })),
-        on_notification_clicked: Some(Box::new(move |notification_response, ctx| {
-            if let Some(notification_data) = notification_response.data() {
-                let context: serde_json::Result<NotificationContext> =
-                    serde_json::from_str(notification_data);
-                if let Ok(NotificationContext::BlockOrigin {
-                    window_id,
-                    pane_group_id,
-                    pane_id,
-                }) = context
-                {
-                    // Ensure the window ID exists, if so dispatch an action to focus
-                    // the correct pane.
-                    if ctx.window_ids().contains(&window_id)
-                        && let Some(root_view_id) = ctx.root_view_id(window_id)
-                    {
-                        ctx.dispatch_action(
-                            window_id,
-                            &[root_view_id],
-                            "root_view:handle_notification_click",
-                            &PaneViewLocator {
-                                pane_group_id,
-                                pane_id,
-                            },
-                            log::Level::Info,
-                        );
-                    }
-                }
-            }
+        on_notification_clicked: Some(Box::new(move |response, ctx| {
+            crate::notification::handle_notification_response(&response, ctx);
         })),
         on_new_window_requested: Some(Box::new(move |ctx| {
             // This one is called when the app is requested to open a new window,

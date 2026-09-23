@@ -43,13 +43,16 @@ void requestNotificationPermissions(void *on_completion_callback) {
     });
 }
 
-void sendNotificationWithErrorHandler(NSString *title, NSString *body, NSString *data,
-                                      void (^error_handler)(NSUInteger error_type, id error_msg),
-                                      BOOL playSound) {
+void sendNotificationWithCompletionHandler(NSString *title, NSString *body, NSString *data,
+                                           void (^completion_handler)(NSUInteger error_type,
+                                                                      id error_msg),
+                                           BOOL playSound) {
     UNUserNotificationCenter *center = [UNUserNotificationCenter currentNotificationCenter];
     [center getNotificationSettingsWithCompletionHandler:^(UNNotificationSettings *settings) {
       if (settings.authorizationStatus == UNAuthorizationStatusDenied) {
-          error_handler(0, @"User turned permissions off in system preferences.");
+          completion_handler(0, @"User turned permissions off in system preferences.");
+      } else if (settings.authorizationStatus == UNAuthorizationStatusNotDetermined) {
+          completion_handler(3, @"Notification permissions have not been requested.");
       } else {
           // Create the notification content.
           // `autorelease` balances the +1 retain from `alloc`; the enclosing UserNotifications
@@ -68,21 +71,21 @@ void sendNotificationWithErrorHandler(NSString *title, NSString *body, NSString 
               @"DATA" : data,
           };
 
-          // Configure the trigger to send the notification after 1 second.
-          UNTimeIntervalNotificationTrigger *trigger =
-              [UNTimeIntervalNotificationTrigger triggerWithTimeInterval:1 repeats:NO];
-
+          // Deliver immediately so repeated updates to the shared identifier cannot postpone
+          // every notification during a burst. The terminal consumer handles rate limiting.
           // Create the request object.
           UNNotificationRequest *request =
               [UNNotificationRequest requestWithIdentifier:@"CUSTOMIZED_NOTIFICATION"
                                                    content:content
-                                                   trigger:trigger];
+                                                   trigger:nil];
 
           // Schedule the notification.
           [center addNotificationRequest:request
                    withCompletionHandler:^(NSError *_Nullable err) {
                      if (err != nil) {
-                         error_handler(1, err.localizedDescription);
+                         completion_handler(1, err.localizedDescription);
+                     } else {
+                         completion_handler(2, @"");
                      }
                    }];
       }
@@ -90,11 +93,11 @@ void sendNotificationWithErrorHandler(NSString *title, NSString *body, NSString 
 }
 
 void sendNotification(id title, id body, id data, void *on_error_callback, BOOL playSound) {
-    sendNotificationWithErrorHandler(
+    sendNotificationWithCompletionHandler(
         title, body, data,
         ^(NSUInteger error_type, id error_msg) {
           dispatch_async(dispatch_get_main_queue(), ^{
-            warp_on_notification_send_error(error_type, error_msg, on_error_callback);
+            warp_on_notification_send_completed(error_type, error_msg, on_error_callback);
           });
         },
         playSound);

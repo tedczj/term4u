@@ -1,29 +1,75 @@
-use warpui::elements::{Container, Element, Flex, ParentElement, Text};
-use warpui::{AppContext, Entity, TypedActionView, View, ViewContext, ViewHandle};
+use settings::Setting as _;
+use warp_errors::report_if_error;
+use warpui::elements::{ChildView, Container, Element, Flex, ParentElement, Text};
+use warpui::{AppContext, Entity, SingletonEntity, TypedActionView, View, ViewContext, ViewHandle};
 
 use super::SettingsSection;
 use super::settings_page::{
-    MatchData, PageType, SettingsPageEvent, SettingsPageMeta, SettingsPageViewHandle,
-    SettingsWidget,
+    LocalOnlyIconState, MatchData, PageTitle, PageType, SettingsPageEvent, SettingsPageMeta,
+    SettingsPageViewHandle, SettingsWidget, ToggleState, render_body_item,
 };
 use crate::appearance::Appearance;
 use crate::settings::local_privacy_policy::LocalPrivacyPolicy;
+use crate::terminal::settings::{Osc52ClipboardAccess, TerminalSettings};
+use crate::view_components::{Dropdown, DropdownItem};
 
 pub struct PrivacyPageView {
     page: PageType<Self>,
+    clipboard_access: ViewHandle<Dropdown<PrivacyPageAction>>,
 }
 
 impl PrivacyPageView {
-    pub fn new(_ctx: &mut ViewContext<Self>) -> Self {
+    pub fn new(ctx: &mut ViewContext<Self>) -> Self {
+        let clipboard_access = ctx.add_typed_action_view(|ctx| {
+            let mut dropdown = Dropdown::new(ctx);
+            dropdown.set_top_bar_max_width(240.);
+            dropdown.set_items(
+                [
+                    Osc52ClipboardAccess::Deny,
+                    Osc52ClipboardAccess::WriteOnly,
+                    Osc52ClipboardAccess::ReadWrite,
+                ]
+                .into_iter()
+                .map(|access| {
+                    DropdownItem::new(
+                        access.as_dropdown_label(),
+                        PrivacyPageAction::SetClipboardAccess(access),
+                    )
+                })
+                .collect(),
+                ctx,
+            );
+            dropdown.set_selected_by_action(
+                PrivacyPageAction::SetClipboardAccess(
+                    *TerminalSettings::as_ref(ctx).osc52_clipboard_access,
+                ),
+                ctx,
+            );
+            dropdown
+        });
+        ctx.subscribe_to_model(&TerminalSettings::handle(ctx), |view, _, _, ctx| {
+            let access = *TerminalSettings::as_ref(ctx).osc52_clipboard_access;
+            view.clipboard_access.update(ctx, |dropdown, ctx| {
+                dropdown.set_selected_by_action(PrivacyPageAction::SetClipboardAccess(access), ctx);
+            });
+            ctx.notify();
+        });
         Self {
-            page: PageType::new_monolith(LocalPrivacyWidget, None, false),
+            clipboard_access,
+            page: PageType::new_uncategorized(
+                vec![
+                    Box::new(LocalPrivacyWidget),
+                    Box::new(ClipboardAccessWidget),
+                ],
+                Some(PageTitle::new("Privacy")),
+            ),
         }
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum PrivacyPageAction {
-    NoOp,
+    SetClipboardAccess(Osc52ClipboardAccess),
 }
 
 impl Entity for PrivacyPageView {
@@ -33,10 +79,15 @@ impl Entity for PrivacyPageView {
 impl TypedActionView for PrivacyPageView {
     type Action = PrivacyPageAction;
 
-    fn handle_action(&mut self, action: &Self::Action, _ctx: &mut ViewContext<Self>) {
+    fn handle_action(&mut self, action: &Self::Action, ctx: &mut ViewContext<Self>) {
         match action {
-            PrivacyPageAction::NoOp => {}
+            PrivacyPageAction::SetClipboardAccess(access) => {
+                TerminalSettings::handle(ctx).update(ctx, |settings, ctx| {
+                    report_if_error!(settings.osc52_clipboard_access.set_value(*access, ctx));
+                });
+            }
         }
+        ctx.notify();
     }
 }
 
@@ -96,6 +147,33 @@ impl SettingsWidget for LocalPrivacyWidget {
     }
 }
 
+struct ClipboardAccessWidget;
+
+impl SettingsWidget for ClipboardAccessWidget {
+    type View = PrivacyPageView;
+
+    fn search_terms(&self) -> &str {
+        "privacy terminal clipboard OSC52 OSC 52 permissions access deny read write only"
+    }
+
+    fn render(
+        &self,
+        view: &Self::View,
+        appearance: &Appearance,
+        _: &AppContext,
+    ) -> Box<dyn Element> {
+        render_body_item::<PrivacyPageAction>(
+            "Terminal clipboard access (OSC 52)".into(),
+            None,
+            LocalOnlyIconState::Hidden,
+            ToggleState::Enabled,
+            appearance,
+            ChildView::new(&view.clipboard_access).finish(),
+            Some("Deny blocks terminal programs from accessing your clipboard. Write only lets them replace its contents. Read and write also lets them read its contents. Applies to GUI terminals.".into()),
+        )
+    }
+}
+
 impl SettingsPageMeta for PrivacyPageView {
     fn section() -> SettingsSection {
         SettingsSection::Privacy
@@ -123,3 +201,7 @@ impl From<ViewHandle<PrivacyPageView>> for SettingsPageViewHandle {
         SettingsPageViewHandle::Privacy(view_handle)
     }
 }
+
+#[cfg(test)]
+#[path = "privacy_page_tests.rs"]
+mod tests;

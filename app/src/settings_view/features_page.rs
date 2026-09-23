@@ -1,6 +1,7 @@
-use settings::ToggleableSetting as _;
+use settings::{Setting as _, ToggleableSetting as _};
 use warp_errors::report_if_error;
 use warpui::elements::Element;
+use warpui::notification::RequestPermissionsOutcome;
 use warpui::ui_components::components::UiComponent;
 use warpui::ui_components::switch::SwitchStateHandle;
 use warpui::{AppContext, Entity, SingletonEntity, TypedActionView, View, ViewContext, ViewHandle};
@@ -13,8 +14,12 @@ use super::settings_page::{
 use crate::appearance::Appearance;
 use crate::settings::{InputSettings, SelectionSettings};
 use crate::terminal::general_settings::GeneralSettings;
-use crate::terminal::session_settings::SessionSettings;
+use crate::terminal::session_settings::{
+    NotificationsMode, NotificationsSettings, SessionSettings,
+};
 use crate::terminal::settings::TerminalSettings;
+use crate::view_components::DismissibleToast;
+use crate::workspace::ToastStack;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum FeaturesPageAction {
@@ -22,6 +27,10 @@ pub enum FeaturesPageAction {
     ToggleCopyOnSelect,
     ToggleConfirmCloseSession,
     ToggleAudibleBell,
+    ToggleNotifications,
+    ToggleAttentionNotifications,
+    ToggleCompletionNotifications,
+    ToggleNotificationSound,
     ToggleNativeShellCompletions,
 }
 
@@ -44,11 +53,48 @@ impl FeaturesPageView {
                     Box::new(CopyOnSelectWidget::default()),
                     Box::new(ConfirmCloseSessionWidget::default()),
                     Box::new(AudibleBellWidget::default()),
+                    Box::new(NotificationsWidget::default()),
+                    Box::new(AttentionNotificationsWidget::default()),
+                    Box::new(CompletionNotificationsWidget::default()),
+                    Box::new(NotificationSoundWidget::default()),
                     Box::new(NativeShellCompletionsWidget::default()),
                 ],
                 Some(PageTitle::new("Features")),
             ),
         }
+    }
+    fn update_notifications(
+        ctx: &mut ViewContext<Self>,
+        update: impl FnOnce(&mut NotificationsSettings),
+    ) {
+        SessionSettings::handle(ctx).update(ctx, |settings, ctx| {
+            let mut value = settings.notifications.value().clone();
+            update(&mut value);
+            report_if_error!(settings.notifications.set_value(value, ctx));
+        });
+    }
+
+    fn notification_permission_result(
+        &mut self,
+        outcome: RequestPermissionsOutcome,
+        ctx: &mut ViewContext<Self>,
+    ) {
+        if SessionSettings::as_ref(ctx).notifications.mode != NotificationsMode::Enabled {
+            return;
+        }
+        let message = match outcome {
+            RequestPermissionsOutcome::Accepted => "Desktop notifications are enabled.",
+            RequestPermissionsOutcome::PermissionsDenied => {
+                "Allow Term4u notifications in macOS System Settings to receive desktop alerts."
+            }
+            RequestPermissionsOutcome::OtherError { .. } => {
+                "Notification permissions could not be requested."
+            }
+        };
+        let window = ctx.window_id();
+        ToastStack::handle(ctx).update(ctx, |stack, ctx| {
+            stack.add_ephemeral_toast(DismissibleToast::default(message.to_owned()), window, ctx);
+        });
     }
 }
 
@@ -83,6 +129,37 @@ impl TypedActionView for FeaturesPageView {
             FeaturesPageAction::ToggleAudibleBell => {
                 TerminalSettings::handle(ctx).update(ctx, |settings, ctx| {
                     report_if_error!(settings.use_audible_bell.toggle_and_save_value(ctx));
+                });
+            }
+            FeaturesPageAction::ToggleNotifications => {
+                let enable =
+                    SessionSettings::as_ref(ctx).notifications.mode != NotificationsMode::Enabled;
+                Self::update_notifications(ctx, |value| {
+                    value.mode = if enable {
+                        NotificationsMode::Enabled
+                    } else {
+                        NotificationsMode::Disabled
+                    }
+                });
+                if enable {
+                    ctx.request_desktop_notification_permissions(
+                        Self::notification_permission_result,
+                    );
+                }
+            }
+            FeaturesPageAction::ToggleAttentionNotifications => {
+                Self::update_notifications(ctx, |value| {
+                    value.is_needs_attention_enabled = !value.is_needs_attention_enabled
+                });
+            }
+            FeaturesPageAction::ToggleCompletionNotifications => {
+                Self::update_notifications(ctx, |value| {
+                    value.is_long_running_enabled = !value.is_long_running_enabled
+                });
+            }
+            FeaturesPageAction::ToggleNotificationSound => {
+                Self::update_notifications(ctx, |value| {
+                    value.play_notification_sound = !value.play_notification_sound
                 });
             }
             FeaturesPageAction::ToggleNativeShellCompletions => {
@@ -308,3 +385,119 @@ impl SettingsWidget for NativeShellCompletionsWidget {
         )
     }
 }
+
+#[derive(Default)]
+struct NotificationsWidget {
+    state: SwitchStateHandle,
+}
+impl SettingsWidget for NotificationsWidget {
+    type View = FeaturesPageView;
+    fn search_terms(&self) -> &str {
+        "desktop notifications enable allow"
+    }
+    fn render(
+        &self,
+        _: &Self::View,
+        appearance: &Appearance,
+        app: &AppContext,
+    ) -> Box<dyn Element> {
+        render_switch(
+            "Desktop notifications",
+            "Allow desktop notifications for background terminal activity.",
+            SessionSettings::as_ref(app).notifications.mode == NotificationsMode::Enabled,
+            self.state.clone(),
+            FeaturesPageAction::ToggleNotifications,
+            appearance,
+        )
+    }
+}
+
+#[derive(Default)]
+struct AttentionNotificationsWidget {
+    state: SwitchStateHandle,
+}
+impl SettingsWidget for AttentionNotificationsWidget {
+    type View = FeaturesPageView;
+    fn search_terms(&self) -> &str {
+        "terminal notifications attention bell program"
+    }
+    fn render(
+        &self,
+        _: &Self::View,
+        appearance: &Appearance,
+        app: &AppContext,
+    ) -> Box<dyn Element> {
+        render_switch(
+            "Terminal attention notifications",
+            "Notify when a background terminal rings or requests attention.",
+            SessionSettings::as_ref(app)
+                .notifications
+                .is_needs_attention_enabled,
+            self.state.clone(),
+            FeaturesPageAction::ToggleAttentionNotifications,
+            appearance,
+        )
+    }
+}
+
+#[derive(Default)]
+struct NotificationSoundWidget {
+    state: SwitchStateHandle,
+}
+impl SettingsWidget for NotificationSoundWidget {
+    type View = FeaturesPageView;
+    fn search_terms(&self) -> &str {
+        "desktop notifications sound"
+    }
+    fn render(
+        &self,
+        _: &Self::View,
+        appearance: &Appearance,
+        app: &AppContext,
+    ) -> Box<dyn Element> {
+        render_switch(
+            "Notification sound",
+            "Play sound for notifications requested by terminal programs. Bell sounds use the separate audible bell setting.",
+            SessionSettings::as_ref(app)
+                .notifications
+                .play_notification_sound,
+            self.state.clone(),
+            FeaturesPageAction::ToggleNotificationSound,
+            appearance,
+        )
+    }
+}
+
+#[derive(Default)]
+struct CompletionNotificationsWidget {
+    state: SwitchStateHandle,
+}
+impl SettingsWidget for CompletionNotificationsWidget {
+    type View = FeaturesPageView;
+    fn search_terms(&self) -> &str {
+        "desktop notifications long running command completion duration threshold"
+    }
+    fn render(
+        &self,
+        _: &Self::View,
+        appearance: &Appearance,
+        app: &AppContext,
+    ) -> Box<dyn Element> {
+        let settings = SessionSettings::as_ref(app).notifications.value();
+        render_switch(
+            "Long command notifications",
+            &format!(
+                "With desktop notifications enabled, notify when background commands finish after at least {} seconds.",
+                settings.long_running_threshold.as_secs_f64()
+            ),
+            settings.is_long_running_enabled,
+            self.state.clone(),
+            FeaturesPageAction::ToggleCompletionNotifications,
+            appearance,
+        )
+    }
+}
+
+#[cfg(test)]
+#[path = "features_page_tests.rs"]
+mod tests;

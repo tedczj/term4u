@@ -166,6 +166,7 @@ impl PaneContent for TerminalPane {
                 | Event::InterruptPty
                 | Event::ShutdownPty
                 | Event::WriteBytesToPty { .. }
+                | Event::ClipboardResponse(_)
                 | Event::Resize { .. }
                 | Event::BlockStarted { .. }
                 | Event::ShellSpawned(_)

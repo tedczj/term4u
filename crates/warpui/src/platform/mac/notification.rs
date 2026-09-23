@@ -47,6 +47,7 @@ pub unsafe fn send_error_from_native(
         Ok(match error_type {
             0 => NotificationSendError::PermissionsDenied,
             1 => NotificationSendError::Other { error_message },
+            3 => NotificationSendError::PermissionsNotYetGranted,
             _ => NotificationSendError::Other { error_message },
         })
     }
