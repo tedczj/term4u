@@ -1,7 +1,7 @@
 # Term4u 完整设计与实施基准
 
-> 唯一设计、状态与施工依据；更新：2026-09-20。
-> 当前实施分支：`dev-20260920`；当前产品范围仅 macOS Apple Silicon / ARM64。
+> 唯一设计、状态与施工依据；更新：2026-09-24。
+> 当前实施分支：`dev-20260924-l0`；当前产品范围仅 macOS Apple Silicon / ARM64。
 > 原已完成批次审计：`dev-202609014` / `65a012a7ac344e05c7e09c51a253cbc661e5ac35`；不是本轮候选证据。
 > 原 R0/R1/R2 和原 GUI-shell 批次已关闭；本地交互保全 L0、R3–R6 与 V1 尚未关闭。
 > “最终设计”表示只采用这一套目标方案，不表示所有功能已经实现或验收。
@@ -1118,6 +1118,117 @@ Clippy、GUI build、实际 inventory 均 exit 0。完整 presubmit exit 0：wor
 原始 baseline 9777 未变。锚点批次原始日志与源码快照在 `/Volumes/未命名/term4u-l0-20260922/`，
 索引 `l0-scroll-anchor-`。这些是自动模型回归；上滚、追加、窗口 resize 的 GUI 实机读线保持仍未验收。
 单个巨大 grid、折叠 UI、图片、隐私出口、清屏入口与最终 R6 同一候选矩阵继续 OPEN，L0 仍为 IN_PROGRESS。
+
+#### 6.2.16 2026-09-24 分层收尾、测试路由与串行实机操作
+
+**本轮交付分支 `dev-20260924-l0`，审查基线 `main@2a6026f9`。L0 仍为 IN_PROGRESS。**
+本节在原 66 个场景之上明确开发、自动验证和实机验证的边界；不重开 R0/R1/R2，也不另建
+roadmap。机器可执行路由在 `test-data/localization/l0-cases.json`，由本文原场景 ID 校验。
+清单不是测试结果：相关函数只标 `RELATED_PARTIAL_NOT_SCENARIO_PASS`，未映射项保持
+`UNMAPPED`，所有运行结果初始化为 NOT_RUN。不得把“写了场景/存在相关测试”计为整项通过。
+
+**已提交的产品增量与仍未开发完的项。** `abd94627476f6d68518de2c4bd37b8653b869fc6`
+增加 `view/local_output.rs`：稳定 BlockId 的输出折叠/展开、上下块导航和 GUI 清屏；折叠保留
+命令行作为展开入口，Find 命中隐藏正文先展开再换算坐标。拒绝 active/stale block 与原生备用屏
+中的不适用动作；清屏保留草稿、正文和历史，不把原生 Ctrl-L 变成 GUI 清屏。入口走现有
+`CustomAction::ClearBlocks` 和输入可见 context；实际默认键以注册表为准，不把 Cmd-K 写成已测。
+`local_output_tests.rs` 已挂载六个真实测试，覆盖高度/正文、Find、active/stale、clear、alt 与导航。
+对应提交由 macOS Rust 1.92.0 formatter 处理；原生构建/测试结果须按 run 35896007581 的实际日志判定，
+此处不预填 PASS。常规 L0 workflow 已扩展到 main/活动 L0 分支，并延长证据保留期。
+
+| 剩余开发面 | 本轮审查结论与下一实现出口 | 自动验证 / 实机出口 |
+|---|---|---|
+| 图片显示与资源预算 | 普通输出仍需接通解析事件→后台解码→元数据缓存→绘制；补入队/解码/像素/缓存上限和 block/session/image incarnation 校验；不能仅传空图片表 | 合法/损坏/超限/分段/过期完成自动测；CUA-15 验证可见图、位置及滚动 |
+| 单个巨大 grid | 现有块级可见区优化不等于单 grid 虚拟化；避免每帧复制整块、遍历所有行，同时保持选择/链接/IME坐标 | 单块20万行构造/clone/paint计数；CUA-14 输入/帧原始时间序列 |
+| 本地隐私交互 | 补 SafeModeSettings 动态订阅/已打开终端模型同步、hover/reveal、设置入口；逐出口确认原有复制策略，明确原文与脱敏复制，不擅称当前复制都为原文 | 合成 secret 的 action→consumer→clipboard/日志断言；CUA-16 |
+| 全保留入口消费者 | 从实际注册表枚举本地设置/菜单/快捷键/Palette，补未接线消费者，记录GUI/TUI适用范围；清单不能代替完整枚举 | 原入口正向效果与错误context拒绝；CUA-17；残留空handler仍OPEN |
+| Privacy标题显示差异 | 尚不能判定是产品帧、窗口合成还是截图环节；不得为“修复”盲改渲染器 | 同一PID同时保存应用帧和桌面截图，继续归因，不能以单测替代像素结论 |
+
+本轮探索过图片链路，但尚未原生编译验证的草稿**不属于上述已提交产品候选**。不会把草稿计为
+已实现，亦不以外部临时路径作为交付。完成这张表仍需要后续实际开发；本节不是 L0 全开发完成声明。
+
+**自动验证划分。** 单元层验证历史排序/去重、请求代次、UTF-16/坐标、paste计划、资源限额、
+通知限流与序列化；后台集成层使用真实 ANSI、真实 raw/noecho PTY、Presenter 事件、可控异步
+barrier、fake clipboard/opener/notification 和隔离 SQLite。不得用最终 ModelEvent 的手工构造
+替代所有协议入口，不得仅测 `notify()`。原生库/主线程测试即使不需要人点屏幕，仍在 macOS
+Apple Silicon 上执行，不能因为称为“后台”便移到 Linux 宣称同等通过。
+
+JSON 中每个原 T-ID 有明确追加断言；已有测试是可复用的部分覆盖，不自动闭合新增组合。
+后台测试可以在隔离数据条件下并行。共享真实剪贴板、系统输入源、窗口/焦点或通知权限的用例
+必须转入串行实机层；纯 fake 版本仍允许并行。TUI 的协议/字符/退出适合受控 PTY 后台验证，
+其人工操作补充不能替代 raw PTY 记录。下列命令是执行入口，不是本次已运行的产品结果：
+
+```bash
+set -euo pipefail
+python3 script/l0_verify.py validate
+python3 script/lib/l0_verify_tests.py
+OUT="verification/$(git rev-parse HEAD)/l0"
+mkdir -p "$OUT"
+cargo nextest list --locked -p warp --no-default-features --features local_only,test-util \
+  --message-format json > "$OUT/warp-inventory.json"
+cargo nextest list --locked -p warp_terminal --message-format json > "$OUT/terminal-inventory.json"
+cargo nextest list --locked -p warpui --message-format json > "$OUT/warpui-inventory.json"
+python3 script/l0_verify.py validate \
+  --inventory "warp=$OUT/warp-inventory.json" \
+  --inventory "warp_terminal=$OUT/terminal-inventory.json" \
+  --inventory "warpui=$OUT/warpui-inventory.json"
+cargo nextest run --locked --no-fail-fast -p warp \
+  --no-default-features --features local_only,test-util
+cargo nextest run --locked --no-fail-fast -p warp_terminal -p warpui -p warp_tui
+./script/test_inventory
+./script/format --check
+./script/presubmit
+```
+
+实际运行必须另行保存完整命令、退出码和原始输出；过滤运行不能代替这里的全量保留测试。
+`l0_verify.py validate` 没有 `--inventory` 时只验证静态定义，输出明确
+`registration_checked: false`，不能当成 actual nextest 注册证明。无匹配、歧义、截断/空 inventory
+均失败；immutable baseline 与 approved deletion 不变。工具自身 18 项 Python 测试在本轮 Linux
+编辑环境通过，仅证明清单/证据/锁的工具逻辑，不是 macOS 产品测试通过。
+
+**串行 computer-use 规格。** JSON 的 CUA-01–18 各有前置条件、步骤、可观察结果、证据类型和
+恢复动作；依次覆盖候选身份、历史、编辑器粘贴、vim/readline、布局、菜单、Finder、链接、
+编辑器IME、原生IME、系统剪贴板、通知/光标、块输出、性能、图片、隐私、全入口与TUI。
+CUA-01 是每轮强制前置，必须证明 source/tree/diff、资源/二进制hash、唯一bundle/profile、
+GUI PID及子程序祖先链。任何实例身份不明的截图作废，而不是解释为产品失败或通过。
+
+同一登录桌面始终只有一个执行代理：整个 external harness 会话（含模型切换/复核）由
+`python3 script/l0_verify.py serial -- <现有computer-use执行器及其参数>` 持锁。锁固定到
+`/tmp/term4u-l0-desktop-<uid>.lock`，不是按目录/profile/model分锁；第二个代理立即拒绝进入。
+工具不自带桌面能力、不自动下载或启动云Agent、不改Term4u网络边界。无computer-use执行器
+或无已解锁macOS桌面时记 INCOMPLETE。用户操作/其他未使用此锁的程序不会被此工具强制阻止，
+因此应使用专用测试账号，并将“测试期间不接管鼠标键盘”作为运行前提。
+
+每次动作前看当前截图/窗口，不盲点旧坐标；一次只执行有明确目标的步骤，等待应用状态再观察。
+输入法要操作系统真实拼音组合，不能粘贴最终中文冒充IME；Finder拖入不能用内部函数替代。
+实际通知授权必须征得用户同意，未授权样本不能算授权投递/点击通过。声音需获准录音或人工
+听验，纯截图模型不能验听觉；输入P95/帧P95需采样仪器和原始时间戳，不能由模型看截图估算。
+跨步失败保留首次证据；最多一次从干净夹具复现，随后标FAIL/INCOMPLETE并交复核，不无限重试
+到偶然通过。只清理本轮测试进程/文件，不杀用户实例、不删真实DB、不访问真实剪贴板内容。
+
+**模型选择（2026-09-24官方资料核对，尚无本项目模型对照实验）。** `gpt-6-luna` 支持
+`reasoning.effort=high` 和 Responses API 的 computer use，可用作明确、重复步骤的执行模型；
+推荐先用历史、粘贴、Finder、IME、焦点、通知、图片、设置八类代表案例各跑三次，与独立
+字节/持久化/视觉oracle对照。出现误判PASS先修测试oracle/执行协议，不用重试掩盖。
+模型配置和真实模型ID、effort、harness版本要写进证据。
+
+工程建议是 Luna High 执行固定步骤，Sol High 处理一般异常和较复杂操作，Astra High 复核
+IME候选位置、焦点竞态和难定位像素差异。此分工是依据官方定位提出的测试策略，不是本项目
+已测准确率排名；也不要求每一步都使用最贵模型。模型本身不提供macOS桌面，外部执行器负责
+动作和截图回传。直接API接入应使用Responses，不能把Luna High的工具调用接到仅none支持
+function calling的Chat Completions配置。公开依据：
+
+- https://developers.openai.com/api/docs/models/gpt-6-luna
+- https://developers.openai.com/api/docs/models/gpt-6-sol
+- https://developers.openai.com/api/docs/guides/latest-model
+- https://developers.openai.com/api/docs/guides/tools-computer-use
+
+**证据与关闭。** `init-results` 必须传真实source/tree/binary SHA，创建全NOT_RUN清单且拒绝覆盖。
+执行后每个场景记录独立reviewer/oracle结论、真实命令退出码、同候选artifact路径及SHA256、
+serial workflow结果和桌面所有权。`check-results` 拒绝缺项、混候选、路径越界、空文件、hash不符、
+缺截图/PTY及未执行场景；即便返回 `evidence_integrity: VALID`，也只表示报告完整性通过，
+不替代视觉/性能/声音的独立判定，不自动宣布L0关闭。最终关闭仍满足§6.2.14和后续R6。
+
 
 ### 6.3 R3：UI、认证、动作和 TUI
 
