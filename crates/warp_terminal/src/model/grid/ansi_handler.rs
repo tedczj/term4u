@@ -1167,18 +1167,29 @@ impl ansi::Handler for GridHandler {
     }
 
     fn clipboard_store(&mut self, clipboard: u8, base64: &[u8]) {
+        if base64.len() > crate::model::ansi::MAX_OSC52_ENCODED_BYTES {
+            return;
+        }
         let clipboard_type = match clipboard {
             b'c' => ClipboardType::Clipboard,
             b'p' | b's' => ClipboardType::Selection,
             _ => return,
         };
 
+        let Some(request) = self
+            .ansi_handler_state
+            .event_proxy
+            .reserve_clipboard_request()
+        else {
+            return;
+        };
         if let Ok(bytes) = base64::engine::general_purpose::STANDARD.decode(base64)
+            && bytes.len() <= crate::model::ansi::MAX_OSC52_CLIPBOARD_BYTES
             && let Ok(text) = String::from_utf8(bytes)
         {
             self.ansi_handler_state
                 .event_proxy
-                .send_terminal_event(Event::ClipboardStore(clipboard_type, text));
+                .send_terminal_event(Event::ClipboardStore(clipboard_type, text, request));
         }
     }
 
@@ -1189,6 +1200,13 @@ impl ansi::Handler for GridHandler {
             _ => return,
         };
 
+        let Some(request) = self
+            .ansi_handler_state
+            .event_proxy
+            .reserve_clipboard_request()
+        else {
+            return;
+        };
         let terminator = terminator.to_owned();
 
         self.ansi_handler_state
@@ -1199,6 +1217,7 @@ impl ansi::Handler for GridHandler {
                     let base64 = base64::engine::general_purpose::STANDARD.encode(text);
                     format!("\x1b]52;{};{}{}", clipboard as char, base64, terminator)
                 }),
+                request,
             ));
     }
 

@@ -2700,3 +2700,63 @@ fn test_full_grid_clear_drops_active_hyperlink() {
         }
     }
 }
+
+#[test]
+fn l0_07_marked_cursor_follows_selection_and_wraps_wide_characters() {
+    let mut blockgrid = mock_blockgrid("01234567\n        ");
+    let grid = &mut blockgrid.grid_handler;
+    grid.set_cursor_point(0, 6);
+    let cursor = grid.cursor_point();
+    grid.set_marked_text("中ab", &(1..2));
+    assert_eq!(grid.cursor_render_point(), Point::new(1, 1));
+    assert_eq!(grid.cursor_point(), cursor);
+    assert_eq!(grid.marked_text(), Some("中ab"));
+    grid.set_marked_text("中ab", &(0..0));
+    assert_eq!(grid.cursor_render_point(), cursor);
+    grid.set_marked_text("e\u{301}😀", &(2..2));
+    assert_eq!(grid.cursor_render_point(), Point::new(0, 7));
+    grid.clear_marked_text();
+    assert_eq!(grid.cursor_render_point(), cursor);
+    assert_eq!(grid.marked_text(), None);
+}
+
+#[test]
+fn resize_reading_anchor_tracks_text_blank_lines_and_wide_characters() {
+    for finished in [false, true] {
+        for (before, after) in [
+            (Point::new(2, 0), Point::new(4, 0)),
+            (Point::new(1, 0), Point::new(3, 0)),
+            (Point::new(0, 10), Point::new(2, 0)),
+        ] {
+            let mut block = mock_blockgrid("0123456789中文\r\n\r\nTARGET\r\nend");
+            let grid = block.grid_handler_mut();
+            if finished {
+                grid.finish();
+            }
+            grid.set_resize_anchor(before);
+            grid.resize(SizeInfo::new_without_font_metrics(8, 5));
+            assert_eq!(
+                grid.take_resize_anchor(),
+                Some(after),
+                "finished={finished}"
+            );
+            assert_eq!(grid.take_resize_anchor(), None, "anchor is consumed once");
+            grid.set_resize_anchor(after);
+            grid.resize(SizeInfo::new_without_font_metrics(8, 14));
+            assert_eq!(grid.take_resize_anchor(), Some(before));
+        }
+    }
+}
+
+#[test]
+fn resize_reading_anchor_drops_evicted_and_invalid_positions() {
+    let mut block = mock_blockgrid("0123456789\r\nsecond\r\nthird\r\nlast");
+    let grid = block.grid_handler_mut();
+    grid.flat_storage.set_max_rows(Some(0));
+    grid.set_resize_anchor(Point::new(0, 0));
+    grid.resize(SizeInfo::new_without_font_metrics(2, 5));
+    assert_eq!(grid.take_resize_anchor(), None);
+    grid.set_resize_anchor(Point::new(999, 0));
+    grid.resize(SizeInfo::new_without_font_metrics(2, 10));
+    assert_eq!(grid.take_resize_anchor(), None);
+}

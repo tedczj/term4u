@@ -7,6 +7,7 @@ use hex::FromHexError;
 use itertools::Itertools as _;
 use warp_util::AsciiDebug;
 
+use crate::event_listener::ClipboardRequest;
 use crate::{ClipboardType, ImageProtocol};
 /// Emitted upon completion of an executor command that goes through the pty, such as the
 /// InBandCommandExecutor.
@@ -152,10 +153,11 @@ pub enum InBandCommandOutputDecodingError {
 #[derive(Clone)]
 pub enum Event {
     MouseCursorDirty,
-    ClipboardStore(ClipboardType, String),
+    ClipboardStore(ClipboardType, String, ClipboardRequest),
     ClipboardLoad(
         ClipboardType,
         Arc<dyn Fn(&str) -> String + Sync + Send + 'static>,
+        ClipboardRequest,
     ),
     CursorBlinkingChange(bool),
     Bell,

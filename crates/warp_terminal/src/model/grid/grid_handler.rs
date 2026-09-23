@@ -416,6 +416,9 @@ pub(crate) enum FullGridClearBehavior {
 pub struct GridHandler {
     grid: GridStorage,
 
+    /// A temporary original-grid point tracked through the next resize.
+    resize_anchor: Option<Point>,
+
     pub flat_storage: FlatStorage,
 
     finished: bool,
@@ -448,6 +451,8 @@ pub struct GridHandler {
     all_bytes_scanned_for_secrets: bool,
     pub(super) images: ImageMap,
     marked_text: Option<String>,
+    /// Character offset of the IME caret within the marked text.
+    marked_text_cursor_offset: usize,
 
     /// Bottommost row with content that should contribute to trimmed CLI agent
     /// block height, updated per PTY-read batch in `on_finish_byte_processing`
@@ -506,6 +511,7 @@ impl GridHandler {
 
         GridHandler {
             grid,
+            resize_anchor: None,
             flat_storage: FlatStorage::new(size_info.columns(), Some(max_scroll_limit), None),
             finished: false,
             ansi_handler_state,
@@ -519,6 +525,7 @@ impl GridHandler {
             all_bytes_scanned_for_secrets: true,
             images: Default::default(),
             marked_text: None,
+            marked_text_cursor_offset: 0,
             bottommost_visible_content_row: None,
             track_content_length: false,
             full_grid_clear_behavior: FullGridClearBehavior::Scroll,
@@ -638,6 +645,7 @@ impl GridHandler {
         // Create a new grid handler with the new grid.
         let mut grid = GridHandler {
             grid,
+            resize_anchor: None,
             flat_storage: FlatStorage::new(self.columns(), self.flat_storage.max_rows(), None),
             finished: self.finished,
             ansi_handler_state,
@@ -657,6 +665,7 @@ impl GridHandler {
             // We do not support splitting marked text, though at the moment,
             // we never split an active grid, so it should not be an issue.
             marked_text: None,
+            marked_text_cursor_offset: 0,
             bottommost_visible_content_row: None,
             track_content_length: false,
             full_grid_clear_behavior: FullGridClearBehavior::Scroll,
@@ -1649,7 +1658,7 @@ impl GridHandler {
     /// This should be used when you want to render the cursor, because it accounts for marked text.
     pub fn cursor_render_point(&self) -> Point {
         let cursor_point = self.cursor_point();
-        cursor_point.wrapping_add(self.columns(), self.marked_text_cell_length())
+        cursor_point.wrapping_add(self.columns(), self.marked_text_cursor_cell_offset())
     }
 
     /// Updates the cursor point to be at the provided row and column.
@@ -2705,23 +2714,30 @@ impl GridHandler {
         self.on_finish_byte_processing(&ansi::ProcessorInput::new(&[]));
     }
 
-    pub fn set_marked_text(&mut self, marked_text: &str, _selected_range: &Range<usize>) {
-        self.marked_text = Some(marked_text.to_string())
+    pub fn set_marked_text(&mut self, marked_text: &str, selected_range: &Range<usize>) {
+        self.marked_text = Some(marked_text.to_string());
+        self.marked_text_cursor_offset = selected_range.end;
     }
 
     pub fn clear_marked_text(&mut self) {
         self.marked_text = None;
+        self.marked_text_cursor_offset = 0;
     }
 
     pub fn marked_text(&self) -> Option<&str> {
         self.marked_text.as_deref()
     }
 
-    /// How many cells the marked text will occupy.
-    fn marked_text_cell_length(&self) -> usize {
+    /// Cell offset of the caret within the marked text.
+    fn marked_text_cursor_cell_offset(&self) -> usize {
         self.marked_text
             .as_ref()
-            .map(|s| s.chars().map(|c| c.width().unwrap_or(0)).sum())
+            .map(|s| {
+                s.chars()
+                    .take(self.marked_text_cursor_offset)
+                    .map(|c| c.width().unwrap_or(0))
+                    .sum()
+            })
             .unwrap_or(0)
     }
 

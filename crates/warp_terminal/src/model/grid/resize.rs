@@ -11,6 +11,20 @@ use crate::model::grid::{Cursor, Dimensions as _};
 use crate::model::{Point, VisiblePoint, VisibleRow};
 
 impl GridHandler {
+    /// Track a displayed point while the owning terminal resizes its grids.
+    pub fn set_resize_anchor(&mut self, point: Point) {
+        let point = self.maybe_translate_point_from_displayed_to_original(point);
+        self.resize_anchor =
+            (point.row < self.total_rows() && point.col < self.columns()).then_some(point);
+    }
+
+    /// Consume the tracked point after resize and output filtering have finished.
+    pub fn take_resize_anchor(&mut self) -> Option<Point> {
+        self.resize_anchor
+            .take()
+            .map(|point| self.maybe_translate_point_from_original_to_displayed(point))
+    }
+
     /// Resize terminal to new dimensions.
     pub fn resize(&mut self, size: SizeInfo) {
         self.ansi_handler_state.cell_width = size.cell_width_px.as_f32() as usize;
@@ -79,6 +93,10 @@ impl GridHandler {
                 self.flat_storage.set_columns(num_cols);
             }
 
+            self.resize_anchor = self
+                .resize_anchor
+                .filter(|point| point.row < self.total_rows() && point.col < num_cols);
+
             return;
         }
 
@@ -109,9 +127,15 @@ impl GridHandler {
         let cursor = cursor.into_content_offset(self);
         let saved_cursor = saved_cursor.into_content_offset(self);
         let max_cursor = max_cursor.into_content_offset(self);
+        let anchor_offset = self
+            .resize_anchor
+            .and_then(|point| self.flat_storage.content_offset_at_point(point).ok());
+        let previously_truncated = self.num_lines_truncated();
 
         // Resize flat storage.
         self.flat_storage.set_columns(num_cols);
+        self.resize_anchor =
+            anchor_offset.and_then(|offset| self.flat_storage.content_offset_to_point(offset).ok());
 
         // If the grid is finished, don't let the number of visible rows exceed
         // the number of total rows (i.e.: if we can't pop a full num_rows
@@ -176,6 +200,11 @@ impl GridHandler {
 
         // Finally, make sure we don't have too many rows in scrollback.
         self.flat_storage.apply_max_rows();
+        let truncated = self.num_lines_truncated() - previously_truncated;
+        self.resize_anchor = self.resize_anchor.and_then(|mut point| {
+            point.row = point.row.checked_sub(truncated.try_into().ok()?)?;
+            (point.row < self.total_rows()).then_some(point)
+        });
     }
 }
 

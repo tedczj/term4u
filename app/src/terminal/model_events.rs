@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use async_channel::Receiver;
+use warp_terminal::event_listener::ClipboardRequest;
 use warpui::{Entity, ModelContext, ModelHandle};
 
 use super::event::{BootstrappedEvent, SshLoginStatus};
@@ -170,11 +171,11 @@ impl ModelEventDispatcher {
                 ModelEvent::BlockWorkingDirectoryUpdated(block_working_directory_updated_event)
             }
             Event::BackgroundBlockStarted => ModelEvent::BackgroundBlockStarted,
-            Event::ClipboardStore(clipboard_type, text) => {
-                ModelEvent::ClipboardStore(clipboard_type, text)
+            Event::ClipboardStore(clipboard_type, text, request) => {
+                ModelEvent::ClipboardStore(clipboard_type, text, request)
             }
-            Event::ClipboardLoad(clipboard_type, clipboard_load) => {
-                ModelEvent::ClipboardLoad(clipboard_type, clipboard_load)
+            Event::ClipboardLoad(clipboard_type, clipboard_load, request) => {
+                ModelEvent::ClipboardLoad(clipboard_type, clipboard_load, request)
             }
             Event::CursorBlinkingChange(is_blinking) => {
                 ModelEvent::CursorBlinkingChange(is_blinking)
@@ -302,10 +303,11 @@ pub enum ModelEvent {
     BlockWorkingDirectoryUpdated(BlockWorkingDirectoryUpdatedEvent),
     /// Sent after a background block is started and added to the block list.
     BackgroundBlockStarted,
-    ClipboardStore(ClipboardType, String),
+    ClipboardStore(ClipboardType, String, ClipboardRequest),
     ClipboardLoad(
         ClipboardType,
         Arc<dyn Fn(&str) -> String + Sync + Send + 'static>,
+        ClipboardRequest,
     ),
     CursorBlinkingChange(bool),
     TerminalClear,

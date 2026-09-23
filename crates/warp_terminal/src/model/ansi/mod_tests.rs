@@ -19,6 +19,9 @@ const DCS_END: &[u8] = &[0x9c];
 const DCS_END_7BIT: &[u8] = &[0x1b, 0x5c];
 
 struct MockHandler {
+    clipboard_writes: Vec<(u8, Vec<u8>)>,
+    clipboard_reads: Vec<(u8, String)>,
+    printed: String,
     index: CharsetIndex,
     charset: StandardCharset,
     attr: Option<Attr>,
@@ -77,7 +80,9 @@ impl Handler for MockHandler {
 
     fn set_cursor_shape(&mut self, _shape: super::CursorShape) {}
 
-    fn input(&mut self, _c: char) {}
+    fn input(&mut self, c: char) {
+        self.printed.push(c);
+    }
 
     fn goto(&mut self, _: VisibleRow, _: usize) {}
 
@@ -173,9 +178,14 @@ impl Handler for MockHandler {
 
     fn reset_color(&mut self, _: usize) {}
 
-    fn clipboard_store(&mut self, _: u8, _: &[u8]) {}
+    fn clipboard_store(&mut self, selection: u8, data: &[u8]) {
+        self.clipboard_writes.push((selection, data.to_vec()));
+    }
 
-    fn clipboard_load(&mut self, _: u8, _: &str) {}
+    fn clipboard_load(&mut self, selection: u8, terminator: &str) {
+        self.clipboard_reads
+            .push((selection, terminator.to_owned()));
+    }
 
     fn decaln(&mut self) {}
 
@@ -292,6 +302,9 @@ impl Handler for MockHandler {
 impl Default for MockHandler {
     fn default() -> MockHandler {
         MockHandler {
+            clipboard_writes: Vec::new(),
+            clipboard_reads: Vec::new(),
+            printed: String::new(),
             index: CharsetIndex::G0,
             charset: StandardCharset::Ascii,
             attr: None,
@@ -1544,4 +1557,90 @@ fn osc_completions_replacement_span_forwards_out_of_range_pair() {
     let (_, handler) = parse_bytes(payload.as_bytes());
 
     assert_eq!(handler.replacement_spans, vec![(usize::MAX, 1)]);
+}
+
+#[test]
+fn l0_07_osc52_streaming_preserves_selection_and_terminators() {
+    let mut processor = Processor::new();
+    let mut handler = MockHandler::default();
+    processor.parse_bytes(&mut handler, b"\x1b]52;", &mut io::sink());
+    processor.parse_bytes(&mut handler, b"c;bm", &mut io::sink());
+    processor.parse_bytes(&mut handler, b"V3", &mut io::sink());
+    assert!(handler.clipboard_writes.is_empty());
+    processor.parse_bytes(&mut handler, b"\x1b", &mut io::sink());
+    processor.parse_bytes(&mut handler, b"\\\x1b]52;;?\x07", &mut io::sink());
+    assert_eq!(handler.clipboard_writes, vec![(b'c', b"bmV3".to_vec())]);
+    assert_eq!(handler.clipboard_reads, vec![(b'c', "\x07".to_owned())]);
+}
+
+#[test]
+fn l0_07_osc52_rejects_compound_targets_and_extra_parameters() {
+    let (_, handler) = parse_bytes(
+        b"\x1b]52;cp;YQ==\x07\x1b]52;pc;?\x07\x1b]52;c0;?\x07\x1b]52;c;YQ==;ignored\x1b\\ok",
+    );
+    assert!(handler.clipboard_writes.is_empty());
+    assert!(handler.clipboard_reads.is_empty());
+    assert_eq!(handler.printed, "ok");
+}
+
+#[test]
+fn l0_07_osc52_rejects_oversized_encoded_data_before_dispatch() {
+    let mut processor = Processor::new();
+    let mut handler = MockHandler::default();
+    processor.parse_bytes(&mut handler, b"\x1b]52;c;", &mut io::sink());
+    processor.parse_bytes(
+        &mut handler,
+        &vec![b'A'; MAX_OSC52_ENCODED_BYTES + 4],
+        &mut io::sink(),
+    );
+    processor.parse_bytes(&mut handler, b"\x07ok", &mut io::sink());
+    assert!(handler.clipboard_writes.is_empty());
+    assert_eq!(handler.printed, "ok");
+}
+
+fn exceed_pending_osc_limit() -> (Processor, MockHandler) {
+    let mut processor = Processor::new();
+    let mut handler = MockHandler::default();
+    processor.parse_bytes(&mut handler, b"\x1b]52;c;", &mut io::sink());
+    let chunk = [b'A'; 4096];
+    for _ in 0..=MAX_PENDING_VTE_BYTES / chunk.len() {
+        processor.parse_bytes(&mut handler, &chunk, &mut io::sink());
+    }
+    assert!(processor.discarding_sequence);
+    assert_eq!(processor.state.pending_vte_bytes, 0);
+    assert!(handler.clipboard_writes.is_empty());
+    (processor, handler)
+}
+
+#[test]
+fn l0_07_unterminated_osc_is_bounded_and_recovers_after_bel() {
+    let (mut processor, mut handler) = exceed_pending_osc_limit();
+    processor.parse_bytes(&mut handler, b"\x07ok\x1b]52;c;?\x07", &mut io::sink());
+    assert!(!processor.discarding_sequence);
+    assert!(handler.clipboard_writes.is_empty());
+    assert_eq!(handler.clipboard_reads, vec![(b'c', "\x07".to_owned())]);
+    assert_eq!(handler.printed, "ok");
+}
+
+#[test]
+fn l0_07_oversized_osc_can_be_aborted_by_a_new_escape_sequence() {
+    let (mut processor, mut handler) = exceed_pending_osc_limit();
+    processor.parse_bytes(&mut handler, b"\x1b]52;c;?\x1b\\ok", &mut io::sink());
+    assert!(!processor.discarding_sequence);
+    assert_eq!(handler.clipboard_reads, vec![(b'c', "\x1b\\".to_owned())]);
+    assert_eq!(handler.printed, "ok");
+}
+
+#[test]
+fn l0_07_large_plain_output_does_not_consume_the_control_string_budget() {
+    let mut processor = Processor::new();
+    let mut handler = MockHandler::default();
+    processor.parse_bytes(
+        &mut handler,
+        &vec![b'a'; MAX_PENDING_VTE_BYTES + 1],
+        &mut io::sink(),
+    );
+    assert!(!processor.discarding_sequence);
+    assert_eq!(processor.state.pending_vte_bytes, 0);
+    assert_eq!(handler.printed.len(), MAX_PENDING_VTE_BYTES + 1);
 }

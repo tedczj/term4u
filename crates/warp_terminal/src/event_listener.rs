@@ -2,6 +2,7 @@ use std::any::Any;
 use std::sync::Arc;
 
 use async_channel::Sender;
+use parking_lot::Mutex;
 
 use crate::event::Event as TerminalEvent;
 
@@ -10,11 +11,38 @@ type SendTerminalEvent = Arc<dyn Fn(TerminalEvent) -> bool + Send + Sync>;
 type SendAppEvent = Arc<dyn Fn(AppEvent) -> bool + Send + Sync>;
 type IsTerminalEventQueueEmpty = Arc<dyn Fn() -> bool + Send + Sync>;
 
+/// Bounds decoded OSC 52 data waiting for a frontend consumer.
+pub const MAX_PENDING_CLIPBOARD_REQUESTS: usize = 8;
+
+#[derive(Default, Debug)]
+struct ClipboardQueue {
+    generation: u64,
+    session: Option<u64>,
+    pending: usize,
+}
+
+#[derive(Debug)]
+struct PendingClipboardRequest {
+    queue: Arc<Mutex<ClipboardQueue>>,
+    generation: u64,
+}
+
+impl Drop for PendingClipboardRequest {
+    fn drop(&mut self) {
+        self.queue.lock().pending -= 1;
+    }
+}
+
+/// A request keeps its queue slot until every event subscriber has released it.
+#[derive(Clone, Debug)]
+pub struct ClipboardRequest(Arc<PendingClipboardRequest>);
+
 /// A wrapper struct that emits events which originate from the PTY event loop.
 /// Instead of passing individual senders, we can pass through this struct
 /// so that users have access to all of the senders in one nicely wrapped struct.
 #[derive(Clone)]
 pub struct ChannelEventListener {
+    clipboard_queue: Arc<Mutex<ClipboardQueue>>,
     /// We have a dedicated channel for "wakeup"s because we throttle the receiver
     /// so that we can coalesce successive wakeup events during situations of high
     /// throughput (e.g. running `yes`).
@@ -48,12 +76,57 @@ impl ChannelEventListener {
         let is_terminal_event_queue_empty: IsTerminalEventQueueEmpty =
             Arc::new(move || terminal_events_tx.is_empty());
         ChannelEventListener {
+            clipboard_queue: Arc::new(Mutex::new(ClipboardQueue::default())),
             wakeups_tx,
             send_terminal_event,
             send_app_event,
             is_terminal_event_queue_empty,
             pty_reads_tx,
         }
+    }
+
+    pub fn reserve_clipboard_request(&self) -> Option<ClipboardRequest> {
+        let mut queue = self.clipboard_queue.lock();
+        if queue.pending == MAX_PENDING_CLIPBOARD_REQUESTS {
+            return None;
+        }
+        queue.pending += 1;
+        Some(ClipboardRequest(Arc::new(PendingClipboardRequest {
+            queue: self.clipboard_queue.clone(),
+            generation: queue.generation,
+        })))
+    }
+
+    pub fn clipboard_request_is_current(&self, request: &ClipboardRequest) -> bool {
+        Arc::ptr_eq(&self.clipboard_queue, &request.0.queue)
+            && self.clipboard_queue.lock().generation == request.0.generation
+    }
+
+    pub fn invalidate_clipboard_requests(&self) {
+        let mut queue = self.clipboard_queue.lock();
+        queue.generation = queue.generation.wrapping_add(1);
+    }
+
+    pub fn reset_clipboard_scope(&self) {
+        let mut queue = self.clipboard_queue.lock();
+        queue.generation = queue.generation.wrapping_add(1);
+        queue.session = None;
+    }
+
+    pub fn end_clipboard_session(&self, session: u64) {
+        let mut queue = self.clipboard_queue.lock();
+        if queue.session.is_none_or(|current| current == session) {
+            queue.generation = queue.generation.wrapping_add(1);
+            queue.session = None;
+        }
+    }
+
+    pub fn set_clipboard_session(&self, session: u64) {
+        let mut queue = self.clipboard_queue.lock();
+        if queue.session.is_some_and(|current| current != session) {
+            queue.generation = queue.generation.wrapping_add(1);
+        }
+        queue.session = Some(session);
     }
 
     #[cfg(any(test, feature = "integration_tests", feature = "test-util"))]

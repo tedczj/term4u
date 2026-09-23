@@ -72,6 +72,11 @@ pub fn wire_up_pty_controller_with_surface<T: EventLoopSender, S: TerminalSurfac
                     controller.write_bytes(bytes, ctx);
                 });
             }
+            PtyIntent::ClipboardResponse(response) => {
+                controller.update(ctx, |controller, ctx| {
+                    controller.write_clipboard_response(response, ctx);
+                });
+            }
             PtyIntent::Resize(size_update) => {
                 controller.update(ctx, |controller, ctx| {
                     controller.resize_pty(size_update, ctx);

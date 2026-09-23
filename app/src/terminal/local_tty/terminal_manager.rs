@@ -676,6 +676,7 @@ impl<S> TerminalManager<S> {
         #[cfg(windows)] event_loop_tx: mio_channel::Sender<Message>,
         ctx: &mut AppContext,
     ) -> anyhow::Result<Pty> {
+        model.lock().event_proxy.reset_clipboard_scope();
         let is_shell_debug_mode_enabled = *DebugSettings::as_ref(ctx)
             .is_shell_debug_mode_enabled
             .value();

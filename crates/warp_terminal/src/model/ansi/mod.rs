@@ -357,8 +357,17 @@ impl<'a> ProcessorInput<'a> {
     }
 }
 
+/// Maximum decoded OSC 52 clipboard payload.
+pub const MAX_OSC52_CLIPBOARD_BYTES: usize = 1024 * 1024;
+pub const MAX_OSC52_ENCODED_BYTES: usize = MAX_OSC52_CLIPBOARD_BYTES.div_ceil(3) * 4;
+
+// VTE owns the OSC buffer and exposes no per-byte OSC callback. Bound bytes between
+// performer callbacks; printable text and streamed DCS/APC do not accumulate here.
+const MAX_PENDING_VTE_BYTES: usize = 16 * 1024 * 1024;
+
 /// Internal state for VTE processor.
 struct ProcessorState {
+    pending_vte_bytes: usize,
     preceding_char: Option<char>,
     dcs_data: DcsData,
     apc_data: Vec<u8>,
@@ -369,18 +378,21 @@ struct ProcessorState {
 pub struct Processor {
     state: ProcessorState,
     parser: VteParser,
+    discarding_sequence: bool,
 }
 
 impl Default for Processor {
     fn default() -> Processor {
         Processor {
             state: ProcessorState {
+                pending_vte_bytes: 0,
                 preceding_char: None,
                 dcs_data: DcsData::default(),
                 apc_data: vec![],
                 sync_output: SyncOutputState::Inactive,
             },
             parser: VteParser::new(),
+            discarding_sequence: false,
         }
     }
 }
@@ -454,6 +466,24 @@ impl Processor {
             // improve performance: while the performer ctor is cheap, there is still a non-zero cost
             // that adds up if we do this per-byte. Implementing this is a challenge due to the fact
             // that the performer requires a mutable reference to [`ProcessorState`].
+            if self.state.pending_vte_bytes == MAX_PENDING_VTE_BYTES {
+                // Drop VTE's allocation and state without dispatching a truncated OSC.
+                self.parser = VteParser::new();
+                self.state.pending_vte_bytes = 0;
+                self.discarding_sequence = true;
+            }
+            if self.discarding_sequence {
+                match byte {
+                    // ESC starts a new escape sequence, including the ST terminator.
+                    0x1b => self.discarding_sequence = false,
+                    0x07 | 0x18 | 0x1a => {
+                        self.discarding_sequence = false;
+                        return;
+                    }
+                    _ => return,
+                }
+            }
+            self.state.pending_vte_bytes += 1;
             let mut performer = Performer::new(&mut self.state, handler, writer);
             self.parser.advance(&mut performer, byte);
             return;
@@ -734,12 +764,14 @@ where
 {
     #[inline]
     fn print(&mut self, c: char) {
+        self.state.pending_vte_bytes = 0;
         self.handler.input(c);
         self.state.preceding_char = Some(c);
     }
 
     #[inline]
     fn execute(&mut self, byte: u8) {
+        self.state.pending_vte_bytes = 0;
         match byte {
             C0::HT => self.handler.put_tab(1),
             C0::BS => self.handler.backspace(),
@@ -757,16 +789,19 @@ where
 
     #[inline]
     fn hook(&mut self, _params: &Params, intermediates: &[u8], _ignore: bool, c: char) {
+        self.state.pending_vte_bytes = 0;
         self.state.dcs_data.on_hook(intermediates, c);
     }
 
     #[inline]
     fn put(&mut self, byte: u8) {
+        self.state.pending_vte_bytes = 0;
         self.state.dcs_data.push(byte);
     }
 
     #[inline]
     fn unhook(&mut self) {
+        self.state.pending_vte_bytes = 0;
         match self.state.dcs_data.final_char {
             HEX_ENCODED_JSON_MARKER => {
                 let dcs_data_str = String::from_utf8_lossy(&self.state.dcs_data.data);
@@ -789,6 +824,7 @@ where
     // TODO replace OSC parsing with parser combinators.
     #[inline]
     fn osc_dispatch(&mut self, params: &[&[u8]], bell_terminated: bool) {
+        self.state.pending_vte_bytes = 0;
         let writer = &mut self.writer;
         let terminator = if bell_terminated { "\x07" } else { "\x1b\\" };
 
@@ -912,7 +948,7 @@ where
                     if let Ok(body) = body
                         && !body.is_empty()
                     {
-                        log::info!("Received OSC 9 notification: {}", body);
+                        log::debug!("Received OSC 9 notification");
                         self.handler.pluggable_notification(None, body);
                         return;
                     }
@@ -975,14 +1011,19 @@ where
 
             // Set clipboard.
             b"52" => {
-                if params.len() < 3 {
-                    return unhandled(params);
+                if params.len() != 3 || params[2].len() > MAX_OSC52_ENCODED_BYTES {
+                    return;
                 }
-
-                let clipboard = params[1].first().unwrap_or(&b'c');
+                // Compound or unsupported selections must not silently become the host clipboard.
+                let clipboard = match params[1] {
+                    b"" | b"c" => b'c',
+                    b"p" => b'p',
+                    b"s" => b's',
+                    _ => return,
+                };
                 match params[2] {
-                    b"?" => self.handler.clipboard_load(*clipboard, terminator),
-                    base64 => self.handler.clipboard_store(*clipboard, base64),
+                    b"?" => self.handler.clipboard_load(clipboard, terminator),
+                    base64 => self.handler.clipboard_store(clipboard, base64),
                 }
             }
 
@@ -1046,11 +1087,7 @@ where
                         })
                         .unwrap_or_default();
                     if !body.is_empty() {
-                        log::info!(
-                            "Received OSC 777 notification: title={:?}, body={}",
-                            title,
-                            body
-                        );
+                        log::debug!("Received OSC 777 notification");
                         self.handler.pluggable_notification(title, body.to_owned());
                         return;
                     }
@@ -1289,6 +1326,7 @@ where
         has_ignored_intermediates: bool,
         action: char,
     ) {
+        self.state.pending_vte_bytes = 0;
         macro_rules! unhandled {
             () => {{
                 debug!(
@@ -1539,6 +1577,7 @@ where
 
     #[inline]
     fn esc_dispatch(&mut self, intermediates: &[u8], _ignore: bool, byte: u8) {
+        self.state.pending_vte_bytes = 0;
         macro_rules! unhandled {
             () => {{
                 debug!(
@@ -1595,14 +1634,17 @@ where
     }
 
     fn apc_start(&mut self) {
+        self.state.pending_vte_bytes = 0;
         self.state.apc_data.clear();
     }
 
     fn apc_put(&mut self, byte: u8) {
+        self.state.pending_vte_bytes = 0;
         self.state.apc_data.push(byte);
     }
 
     fn apc_end(&mut self) {
+        self.state.pending_vte_bytes = 0;
         let first_byte = match self.state.apc_data.first() {
             Some(&first_byte) => first_byte,
             None => return,

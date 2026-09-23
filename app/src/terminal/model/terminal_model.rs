@@ -20,6 +20,7 @@ use warp_terminal::model::{KeyboardModes, KeyboardModesApplyBehavior};
 use warpui::assets::asset_cache::Asset;
 use warpui::r#async::executor::Background;
 use warpui::image_cache::ImageType;
+use warpui::notification::UserNotification;
 
 use super::super::{AltScreen, BlockList};
 use super::ansi::{BootstrappedValue, FinishUpdateValue, InputBufferValue, Mode, PendingHook};
@@ -50,7 +51,7 @@ use crate::terminal::event::{
     BootstrappedEvent, Event, ExecutedExecutorCommandEvent, InitSubshellEvent,
     SourcedRcFileInSubshellEvent, SshLoginStatus, TerminalMode,
 };
-use crate::terminal::event_listener::ChannelEventListener;
+use crate::terminal::event_listener::{ChannelEventListener, ClipboardRequest};
 pub use crate::terminal::history::HistoryEntry;
 use crate::terminal::model::ansi::{
     ClearValue, CommandFinishedValue, CompletionMetadata, ExitShellValue, Handler, InitShellValue,
@@ -1091,7 +1092,12 @@ impl TerminalModel {
         self.ignore_bootstrapping_messages = true;
     }
 
+    pub(crate) fn clipboard_request_is_current(&self, request: &ClipboardRequest) -> bool {
+        !self.handled_exit && self.event_proxy.clipboard_request_is_current(request)
+    }
+
     pub fn exit(&mut self, reason: ExitReason) {
+        self.event_proxy.invalidate_clipboard_requests();
         // If we've already responded to the shell/event loop exiting, there's
         // nothing more to do.
         if self.handled_exit {
@@ -1796,6 +1802,9 @@ impl TerminalModel {
 
     /// Applies prompt metadata through the normal once-per-block path.
     fn apply_precmd_to_fresh_block(&mut self, data: PromptMetadata) {
+        if let Some(session) = data.session_id {
+            self.event_proxy.set_clipboard_session(session);
+        }
         self.ignore_bootstrapping_messages = false;
         let session_id = data.session_id;
         let mut env_vars = HashMap::new();
@@ -2204,6 +2213,7 @@ impl ansi::Handler for TerminalModel {
     }
 
     fn reset_state(&mut self) {
+        self.event_proxy.invalidate_clipboard_requests();
         self.title_stack = Vec::new();
         self.title = None;
 
@@ -2521,6 +2531,8 @@ impl ansi::Handler for TerminalModel {
     }
 
     fn exit_shell(&mut self, data: ExitShellValue) {
+        self.event_proxy
+            .end_clipboard_session(data.session_id.as_u64());
         log::info!(
             "Received ExitShell hook from shell for session_id: {:?}",
             data.session_id
@@ -2543,6 +2555,8 @@ impl ansi::Handler for TerminalModel {
                 self.commit_lifecycle_transition(&transition);
                 return;
             }
+            self.event_proxy
+                .set_clipboard_session(data.session_id.as_u64());
             let subshell_info = if data.is_subshell {
                 let was_triggered_by_rc_file_snippet =
                     self.did_receive_rc_file_dcs.take().unwrap_or(false);
@@ -3050,6 +3064,17 @@ impl ansi::Handler for TerminalModel {
 
     fn pluggable_notification(&mut self, title: Option<String>, body: String) {
         if FeatureFlag::PluggableNotifications.is_enabled() {
+            // Bound each queued event before handing terminal-controlled text to the GUI.
+            let title = title.map(|title| {
+                title
+                    .chars()
+                    .take(UserNotification::MAX_TITLE_LENGTH)
+                    .collect()
+            });
+            let body = body
+                .chars()
+                .take(UserNotification::MAX_BODY_LENGTH)
+                .collect();
             self.event_proxy
                 .send_app_event(Event::PluggableNotification { title, body });
         }

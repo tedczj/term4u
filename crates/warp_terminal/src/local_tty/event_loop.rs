@@ -17,10 +17,10 @@ use parking_lot::{FairMutex, FairMutexGuard};
 
 use super::mio_channel::Receiver;
 use crate::event::ExitReason;
-use crate::event_listener::ChannelEventListener;
+use crate::event_listener::{ChannelEventListener, ClipboardRequest};
 use crate::local_tty;
 use crate::model::ansi;
-use crate::writeable_pty::Message;
+use crate::writeable_pty::{ClipboardResponse, Message};
 
 /// The size of the buffer to read data into from the PTY.
 const READ_BUFFER_SIZE: usize = 0x4_0000;
@@ -58,6 +58,7 @@ pub struct EventLoop<P: local_tty::EventedPty, M: ActiveTerminal> {
 /// Helper type which tracks how much of a buffer has been written.
 struct Writing {
     source: Cow<'static, [u8]>,
+    clipboard_request: Option<ClipboardRequest>,
     written: usize,
 }
 
@@ -66,7 +67,7 @@ struct Writing {
 /// Contains list of items to write, current write state, etc. Anything that
 /// would otherwise be mutated on the `EventLoop` goes here.
 pub struct State {
-    write_list: VecDeque<Cow<'static, [u8]>>,
+    write_list: VecDeque<Writing>,
     writing: Option<Writing>,
     parser: ansi::Processor,
 }
@@ -91,7 +92,7 @@ impl State {
 
     #[inline]
     fn goto_next(&mut self) {
-        self.writing = self.write_list.pop_front().map(Writing::new);
+        self.writing = self.write_list.pop_front();
     }
 
     #[inline]
@@ -115,6 +116,15 @@ impl Writing {
     fn new(c: Cow<'static, [u8]>) -> Writing {
         Writing {
             source: c,
+            clipboard_request: None,
+            written: 0,
+        }
+    }
+
+    fn clipboard(response: ClipboardResponse) -> Self {
+        Self {
+            source: response.bytes,
+            clipboard_request: Some(response.request),
             written: 0,
         }
     }
@@ -167,7 +177,10 @@ where
     fn drain_recv_channel(&mut self, state: &mut State) -> ChannelResult {
         while let Ok(msg) = self.rx.try_recv() {
             match msg {
-                Message::Input(input) => state.write_list.push_back(input),
+                Message::Input(input) => state.write_list.push_back(Writing::new(input)),
+                Message::ClipboardResponse(response) => {
+                    state.write_list.push_back(Writing::clipboard(response))
+                }
                 Message::Shutdown => {
                     return ChannelResult::TerminateLoop {
                         child_exited: false,
@@ -260,7 +273,7 @@ where
             if !terminal_response_sequences.is_empty() {
                 state
                     .write_list
-                    .push_back(Cow::Owned(terminal_response_sequences));
+                    .push_back(Writing::new(Cow::Owned(terminal_response_sequences)));
             }
 
             bytes_processed += bytes_in_buffer;
@@ -286,43 +299,7 @@ where
 
     #[inline]
     fn pty_write(&mut self, state: &mut State, can_write: &mut bool) -> io::Result<()> {
-        state.ensure_next();
-
-        'write_many: while let Some(mut current) = state.take_current() {
-            'write_one: loop {
-                match self.pty.writer().write(current.remaining_bytes()) {
-                    Ok(0) => {
-                        state.set_current(Some(current));
-                        // We never attempt to write an empty buffer, so if we
-                        // get 0 here, it means the object is unable to receive
-                        // writes.
-                        *can_write = false;
-                        break 'write_many;
-                    }
-                    Ok(n) => {
-                        current.advance(n);
-                        if current.finished() {
-                            state.goto_next();
-                            break 'write_one;
-                        }
-                    }
-                    Err(err) => {
-                        state.set_current(Some(current));
-                        match err.kind() {
-                            ErrorKind::Interrupted | ErrorKind::WouldBlock => {
-                                if err.kind() == ErrorKind::WouldBlock {
-                                    *can_write = false;
-                                }
-                                break 'write_many;
-                            }
-                            _ => return Err(err),
-                        }
-                    }
-                }
-            }
-        }
-
-        Ok(())
+        write_pending(state, self.pty.writer(), &self.event_listener, can_write)
     }
 
     pub fn spawn(mut self) -> JoinHandle<()> {
@@ -389,7 +366,7 @@ where
                         if !terminal_response_sequences.is_empty() {
                             state
                                 .write_list
-                                .push_back(Cow::Owned(terminal_response_sequences));
+                                .push_back(Writing::new(Cow::Owned(terminal_response_sequences)));
                         }
                     }
 
@@ -497,3 +474,60 @@ where
             .expect("thread spawn works")
     }
 }
+
+fn write_pending(
+    state: &mut State,
+    writer: &mut impl Write,
+    listener: &ChannelEventListener,
+    can_write: &mut bool,
+) -> io::Result<()> {
+    state.ensure_next();
+
+    'write_many: while let Some(mut current) = state.take_current() {
+        'write_one: loop {
+            if current
+                .clipboard_request
+                .as_ref()
+                .is_some_and(|request| !listener.clipboard_request_is_current(request))
+            {
+                state.goto_next();
+                break 'write_one;
+            }
+            match writer.write(current.remaining_bytes()) {
+                Ok(0) => {
+                    state.set_current(Some(current));
+                    // We never attempt to write an empty buffer, so if we
+                    // get 0 here, it means the object is unable to receive
+                    // writes.
+                    *can_write = false;
+                    break 'write_many;
+                }
+                Ok(n) => {
+                    current.advance(n);
+                    if current.finished() {
+                        state.goto_next();
+                        break 'write_one;
+                    }
+                }
+                Err(err) => {
+                    state.set_current(Some(current));
+                    match err.kind() {
+                        ErrorKind::Interrupted | ErrorKind::WouldBlock => {
+                            if err.kind() == ErrorKind::WouldBlock {
+                                *can_write = false;
+                            }
+                            break 'write_many;
+                        }
+                        _ => return Err(err),
+                    }
+                }
+            }
+        }
+    }
+
+    Ok(())
+}
+
+#[cfg(test)]
+#[path = "event_loop_tests.rs"]
+mod tests;

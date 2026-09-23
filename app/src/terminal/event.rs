@@ -5,6 +5,7 @@ use std::time::Duration;
 
 use instant::Instant;
 pub use warp_terminal::event::{ExecutedExecutorCommandEvent, ParseGeneratorOutputError};
+use warp_terminal::event_listener::ClipboardRequest;
 use warp_util::lazy::Lazy;
 
 use super::history::HistoryEntry;
@@ -51,10 +52,11 @@ pub enum Event {
     BlockWorkingDirectoryUpdated(BlockWorkingDirectoryUpdatedEvent),
     /// Sent after a background block is started and added to the block list.
     BackgroundBlockStarted,
-    ClipboardStore(ClipboardType, String),
+    ClipboardStore(ClipboardType, String, ClipboardRequest),
     ClipboardLoad(
         ClipboardType,
         Arc<dyn Fn(&str) -> String + Sync + Send + 'static>,
+        ClipboardRequest,
     ),
     CursorBlinkingChange(bool),
     TerminalClear,
@@ -135,11 +137,11 @@ impl From<warp_terminal::event::Event> for Event {
     fn from(event: warp_terminal::event::Event) -> Self {
         match event {
             warp_terminal::event::Event::MouseCursorDirty => Self::MouseCursorDirty,
-            warp_terminal::event::Event::ClipboardStore(clipboard, text) => {
-                Self::ClipboardStore(clipboard, text)
+            warp_terminal::event::Event::ClipboardStore(clipboard, text, request) => {
+                Self::ClipboardStore(clipboard, text, request)
             }
-            warp_terminal::event::Event::ClipboardLoad(clipboard, load) => {
-                Self::ClipboardLoad(clipboard, load)
+            warp_terminal::event::Event::ClipboardLoad(clipboard, load, request) => {
+                Self::ClipboardLoad(clipboard, load, request)
             }
             warp_terminal::event::Event::CursorBlinkingChange(blinking) => {
                 Self::CursorBlinkingChange(blinking)
@@ -397,8 +399,8 @@ impl Debug for Event {
             Event::BackgroundBlockStarted => write!(f, "BackgroundBlockStarted"),
             Event::VisibleBootstrapBlock => write!(f, "VisibleBootstrapBlock"),
             Event::Title(title) => write!(f, "Title({title})"),
-            Event::ClipboardStore(_, _) => write!(f, "ClipboardStore(<redacted>)"),
-            Event::ClipboardLoad(_, _) => write!(f, "ClipboardLoad()"),
+            Event::ClipboardStore(_, _, _) => write!(f, "ClipboardStore(<redacted>)"),
+            Event::ClipboardLoad(_, _, _) => write!(f, "ClipboardLoad()"),
             Event::TerminalClear => write!(f, "TerminalClear"),
             Event::Bell => write!(f, "Bell"),
             Event::Exit { reason } => write!(f, "Exit({reason:?})"),

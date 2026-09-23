@@ -261,7 +261,7 @@ pub fn test_cursor_display_point_not_clipped_when_trimming_disabled() {
     block_grid.input('c');
     block_grid
         .grid_handler_mut()
-        .set_marked_text("12345678", &(0..0));
+        .set_marked_text("12345678", &(8..8));
 
     assert_eq!(block_grid.len_displayed(), 1);
     assert_eq!(

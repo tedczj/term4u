@@ -1,12 +1,14 @@
 use std::borrow::Cow;
 
 use crate::SizeInfo;
+use crate::event_listener::ClipboardRequest;
 
 /// Messages that may be sent to the `EventLoop`.
 #[derive(Debug)]
 pub enum Message {
     /// Data that should be written to the PTY.
     Input(Cow<'static, [u8]>),
+    ClipboardResponse(ClipboardResponse),
 
     /// Indicates that the `EventLoop` should be shut down.
     Shutdown,
@@ -20,4 +22,17 @@ pub enum Message {
 
     /// Instruction to resize the PTY.
     Resize(SizeInfo),
+}
+
+/// An authorized clipboard reply, revalidated at the final PTY write boundary.
+#[derive(Clone)]
+pub struct ClipboardResponse {
+    pub bytes: Cow<'static, [u8]>,
+    pub request: ClipboardRequest,
+}
+
+impl std::fmt::Debug for ClipboardResponse {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("ClipboardResponse(<redacted>)")
+    }
 }

@@ -568,6 +568,14 @@ impl<T: EventLoopSender> PtyController<T> {
         );
     }
 
+    pub fn write_clipboard_response(
+        &self,
+        response: warp_terminal::writeable_pty::ClipboardResponse,
+        ctx: &mut ModelContext<Self>,
+    ) {
+        self.send_message_to_event_loop(Message::ClipboardResponse(response), ctx);
+    }
+
     /// Shuts down the pty and event loop.
     pub fn shutdown_pty(&mut self, ctx: &mut ModelContext<Self>) {
         self.send_message_to_event_loop(Message::Shutdown, ctx);

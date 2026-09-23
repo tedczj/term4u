@@ -2,6 +2,7 @@ use std::borrow::Cow;
 
 use async_channel::Sender;
 use warp_completer::meta::Span;
+use warp_terminal::writeable_pty::ClipboardResponse;
 #[cfg(unix)]
 use warpui::AppContext;
 use warpui::{Entity, ViewContext};
@@ -26,6 +27,7 @@ pub enum PtyIntent {
     Interrupt,
     ShutdownPty,
     WriteBytes(Cow<'static, [u8]>),
+    ClipboardResponse(ClipboardResponse),
     Resize(SizeUpdate),
     ExecuteCommand(ExecuteCommandEvent),
     RunNativeShellCompletions {
