@@ -2,7 +2,7 @@ name: Term4u L0 macOS Apple Silicon
 
 on:
   push:
-    branches: [dev-20260920]
+    branches: [main, dev-20260920, 'dev-*-l0']
   workflow_dispatch:
 
 permissions:
@@ -45,7 +45,7 @@ jobs:
         with:
           name: l0-source-${{ github.sha }}
           path: verification/ci-l0/
-          retention-days: 3
+          retention-days: 7
           if-no-files-found: error
 
       - name: Materialize retained macOS LFS resources
@@ -155,5 +155,5 @@ jobs:
         with:
           name: l0-verification-${{ github.sha }}
           path: verification/ci-l0/
-          retention-days: 7
+          retention-days: 30
           if-no-files-found: error
