@@ -1212,6 +1212,29 @@ impl BlockList {
         None
     }
 
+    /// Collapses only completed output; the command remains available to expand it again.
+    /// All callers, including Find, use this path so the height index and clear gap stay in sync.
+    pub fn set_block_output_collapsed(&mut self, block_id: &BlockId, collapsed: bool) -> bool {
+        let Some(index) = self.block_index_for_id(block_id) else {
+            return false;
+        };
+        if index == self.active_block_index() {
+            return false;
+        }
+        let block = &mut self.blocks[index.0];
+        if block.is_executing()
+            || block.should_hide_command_grid()
+            || block.command_to_string().trim().is_empty()
+            || block.should_hide_output_grid() == collapsed
+        {
+            return false;
+        }
+        block.set_should_hide_output_grid(collapsed);
+        self.update_block_height_at_idx(index);
+        self.event_proxy.send_wakeup_event();
+        true
+    }
+
     pub fn unhide_block(&mut self, block_id: &BlockId) {
         if let Some(block) = self.mut_block_from_id(block_id) {
             block.unhide();
