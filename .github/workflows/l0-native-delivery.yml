@@ -1,0 +1,130 @@
+name: L0 scoped native delivery
+on:
+  push:
+    branches: [dev-20260924-l0-delivery]
+permissions:
+  contents: read
+concurrency:
+  group: l0-scoped-native-delivery
+  cancel-in-progress: false
+jobs:
+  deliver:
+    runs-on: macos-26
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    outputs:
+      candidate: ${{ steps.publish.outputs.candidate }}
+    env:
+      GIT_LFS_SKIP_SMUDGE: '1'
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      - name: Prepare pinned formatter
+        run: rustup toolchain install 1.92.0 --profile minimal --component rustfmt
+      - name: Verify, apply, format and publish the reviewed patch
+        id: publish
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import base64, gzip, hashlib, io, json, os, pathlib, re, subprocess
+          def git(*args):
+              return subprocess.check_output(['git', *args], text=True).strip()
+          assert os.environ['GITHUB_REF'] == 'refs/heads/dev-20260924-l0-delivery'
+          spec = json.loads(pathlib.Path('.github/l0-delivery.json').read_text())
+          assert spec['target'] == 'dev-20260924-l0'
+          assert re.fullmatch('[0-9a-f]{40}', spec['base'])
+          paths = spec['paths']
+          assert paths and len(paths) == len(set(paths))
+          for path in paths:
+              p = pathlib.PurePosixPath(path)
+              assert not p.is_absolute() and '..' not in p.parts
+              assert p.parts[0] in {'app', 'crates', 'docs', 'script', 'test-data', 'verification'}
+              assert path not in {'test-data/localization/phase1-before.txt', 'test-data/localization/deleted-test-ids.txt'}
+              assert 'migrations' not in p.parts
+          packed = base64.b64decode(spec['patch_gzip_base64'], validate=True)
+          with gzip.GzipFile(fileobj=io.BytesIO(packed)) as stream:
+              patch = stream.read(2 * 1024 * 1024 + 1)
+          assert len(patch) <= 2 * 1024 * 1024
+          assert hashlib.sha256(patch).hexdigest() == spec['sha256']
+          patch_path = pathlib.Path(os.environ['RUNNER_TEMP']) / 'reviewed-l0.patch'
+          patch_path.write_bytes(patch)
+          git('fetch', 'origin', spec['target'])
+          actual = git('rev-parse', 'FETCH_HEAD')
+          assert actual == spec['base'], f'Branch moved: expected {spec["base"]}, got {actual}'
+          git('checkout', '--detach', actual)
+          subprocess.run(['git', 'apply', '--check', '--whitespace=error', str(patch_path)], check=True)
+          subprocess.run(['git', 'apply', '--index', '--whitespace=error', str(patch_path)], check=True)
+          changed = set(git('diff', '--cached', '--name-only').splitlines())
+          assert changed == set(paths), (changed, paths)
+          subprocess.run(['cargo', '+1.92.0', 'fmt', '--all'], check=True)
+          changed |= set(git('diff', '--name-only').splitlines())
+          assert changed <= set(paths), f'Formatter changed undeclared paths: {changed - set(paths)}'
+          subprocess.run(['git', 'add', '--', *paths], check=True)
+          subprocess.run(['git', 'diff', '--cached', '--check'], check=True)
+          git('config', 'user.name', 'github-actions[bot]')
+          git('config', 'user.email', '41898282+github-actions[bot]@users.noreply.github.com')
+          git('commit', '-m', spec['message'])
+          candidate = git('rev-parse', 'HEAD')
+          tree = git('rev-parse', 'HEAD^{tree}')
+          # A normal fast-forward push refuses any concurrent target-branch change.
+          subprocess.run(['git', 'push', 'origin', f'HEAD:refs/heads/{spec["target"]}'], check=True)
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as out:
+              out.write(f'candidate={candidate}\n')
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as out:
+              out.write(f'Base: `{actual}`\n\nPatch SHA256: `{spec["sha256"]}`\n\nCandidate: `{candidate}`\n\nTree: `{tree}`\n\nFormatting completed; product tests are reported separately.\n')
+          print('Published candidate', candidate, 'tree', tree)
+          PY
+  native-validation:
+    needs: deliver
+    runs-on: macos-26
+    timeout-minutes: 90
+    permissions:
+      contents: read
+    env:
+      CARGO_BUILD_JOBS: 3
+      CARGO_TERM_COLOR: always
+      RUSTFLAGS: -C debuginfo=line-tables-only --cfg=web_sys_unstable_apis
+      WARPUI_USE_REAL_DISPLAY_IN_INTEGRATION_TESTS: '1'
+      WARP_SHELL_PATH: /bin/zsh
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          ref: ${{ needs.deliver.outputs.candidate }}
+          persist-credentials: false
+      - name: Record candidate and materialize retained resources
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(uname -m)" = arm64
+          mkdir -p verification/ci-l0
+          git rev-parse HEAD > verification/ci-l0/source-head.txt
+          sw_vers > verification/ci-l0/platform.txt
+          GIT_LFS_SKIP_SMUDGE=1 git archive --format=tar.gz HEAD > verification/ci-l0/candidate-source.tar.gz
+          git lfs install --local
+          git lfs pull --exclude='crates/input_classifier/models/**,*.pdb'
+          ./script/macos/install_build_deps
+          HOMEBREW_NO_AUTO_UPDATE=1 brew install protobuf fish bash
+      - uses: taiki-e/install-action@16b05812d776ae1dfaabc8277e421fb6d2506419
+        with:
+          tool: nextest
+      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32
+        with:
+          cache-on-failure: true
+      - name: Native compile and focused L0 tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          cargo check --locked -p warp --all-targets --tests --no-default-features --features local_only 2>&1 | tee verification/ci-l0/gui-check.log
+          cargo nextest run --locked --no-fail-fast -p warp --no-default-features --features local_only,test-util -E 'test(l0_)' 2>&1 | tee verification/ci-l0/l0-tests.log
+          cargo nextest run --locked --no-fail-fast -p warp --no-default-features --features local_only,test-util 2>&1 | tee verification/ci-l0/app-tests.log
+          cargo clippy --locked -p warp --all-targets --tests --no-default-features --features local_only -- -D warnings 2>&1 | tee verification/ci-l0/clippy-local.log
+          ./script/test_inventory 2>&1 | tee verification/ci-l0/inventory.log
+      - name: Preserve source and native results
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: l0-native-${{ needs.deliver.outputs.candidate }}
+          path: verification/ci-l0/
+          retention-days: 30
+          if-no-files-found: error
