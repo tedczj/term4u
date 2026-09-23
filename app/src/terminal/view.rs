@@ -1,17 +1,22 @@
 mod action;
 mod context_menu;
 pub mod init;
+mod link_detection;
 mod local_io;
-
+mod scroll;
 use std::borrow::Cow;
+use std::cell::RefCell;
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
 
 pub use action::TerminalAction;
 use async_channel::{Receiver, Sender};
+use instant::Instant;
+use local_io::NotificationKind;
 use parking_lot::FairMutex;
 use pathfinder_geometry::vector::Vector2F;
+use sum_tree::SeekBias;
 use vec1::vec1;
 use warp_completer::meta::Span;
 use warp_core::semantic_selection::SemanticSelection;
@@ -25,6 +30,7 @@ use warpui::elements::{
 };
 use warpui::ui_components::components::{UiComponent, UiComponentStyles};
 use warpui::units::{IntoLines, IntoPixels, Lines};
+use warpui::windowing::WindowManager;
 use warpui::{
     AppContext, Element, Entity, EntityId, FocusContext, ModelHandle, SingletonEntity,
     TypedActionView, View, ViewContext, ViewHandle,
@@ -58,13 +64,16 @@ use crate::pane_group::focus_state::PaneFocusHandle;
 use crate::pane_group::pane::view;
 use crate::pane_group::{BackingView, PaneConfiguration, PaneEvent, SplitPaneState};
 use crate::session_management::{CommandContext, SessionNavigationPromptElements};
-use crate::settings::EnforceMinimumContrast;
+use crate::settings::{AppEditorSettings, EnforceMinimumContrast};
 use crate::terminal::event::BlockCompletedEvent;
 use crate::terminal::input::Event as InputEvent;
 use crate::terminal::model::block::SerializedBlock;
-use crate::terminal::model::blocks::{BlockHeightItem, BlockListPoint, TotalIndex};
+use crate::terminal::model::blocks::{
+    BlockHeight, BlockHeightItem, BlockHeightSummary, BlockListPoint,
+};
 use crate::terminal::model::index::Point;
 use crate::terminal::model::terminal_model::{BlockIndex, WithinBlock};
+use crate::terminal::session_settings::SessionSettings;
 use crate::terminal::shell::ShellType;
 use crate::terminal::{GridType, context_menu_offset, should_right_click_paste};
 use crate::throttle::throttle;
@@ -100,6 +109,7 @@ pub enum Event {
     WriteBytesToPty {
         bytes: Cow<'static, [u8]>,
     },
+    ClipboardResponse(warp_terminal::writeable_pty::ClipboardResponse),
     Resize {
         size_update: SizeUpdate,
     },
@@ -144,6 +154,9 @@ impl PtyIntentEvent for Event {
             Event::InterruptPty => None,
             Event::ShutdownPty => Some(PtyIntent::ShutdownPty),
             Event::WriteBytesToPty { bytes } => Some(PtyIntent::WriteBytes(bytes.clone())),
+            Event::ClipboardResponse(response) => {
+                Some(PtyIntent::ClipboardResponse(response.clone()))
+            }
             Event::Resize { size_update } => Some(PtyIntent::Resize(*size_update)),
             Event::ExecuteCommand(event) => Some(PtyIntent::ExecuteCommand(event.clone())),
             Event::RunNativeShellCompletions {
@@ -204,7 +217,8 @@ pub struct TerminalViewRenderContext {
     pub highlighted_url: Option<Link>,
     pub link_tool_tip: Option<Link>,
     pub is_terminal_focused: bool,
-    pub is_terminal_selecting: bool,
+    pub cursor_blink_epoch: Option<Instant>,
+    pub selection_dragging: Arc<AtomicBool>,
     pub pane_state: SplitPaneState,
     pub active_session_state: ActiveSessionState,
     pub terminal_view_id: EntityId,
@@ -220,6 +234,7 @@ pub struct TerminalView {
     resize_tx: Sender<Vector2F>,
     transcript_scroll: ClippedScrollStateHandle,
     transcript_height: f32,
+    reading_position: RefCell<Option<scroll::ScrollSnapshot>>,
     scroll_after_clear: bool,
     find_model: ModelHandle<TerminalFindModel>,
     find_bar: ViewHandle<Find<TerminalFindModel>>,
@@ -245,6 +260,7 @@ pub struct TerminalView {
     position_id: String,
     local_io: local_io::LocalIoState,
     file_drop_active: bool,
+    links: link_detection::LinkState,
 }
 
 /// Which part of a block the transcript context menu copies.
@@ -273,6 +289,21 @@ impl TerminalView {
         model.lock().block_list_mut().set_next_gap_height_in_lines(
             (size_info.pane_height_px as f64 / size_info.cell_height_px().as_f32() as f64)
                 .into_lines(),
+        );
+        let mut clipboard_access =
+            *super::settings::TerminalSettings::as_ref(ctx).osc52_clipboard_access;
+        ctx.subscribe_to_model(
+            &super::settings::TerminalSettings::handle(ctx),
+            move |view, _, _, ctx| {
+                let access = *super::settings::TerminalSettings::as_ref(ctx).osc52_clipboard_access;
+                if clipboard_access != access {
+                    clipboard_access = access;
+                    view.model
+                        .lock()
+                        .event_proxy
+                        .invalidate_clipboard_requests();
+                }
+            },
         );
         let input = ctx.add_typed_action_view(Input::new);
         ctx.subscribe_to_view(&input, |view, _, event, ctx| {
@@ -310,6 +341,14 @@ impl TerminalView {
             |view, _, ctx| view.handle_wakeup(None, ctx),
             |_, _| {},
         );
+        ctx.subscribe_to_model(&AppEditorSettings::handle(ctx), |view, _, _, ctx| {
+            view.local_io.reset_cursor_blink();
+            ctx.notify();
+        });
+        ctx.subscribe_to_model(&WindowManager::handle(ctx), |view, _, _, ctx| {
+            view.local_io.reset_cursor_blink();
+            ctx.notify();
+        });
         let (resize_tx, resize_rx) = async_channel::unbounded();
         ctx.spawn_stream_local(resize_rx, Self::after_layout, |_, _| {});
         Self {
@@ -320,6 +359,7 @@ impl TerminalView {
             resize_tx,
             transcript_scroll: ClippedScrollStateHandle::default(),
             transcript_height: 0.,
+            reading_position: RefCell::new(None),
             scroll_after_clear: false,
             find_model,
             find_bar,
@@ -345,6 +385,7 @@ impl TerminalView {
             position_id: format!("terminal_content_{}", ctx.view_id()),
             local_io: local_io::LocalIoState::default(),
             file_drop_active: false,
+            links: link_detection::LinkState::default(),
         }
     }
 
@@ -432,6 +473,21 @@ impl TerminalView {
         self.current_working_directory(app)
     }
 
+    /// Keeps the block's origin attached to snapshots after its live session has gone away.
+    pub(crate) fn serialize_block(
+        &self,
+        block: &super::model::block::Block,
+        app: &AppContext,
+    ) -> SerializedBlock {
+        let mut serialized = SerializedBlock::from(block);
+        serialized.is_local = block
+            .session_id()
+            .and_then(|id| self.sessions.as_ref(app).get(id))
+            .map(|session| session.is_local())
+            .or(block.restored_block_was_local());
+        serialized
+    }
+
     pub fn selected_text_from_input(&self, app: &AppContext) -> Option<String> {
         let text = self
             .input
@@ -478,7 +534,7 @@ impl TerminalView {
     pub fn clear_orchestration_split_off(&mut self, _: &mut ViewContext<Self>) {}
 
     pub fn has_highlighted_link(&self) -> bool {
-        false
+        self.links.highlighted.is_some()
     }
 
     pub fn mark_as_visible(&mut self) {
@@ -493,19 +549,14 @@ impl TerminalView {
         self.size_info
     }
 
-    pub fn dismiss_tooltips(&mut self, _: &mut ViewContext<Self>) {}
+    pub fn dismiss_tooltips(&mut self, ctx: &mut ViewContext<Self>) {
+        self.clear_link(ctx);
+    }
 
     pub fn shell_indicator_type(&self) -> Option<crate::shell_indicator::ShellIndicatorType> {
         self.active_shell_launch_data
             .as_ref()
             .and_then(|launch_data| launch_data.try_into().ok())
-    }
-
-    pub fn show_notification_error(
-        &mut self,
-        _: warpui::notification::NotificationSendError,
-        _: &mut ViewContext<Self>,
-    ) {
     }
 
     pub fn full_prompt(&self, app: &AppContext) -> String {
@@ -643,6 +694,7 @@ impl TerminalView {
     }
 
     pub fn focus(&mut self, ctx: &mut ViewContext<Self>) {
+        self.local_io.reset_cursor_blink();
         if self.context_menu_state.is_some() {
             ctx.focus(&self.context_menu);
             return;
@@ -750,6 +802,7 @@ impl TerminalView {
     }
 
     fn handle_model_event(&mut self, event: &ModelEvent, ctx: &mut ViewContext<Self>) {
+        self.invalidate_changed_link(ctx);
         match event {
             ModelEvent::Handler(AnsiHandlerEvent::Bootstrapped { .. }) => {
                 self.input
@@ -764,17 +817,39 @@ impl TerminalView {
                     configuration.set_title(title.clone(), ctx)
                 });
             }
-            ModelEvent::BlockCompleted(BlockCompletedEvent { block_id, .. }) => {
-                if let Some(block) = self
-                    .model
-                    .lock()
-                    .block_list()
-                    .block_with_id(block_id)
-                    .map(|block| Arc::new(SerializedBlock::from(block)))
-                {
+            ModelEvent::BlockCompleted(BlockCompletedEvent {
+                block_id,
+                block_type,
+                ..
+            }) => {
+                let completed = {
+                    let model = self.model.lock();
+                    model.block_list().block_with_id(block_id).map(|block| {
+                        (
+                            Arc::new(self.serialize_block(block, ctx)),
+                            block.duration().and_then(|duration| duration.to_std().ok()),
+                        )
+                    })
+                };
+                if let Some((block, duration)) = completed {
+                    if matches!(block_type, super::event::BlockType::User(_))
+                        && duration.is_some_and(|duration| {
+                            duration
+                                >= SessionSettings::as_ref(ctx)
+                                    .notifications
+                                    .long_running_threshold
+                        })
+                    {
+                        self.send_local_notification(
+                            Some("Command completed"),
+                            "A background command has finished.",
+                            NotificationKind::CommandCompleted,
+                            ctx,
+                        );
+                    }
                     ctx.emit(Event::BlockCompleted {
+                        is_local: block.is_local.unwrap_or(false),
                         block,
-                        is_local: true,
                     });
                 }
                 if self.context_menu_state.is_none()
@@ -805,13 +880,31 @@ impl TerminalView {
                 self.model.lock().clear_marked_text();
                 ctx.emit(Event::Exited);
             }
-            ModelEvent::ClipboardStore(selection, text) => {
-                self.store_terminal_clipboard(*selection, text, ctx)
+            ModelEvent::ClipboardStore(selection, text, request) => {
+                let current = self.model.lock().clipboard_request_is_current(request);
+                if current {
+                    self.store_terminal_clipboard(*selection, text, ctx);
+                }
             }
-            ModelEvent::ClipboardLoad(selection, encode) => {
-                self.load_terminal_clipboard(*selection, encode.as_ref(), ctx)
+            ModelEvent::ClipboardLoad(selection, encode, request) => {
+                let current = self.model.lock().clipboard_request_is_current(request);
+                if current {
+                    self.load_terminal_clipboard(*selection, encode.as_ref(), request, ctx);
+                }
+            }
+            ModelEvent::CursorBlinkingChange(_) => {
+                self.local_io.reset_cursor_blink();
+                ctx.notify();
             }
             ModelEvent::Bell => self.ring_local_bell(ctx),
+            ModelEvent::PluggableNotification { title, body } => {
+                self.send_local_notification(
+                    title.as_deref(),
+                    body,
+                    NotificationKind::Attention,
+                    ctx,
+                );
+            }
             ModelEvent::BlockMetadataReceived(_)
             | ModelEvent::BlockWorkingDirectoryUpdated(_)
             | ModelEvent::BootstrapPrecmdDone => {
@@ -836,14 +929,12 @@ impl TerminalView {
             ModelEvent::Handler(_)
             | ModelEvent::AfterBlockCompleted(_)
             | ModelEvent::BackgroundBlockStarted
-            | ModelEvent::CursorBlinkingChange(_)
             | ModelEvent::VisibleBootstrapBlock
             | ModelEvent::PromptUpdated
             | ModelEvent::HonorPS1OutOfSync
             | ModelEvent::SelectedTextChanged
             | ModelEvent::ImageReceived { .. }
             | ModelEvent::AgentTaggedInChanged { .. }
-            | ModelEvent::PluggableNotification { .. }
             | ModelEvent::FinishUpdate(_)
             | ModelEvent::Typeahead
             | ModelEvent::CompletionsFinished(_, _)
@@ -894,7 +985,9 @@ impl TerminalView {
     }
 
     fn handle_wakeup(&mut self, find_match: Option<BlockGridMatch>, ctx: &mut ViewContext<Self>) {
-        let mut model = self.model.lock();
+        self.invalidate_changed_link(ctx);
+        let model_handle = self.model.clone();
+        let mut model = model_handle.lock();
         let show_input = matches!(
             model.terminal_input_state(),
             TerminalInputState::InputEditor | TerminalInputState::NotBootstrapped
@@ -913,70 +1006,36 @@ impl TerminalView {
                 .unwrap_or_default();
         }
         if !model.is_alt_screen_active() {
+            let scroll = self.capture_scroll(&model);
             model.block_list_mut().update_background_block_height();
             model.block_list_mut().update_active_block_height();
-            let follows_output = self.transcript_scroll.scroll_start().as_f32()
-                >= (self.transcript_height
-                    - self.size_info.pane_height_px
-                    - self.size_info.cell_height_px().as_f32())
-                .max(0.);
+            self.restore_scroll(scroll, &model);
 
-            let gap_rows = self.clear_gap_rows(&model);
-            let mut displayed_rows = 0;
-            let mut find_row = None;
-            for (index, block) in model.block_list().blocks().iter().enumerate() {
-                displayed_rows += gap_rows[index];
-                if !block.is_visible() {
-                    continue;
-                }
-                let command_rows = if block.should_hide_command_grid() {
-                    0
-                } else {
-                    block.prompt_and_command_grid().len_displayed()
+            let find_row = find_match.as_ref().and_then(|matched| {
+                let block_list = model.block_list();
+                let block = block_list.block_at(matched.block_index)?;
+                let grid = match matched.grid_type {
+                    GridType::Output => block.output_grid(),
+                    GridType::PromptAndCommand => block.prompt_and_command_grid(),
+                    GridType::Prompt | GridType::Rprompt => return None,
                 };
-                let output_rows = if block.should_hide_output_grid() {
-                    0
-                } else {
-                    block.output_grid().len_displayed()
-                };
-                if let Some(matched) = &find_match
-                    && matched.block_index == BlockIndex(index)
-                {
-                    for (grid_type, grid, offset) in [
-                        (
-                            GridType::PromptAndCommand,
-                            block.prompt_and_command_grid(),
-                            0,
-                        ),
-                        (GridType::Output, block.output_grid(), command_rows),
-                    ] {
-                        if matched.grid_type == grid_type {
-                            let point = grid
-                                .grid_handler()
-                                .maybe_translate_point_from_original_to_displayed(
-                                    *matched.range.start(),
-                                );
-                            find_row = Some(
-                                displayed_rows
-                                    + offset
-                                    + point.row.min(grid.len_displayed().saturating_sub(1)),
-                            );
-                        }
-                    }
-                }
-                displayed_rows += command_rows + output_rows;
-            }
-            displayed_rows += gap_rows.last().copied().unwrap_or_default();
-            self.transcript_height =
-                displayed_rows as f32 * self.size_info.cell_height_px().as_f32();
+                let point = grid
+                    .grid_handler()
+                    .maybe_translate_point_from_original_to_displayed(*matched.range.start());
+                Some(
+                    BlockListPoint::from_within_block_point(
+                        &WithinBlock::new(point, matched.block_index, matched.grid_type),
+                        block_list,
+                    )
+                    .row,
+                )
+            });
             if let Some(row) = find_row {
-                let offset = (row as f32 * self.size_info.cell_height_px().as_f32()
+                let offset = (row.as_f64() as f32 * self.size_info.cell_height_px().as_f32()
                     - self.size_info.pane_height_px / 2.)
                     .max(0.);
                 self.transcript_scroll.scroll_to(offset.into_pixels());
-            } else if follows_output {
-                self.transcript_scroll
-                    .scroll_to(self.transcript_height.into_pixels());
+                self.remember_scroll(&model);
             }
         }
         drop(model);
@@ -1021,6 +1080,7 @@ impl TerminalView {
         if new_size == self.size_info {
             return;
         }
+        self.clear_link(ctx);
         let update = SizeUpdate {
             update_reason: SizeUpdateReason::AfterLayout,
             last_size: self.size_info,
@@ -1032,63 +1092,40 @@ impl TerminalView {
             natural_cols: new_size.columns(),
         };
         {
-            let mut model = self.model.lock();
+            let model_handle = self.model.clone();
+            let mut model = model_handle.lock();
+            let mut scroll = self.capture_scroll(&model);
+            scroll.prepare_resize(&mut model);
             model
                 .block_list_mut()
                 .set_next_gap_height_in_lines(update.new_gap_height.unwrap());
             model.resize(update);
+            scroll.finish_resize(&mut model);
+            self.size_info = new_size;
+            self.restore_scroll(scroll, &model);
         }
-        self.size_info = new_size;
         ctx.emit(Event::Resize {
             size_update: update,
         });
         ctx.notify();
     }
 
-    fn clear_gap_rows(&self, model: &TerminalModel) -> Vec<usize> {
-        let mut rows = vec![0; model.block_list().blocks().len() + 1];
-        let mut following_rows = vec![0usize; rows.len()];
-        for (index, block) in model.block_list().blocks().iter().enumerate().rev() {
-            let command = if block.is_visible() && !block.should_hide_command_grid() {
-                block.prompt_and_command_grid().len_displayed()
-            } else {
-                0
-            };
-            let output = if block.is_visible() && !block.should_hide_output_grid() {
-                block.output_grid().len_displayed()
-            } else {
-                0
-            };
-            following_rows[index] = following_rows[index + 1]
-                .saturating_add(command)
-                .saturating_add(output);
-        }
-        let mut index = 0;
-        for item in model
-            .block_list()
-            .block_heights()
-            .cursor::<TotalIndex, ()>()
-        {
-            match item {
-                BlockHeightItem::Block(_) => index += 1,
-                BlockHeightItem::Gap(_) => {
-                    let viewport_rows = (self.size_info.pane_height_px
-                        / self.size_info.cell_height_px().as_f32())
-                    .ceil() as usize;
-                    rows[index] = viewport_rows.saturating_sub(following_rows[index]);
-                }
-                BlockHeightItem::RestoredBlockSeparator { .. }
-                | BlockHeightItem::InlineBanner { .. }
-                | BlockHeightItem::SubshellSeparator { .. }
-                | BlockHeightItem::RichContent(_) => {}
-            }
-        }
-        rows
-    }
-
     fn render_blocks(&self, app: &AppContext) -> Box<dyn Element> {
         let appearance = Appearance::as_ref(app);
         let model = self.model.lock();
+        if self
+            .reading_position
+            .borrow()
+            .as_ref()
+            .is_none_or(|snapshot| !snapshot.matches_scroll(self))
+        {
+            self.remember_scroll(&model);
+        }
+        let receives_native_input = !matches!(
+            model.terminal_input_state(),
+            TerminalInputState::InputEditor | TerminalInputState::NotBootstrapped
+        ) && app.focused_view_id(self.input.window_id(app))
+            == Some(self.view_id);
 
         let ranges = model
             .block_list()
@@ -1096,81 +1133,140 @@ impl TerminalView {
             .map(|ranges| ranges.into_iter().collect::<Vec<_>>())
             .unwrap_or_default();
         let mut column = Flex::column().with_cross_axis_alignment(CrossAxisAlignment::Stretch);
-        let gap_rows = self.clear_gap_rows(&model);
-        for (index, block) in model.block_list().blocks().iter().enumerate() {
-            if gap_rows[index] > 0 {
-                column.add_child(
-                    ConstrainedBox::new(Empty::new().finish())
-                        .with_height(
-                            gap_rows[index] as f32 * self.size_info.cell_height_px().as_f32(),
-                        )
-                        .finish(),
-                );
+        let cell_height = self.size_info.cell_height_px().as_f32();
+        let tree = model.block_list().block_heights();
+        let total_rows = tree.summary().height.as_f64();
+        let viewport_rows = self.size_info.pane_height_px as f64 / cell_height as f64;
+        let scroll_row = (self.transcript_scroll.scroll_start().as_f32() as f64
+            / cell_height as f64)
+            .min((total_rows - viewport_rows).max(0.));
+        let start_row = (scroll_row - 3.).max(0.);
+        let end_row = scroll_row + viewport_rows + 3.;
+        let mut cursor = tree.cursor::<BlockHeight, BlockHeightSummary>();
+        cursor.seek(&start_row.into(), SeekBias::Right);
+        let mut rendered_to = 0.;
+        while let Some(item) = cursor.item() {
+            let top = cursor.start().height.as_f64();
+            if top >= end_row {
+                break;
             }
-            if !block.is_visible() {
+            let bottom = top + item.height().as_f64();
+            let index = cursor.start().block_count;
+            #[cfg(test)]
+            viewport_tests::WORK.with(|work| work.set((work.get().0 + 1, work.get().1)));
+            // Seeking by height skips arbitrarily long runs of hidden (zero-height) blocks.
+            cursor.seek(&bottom.into(), SeekBias::Right);
+            if !matches!(item, BlockHeightItem::Block(_)) {
                 continue;
             }
+            let block = &model.block_list().blocks()[index];
             let find = self.find_model.as_ref(app).find_render_data_for_block(
                 BlockIndex(index),
                 Some(block.prompt_and_command_grid().grid_handler()),
                 Some(block.output_grid().grid_handler()),
             );
-            for (hidden, grid, grid_type) in [
+            for (hidden, grid, grid_type, grid_offset, grid_height) in [
                 (
                     block.should_hide_command_grid(),
                     block.prompt_and_command_grid(),
                     GridType::PromptAndCommand,
+                    block.prompt_and_command_grid_offset(),
+                    block.prompt_and_command_grid().len_displayed().into_lines(),
                 ),
                 (
                     block.should_hide_output_grid(),
                     block.output_grid(),
                     GridType::Output,
+                    block.output_grid_offset(),
+                    block.output_grid_displayed_height(),
                 ),
             ] {
-                if !hidden {
+                let grid_top = top + grid_offset.as_f64();
+                let grid_rows = grid_height.as_f64().min((bottom - grid_top).max(0.));
+                if !hidden
+                    && grid_rows > 0.
+                    && grid_top < end_row
+                    && grid_top + grid_rows > start_row
+                {
+                    if grid_top > rendered_to {
+                        column.add_child(
+                            ConstrainedBox::new(Empty::new().finish())
+                                .with_height((grid_top - rendered_to) as f32 * cell_height)
+                                .finish(),
+                        );
+                    }
+                    rendered_to = grid_top + grid_rows;
+                    #[cfg(test)]
+                    viewport_tests::WORK.with(|work| work.set((work.get().0, work.get().1 + 1)));
                     let first_row = BlockListPoint::from_within_block_point(
                         &WithinBlock::new(Point { row: 0, col: 0 }, BlockIndex(index), grid_type),
                         model.block_list(),
                     )
                     .row;
                     column.add_child(
-                        BlockGridElement::new(
-                            grid,
-                            appearance,
-                            EnforceMinimumContrast::default(),
-                            get_secret_obfuscation_mode(app),
-                            self.size_info,
-                        )
-                        .with_find_matches(
-                            find.as_ref()
-                                .and_then(|find| {
-                                    if grid_type == GridType::Output {
-                                        find.output_grid_matches()
-                                    } else {
-                                        find.command_grid_matches()
+                        ConstrainedBox::new(
+                            BlockGridElement::new(
+                                grid,
+                                appearance,
+                                EnforceMinimumContrast::default(),
+                                get_secret_obfuscation_mode(app),
+                                self.size_info,
+                            )
+                            .with_find_matches(
+                                find.as_ref()
+                                    .and_then(|find| {
+                                        if grid_type == GridType::Output {
+                                            find.output_grid_matches()
+                                        } else {
+                                            find.command_grid_matches()
+                                        }
+                                    })
+                                    .into_iter()
+                                    .flatten()
+                                    .cloned()
+                                    .collect(),
+                                find.as_ref()
+                                    .and_then(|find| find.focused_range_for_grid(grid_type)),
+                            )
+                            .with_link(
+                                BlockIndex(index),
+                                grid_type,
+                                self.highlighted_grid_link().and_then(|link| match link {
+                                    super::model::terminal_model::WithinModel::BlockList(link)
+                                        if link.block_index == BlockIndex(index)
+                                            && link.grid == grid_type =>
+                                    {
+                                        Some(link.inner)
                                     }
-                                })
-                                .into_iter()
-                                .flatten()
-                                .cloned()
-                                .collect(),
-                            find.as_ref()
-                                .and_then(|find| find.focused_range_for_grid(grid_type)),
+                                    _ => None,
+                                }),
+                            )
+                            .with_cursor(
+                                (receives_native_input
+                                    && BlockIndex(index)
+                                        == model.block_list().active_block_index()
+                                    && grid_type == block.active_grid_type())
+                                .then_some(self.view_id),
+                                self.native_cursor_blink_epoch(app),
+                            )
+                            .with_selection(first_row, &ranges, self.output_dragging.clone())
+                            .with_context_menu(self.position_id.clone(), BlockIndex(index))
+                            .finish(),
                         )
-                        .with_selection(first_row, &ranges, self.output_dragging.clone())
-                        .with_context_menu(self.position_id.clone(), BlockIndex(index))
+                        .with_height(grid_rows as f32 * cell_height)
                         .finish(),
                     );
                 }
             }
         }
-        if let Some(rows) = gap_rows.last().filter(|rows| **rows > 0) {
+        if total_rows > rendered_to {
             column.add_child(
                 ConstrainedBox::new(Empty::new().finish())
-                    .with_height(*rows as f32 * self.size_info.cell_height_px().as_f32())
+                    .with_height((total_rows - rendered_to) as f32 * cell_height)
                     .finish(),
             );
         }
+        drop(cursor);
         drop(model);
         ClippedScrollable::vertical_centered(
             self.transcript_scroll.clone(),
@@ -1205,13 +1301,30 @@ impl TerminalView {
             self.model.clone(),
             TerminalViewRenderContext {
                 size_info: self.size_info,
-                highlighted_url: None,
+                highlighted_url: self.highlighted_grid_link().and_then(|link| match link {
+                    super::model::terminal_model::WithinModel::AltScreen(link) => Some(link),
+                    super::model::terminal_model::WithinModel::BlockList(_) => None,
+                }),
                 link_tool_tip: None,
-                is_terminal_focused: true,
-                is_terminal_selecting: self.is_selecting,
-                pane_state: SplitPaneState::NotInSplitPane,
-                active_session_state: ActiveSessionState::Active,
-                terminal_view_id: self.input.id(),
+                is_terminal_focused: app.focused_view_id(self.input.window_id(app))
+                    == Some(self.view_id),
+                cursor_blink_epoch: self.native_cursor_blink_epoch(app),
+                selection_dragging: self.output_dragging.clone(),
+                pane_state: self
+                    .focus_handle
+                    .as_ref()
+                    .map(|handle| handle.split_pane_state(app))
+                    .unwrap_or(SplitPaneState::NotInSplitPane),
+                active_session_state: if self
+                    .focus_handle
+                    .as_ref()
+                    .is_none_or(|handle| handle.is_active_session(app))
+                {
+                    ActiveSessionState::Active
+                } else {
+                    ActiveSessionState::Inactive
+                },
+                terminal_view_id: self.view_id,
                 hovered_secret: None,
                 obfuscate_secrets: get_secret_obfuscation_mode(app),
             },
@@ -1260,7 +1373,16 @@ impl TerminalView {
         }
     }
 
+    fn native_cursor_blink_epoch(&self, app: &AppContext) -> Option<Instant> {
+        (AppEditorSettings::as_ref(app).cursor_blink_enabled()
+            && app.windows().state().active_window == Some(self.input.window_id(app))
+            && app.focused_view_id(self.input.window_id(app)) == Some(self.view_id))
+        .then(|| self.local_io.cursor_blink_epoch())
+    }
+
     fn write_bytes(&self, bytes: Vec<u8>, ctx: &mut ViewContext<Self>) {
+        self.local_io.reset_cursor_blink();
+        ctx.notify();
         ctx.emit(Event::WriteBytesToPty {
             bytes: Cow::Owned(bytes),
         });
@@ -1354,22 +1476,19 @@ impl TypedActionView for TerminalView {
                             *selection_type,
                             *side,
                         );
+                        self.links.dragged = false;
                         self.is_selecting = true;
                         ctx.focus_self();
                     }
                     SelectAction::Update { point, side, .. } => {
+                        self.links.dragged = true;
+                        self.clear_link(ctx);
                         self.model
                             .lock()
                             .block_list_mut()
                             .update_selection(*point, *side);
                     }
-                    SelectAction::End => {
-                        self.is_selecting = false;
-                        if self.selected_text(ctx).is_none_or(|text| text.is_empty()) {
-                            self.model.lock().block_list_mut().clear_selection();
-                            self.focus(ctx);
-                        }
-                    }
+                    SelectAction::End => self.handle_action(&TerminalAction::FinishSelection, ctx),
                 }
                 ctx.notify();
             }
@@ -1409,6 +1528,15 @@ impl TypedActionView for TerminalView {
             }
             TerminalAction::ClearBuffer => self.clear_buffer(ctx),
             TerminalAction::Focus => self.focus(ctx),
+            TerminalAction::FinishSelection => {
+                self.is_selecting = false;
+                self.output_dragging
+                    .store(false, std::sync::atomic::Ordering::Relaxed);
+                if self.selected_text(ctx).is_none_or(|text| text.is_empty()) {
+                    self.model.lock().block_list_mut().clear_selection();
+                }
+                self.focus(ctx);
+            }
             TerminalAction::FocusInputAndClearSelection => {
                 self.model.lock().block_list_mut().clear_selection();
                 self.focus(ctx);
@@ -1489,20 +1617,20 @@ impl TypedActionView for TerminalView {
                         *selection_type,
                         *side,
                     );
+                    self.links.dragged = false;
                     self.is_selecting = true;
                     ctx.notify();
                 }
                 SelectAction::Update { point, side, .. } => {
+                    self.links.dragged = true;
+                    self.clear_link(ctx);
                     self.model
                         .lock()
                         .alt_screen_mut()
                         .update_selection(*point, *side);
                     ctx.notify();
                 }
-                SelectAction::End => {
-                    self.is_selecting = false;
-                    ctx.notify();
-                }
+                SelectAction::End => self.handle_action(&TerminalAction::FinishSelection, ctx),
             },
             TerminalAction::AltScreenContextMenu { position } => {
                 let items = self.alt_screen_context_menu_items(ctx);
@@ -1568,15 +1696,29 @@ impl TypedActionView for TerminalView {
                 ctx.notify();
             }
             TerminalAction::ClearMarkedText => {
+                self.local_io.reset_cursor_blink();
                 self.model.lock().clear_marked_text();
                 ctx.notify();
             }
+            TerminalAction::MaybeLinkHover { position } => {
+                if !self.is_selecting {
+                    self.links.dragged = false;
+                }
+                self.hover_link(*position, None, ctx);
+            }
+            TerminalAction::ClickOnGrid {
+                position,
+                modifiers,
+            } => {
+                if self.selected_text(ctx).is_none_or(|text| text.is_empty()) {
+                    self.hover_link(Some(*position), Some(*modifiers), ctx);
+                }
+            }
+            TerminalAction::OpenGridLink { generation } => self.open_grid_link(*generation, ctx),
+            TerminalAction::MaybeDismissToolTip { .. } => self.dismiss_tooltips(ctx),
             TerminalAction::Scroll { .. }
-            | TerminalAction::ClickOnGrid { .. }
             | TerminalAction::MiddleClickOnGrid { .. }
-            | TerminalAction::MaybeDismissToolTip { .. }
-            | TerminalAction::MaybeHoverSecret
-            | TerminalAction::MaybeLinkHover => {}
+            | TerminalAction::MaybeHoverSecret => {}
         }
     }
 }
@@ -1601,7 +1743,7 @@ impl View for TerminalView {
         let output = EventHandler::new(output)
             .with_always_handle()
             .on_left_mouse_up(|ctx, _, _| {
-                ctx.dispatch_typed_action(TerminalAction::Focus);
+                ctx.dispatch_typed_action(TerminalAction::FinishSelection);
                 DispatchEventResult::StopPropagation
             })
             .finish();
@@ -1657,6 +1799,17 @@ impl View for TerminalView {
                 ),
             );
         }
+        if let Some(hint) = self.render_link_hint(app) {
+            stack.add_positioned_overlay_child(
+                hint,
+                OffsetPositioning::offset_from_parent(
+                    Vector2F::new(8., -8.),
+                    ParentOffsetBounds::ParentBySize,
+                    ParentAnchor::BottomLeft,
+                    ChildAnchor::BottomLeft,
+                ),
+            );
+        }
         if let Some(context_menu_state) = &self.context_menu_state {
             stack.add_positioned_overlay_child(
                 ChildView::new(&self.context_menu).finish(),
@@ -1689,6 +1842,11 @@ impl View for TerminalView {
     }
 
     fn on_blur(&mut self, blur: &warpui::BlurContext, ctx: &mut ViewContext<Self>) {
+        // A plain output click returns focus to this pane's input while file detection
+        // may still be running. Only leaving the pane invalidates that user action.
+        if !ctx.is_self_or_child_focused() {
+            self.clear_link(ctx);
+        }
         if blur.is_self_blurred() {
             self.invalidate_pending_paste();
             self.model.lock().clear_marked_text();
@@ -1775,3 +1933,7 @@ mod tests;
 #[cfg(test)]
 #[path = "local_interaction_tests.rs"]
 mod local_interaction_tests;
+
+#[cfg(test)]
+#[path = "view/viewport_tests.rs"]
+mod viewport_tests;

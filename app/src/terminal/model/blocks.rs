@@ -1202,6 +1202,8 @@ impl BlockList {
     pub fn toggle_visibility_of_block(&mut self, block_id: &BlockId) -> Option<bool> {
         if let Some(block) = self.mut_block_from_id(block_id) {
             let is_visible = !block.toggle_hidden();
+            let index = block.index();
+            self.update_block_height_at_idx(index);
 
             // Force a re-draw since the blocklist has changed.
             self.event_proxy.send_wakeup_event();
@@ -1213,6 +1215,8 @@ impl BlockList {
     pub fn unhide_block(&mut self, block_id: &BlockId) {
         if let Some(block) = self.mut_block_from_id(block_id) {
             block.unhide();
+            let index = block.index();
+            self.update_block_height_at_idx(index);
 
             // Force a re-draw since the blocklist has changed.
             self.event_proxy.send_wakeup_event();
@@ -1366,6 +1370,11 @@ impl BlockList {
             "Can only update height for the active block and latest background block"
         );
 
+        self.update_block_height_at_idx(block_index);
+    }
+
+    /// Updates the sumtree with the block's new height.
+    fn update_block_height_at_idx(&mut self, block_index: BlockIndex) {
         // Gaps are created via ctrl-l binding or `clear`, and shrink as more blocks are executed after.
 
         // With eg. `clear`, a block_heights re-calculation notices a difference in the total block list height after execution
@@ -2750,31 +2759,6 @@ impl BlockList {
     /// Returns the cached prompt data from the last user-executed block, if any.
     pub fn cached_prompt_data_from_last_user_block(&self) -> Option<&CachedPromptData> {
         self.cached_prompt_data.as_ref()
-    }
-
-    /// Updates the sumtree with the block's new height.
-    fn update_block_height_at_idx(&mut self, block_index: BlockIndex) {
-        if let Some(block) = self.block_at(block_index) {
-            let new_block_height = block.height().into();
-
-            self.block_heights = {
-                let mut cursor = self.block_heights.cursor::<BlockIndex, ()>();
-                // The BlockIndex dimension acts like a count rather than an index.
-                // |    block 0    |    block 1    |    block 2    | ...
-                // ^ count=0       ^ count=1       ^ count=2       ^ count=3
-                // To position the cursor at block N, we want to seek to the left
-                // of the point where count=N + 1.
-                let next_index = block_index + BlockIndex(1);
-                let mut tree_before_last_block = cursor.slice(&next_index, SeekBias::Left);
-                tree_before_last_block.push(BlockHeightItem::Block(new_block_height));
-
-                cursor.next();
-                let suffix = cursor.suffix();
-                tree_before_last_block.push_tree(suffix);
-                tree_before_last_block
-            };
-            // TODO: Update active gap.
-        }
     }
 
     pub fn filtered_blocks(&self) -> HashSet<BlockIndex> {

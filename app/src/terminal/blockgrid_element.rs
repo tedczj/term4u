@@ -3,8 +3,8 @@ use std::ops::RangeInclusive;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 
+use instant::Instant;
 use pathfinder_geometry::vector::{Vector2F, vec2f};
-use warpui::Event;
 use warpui::elements::{
     AfterLayoutContext, AppContext, Element, EventContext, LayoutContext, PaintContext, Point,
     SizeConstraint,
@@ -13,7 +13,8 @@ use warpui::event::DispatchedEvent;
 use warpui::fonts::Properties;
 use warpui::geometry::rect::RectF;
 use warpui::text::SelectionType;
-use warpui::units::{IntoLines, Lines};
+use warpui::units::{IntoLines, IntoPixels, Lines};
+use warpui::{EntityId, Event};
 
 use super::blockgrid_renderer::{BlockGridRenderer, GridRenderParams};
 use crate::appearance::Appearance;
@@ -21,15 +22,16 @@ use crate::settings::EnforceMinimumContrast;
 use crate::terminal::blockgrid_renderer::BlockGridParams;
 use crate::terminal::grid_renderer::CellGlyphCache;
 use crate::terminal::model::ObfuscateSecrets;
-use crate::terminal::model::blockgrid::BlockGrid;
+use crate::terminal::model::blockgrid::{BlockGrid, CursorDisplayPoint};
 use crate::terminal::model::blocks::{BlockListPoint, SelectionRange};
 use crate::terminal::model::grid::Dimensions;
+use crate::terminal::model::grid::grid_handler::{Link, TermMode};
 use crate::terminal::model::index::{Point as GridPoint, Side};
 use crate::terminal::model::selection::{SelectAction, SelectionPoint};
-use crate::terminal::model::terminal_model::BlockIndex;
+use crate::terminal::model::terminal_model::{BlockIndex, WithinBlock, WithinModel};
 use crate::terminal::view::TerminalAction;
 use crate::terminal::{
-    SizeInfo, color, context_menu_offset, grid_renderer, should_right_click_paste,
+    GridType, SizeInfo, color, context_menu_offset, grid_renderer, should_right_click_paste,
 };
 
 struct GridSelection {
@@ -49,6 +51,10 @@ pub struct BlockGridElement {
     find_matches: Vec<RangeInclusive<GridPoint>>,
     focused_find_match: Option<RangeInclusive<GridPoint>>,
     context_menu: Option<ContextMenuAnchor>,
+    link_grid: Option<(BlockIndex, GridType)>,
+    highlighted_link: Option<Link>,
+    terminal_cursor: Option<EntityId>,
+    cursor_blink_epoch: Option<Instant>,
 }
 
 /// Set when this grid belongs to a block that can raise the transcript context menu.
@@ -103,6 +109,10 @@ impl BlockGridElement {
             find_matches: Vec::new(),
             focused_find_match: None,
             context_menu: None,
+            link_grid: None,
+            highlighted_link: None,
+            terminal_cursor: None,
+            cursor_blink_epoch: None,
         }
     }
 
@@ -113,6 +123,44 @@ impl BlockGridElement {
             block_index,
         });
         self
+    }
+
+    pub fn with_link(
+        mut self,
+        block: BlockIndex,
+        grid: GridType,
+        highlighted: Option<Link>,
+    ) -> Self {
+        self.link_grid = Some((block, grid));
+        self.highlighted_link = highlighted;
+        self
+    }
+
+    pub fn with_cursor(
+        mut self,
+        terminal_view_id: Option<EntityId>,
+        epoch: Option<Instant>,
+    ) -> Self {
+        self.cursor_blink_epoch = epoch;
+        self.terminal_cursor = terminal_view_id;
+        self
+    }
+
+    fn link_point(&self, position: Vector2F) -> Option<WithinModel<GridPoint>> {
+        let (block, grid) = self.link_grid?;
+        let bounds = self.bounds?;
+        if !bounds.contains_point(position) {
+            return None;
+        }
+        let local = position - bounds.origin();
+        let cell = self.block_grid_params.grid_render_params.cell_size;
+        let displayed = GridPoint {
+            row: (local.y() / cell.y()).floor().max(0.) as usize,
+            col: (local.x() / cell.x()).floor().max(0.) as usize,
+        };
+        Some(WithinModel::BlockList(WithinBlock::new(
+            displayed, block, grid,
+        )))
     }
 
     pub fn with_find_matches(
@@ -223,23 +271,54 @@ impl Element for BlockGridElement {
 
         self.block_grid_params.bounds = bounds;
         self.bounds = Some(bounds);
+        let grid = self.block_grid.grid_handler();
+        let cursor_visible = self.terminal_cursor.is_some()
+            && grid.is_mode_set(TermMode::SHOW_CURSOR)
+            && grid_renderer::native_cursor_visible(
+                self.cursor_blink_epoch,
+                grid.cursor_style().blinking && grid.marked_text().is_none(),
+                ctx,
+            );
         self.block_grid.draw(
             origin,
             origin,
             &mut CellGlyphCache::default(),
             255,
-            None,
+            self.highlighted_link.as_ref(),
             None,
             None,
             Some(self.find_matches.iter()),
             self.focused_find_match.as_ref(),
             Properties::default(),
             &self.block_grid_params,
-            None,
+            cursor_visible.then(|| grid.cursor_style().shape),
             &HashMap::new(),
             ctx,
             app,
         );
+        if let Some(terminal_view_id) = self.terminal_cursor
+            && let Some(cursor) = self.block_grid.cursor_display_point()
+        {
+            let (point, visible) = match cursor {
+                CursorDisplayPoint::Visible(point) => (point, cursor_visible),
+                CursorDisplayPoint::HiddenCache(point) => (point, false),
+            };
+            let params = &self.block_grid_params.grid_render_params;
+            grid_renderer::render_cursor(
+                params,
+                point,
+                grid.is_cursor_on_wide_char(),
+                grid.cursor_style(),
+                visible,
+                0_f32.into_pixels(),
+                origin,
+                params.warp_theme.cursor().into(),
+                ctx,
+                terminal_view_id,
+                None,
+                app,
+            );
+        }
         if let Some(selection) = &self.selection {
             for (start, end) in &selection.ranges {
                 grid_renderer::render_selection(
@@ -291,6 +370,15 @@ impl Element for BlockGridElement {
             return true;
         }
 
+        if let Some(Event::MouseMoved { position, .. }) = event.at_z_index(z_index, ctx)
+            && let Some(point) = self.link_point(*position)
+        {
+            ctx.dispatch_typed_action(TerminalAction::MaybeLinkHover {
+                position: Some(point),
+            });
+            return true;
+        }
+
         let Some(selection) = &self.selection else {
             return false;
         };
@@ -328,9 +416,22 @@ impl Element for BlockGridElement {
                 }));
                 true
             }
-            Some(Event::LeftMouseUp { .. })
-                if selection.dragging.swap(false, Ordering::Relaxed) =>
+            Some(Event::LeftMouseUp {
+                position,
+                modifiers,
+                ..
+            }) if selection.dragging.load(Ordering::Relaxed)
+                && self
+                    .bounds
+                    .is_some_and(|bounds| bounds.contains_point(*position)) =>
             {
+                selection.dragging.store(false, Ordering::Relaxed);
+                if let Some(point) = self.link_point(*position) {
+                    ctx.dispatch_typed_action(TerminalAction::ClickOnGrid {
+                        position: point,
+                        modifiers: *modifiers,
+                    });
+                }
                 ctx.dispatch_typed_action(TerminalAction::SelectOutput(SelectAction::End));
                 true
             }

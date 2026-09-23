@@ -418,8 +418,13 @@ impl EditorElement {
         }
     }
 
-    fn key_down(&self, keystroke: &Keystroke, ctx: &mut EventContext) -> bool {
-        if self.view_snapshot.is_focused && (keystroke.cmd || keystroke.ctrl) {
+    fn accepts_keyboard_input(&self, app: &AppContext) -> bool {
+        // Focus may change between frames (for example, when closing a search panel).
+        app.check_view_focused(self.view_snapshot.window_id, &self.view_snapshot.view_id)
+    }
+
+    fn key_down(&self, keystroke: &Keystroke, app: &AppContext, ctx: &mut EventContext) -> bool {
+        if self.accepts_keyboard_input(app) && (keystroke.cmd || keystroke.ctrl) {
             // Ctrl and cmd should be handled via key bindings
             ctx.dispatch_typed_action(EditorAction::UnhandledModifierKey(Arc::new(
                 keystroke.normalized(),
@@ -612,8 +617,8 @@ impl EditorElement {
         updated
     }
 
-    fn typed_characters(&self, chars: &str, ctx: &mut EventContext) -> bool {
-        if self.view_snapshot.is_focused {
+    fn typed_characters(&self, chars: &str, app: &AppContext, ctx: &mut EventContext) -> bool {
+        if self.accepts_keyboard_input(app) {
             if self.vim_mode.is_some() {
                 ctx.dispatch_typed_action(EditorAction::VimUserInsert(UserInput::new(chars)));
             } else {
@@ -629,9 +634,10 @@ impl EditorElement {
         &mut self,
         marked_text: &str,
         selected_range: &Range<usize>,
+        app: &AppContext,
         ctx: &mut EventContext,
     ) -> bool {
-        if self.view_snapshot.is_focused {
+        if self.accepts_keyboard_input(app) {
             ctx.dispatch_typed_action(EditorAction::SetMarkedText {
                 marked_text: UserInput::new(marked_text),
                 selected_range: selected_range.clone(),
@@ -641,8 +647,8 @@ impl EditorElement {
         false
     }
 
-    fn clear_marked_text(&mut self, ctx: &mut EventContext) -> bool {
-        if self.view_snapshot.is_focused {
+    fn clear_marked_text(&mut self, app: &AppContext, ctx: &mut EventContext) -> bool {
+        if self.accepts_keyboard_input(app) {
             ctx.dispatch_typed_action(EditorAction::ClearMarkedText);
             return true;
         }
@@ -999,15 +1005,6 @@ impl EditorElement {
                             continue;
                         }
                     };
-                    let cursor_x_index = match &marked_text_state {
-                        MarkedTextState::Active { selected_range } => {
-                            // The marked text selected range assumes that the marked text starts at 0.
-                            // Adjust the cursor position to match what the IME tells us.
-                            let ime_offset = selected_range.end;
-                            selection.start.column() as usize + ime_offset
-                        }
-                        MarkedTextState::Inactive => selection.end.column() as usize,
-                    };
                     // Use baseline position to get to bottom of text line, then subtract the font size to
                     // get to top of text. We have the multipliers of default line height ratio and top bottom ratio
                     // to get to the "correct" spot above the normal characters within a font.
@@ -1037,7 +1034,7 @@ impl EditorElement {
                                 .max(0.0),
                         )
                         + vec2f(
-                            cursor_row_layout.x_for_index(cursor_x_index),
+                            cursor_row_layout.x_for_index(selection.end.column() as usize),
                             (selection.end.row() - first_visible_row) as f32
                                 * line_parameters.line_height,
                         );
@@ -1087,43 +1084,17 @@ impl EditorElement {
                             continue;
                         };
 
-                        let selection_to_draw = match &marked_text_state {
-                            MarkedTextState::Active { selected_range }
-                                if !selected_range.is_empty() =>
-                            {
-                                // This is the case where we have a selected range within marked text.
-                                // This selected range needs to be highlighted.
-                                // Since we model the marked text itself as a selection in the editor,
-                                // we need to generate the "real" selection here.
-                                let marked_text_selection_start = SoftWrapPoint::new(
-                                    selection.start.row(),
-                                    selection.start.column() + selected_range.start as u32,
-                                );
-                                let marked_text_selection_end = SoftWrapPoint::new(
-                                    selection.start.row(),
-                                    selection.start.column() + selected_range.end as u32,
-                                );
-                                let marked_text_selection =
-                                    marked_text_selection_start..marked_text_selection_end;
-                                Some(marked_text_selection)
-                            }
-                            MarkedTextState::Inactive => Some(selection.clone()),
-                            _ => None,
-                        };
-
-                        if let Some(selection_to_draw) = selection_to_draw {
-                            self.draw_selection(
-                                content_origin,
-                                row,
-                                first_visible_row,
-                                colors.selection,
-                                &selection_to_draw,
-                                line_parameters.line_height,
-                                line_layout,
-                                layout,
-                                ctx,
-                            );
-                        }
+                        self.draw_selection(
+                            content_origin,
+                            row,
+                            first_visible_row,
+                            colors.selection,
+                            &selection,
+                            line_parameters.line_height,
+                            line_layout,
+                            layout,
+                            ctx,
+                        );
                     }
                 } else if let Some(VimMode::Visual(motion_type)) = self.vim_mode {
                     // If we're in Vim visual mode, render the visual mode selection which isn't
@@ -2171,11 +2142,11 @@ impl Element for EditorElement {
                 precise,
                 modifiers: ModifiersState { ctrl: false, .. },
             } => self.scroll(*position, *delta, *precise, ctx, app),
-            Event::KeyDown { keystroke, .. } => self.key_down(keystroke, ctx),
+            Event::KeyDown { keystroke, .. } => self.key_down(keystroke, app, ctx),
             Event::ModifierKeyChanged {
                 key_code, state, ..
             } => self.modifier_key_change(key_code, state, ctx),
-            Event::TypedCharacters { chars } => self.typed_characters(chars, ctx),
+            Event::TypedCharacters { chars } => self.typed_characters(chars, app, ctx),
             Event::DragAndDropFiles { paths, location } => {
                 self.drag_and_drop_file(paths.clone(), *location, ctx)
             }
@@ -2184,8 +2155,8 @@ impl Element for EditorElement {
             Event::SetMarkedText {
                 marked_text,
                 selected_range,
-            } => self.set_marked_text(marked_text, selected_range, ctx),
-            Event::ClearMarkedText => self.clear_marked_text(ctx),
+            } => self.set_marked_text(marked_text, selected_range, app, ctx),
+            Event::ClearMarkedText => self.clear_marked_text(app, ctx),
             _ => false,
         }
     }

@@ -57,6 +57,7 @@ use crate::tab::{SelectedTabColor, TabData};
 use crate::terminal::TerminalView;
 use crate::terminal::input::MenuPositioning;
 use crate::terminal::model::SerializedBlockListItem;
+use crate::terminal::model::terminal_model::TerminalInputState;
 use crate::undo_close::UndoCloseStack;
 use crate::user_config::{WarpConfig, WarpConfigUpdateEvent};
 use crate::util::openable_file_type::{EditorLayout, FileTarget};
@@ -1035,10 +1036,73 @@ impl Workspace {
                 .map(|view| view.as_ref(ctx).input().as_ref(ctx).buffer_text(ctx))
                 .unwrap_or_default(),
         };
+        let origin = self
+            .active_tab_pane_group()
+            .as_ref(ctx)
+            .active_session_view(ctx);
+        let origin = origin.map(|terminal| {
+            let view = terminal.as_ref(ctx);
+            let session_id = view.active_session(ctx).map(|session| session.id());
+            let block_id = view.model.lock().block_list().active_block().id().clone();
+            let revision = view
+                .input()
+                .as_ref(ctx)
+                .editor()
+                .as_ref(ctx)
+                .content_and_selection_revision(ctx);
+            (terminal.downgrade(), session_id, block_id, revision)
+        });
         let search = ctx.add_typed_action_view(CommandSearchView::new);
-        ctx.subscribe_to_view(&search, |workspace, search, event, ctx| {
+        ctx.subscribe_to_view(&search, move |workspace, search, event, ctx| {
             if workspace.command_search.as_ref() != Some(&search) {
                 return;
+            }
+            if let CommandSearchEvent::ItemSelected { payload, .. } = event
+                && matches!(
+                    payload.as_ref(),
+                    CommandSearchItemAction::AcceptHistory(_)
+                        | CommandSearchItemAction::ExecuteHistory(_)
+                )
+            {
+                let valid =
+                    origin
+                        .as_ref()
+                        .is_some_and(|(origin, session_id, block_id, revision)| {
+                            let Some(terminal) = origin.upgrade(ctx) else {
+                                return false;
+                            };
+                            if workspace
+                                .active_tab_pane_group()
+                                .as_ref(ctx)
+                                .active_session_view(ctx)
+                                .as_ref()
+                                != Some(&terminal)
+                            {
+                                return false;
+                            }
+                            let view = terminal.as_ref(ctx);
+                            let model = view.model.lock();
+                            let session_valid =
+                                view.active_session(ctx).map(|session| session.id()) == *session_id
+                                    && model.block_list().active_block().id() == block_id
+                                    && matches!(
+                                        model.terminal_input_state(),
+                                        TerminalInputState::InputEditor
+                                            | TerminalInputState::NotBootstrapped
+                                    );
+                            drop(model);
+                            session_valid
+                                && view
+                                    .input()
+                                    .as_ref(ctx)
+                                    .editor()
+                                    .as_ref(ctx)
+                                    .content_and_selection_revision(ctx)
+                                    == *revision
+                        });
+                if !valid {
+                    return;
+                }
             }
             match event {
                 CommandSearchEvent::ItemSelected { payload, .. } => match payload.as_ref() {
@@ -1748,6 +1812,26 @@ impl View for Workspace {
             );
         }
         stack.finish()
+    }
+
+    fn keymap_context(&self, app: &AppContext) -> warpui::keymap::Context {
+        // The binding belongs to Workspace. Keep availability here so ancestor fallback
+        // and native menu dispatch cannot bypass the terminal's input state.
+        let mut context = Self::default_keymap_context();
+        let available = self
+            .active_tab_pane_group()
+            .as_ref(app)
+            .active_session_view(app)
+            .is_none_or(|terminal| {
+                matches!(
+                    terminal.as_ref(app).model.lock().terminal_input_state(),
+                    TerminalInputState::InputEditor | TerminalInputState::NotBootstrapped
+                )
+            });
+        if available {
+            context.set.insert(super::HISTORY_SEARCH_AVAILABLE_KEY);
+        }
+        context
     }
 
     fn on_focus(&mut self, focus: &FocusContext, ctx: &mut ViewContext<Self>) {

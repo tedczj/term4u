@@ -52,11 +52,17 @@ pub enum TerminalAction {
         from_keybinding: bool,
     },
     MaybeHoverSecret,
-    MaybeLinkHover,
+    MaybeLinkHover {
+        position: Option<WithinModel<Point>>,
+    },
+    OpenGridLink {
+        generation: u64,
+    },
     Paste,
     Copy,
     ClearBuffer,
     Focus,
+    FinishSelection,
     FocusInputAndClearSelection,
     ShowFindBar,
     Up,

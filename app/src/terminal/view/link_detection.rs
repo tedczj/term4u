@@ -1,35 +1,32 @@
-use std::ops::Deref;
+//! Local output links. Parsing stays in the terminal model; filesystem checks run off the UI thread.
 
-use serde::{Serialize, Serializer};
-use warpui::ViewContext;
+use warpui::event::ModifiersState;
 use warpui::platform::Cursor;
+use warpui::ui_components::components::UiComponent;
+use warpui::{AppContext, Element, SingletonEntity, ViewContext};
+#[cfg(feature = "local_fs")]
+use {
+    crate::{
+        terminal::{ShellLaunchData, model::grid::grid_handler},
+        util::file::{FileLink, ShellPathType, absolute_path_if_valid},
+    },
+    std::path::PathBuf,
+    unicode_general_category::{GeneralCategory, get_general_category},
+    unicode_width::UnicodeWidthChar,
+    warp_util::path::{CleanPathResult, LineAndColumnArg},
+};
 
-use crate::terminal::TerminalModel;
+use super::TerminalView;
+use crate::GeneralSettings;
+use crate::terminal::links::should_directly_open_link;
 use crate::terminal::model::RespectObfuscatedSecrets;
 use crate::terminal::model::grid::grid_handler::Link;
 use crate::terminal::model::index::Point;
 use crate::terminal::model::terminal_model::{WithinBlock, WithinModel};
-
-cfg_if::cfg_if! {
-    if #[cfg(feature = "local_fs")] {
-        use crate::{
-            terminal::model::grid::grid_handler,
-            terminal::ShellLaunchData,
-            util::file::{FileLink, absolute_path_if_valid, ShellPathType},
-            util::openable_file_type::FileTarget,
-        };
-        use std::path::PathBuf;
-        use unicode_general_category::{get_general_category, GeneralCategory};
-        use unicode_width::UnicodeWidthChar;
-        use warp_util::path::CleanPathResult;
-        use warp_util::path::LineAndColumnArg;
-    }
-}
-
 #[cfg(feature = "local_fs")]
-use warp_errors::report_error;
-
-use super::{FindLinkArg, TerminalEditor};
+use crate::util::file::external_editor::EditorSettings;
+#[cfg(feature = "local_fs")]
+use crate::util::openable_file_type::FileTarget;
 
 // "a/" and "b/" are prefixes specific to Git Diff
 #[cfg(feature = "local_fs")]
@@ -112,519 +109,380 @@ fn path_without_trailing_sentence_punctuation(
     })
 }
 
-/// Highlighted link within a terminal model grid.
-#[derive(Debug, Clone)]
-pub enum GridHighlightedLink {
-    Url(WithinModel<Link>),
-    #[cfg(feature = "local_fs")]
-    File(WithinModel<FileLink>),
-    /// OSC 8 hyperlink span. Carries the URI directly because — unlike `Url`
-    /// — it isn't recoverable from the cell text.
-    Hyperlink {
+#[derive(Clone, Debug)]
+pub(super) enum GridHighlightedLink {
+    Url {
         link: WithinModel<Link>,
         uri: String,
     },
+    #[cfg(feature = "local_fs")]
+    File(WithinModel<FileLink>),
 }
 
 impl GridHighlightedLink {
-    pub fn contains(&self, position: &WithinModel<Point>) -> bool {
+    pub(super) fn range(&self) -> WithinModel<Link> {
         match self {
-            GridHighlightedLink::Url(url) => url.contains(position),
+            Self::Url { link, .. } => link.clone(),
             #[cfg(feature = "local_fs")]
-            GridHighlightedLink::File(file_link) => file_link.contains(position),
-            GridHighlightedLink::Hyperlink { link, .. } => link.contains(position),
+            Self::File(link) => link.clone().replace_inner(link.get_inner().link.clone()),
         }
     }
 
-    pub fn tooltip_text(&self) -> &'static str {
-        match &self {
+    pub(super) fn label(&self) -> String {
+        match self {
+            Self::Url { uri, .. } => uri.clone(),
             #[cfg(feature = "local_fs")]
-            GridHighlightedLink::File(file_link)
-                if file_link
-                    .get_inner()
-                    .absolute_path()
-                    .map(|path| path.is_dir())
-                    .unwrap_or(false) =>
-            {
-                "Open folder"
-            }
-            #[cfg(feature = "local_fs")]
-            GridHighlightedLink::File(_) => "Open file",
-            GridHighlightedLink::Url(_) => "Open link",
-            GridHighlightedLink::Hyperlink { .. } => "Open link",
+            Self::File(file) => file.get_inner().absolute_path.display().to_string(),
         }
     }
 }
 
-impl Serialize for GridHighlightedLink {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        match &self {
-            GridHighlightedLink::Url(_) => {
-                serializer.serialize_unit_variant("HighlightedLink", 0, "Url")
-            }
-            #[cfg(feature = "local_fs")]
-            GridHighlightedLink::File(_) => {
-                serializer.serialize_unit_variant("HighlightedLink", 1, "File")
-            }
-            GridHighlightedLink::Hyperlink { .. } => {
-                serializer.serialize_unit_variant("HighlightedLink", 2, "Hyperlink")
-            }
-        }
-    }
+#[derive(PartialEq, Eq)]
+struct LinkContext {
+    block_id: crate::terminal::model::BlockId,
+    session_id: Option<crate::terminal::model::session::SessionId>,
+    active_session_id: Option<crate::terminal::model::session::SessionId>,
+    pwd: Option<String>,
+    alt_screen: bool,
 }
 
-impl TryFrom<GridHighlightedLink> for Link {
-    type Error = anyhow::Error;
-
-    fn try_from(value: GridHighlightedLink) -> Result<Self, Self::Error> {
-        match value {
-            GridHighlightedLink::Url(WithinModel::AltScreen(url)) => Ok(url),
-            #[cfg(feature = "local_fs")]
-            GridHighlightedLink::File(WithinModel::AltScreen(file_link)) => Ok(file_link.link),
-            GridHighlightedLink::Hyperlink {
-                link: WithinModel::AltScreen(link),
-                ..
-            } => Ok(link),
-            _ => Err(anyhow::anyhow!(
-                "HighlightedLink is not within the alt screen"
-            )),
-        }
-    }
+#[derive(Default)]
+pub(super) struct LinkState {
+    generation: u64,
+    position: Option<WithinModel<Point>>,
+    pub(super) highlighted: Option<GridHighlightedLink>,
+    source_text: String,
+    pending_click: Option<ModifiersState>,
+    context: Option<LinkContext>,
+    scan: Option<warpui::r#async::SpawnedFutureHandle>,
+    /// A drag must never turn into a link activation when the mouse button is released.
+    pub(super) dragged: bool,
 }
 
-impl TryFrom<GridHighlightedLink> for WithinBlock<Link> {
-    type Error = anyhow::Error;
-
-    fn try_from(value: GridHighlightedLink) -> Result<Self, Self::Error> {
-        match value {
-            GridHighlightedLink::Url(WithinModel::BlockList(url)) => Ok(url),
-            #[cfg(feature = "local_fs")]
-            GridHighlightedLink::File(WithinModel::BlockList(file_link)) => {
-                Ok(file_link.map(|file_link| file_link.link))
-            }
-            GridHighlightedLink::Hyperlink {
-                link: WithinModel::BlockList(link),
-                ..
-            } => Ok(link),
-            _ => Err(anyhow::anyhow!(
-                "HighlightedLink is not within the block list"
-            )),
-        }
-    }
+fn allowed_url(uri: &str) -> bool {
+    url::Url::parse(uri).is_ok_and(|url| matches!(url.scheme(), "http" | "https"))
 }
 
-/// The highlighted_link state is synced with both the BlockList and AltScreen so that they can
-/// use the highlighted_link to override the normal smart-selection behavior. The
-/// highlighted_link can, for example, verify that a file path actually exists on disk, and
-/// include file paths with spaces. Smart-select can do neither of those things.
-/// Since this value must be kept in sync, we need to prevent any mutation of the value outside
-/// of this wrapper.
-#[derive(Debug, Default)]
-pub struct HighlightedLinkOption {
-    inner: Option<GridHighlightedLink>,
-    /// True if the underlying content has changed such that the link may no longer be valid.
-    invalidated: bool,
-}
-
-#[derive(Clone, Debug)]
-pub enum RichContentLink {
-    Url(String),
-    #[cfg(feature = "local_fs")]
-    FilePath {
-        absolute_path: PathBuf,
-        line_and_column_num: Option<LineAndColumnArg>,
-        target_override: Option<FileTarget>,
-    },
-}
-
-impl RichContentLink {
-    pub fn tooltip_text(&self) -> &'static str {
-        match &self {
-            #[cfg(feature = "local_fs")]
-            RichContentLink::FilePath { absolute_path, .. } if absolute_path.is_dir() => {
-                "Open folder"
-            }
-            #[cfg(feature = "local_fs")]
-            RichContentLink::FilePath { .. } => "Open file",
-            RichContentLink::Url(_) => "Open link",
-        }
-    }
-}
-
-#[derive(Clone, Debug)]
-pub struct RichContentLinkTooltipInfo {
-    pub link: RichContentLink,
-    pub position_id: String,
-}
-
-impl HighlightedLinkOption {
-    /// Assigns the inner value and syncs it with the BlockList and AltScreen
-    pub fn set(&mut self, link: GridHighlightedLink, model: &mut TerminalModel) {
-        match &link {
-            GridHighlightedLink::Url(within_model) => match within_model {
-                WithinModel::BlockList(within_block) => {
-                    let point_range = WithinBlock::new(
-                        within_block.inner.range.clone(),
-                        within_block.block_index,
-                        within_block.grid,
-                    );
-                    model
-                        .block_list_mut()
-                        .set_smart_select_override(point_range);
-                }
-                WithinModel::AltScreen(link) => {
-                    model
-                        .alt_screen_mut()
-                        .set_smart_select_override(link.range.clone());
-                }
-            },
-            #[cfg(feature = "local_fs")]
-            GridHighlightedLink::File(within_model) => match within_model {
-                WithinModel::BlockList(within_block) => {
-                    let point_range = WithinBlock::new(
-                        within_block.inner.link.range.clone(),
-                        within_block.block_index,
-                        within_block.grid,
-                    );
-                    model
-                        .block_list_mut()
-                        .set_smart_select_override(point_range);
-                }
-                WithinModel::AltScreen(file_link) => {
-                    model
-                        .alt_screen_mut()
-                        .set_smart_select_override(file_link.link.range.clone());
-                }
-            },
-            GridHighlightedLink::Hyperlink {
-                link: within_model, ..
-            } => match within_model {
-                WithinModel::BlockList(within_block) => {
-                    let point_range = WithinBlock::new(
-                        within_block.inner.range.clone(),
-                        within_block.block_index,
-                        within_block.grid,
-                    );
-                    model
-                        .block_list_mut()
-                        .set_smart_select_override(point_range);
-                }
-                WithinModel::AltScreen(link) => {
-                    model
-                        .alt_screen_mut()
-                        .set_smart_select_override(link.range.clone());
-                }
-            },
-        }
-        self.inner = Some(link);
-    }
-
-    /// Wrapper method for Option::take that also keeps the derived state in the BlockList and
-    /// AltScreen in sync
-    pub fn take(&mut self, model: &mut TerminalModel) -> Option<GridHighlightedLink> {
-        model.block_list_mut().clear_smart_select_override();
-        model.alt_screen_mut().clear_smart_select_override();
-        self.invalidated = false;
-        self.inner.take()
-    }
-
-    pub fn invalidate(&mut self) {
-        self.invalidated = true;
-    }
-
-    pub fn is_invalidated(&self) -> bool {
-        self.invalidated
-    }
-
-    pub fn clone_inner(&self) -> Option<GridHighlightedLink> {
-        self.inner.clone()
-    }
-}
-
-impl Deref for HighlightedLinkOption {
-    type Target = Option<GridHighlightedLink>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.inner
-    }
-}
-
-impl super::TerminalView {
-    pub(super) fn maybe_link_hover(
-        &mut self,
-        position: &Option<WithinModel<Point>>,
-        from_editor: TerminalEditor,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        // Do not highlight the url while selecting text or blocks, or if the window is not active.
-        if self.terminal_is_selecting(&self.model.lock(), ctx)
-            || self.is_navigated_away_from_window(ctx)
-        {
-            if self.highlighted_link.take(&mut self.model.lock()).is_some() {
-                ctx.reset_cursor();
-                ctx.notify();
-            }
-            return;
-        }
-
-        // If the mouse isn't in the terminal view, we're not hovering any link.
-        let Some(position) = position else {
-            if self.highlighted_link.take(&mut self.model.lock()).is_some() {
-                ctx.reset_cursor();
-                // Clear last_hover_fragment_boundary when mouse is out of block bounds.
-                self.last_hover_fragment_boundary = None;
-                ctx.notify();
-            }
-            return;
+impl TerminalView {
+    fn link_context(&self, position: WithinModel<Point>, ctx: &AppContext) -> Option<LinkContext> {
+        let model = self.model.lock();
+        let block = match position {
+            WithinModel::BlockList(point) => model.block_list().block_at(point.block_index)?,
+            WithinModel::AltScreen(_) => model.block_list().active_block(),
         };
+        Some(LinkContext {
+            block_id: block.id().clone(),
+            session_id: block.session_id(),
+            active_session_id: self.model_events.as_ref(ctx).active_session_id(),
+            pwd: block.pwd().cloned(),
+            alt_screen: model.is_alt_screen_active(),
+        })
+    }
 
-        // If the mouse is still on top of the previous highlighted link and that link is
-        // still valid, we can keep highlighting it.
-        if let Some(link) = self.highlighted_link.as_ref()
-            && link.contains(position)
-            && !self.highlighted_link.is_invalidated()
-        {
-            // If already hovering on a highlighted link, return.
-            return;
+    pub(super) fn clear_link(&mut self, ctx: &mut ViewContext<Self>) {
+        self.links.generation = self.links.generation.wrapping_add(1);
+        self.links.position = None;
+        self.links.pending_click = None;
+        if let Some(scan) = self.links.scan.take() {
+            scan.abort();
         }
-
-        // Updating the cursor shape repeatedly can cause flashing, so we only set it once, and only
-        // when necessary.
-        let mut new_cursor_shape = None;
-
-        // If a link is highlighted and it's invalidated or we're not hovering it, remove that
-        // hover and look for a new one.
-        if self.highlighted_link.is_some() {
-            // Remove the current highlighted link because we are no longer
-            // hovering over it.
-            self.highlighted_link.take(&mut self.model.lock());
-            new_cursor_shape = Some(Cursor::Arrow);
-        }
-
-        let (hyperlink_at_point, url_at_point, new_fragment_boundary) = {
-            let model = self.model.lock();
-            // OSC 8 wins over auto-detected URLs on the same cell, so check for
-            // a hyperlink first and only run the urlocator scan when no OSC 8
-            // span covers `position`.
-            let hyperlink_at_point = model.hyperlink_at_point(position);
-            let url_at_point = if hyperlink_at_point.is_none() {
-                model.url_at_point(position)
-            } else {
-                None
-            };
-            (
-                hyperlink_at_point,
-                url_at_point,
-                model.fragment_boundary_at_point(position),
-            )
-        };
-
-        match (
-            hyperlink_at_point,
-            url_at_point,
-            &self.last_hover_fragment_boundary,
-        ) {
-            (Some((link, uri)), _, _) => {
-                self.highlighted_link.set(
-                    GridHighlightedLink::Hyperlink { link, uri },
-                    &mut self.model.lock(),
-                );
-                new_cursor_shape = Some(Cursor::PointingHand);
-            }
-            (None, Some(url), _) => {
-                self.highlighted_link
-                    .set(GridHighlightedLink::Url(url), &mut self.model.lock());
-                new_cursor_shape = Some(Cursor::PointingHand);
-            }
-            // Only scan for links if the mouse hovered on a new word.
-            (_, _, Some(last_hover_fragment_boundary))
-                if !last_hover_fragment_boundary.contains(position) =>
-            {
-                // Use try_send to return an error directly when the channel is full
-                // instead of blocking main thread.
-                let _ = self.find_link_tx.try_send(FindLinkArg {
-                    position: *position,
-                    from_editor,
-                });
-            }
-            // If there's no last hover fragment boundary, we scan for links.
-            (_, _, None) => {
-                let _ = self.find_link_tx.try_send(FindLinkArg {
-                    position: *position,
-                    from_editor,
-                });
-            }
-            _ => (),
-        };
-
-        if let Some(new_cursor_shape) = new_cursor_shape {
-            ctx.set_cursor_shape(new_cursor_shape);
+        if self.links.highlighted.take().is_some() {
+            ctx.reset_cursor();
             ctx.notify();
         }
-
-        self.last_hover_fragment_boundary = Some(new_fragment_boundary);
     }
 
-    #[cfg_attr(not(feature = "local_fs"), allow(unused_variables))]
-    pub(super) fn handle_find_link(
+    pub(super) fn highlighted_grid_link(&self) -> Option<WithinModel<Link>> {
+        self.links
+            .highlighted
+            .as_ref()
+            .map(GridHighlightedLink::range)
+    }
+
+    pub(super) fn hover_link(
         &mut self,
-        find_link_arg: FindLinkArg,
+        position: Option<WithinModel<Point>>,
+        click: Option<ModifiersState>,
         ctx: &mut ViewContext<Self>,
     ) {
-        let FindLinkArg {
-            position,
-            from_editor,
-        } = find_link_arg;
-
-        // Already highlighted the hovered link, returning.
-        if self
-            .highlighted_link
-            .as_ref()
-            .is_some_and(|url| url.contains(&position))
-        {
-            #[cfg_attr(not(feature = "local_fs"), allow(clippy::needless_return))]
+        if self.links.dragged || (self.is_selecting && click.is_none()) {
+            self.clear_link(ctx);
             return;
         }
-
+        if self.links.position == position {
+            if self.links.highlighted.is_none() {
+                if let Some(click) = click {
+                    self.links.pending_click = Some(click);
+                }
+            } else if click.is_some_and(|modifiers| should_directly_open_link(&modifiers)) {
+                self.open_grid_link(self.links.generation, ctx);
+            }
+            return;
+        }
+        self.clear_link(ctx);
+        let Some(position) = position else { return };
+        self.links.position = Some(position);
+        self.links.context = self.link_context(position, ctx);
+        let generation = self.links.generation;
+        let detected = {
+            let model = self.model.lock();
+            model.hyperlink_at_point(&position).or_else(|| {
+                model.url_at_point(&position).map(|link| {
+                    let uri = model.link_at_range(&link, RespectObfuscatedSecrets::No);
+                    (link, uri)
+                })
+            })
+        };
+        if let Some((link, uri)) = detected {
+            if allowed_url(&uri) {
+                self.finish_link(
+                    generation,
+                    Some(GridHighlightedLink::Url { link, uri }),
+                    click,
+                    ctx,
+                );
+            }
+            return;
+        }
         #[cfg(feature = "local_fs")]
-        self.scan_for_file_path(position, from_editor, ctx);
+        {
+            // A historical block's cwd and session belong to that block, never to the new prompt.
+            let (pwd, session_id, restored_local, paths) = {
+                let model = self.model.lock();
+                let block = match position {
+                    WithinModel::BlockList(point) => model.block_list().block_at(point.block_index),
+                    WithinModel::AltScreen(_) => Some(model.block_list().active_block()),
+                };
+                let Some(block) = block else { return };
+                (
+                    block.pwd().cloned(),
+                    block.session_id(),
+                    block.restored_block_was_local(),
+                    model.possible_file_paths_at_point(position),
+                )
+            };
+            let session = session_id.and_then(|id| self.sessions.as_ref(ctx).get(id));
+            if !session
+                .as_ref()
+                .map(|session| session.is_local())
+                .or(restored_local)
+                .unwrap_or(false)
+            {
+                return;
+            }
+            let Some(pwd) = pwd else { return };
+            let launch = session.and_then(|session| session.launch_data().cloned());
+            let columns = self.size_info.columns;
+            let paths = paths.collect::<Vec<_>>();
+            let signature = paths
+                .iter()
+                .map(|path| {
+                    let path = path.get_inner();
+                    (
+                        path.path.path.clone(),
+                        path.path.line_and_column_num,
+                        path.range.clone(),
+                    )
+                })
+                .collect::<Vec<_>>();
+            self.links.scan = Some(ctx.spawn(
+                async move { Self::compute_valid_paths(&pwd, paths.into_iter(), columns, launch) },
+                move |view, link, ctx| {
+                    if generation != view.links.generation {
+                        return;
+                    }
+                    let current = view
+                        .model
+                        .lock()
+                        .possible_file_paths_at_point(position)
+                        .map(|path| {
+                            let path = path.get_inner();
+                            (
+                                path.path.path.clone(),
+                                path.path.line_and_column_num,
+                                path.range.clone(),
+                            )
+                        })
+                        .collect::<Vec<_>>();
+                    if current == signature {
+                        view.finish_link(generation, link, click, ctx);
+                    }
+                },
+            ));
+        }
     }
 
-    pub(super) fn open_highlighted_link(
+    fn finish_link(
         &mut self,
-        link: &GridHighlightedLink,
+        generation: u64,
+        link: Option<GridHighlightedLink>,
+        click: Option<ModifiersState>,
         ctx: &mut ViewContext<Self>,
     ) {
-        self.dismiss_tooltips(ctx);
-        ctx.focus(&self.input);
-        ctx.notify();
+        if generation != self.links.generation {
+            return;
+        }
+        let Some(position) = self.links.position else {
+            return;
+        };
+        if self.links.context != self.link_context(position, ctx) {
+            return;
+        }
+        if let Some(link) = link {
+            self.links.source_text = self
+                .model
+                .lock()
+                .link_at_range(&link.range(), RespectObfuscatedSecrets::No);
+            self.links.highlighted = Some(link);
+            ctx.set_cursor_shape(Cursor::PointingHand);
+            ctx.notify();
+            if click
+                .or(self.links.pending_click.take())
+                .is_some_and(|modifiers| should_directly_open_link(&modifiers))
+            {
+                self.open_grid_link(generation, ctx);
+            }
+        }
+    }
 
-        match link {
-            #[cfg(feature = "local_fs")]
-            GridHighlightedLink::File(link) => {
-                let link = link.get_inner();
-                if let Some(path) = link.absolute_path() {
-                    self.open_file_path(path.clone(), link.line_and_column_num, ctx);
+    fn link_is_current(&self, link: &GridHighlightedLink, position: WithinModel<Point>) -> bool {
+        // Revalidate at the side-effect boundary, even if a parser wakeup is still queued.
+        {
+            let model = self.model.lock();
+            match link {
+                GridHighlightedLink::Url { uri, .. } => {
+                    model
+                        .hyperlink_at_point(&position)
+                        .map(|(_, target)| target)
+                        .or_else(|| {
+                            model.url_at_point(&position).map(|range| {
+                                model.link_at_range(&range, RespectObfuscatedSecrets::No)
+                            })
+                        })
+                        .as_ref()
+                        == Some(uri)
+                }
+                #[cfg(feature = "local_fs")]
+                GridHighlightedLink::File(_) => {
+                    model.link_at_range(&link.range(), RespectObfuscatedSecrets::No)
+                        == self.links.source_text
                 }
             }
-            GridHighlightedLink::Url(url) => {
-                let uri = self
-                    .model
-                    .lock()
-                    .link_at_range(url, RespectObfuscatedSecrets::No);
-                ctx.open_url(&uri);
-            }
-            GridHighlightedLink::Hyperlink { uri, .. } => {
-                self.open_hyperlink_uri(uri, ctx);
-            }
-        };
+        }
     }
 
-    pub(super) fn open_rich_content_link(
-        &mut self,
-        link: &RichContentLink,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        self.dismiss_tooltips(ctx);
-        ctx.focus(&self.input);
-        ctx.notify();
+    pub(super) fn invalidate_changed_link(&mut self, ctx: &mut ViewContext<Self>) {
+        if let Some(position) = self.links.position
+            && (self.links.context != self.link_context(position, ctx)
+                || self
+                    .links
+                    .highlighted
+                    .as_ref()
+                    .is_some_and(|link| !self.link_is_current(link, position)))
+        {
+            self.clear_link(ctx);
+        }
+    }
 
+    pub(super) fn open_grid_link(&mut self, generation: u64, ctx: &mut ViewContext<Self>) {
+        if generation != self.links.generation || self.links.dragged {
+            return;
+        }
+        let Some(link) = self.links.highlighted.clone() else {
+            return;
+        };
+        let Some(position) = self.links.position else {
+            return;
+        };
+        if self.links.context != self.link_context(position, ctx) {
+            self.clear_link(ctx);
+            return;
+        }
+        let valid = self.link_is_current(&link, position);
+        self.clear_link(ctx);
+        if !valid {
+            return;
+        }
         match link {
+            GridHighlightedLink::Url { uri, .. } => {
+                if allowed_url(&uri) {
+                    ctx.open_url(&uri);
+                }
+            }
             #[cfg(feature = "local_fs")]
-            RichContentLink::FilePath {
-                absolute_path,
-                line_and_column_num,
-                target_override,
-            } => {
-                if let Some(target_override) = target_override {
-                    self.open_file_path_with_target(
-                        absolute_path.clone(),
-                        target_override.clone(),
-                        *line_and_column_num,
-                        ctx,
+            GridHighlightedLink::File(file) => {
+                let file = file.get_inner();
+                if !file.absolute_path.exists() {
+                    ctx.show_native_platform_modal(
+                        warpui::modals::AlertDialogWithCallbacks::for_view(
+                            "The linked file no longer exists.",
+                            "",
+                            vec![warpui::modals::ModalButton::for_view(
+                                "OK",
+                                |_: &mut Self, _| {},
+                            )],
+                            |_, _| {},
+                        ),
                     );
-                } else {
-                    self.open_file_path(absolute_path.clone(), *line_and_column_num, ctx);
+                    return;
                 }
+                let target = crate::util::openable_file_type::resolve_file_target(
+                    &file.absolute_path,
+                    EditorSettings::as_ref(ctx),
+                    None,
+                );
+                // Terminal diagnostics use one-based columns; the built-in editor uses
+                // zero-based columns. External editors keep the original diagnostic position.
+                let line_col = match target {
+                    FileTarget::CodeEditor(_) | FileTarget::MarkdownViewer(_) => {
+                        file.line_and_column_num.map(|mut position| {
+                            position.column_num =
+                                position.column_num.map(|column| column.saturating_sub(1));
+                            position
+                        })
+                    }
+                    FileTarget::ExternalEditor(_)
+                    | FileTarget::EnvEditor
+                    | FileTarget::SystemDefault
+                    | FileTarget::SystemGeneric => file.line_and_column_num,
+                };
+                ctx.emit(super::Event::OpenFileWithTarget {
+                    path: file.absolute_path.clone(),
+                    target,
+                    line_col,
+                });
             }
-            RichContentLink::Url(url) => {
-                ctx.open_url(url);
-            }
-        };
+        }
+    }
+
+    pub(super) fn render_link_hint(&self, app: &AppContext) -> Option<Box<dyn warpui::Element>> {
+        use warpui::elements::{DispatchEventResult, EventHandler};
+        if !*GeneralSettings::as_ref(app).link_tooltip {
+            return None;
+        }
+        let link = self.links.highlighted.as_ref()?;
+        let generation = self.links.generation;
+        let label = format!("{}  [Cmd + Click]", link.label());
+        Some(
+            EventHandler::new(
+                crate::appearance::Appearance::as_ref(app)
+                    .ui_builder()
+                    .paragraph(label)
+                    .build()
+                    .finish(),
+            )
+            .on_mouse_in(|_, _, _| DispatchEventResult::StopPropagation, None)
+            .on_left_mouse_up(move |ctx, _, _| {
+                ctx.dispatch_typed_action(super::TerminalAction::OpenGridLink { generation });
+                DispatchEventResult::StopPropagation
+            })
+            .finish(),
+        )
     }
 }
 
-// A collection of link detection functions that are only valid on platforms
-// where we can spawn a local tty.
 #[cfg(feature = "local_fs")]
-impl super::TerminalView {
-    /// Scans the terminal model at the given position to see if it is
-    /// contained within a path that should be linkified.
-    fn scan_for_file_path(
-        &mut self,
-        position: WithinModel<Point>,
-        from_editor: TerminalEditor,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        // For AltScreen we scan for relative path with the current working directory.
-        // For BlockList we scan for relative path with the pwd of the hovered block.
-        let pwd_to_scan_for = match position {
-            WithinModel::AltScreen(_) => self.pwd_if_local(ctx),
-            WithinModel::BlockList(inner) => self
-                .model
-                .lock()
-                .block_list()
-                .block_at(inner.block_index)
-                .filter(|block| !self.is_block_considered_remote(block.session_id(), None, ctx)) // Don't scan for file links if the block is on remote sessions
-                .and_then(|block| block.pwd().map(String::from)),
-        };
-
-        match pwd_to_scan_for {
-            // Check if we are hovering on any file path. Don't scan for file path
-            // if user is hovering from an editor like vim or nano.
-            Some(path) if matches!(from_editor, TerminalEditor::No) => {
-                let possible_paths = self.model.lock().possible_file_paths_at_point(position);
-                let max_columns = self.size_info.columns;
-                let shell_launch_data = self
-                    .active_block_session_id()
-                    .and_then(|active_session_id| self.sessions.as_ref(ctx).get(active_session_id))
-                    .and_then(|active_session| active_session.launch_data().cloned());
-
-                // Using the thread builder instead of ctx.spawn here so that the previous
-                // scanning job will be dropped once there is a new scanning job created.
-                let (tx, rx) = futures::channel::oneshot::channel();
-                self.file_link_scanning_join_handle = std::thread::Builder::new()
-                    .name("Compute file paths".into())
-                    .spawn(move || {
-                        let paths = Self::compute_valid_paths(
-                            &path,
-                            possible_paths,
-                            max_columns,
-                            shell_launch_data,
-                        );
-                        let _ = tx.send(paths);
-                    })
-                    .map_err(|e| {
-                        report_error!(anyhow::Error::new(e).context("Unable to spawn thread"));
-                    })
-                    .ok();
-
-                let _ = ctx.spawn(
-                    async move { rx.await.ok().flatten() },
-                    Self::handle_file_link_completed,
-                );
-            }
-            _ if self.highlighted_link.take(&mut self.model.lock()).is_some() => {
-                ctx.reset_cursor();
-                ctx.notify();
-            }
-            _ => (),
-        };
-    }
-
+impl TerminalView {
     fn compute_valid_paths(
         working_directory: &str,
         possible_paths: impl Iterator<Item = WithinModel<grid_handler::PossiblePath>>,
@@ -774,24 +632,6 @@ impl super::TerminalView {
             WithinModel::BlockList(inner) => {
                 WithinModel::BlockList(WithinBlock::new(inner_link, inner.block_index, inner.grid))
             }
-        }
-    }
-
-    fn handle_file_link_completed(
-        &mut self,
-        link_result: Option<GridHighlightedLink>,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        let mut model = self.model.lock();
-        if self.highlighted_link.take(&mut model).is_some() {
-            ctx.reset_cursor();
-            ctx.notify();
-        }
-
-        if let Some(new_link) = link_result {
-            self.highlighted_link.set(new_link, &mut model);
-            ctx.set_cursor_shape(Cursor::PointingHand);
-            ctx.notify();
         }
     }
 }

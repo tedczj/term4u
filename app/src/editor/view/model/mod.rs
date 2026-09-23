@@ -2734,6 +2734,22 @@ impl EditorModel {
             .selections_intersecting_range(range.clone(), map, app)
     }
 
+    /// Returns local drawable selections, with any pending mouse selection appended.
+    pub fn local_drawable_selections_intersecting_range<'a>(
+        &'a self,
+        range: Range<DisplayPoint>,
+        app: &'a AppContext,
+    ) -> impl 'a + Iterator<Item = DrawableSelection> {
+        self.buffer(app)
+            .local_selections()
+            .drawable_selections_intersecting_range(
+                range,
+                self.replica_id(app),
+                self.display_map(app),
+                app,
+            )
+    }
+
     /// Returns drawable local + remote selections that intersect
     /// the provided range.
     pub fn all_drawable_selections_intersecting_range<'a>(
@@ -2742,9 +2758,7 @@ impl EditorModel {
         app: &'a AppContext,
     ) -> impl 'a + Iterator<Item = DrawableSelection> {
         let map = self.display_map(app);
-        self.buffer(app)
-            .local_selections()
-            .drawable_selections_intersecting_range(range.clone(), self.replica_id(app), map, app)
+        self.local_drawable_selections_intersecting_range(range.clone(), app)
             .chain(self.buffer(app).remote_selections().flat_map(
                 move |(replica_id, selections)| {
                     selections.drawable_selections_intersecting_range(

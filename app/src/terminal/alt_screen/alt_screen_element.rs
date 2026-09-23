@@ -1,6 +1,8 @@
 use std::ops::{Deref as _, Range};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 
+use instant::Instant;
 use num_traits::Float as _;
 use parking_lot::FairMutex;
 use pathfinder_geometry::vector::vec2f;
@@ -53,7 +55,8 @@ pub struct AltScreenElement {
     model: Arc<FairMutex<TerminalModel>>,
     find_model: ModelHandle<TerminalFindModel>,
     is_terminal_focused: bool,
-    is_terminal_selecting: bool,
+    cursor_blink_epoch: Option<Instant>,
+    selection_dragging: Arc<AtomicBool>,
     size: Option<Vector2F>,
     bounds: Option<RectF>,
     origin: Option<UiPoint>,
@@ -116,7 +119,8 @@ impl AltScreenElement {
             model,
             find_model,
             is_terminal_focused: terminal_view_render_context.is_terminal_focused,
-            is_terminal_selecting: terminal_view_render_context.is_terminal_selecting,
+            cursor_blink_epoch: terminal_view_render_context.cursor_blink_epoch,
+            selection_dragging: terminal_view_render_context.selection_dragging,
             terminal_view_id: terminal_view_render_context.terminal_view_id,
             selection_range,
             size: None,
@@ -258,6 +262,7 @@ impl AltScreenElement {
         };
 
         if should_intercept_mouse(&self.model.lock(), mouse_state.modifiers().shift, app) {
+            self.selection_dragging.store(true, Ordering::Relaxed);
             ctx.dispatch_typed_action(TerminalAction::AltSelect(SelectAction::Begin {
                 point,
                 side,
@@ -307,8 +312,8 @@ impl AltScreenElement {
         &self,
         local_position: Vector2F,
         is_synthetic: bool,
-
         ctx: &mut EventContext,
+        app: &AppContext,
     ) -> bool {
         if self.active_session_state != ActiveSessionState::Active {
             return false;
@@ -329,13 +334,17 @@ impl AltScreenElement {
             ctx.dispatch_typed_action(TerminalAction::AltMouseAction(mouse_state.set_point(point)));
         }
 
-        // Allow the event to continue propagating.
-        false
+        if should_intercept_mouse(&self.model.lock(), false, app) {
+            ctx.dispatch_typed_action(TerminalAction::MaybeLinkHover {
+                position: Some(WithinModel::AltScreen(point)),
+            });
+        }
+        true
     }
 
     /// Called when the mouse is moved outside of the element.
     fn mouse_out(&self, ctx: &mut EventContext) -> bool {
-        ctx.dispatch_typed_action(TerminalAction::MaybeLinkHover);
+        ctx.dispatch_typed_action(TerminalAction::MaybeLinkHover { position: None });
         true
     }
 
@@ -352,15 +361,14 @@ impl AltScreenElement {
 
         let point = self.coord_to_point(local_position);
 
-        ctx.dispatch_typed_action(TerminalAction::ClickOnGrid {
-            position: WithinModel::AltScreen(Point {
-                col: point.col,
-                row: point.row,
-            }),
-            modifiers: *mouse_state.modifiers(),
-        });
+        if should_intercept_mouse(&self.model.lock(), mouse_state.modifiers().shift, app) {
+            ctx.dispatch_typed_action(TerminalAction::ClickOnGrid {
+                position: WithinModel::AltScreen(point),
+                modifiers: *mouse_state.modifiers(),
+            });
+        }
 
-        if self.is_terminal_selecting {
+        if self.selection_dragging.swap(false, Ordering::Relaxed) {
             ctx.dispatch_typed_action(TerminalAction::AltSelect(SelectAction::End));
         }
 
@@ -385,7 +393,7 @@ impl AltScreenElement {
         let mut is_mouse_dragged = false;
         let point = self.coord_to_point(local_position);
 
-        if self.is_terminal_selecting && self.bounds.is_some() {
+        if self.selection_dragging.load(Ordering::Relaxed) && self.bounds.is_some() {
             let side = self
                 .grid_render_params
                 .size_info
@@ -623,7 +631,12 @@ impl Element for AltScreenElement {
                 .as_f64())
         .min(grid.visible_rows() as f64);
         let adjusted_grid_origin = origin - self.vertical_scroll_pixels();
-        let cursor_visible = model.alt_screen().is_mode_set(TermMode::SHOW_CURSOR);
+        let cursor_visible = model.alt_screen().is_mode_set(TermMode::SHOW_CURSOR)
+            && grid_renderer::native_cursor_visible(
+                self.cursor_blink_epoch,
+                grid.cursor_style().blinking && grid.marked_text().is_none(),
+                ctx,
+            );
         grid_renderer::render_grid(
             grid,
             start_row.floor() as usize,
@@ -658,23 +671,21 @@ impl Element for AltScreenElement {
         );
         record_trace_event!("alt_screen_element:paint:grid_rendered");
 
-        // Render cursor if the escape sequence is set.
-        // Also suppress the cursor when hide_cursor_cell is active (CLI agent rich input is open).
-        if cursor_visible && !self.grid_render_params.hide_cursor_cell {
-            grid_renderer::render_cursor(
-                &self.grid_render_params,
-                grid.cursor_render_point(),
-                grid.is_cursor_on_wide_char(),
-                model.alt_screen().cursor_style(),
-                padding_x,
-                adjusted_grid_origin,
-                self.grid_render_params.warp_theme.cursor().into(),
-                ctx,
-                self.terminal_view_id,
-                self.cursor_hint_text.as_mut(),
-                app,
-            );
-        }
+        // Keep the IME anchor current even when the terminal program hides its cursor.
+        grid_renderer::render_cursor(
+            &self.grid_render_params,
+            grid.cursor_render_point(),
+            grid.is_cursor_on_wide_char(),
+            model.alt_screen().cursor_style(),
+            cursor_visible && !self.grid_render_params.hide_cursor_cell,
+            padding_x,
+            adjusted_grid_origin,
+            self.grid_render_params.warp_theme.cursor().into(),
+            ctx,
+            self.terminal_view_id,
+            self.cursor_hint_text.as_mut(),
+            app,
+        );
 
         record_trace_event!("alt_screen_element:paint:cursor_rendered");
 
@@ -829,7 +840,7 @@ impl Element for AltScreenElement {
                 ..
             } => {
                 if in_bounds {
-                    self.mouse_moved(to_local(*position), *is_synthetic, ctx)
+                    self.mouse_moved(to_local(*position), *is_synthetic, ctx, app)
                 } else {
                     self.mouse_out(ctx)
                 }

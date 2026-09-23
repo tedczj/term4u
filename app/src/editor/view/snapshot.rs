@@ -21,7 +21,7 @@ use warpui::text_layout::{
     self, ClipConfig, ComputeBaselinePositionFn, DEFAULT_TOP_BOTTOM_RATIO, LayoutCache,
     StyleAndFont, TextAlignment, TextStyle, default_compute_baseline_position_fn,
 };
-use warpui::{AppContext, EntityId, ModelHandle};
+use warpui::{AppContext, EntityId, ModelHandle, WindowId};
 
 use super::model::EditorModel;
 use super::{
@@ -61,6 +61,7 @@ const EDITOR_HEIGHT_SHRINK_DELAY: Duration = Duration::from_millis(25);
 /// to render the [`EditorElement`].
 pub struct ViewSnapshot {
     pub view_id: EntityId,
+    pub window_id: WindowId,
     pub is_focused: bool,
     pub editor_model: ModelHandle<EditorModel>,
 
@@ -353,15 +354,25 @@ impl ViewSnapshot {
 
         let mut target_left = f32::INFINITY;
         let mut target_right = 0.0_f32;
-        for selection in self.editor_model.as_ref(app).selections(app) {
-            let head = selection.head().to_display_point(map, app).unwrap();
+        for selection in self
+            .editor_model
+            .as_ref(app)
+            .local_drawable_selections_intersecting_range(
+                DisplayPoint::new(0, 0)..self.max_point(app),
+                app,
+            )
+            .take(self.editor_model.as_ref(app).selections(app).len())
+        {
+            let head = selection.range.end;
             let start_column = head.column().saturating_sub(3);
             let end_column = cmp::min(map.line_len(head.row(), app).unwrap(), head.column() + 3);
 
-            if let Some(line) = layouts.get((head.row() - start_row) as usize) {
+            if let Some(line) = head
+                .row()
+                .checked_sub(start_row)
+                .and_then(|row| layouts.get(row as usize))
+            {
                 target_left = target_left.min(line.x_for_index(start_column as usize));
-            }
-            if let Some(line) = layouts.get((head.row() - start_row) as usize) {
                 target_right =
                     target_right.max(line.x_for_index(end_column as usize) + max_glyph_width);
             }
@@ -403,47 +414,32 @@ impl ViewSnapshot {
             return false;
         }
 
-        let map = self.editor_model.as_ref(app).display_map(app);
-
-        let first_selection = self.editor_model.as_ref(app).first_selection(app);
-        let first_selection_clamp_direction = first_selection.clamp_direction;
-        let first_cursor = first_selection.head().to_display_point(map, app);
-
-        let first_cursor_top = match first_cursor {
-            Ok(first_cursor) => {
-                match frame_layouts
-                    .to_soft_wrap_point(first_cursor, first_selection_clamp_direction)
-                {
-                    Some(point) => point.row() as f32 + top_section_height_lines,
-                    None => {
-                        report_error!("Failed to get softwrapped point from display point");
-                        return false;
-                    }
-                }
-            }
-            Err(err) => {
-                report_error!(err.context("Error trying to turn selection into display point"));
+        let mut selections = self
+            .editor_model
+            .as_ref(app)
+            .local_drawable_selections_intersecting_range(
+                DisplayPoint::new(0, 0)..self.max_point(app),
+                app,
+            )
+            .take(self.editor_model.as_ref(app).selections(app).len());
+        let first_selection = selections.next().expect("editor has a local selection");
+        let first_cursor_top = match frame_layouts
+            .to_soft_wrap_point(first_selection.range.end, first_selection.clamp_direction)
+        {
+            Some(point) => point.row() as f32 + top_section_height_lines,
+            None => {
+                report_error!("Failed to get softwrapped point from display point");
                 return false;
             }
         };
 
-        let last_selection = self.editor_model.as_ref(app).last_selection(app);
-        let last_selection_clamp_direction = last_selection.clamp_direction;
-        let last_cursor = last_selection.head().to_display_point(map, app);
-
-        let last_cursor_bottom = match last_cursor {
-            Ok(last_cursor) => {
-                match frame_layouts.to_soft_wrap_point(last_cursor, last_selection_clamp_direction)
-                {
-                    Some(point) => point.row() as f32 + 1.0 + top_section_height_lines,
-                    None => {
-                        report_error!("Failed to get softwrapped point from display point");
-                        return false;
-                    }
-                }
-            }
-            Err(err) => {
-                report_error!(err.context("Error trying to turn selection into display point"));
+        let last_selection = selections.last().unwrap_or(first_selection);
+        let last_cursor_bottom = match frame_layouts
+            .to_soft_wrap_point(last_selection.range.end, last_selection.clamp_direction)
+        {
+            Some(point) => point.row() as f32 + 1.0 + top_section_height_lines,
+            None => {
+                report_error!("Failed to get softwrapped point from display point");
                 return false;
             }
         };

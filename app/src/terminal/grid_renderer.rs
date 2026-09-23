@@ -6,7 +6,9 @@ use core::mem;
 use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::ops::{Range, RangeInclusive};
+use std::time::Duration;
 
+use instant::Instant;
 use lazy_static::lazy_static;
 use num_traits::Float as _;
 use unicode_width::UnicodeWidthChar;
@@ -2409,12 +2411,36 @@ fn calculate_cursor_origin(
         )
 }
 
+fn cursor_blink_phase(epoch: Instant, now: Instant) -> (bool, Instant) {
+    const HALF_CYCLE: Duration = Duration::from_millis(500);
+    let elapsed = now.saturating_duration_since(epoch);
+    let remainder = Duration::from_nanos((elapsed.as_nanos() % HALF_CYCLE.as_nanos()) as u64);
+    (
+        (elapsed.as_millis() / 500).is_multiple_of(2),
+        now + HALF_CYCLE - remainder,
+    )
+}
+
+pub(crate) fn native_cursor_visible(
+    epoch: Option<Instant>,
+    blinking: bool,
+    ctx: &mut PaintContext,
+) -> bool {
+    let Some(epoch) = epoch.filter(|_| blinking) else {
+        return true;
+    };
+    let (visible, next) = cursor_blink_phase(epoch, Instant::now());
+    ctx.repaint_at(next);
+    visible
+}
+
 #[allow(clippy::too_many_arguments)]
 pub fn render_cursor(
     grid_render_params: &GridRenderParams,
     cursor_point: Point,
     is_cursor_on_wide_char: bool,
     cursor_style: CursorStyle,
+    visible: bool,
     padding_x: Pixels,
     grid_origin: Vector2F,
     color: ColorU,
@@ -2438,10 +2464,14 @@ pub fn render_cursor(
         grid_render_params.font_size * DEFAULT_UI_LINE_HEIGHT_RATIO,
     );
 
-    ctx.position_cache.cache_position_indefinitely(
+    ctx.position_cache.cache_position_for_one_frame(
         format!("terminal_view:cursor_{terminal_view_id}"),
         RectF::new(cursor_top_origin, cursor_block_size),
     );
+
+    if !visible {
+        return;
+    }
 
     let thickness =
         CURSOR_THICKNESS_SCALE_FACTOR * grid_render_params.cell_size.x().round().max(1.);

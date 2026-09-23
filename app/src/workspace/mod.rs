@@ -75,6 +75,8 @@ pub fn init(app: &mut AppContext) {
     register_bindings(app);
 }
 
+const HISTORY_SEARCH_AVAILABLE_KEY: &str = "CommandHistoryAvailable";
+
 fn register_bindings(app: &mut AppContext) {
     use warpui::keymap::macros::*;
 
@@ -222,7 +224,11 @@ fn register_bindings(app: &mut AppContext) {
         .into_iter()
         .map(|(name, description, action, custom_action)| {
             EditableBinding::new(name, description, action)
-                .with_context_predicate(id!("Workspace"))
+                .with_context_predicate(if matches!(custom_action, CustomAction::CommandSearch) {
+                    id!("Workspace") & id!(HISTORY_SEARCH_AVAILABLE_KEY)
+                } else {
+                    id!("Workspace")
+                })
                 .with_custom_action(custom_action)
         }),
     );

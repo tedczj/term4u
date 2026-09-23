@@ -1,17 +1,22 @@
 //! Local input and host-clipboard boundaries. Payloads must never be logged here.
 
+use std::cell::Cell;
 use std::path::PathBuf;
 use std::time::Duration;
 
 use instant::Instant;
+use settings::Setting as _;
 use warpui::clipboard::ClipboardContent;
 use warpui::modals::{AlertDialogWithCallbacks, ModalButton};
+use warpui::notification::{NotificationSendError, UserNotification};
 use warpui::{SingletonEntity, ViewContext};
 
 use super::TerminalView;
+use crate::notification::NotificationContext;
 use crate::terminal::model::block::BlockId;
 use crate::terminal::model::escape_sequences::{BRACKETED_PASTE_END, BRACKETED_PASTE_START};
 use crate::terminal::model::session::SessionId;
+use crate::terminal::session_settings::{NotificationsMode, SessionSettings};
 use crate::terminal::settings::TerminalSettings;
 use crate::terminal::{AudibleBell, ClipboardType};
 use crate::view_components::DismissibleToast;
@@ -19,12 +24,52 @@ use crate::workspace::ToastStack;
 
 pub(super) const MAX_LOCAL_TRANSFER_BYTES: usize = 1024 * 1024;
 const BELL_INTERVAL: Duration = Duration::from_millis(250);
+const NOTIFICATION_INTERVAL: Duration = Duration::from_secs(1);
+const NOTIFICATION_ERROR_INTERVAL: Duration = Duration::from_secs(30);
+
+#[derive(Clone, Copy)]
+pub(super) enum NotificationKind {
+    Bell,
+    Attention,
+    CommandCompleted,
+}
+
+#[cfg(test)]
+type NotificationTestSink = Box<dyn Fn(UserNotification) -> Result<(), NotificationSendError>>;
 
 #[derive(Default)]
 pub(super) struct LocalIoState {
     pub pending_paste: Option<PendingPaste>,
     next_request: u64,
     last_bell: Option<Instant>,
+    cursor_epoch: Cell<Option<Instant>>,
+    last_notification: Option<Instant>,
+    last_completion_notification: Option<Instant>,
+    last_notification_error: Option<Instant>,
+    #[cfg(test)]
+    pub clock_for_test: Option<Box<dyn Fn() -> Instant>>,
+    #[cfg(test)]
+    pub notification_for_test: Option<NotificationTestSink>,
+}
+
+impl LocalIoState {
+    pub(super) fn reset_cursor_blink(&self) {
+        self.cursor_epoch.set(Some(self.now()));
+    }
+    pub(super) fn cursor_blink_epoch(&self) -> Instant {
+        self.cursor_epoch.get().unwrap_or_else(|| {
+            let now = self.now();
+            self.cursor_epoch.set(Some(now));
+            now
+        })
+    }
+    fn now(&self) -> Instant {
+        #[cfg(test)]
+        if let Some(clock) = &self.clock_for_test {
+            return clock();
+        }
+        Instant::now()
+    }
 }
 
 pub(super) struct PendingPaste {
@@ -209,6 +254,7 @@ impl TerminalView {
         &self,
         selection: ClipboardType,
         encode: &(dyn Fn(&str) -> String + Send + Sync),
+        request: &crate::terminal::event_listener::ClipboardRequest,
         ctx: &mut ViewContext<Self>,
     ) {
         if selection != ClipboardType::Clipboard
@@ -225,16 +271,20 @@ impl TerminalView {
             return;
         }
         // The parser supplies the encoder and terminator. This is a protocol response, not paste.
-        self.write_bytes(encode(&text).into_bytes(), ctx);
+        ctx.emit(super::Event::ClipboardResponse(
+            warp_terminal::writeable_pty::ClipboardResponse {
+                bytes: encode(&text).into_bytes().into(),
+                request: request.clone(),
+            },
+        ));
     }
 
     pub(super) fn ring_local_bell(&mut self, ctx: &mut ViewContext<Self>) {
-        if !*TerminalSettings::as_ref(ctx).use_audible_bell
-            || !ctx.has_singleton_model::<AudibleBell>()
-        {
+        let audible = *TerminalSettings::as_ref(ctx).use_audible_bell;
+        if !audible && !self.should_send_local_notification(NotificationKind::Bell, ctx) {
             return;
         }
-        let now = Instant::now();
+        let now = self.local_io.now();
         if self
             .local_io
             .last_bell
@@ -243,9 +293,115 @@ impl TerminalView {
             return;
         }
         self.local_io.last_bell = Some(now);
-        if AudibleBell::as_ref(ctx).ring().is_err() {
+        if audible
+            && ctx.has_singleton_model::<AudibleBell>()
+            && AudibleBell::as_ref(ctx).ring().is_err()
+        {
             log::warn!("l0_id=L0-07 route=bell outcome=platform_error");
         }
+        // The bell already owns its sound; a background notification must not play it twice.
+        self.send_local_notification(
+            Some("Terminal needs attention"),
+            "A background terminal rang the bell.",
+            NotificationKind::Bell,
+            ctx,
+        );
+    }
+
+    fn should_send_local_notification(
+        &self,
+        kind: NotificationKind,
+        ctx: &ViewContext<Self>,
+    ) -> bool {
+        let settings = SessionSettings::as_ref(ctx).notifications.value();
+        settings.mode == NotificationsMode::Enabled
+            && match kind {
+                NotificationKind::Bell | NotificationKind::Attention => {
+                    settings.is_needs_attention_enabled
+                }
+                NotificationKind::CommandCompleted => settings.is_long_running_enabled,
+            }
+            && !(ctx.windows().state().active_window == Some(self.input.window_id(ctx))
+                && ctx.is_self_or_child_focused())
+    }
+
+    pub(super) fn send_local_notification(
+        &mut self,
+        title: Option<&str>,
+        body: &str,
+        kind: NotificationKind,
+        ctx: &mut ViewContext<Self>,
+    ) {
+        if !self.should_send_local_notification(kind, ctx)
+            || (body.trim().is_empty() && title.is_none_or(|title| title.trim().is_empty()))
+        {
+            return;
+        }
+        let now = self.local_io.now();
+        let last_notification = match kind {
+            NotificationKind::Bell | NotificationKind::Attention => {
+                &mut self.local_io.last_notification
+            }
+            NotificationKind::CommandCompleted => &mut self.local_io.last_completion_notification,
+        };
+        if last_notification.is_some_and(|last| now.duration_since(last) < NOTIFICATION_INTERVAL) {
+            return;
+        }
+        *last_notification = Some(now);
+        let play_sound = !matches!(kind, NotificationKind::Bell)
+            && SessionSettings::as_ref(ctx)
+                .notifications
+                .play_notification_sound;
+        let notification = UserNotification::new_with_sound(
+            title
+                .filter(|t| !t.trim().is_empty())
+                .unwrap_or("Terminal notification")
+                .to_owned(),
+            body.to_owned(),
+            Some(
+                serde_json::to_string(&NotificationContext::for_terminal(self.view_id))
+                    .expect("notification context is serializable"),
+            ),
+            play_sound,
+        );
+        #[cfg(test)]
+        if let Some(send) = &self.local_io.notification_for_test {
+            if let Err(error) = send(notification) {
+                self.show_notification_error(error, ctx);
+            }
+            return;
+        }
+        ctx.send_desktop_notification(notification, Self::show_notification_error);
+    }
+
+    pub fn show_notification_error(
+        &mut self,
+        error: NotificationSendError,
+        ctx: &mut ViewContext<Self>,
+    ) {
+        if SessionSettings::as_ref(ctx).notifications.mode != NotificationsMode::Enabled {
+            return;
+        }
+        let now = self.local_io.now();
+        if self
+            .local_io
+            .last_notification_error
+            .is_some_and(|last| now.duration_since(last) < NOTIFICATION_ERROR_INTERVAL)
+        {
+            return;
+        }
+        self.local_io.last_notification_error = Some(now);
+        let message = match error {
+            NotificationSendError::PermissionsDenied
+            | NotificationSendError::PermissionsNotYetGranted => {
+                "Desktop notifications are not allowed. Enable Term4u notifications in macOS System Settings."
+            }
+            NotificationSendError::Other { .. } => {
+                "A terminal notification could not be delivered."
+            }
+        };
+        log::debug!("l0_id=L0-07 route=notification outcome=platform_error");
+        self.show_local_io_warning(message, ctx);
     }
 
     fn show_local_io_warning(&self, reason: &'static str, ctx: &mut ViewContext<Self>) {

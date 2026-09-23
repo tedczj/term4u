@@ -206,6 +206,7 @@ pub enum Event {
 
     SetMarkedText {
         marked_text: String,
+        /// Character offsets within `marked_text`.
         selected_range: Range<usize>,
     },
 

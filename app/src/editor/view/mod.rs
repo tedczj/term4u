@@ -2707,6 +2707,7 @@ impl EditorView {
         let appearance = Appearance::as_ref(ctx);
         ViewSnapshot {
             view_id: self.view_id,
+            window_id: self.window_id,
             is_focused: self.is_focused(),
             editor_model: self.editor_model.clone(),
 
@@ -6671,6 +6672,15 @@ impl EditorView {
             },
             Self::blink_cursors,
         );
+    }
+
+    /// An owned revision for asynchronous operations that may replace the current draft.
+    pub(crate) fn content_and_selection_revision(
+        &self,
+        ctx: &AppContext,
+    ) -> impl PartialEq + use<> {
+        let buffer = self.editor_model.as_ref(ctx).buffer(ctx);
+        (buffer.versions(), buffer.local_selections().clone())
     }
 
     /// Returns a snapshot of the editor.

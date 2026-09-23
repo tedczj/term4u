@@ -115,6 +115,10 @@ impl Element for TerminalSizeElement {
             return false;
         };
         match event {
+            Event::MouseMoved { .. } if self.resize_tx.is_some() => {
+                ctx.dispatch_typed_action(TerminalAction::MaybeLinkHover { position: None });
+                false
+            }
             Event::KeyDown {
                 chars,
                 is_composing: false,

@@ -443,3 +443,279 @@ fn command_palette_opens_with_local_bindings_and_closes() {
         });
     });
 }
+
+fn history_result(search: &ViewHandle<CommandSearchView>, app: &mut App) {
+    search.update(app, |search, ctx| {
+        search.handle_action(
+            &crate::search::command_search::view::CommandSearchAction::ResultClicked {
+                result_index: 0,
+                result_action: Box::new(CommandSearchItemAction::AcceptHistory(
+                    crate::search::command_search::searcher::AcceptedHistoryItem {
+                        command: "echo chosen".into(),
+                        linked_workflow_data: None,
+                    },
+                )),
+            },
+            ctx,
+        );
+    });
+}
+
+#[test]
+fn l0_01_history_accept_fills_origin_without_execution_and_cancel_keeps_cursor() {
+    App::test((), |mut app| async move {
+        let workspace = initialize_workspace(&mut app);
+        let terminal =
+            workspace.update(&mut app, |workspace, ctx| workspace.terminal_for_input(ctx));
+        terminal.update(&mut app, |view, ctx| {
+            view.input().update(ctx, |input, ctx| {
+                input.replace_buffer_content("draft 中文 tail", ctx);
+                input.editor().update(ctx, |editor, ctx| {
+                    editor.select_ranges_by_byte_offset([6_usize.into()..6_usize.into()], ctx);
+                });
+            });
+        });
+        let draft = terminal.read(&app, |view, ctx| {
+            view.input()
+                .as_ref(ctx)
+                .editor()
+                .as_ref(ctx)
+                .snapshot_model(ctx)
+        });
+        let (tx, rx) = async_channel::unbounded();
+        app.update(|ctx| {
+            ctx.subscribe_to_view(&terminal, move |_, event, _| {
+                if matches!(event, crate::terminal::view::Event::ExecuteCommand(_)) {
+                    tx.try_send(()).unwrap();
+                }
+            });
+        });
+        let search = workspace.update(&mut app, |workspace, ctx| {
+            workspace.show_command_search(&CommandSearchOptions::default(), ctx);
+            workspace.command_search.clone().unwrap()
+        });
+        search.update(&mut app, |_, ctx| {
+            ctx.emit(CommandSearchEvent::Close {
+                query: "draft".into(),
+                filter: None,
+            });
+        });
+        terminal.read(&app, |view, ctx| {
+            assert!(view.input().as_ref(ctx).editor().is_focused(ctx));
+            assert_eq!(
+                view.input()
+                    .as_ref(ctx)
+                    .editor()
+                    .as_ref(ctx)
+                    .snapshot_model(ctx),
+                draft
+            );
+        });
+        let search = workspace.update(&mut app, |workspace, ctx| {
+            workspace.show_command_search(&CommandSearchOptions::default(), ctx);
+            workspace.command_search.clone().unwrap()
+        });
+        history_result(&search, &mut app);
+        terminal.read(&app, |view, ctx| {
+            assert_eq!(view.input().as_ref(ctx).buffer_text(ctx), "echo chosen");
+        });
+        assert!(rx.is_empty());
+    });
+}
+
+#[test]
+fn l0_01_history_result_does_not_follow_a_tab_switch() {
+    App::test((), |mut app| async move {
+        let workspace = initialize_workspace(&mut app);
+        let (origin, search) = workspace.update(&mut app, |workspace, ctx| {
+            let terminal = workspace.terminal_for_input(ctx);
+            workspace.insert_in_input("first draft", true, ctx);
+            workspace.show_command_search(&CommandSearchOptions::default(), ctx);
+            (terminal, workspace.command_search.clone().unwrap())
+        });
+        let other = workspace.update(&mut app, |workspace, ctx| {
+            workspace.add_terminal_tab(false, ctx);
+            workspace.insert_in_input("second draft", true, ctx);
+            workspace.terminal_for_input(ctx)
+        });
+        history_result(&search, &mut app);
+        origin.read(&app, |view, ctx| {
+            assert_eq!(view.input().as_ref(ctx).buffer_text(ctx), "first draft")
+        });
+        other.read(&app, |view, ctx| {
+            assert_eq!(view.input().as_ref(ctx).buffer_text(ctx), "second draft")
+        });
+    });
+}
+
+#[test]
+fn l0_01_history_result_rejects_a_changed_then_restored_draft() {
+    App::test((), |mut app| async move {
+        let workspace = initialize_workspace(&mut app);
+        let (terminal, search) = workspace.update(&mut app, |workspace, ctx| {
+            workspace.insert_in_input("draft", true, ctx);
+            let terminal = workspace.terminal_for_input(ctx);
+            workspace.show_command_search(&CommandSearchOptions::default(), ctx);
+            (terminal, workspace.command_search.clone().unwrap())
+        });
+        terminal.update(&mut app, |view, ctx| {
+            view.input().update(ctx, |input, ctx| {
+                input.replace_buffer_content("intervening edit", ctx);
+                input.replace_buffer_content("draft", ctx);
+            });
+        });
+        history_result(&search, &mut app);
+        terminal.read(&app, |view, ctx| {
+            assert_eq!(view.input().as_ref(ctx).buffer_text(ctx), "draft")
+        });
+    });
+}
+
+#[test]
+fn l0_01_ctrl_r_is_not_captured_by_history_in_a_native_program() {
+    App::test((), |mut app| async move {
+        let workspace = initialize_workspace(&mut app);
+        let (window, terminal) = workspace.update(&mut app, |workspace, ctx| {
+            (ctx.window_id(), workspace.terminal_for_input(ctx))
+        });
+        app.update(|ctx| {
+            ctx.dispatch_custom_action(crate::util::bindings::CustomAction::CommandSearch, window)
+        });
+        let search = workspace
+            .read(&app, |workspace, _| workspace.command_search.clone())
+            .expect("the menu action must be available in the editor");
+        search.update(&mut app, |search, ctx| {
+            search.handle_action(
+                &crate::search::command_search::view::CommandSearchAction::Close,
+                ctx,
+            )
+        });
+        terminal.update(&mut app, |view, ctx| {
+            view.model.lock().process_bytes("\x1b[?1049h");
+            ctx.focus_self();
+        });
+        app.update(|ctx| {
+            ctx.dispatch_custom_action(crate::util::bindings::CustomAction::CommandSearch, window)
+        });
+        let handled = app
+            .dispatch_keystroke(
+                window,
+                &[workspace.id(), terminal.id()],
+                &warpui::keymap::Keystroke::parse("ctrl-r").unwrap(),
+                false,
+            )
+            .unwrap();
+        assert!(!handled);
+        assert!(workspace.read(&app, |workspace, _| workspace.command_search.is_none()));
+    });
+}
+
+#[test]
+fn l0_01_cancelled_search_accepts_text_before_the_next_frame() {
+    use std::cell::RefCell;
+    use std::rc::Rc;
+
+    App::test((), |mut app| async move {
+        let workspace = initialize_workspace(&mut app);
+        let (window, terminal, search) = workspace.update(&mut app, |workspace, ctx| {
+            workspace.insert_in_input("draft", true, ctx);
+            let terminal = workspace.terminal_for_input(ctx);
+            workspace.show_command_search(&CommandSearchOptions::default(), ctx);
+            (
+                ctx.window_id(),
+                terminal,
+                workspace.command_search.clone().unwrap(),
+            )
+        });
+        let mut presenter = Presenter::new(window);
+        let updated = app.read(|ctx| ctx.view_ids_for_window(window).into_iter().collect());
+        let presenter = app.update(move |ctx| {
+            presenter.invalidate(
+                WindowInvalidation {
+                    updated,
+                    ..Default::default()
+                },
+                ctx,
+            );
+            presenter.build_scene(vec2f(800., 600.), 1., None, ctx);
+            Rc::new(RefCell::new(presenter))
+        });
+        search.update(&mut app, |_, ctx| {
+            ctx.emit(CommandSearchEvent::Close {
+                query: "draft".into(),
+                filter: None,
+            });
+        });
+        terminal.read(&app, |view, ctx| {
+            assert!(view.input().as_ref(ctx).editor().is_focused(ctx))
+        });
+        // Retain the painted search frame: text delivery must use current focus, not its snapshot.
+        app.update(|ctx| {
+            ctx.simulate_window_event(
+                warpui::Event::TypedCharacters { chars: "x".into() },
+                window,
+                presenter,
+            );
+        });
+        terminal.read(&app, |view, ctx| {
+            assert_eq!(view.input().as_ref(ctx).buffer_text(ctx), "draftx")
+        });
+    });
+}
+
+#[test]
+fn l0_07_notification_click_resolves_live_terminal_and_rejects_stale_data() {
+    use warpui::notification::NotificationResponse;
+
+    use crate::notification::{NotificationContext, handle_notification_response};
+    App::test((), |mut app| async move {
+        let workspace = initialize_workspace(&mut app);
+        let terminal = workspace.update(&mut app, |w, ctx| {
+            let t = w.terminal_for_input(ctx);
+            w.add_terminal_tab(false, ctx);
+            t
+        });
+        let response = |context: NotificationContext| {
+            NotificationResponse::new(
+                chrono::DateTime::UNIX_EPOCH.naive_utc(),
+                Some(serde_json::to_string(&context).unwrap()),
+            )
+        };
+        let stale = response(NotificationContext::TerminalOrigin {
+            run_id: uuid::Uuid::nil(),
+            terminal_view_id: terminal.id(),
+        });
+        app.update(|ctx| handle_notification_response(&stale, ctx));
+        assert_eq!(workspace.read(&app, |w, _| w.active_tab_index), 1);
+        let absent = response(NotificationContext::for_terminal(warpui::EntityId::new()));
+        app.update(|ctx| handle_notification_response(&absent, ctx));
+        let legacy = workspace.read(&app, |w, ctx| {
+            let group = w.tabs[0].pane_group.as_ref(ctx);
+            response(NotificationContext::BlockOrigin {
+                window_id: workspace.window_id(ctx),
+                pane_group_id: w.tabs[0].pane_group.id(),
+                pane_id: group
+                    .find_pane_id_for_terminal_view(terminal.id(), ctx)
+                    .unwrap(),
+            })
+        });
+        app.update(|ctx| handle_notification_response(&legacy, ctx));
+        assert_eq!(workspace.read(&app, |w, _| w.active_tab_index), 1);
+        let valid = response(NotificationContext::for_terminal(terminal.id()));
+        app.update(|ctx| handle_notification_response(&valid, ctx));
+        assert_eq!(workspace.read(&app, |w, _| w.active_tab_index), 0);
+        workspace.read(&app, |w, ctx| {
+            let group = w.active_tab_pane_group().as_ref(ctx);
+            assert_eq!(
+                group.find_pane_id_for_terminal_view(terminal.id(), ctx),
+                Some(group.focused_pane_id(ctx))
+            );
+        });
+        workspace.update(&mut app, |w, ctx| {
+            w.handle_action(&WorkspaceAction::CloseActiveTab, ctx)
+        });
+        let before = workspace.read(&app, |w, _| w.active_tab_index);
+        app.update(|ctx| handle_notification_response(&valid, ctx));
+        assert_eq!(workspace.read(&app, |w, _| w.active_tab_index), before);
+    });
+}

@@ -423,10 +423,30 @@ impl LocalSelections {
         app: &'a AppContext,
     ) -> impl Iterator<Item = DrawableSelection> + 'a {
         self.selections_intersecting_range(range, map, app).map(
-            move |(selection, selection_range)| DrawableSelection {
-                range: selection_range,
-                clamp_direction: selection.clamp_direction,
-                replica_id: replica_id.clone(),
+            move |(selection, selection_range)| {
+                let range = match &self.marked_text_state {
+                    MarkedTextState::Active { selected_range } => {
+                        // The replacement selection contains all marked text. Map only the IME's
+                        // subrange through buffer coordinates before tabs, folds and soft wrapping.
+                        let buffer = map.buffer(app);
+                        let start = selection.start().to_char_offset(buffer).unwrap();
+                        let end = selection.end().to_char_offset(buffer).unwrap();
+                        let length = (end - start).as_usize();
+                        let point = |offset: usize| {
+                            (start + offset.min(length))
+                                .to_point(buffer)
+                                .and_then(|point| point.to_display_point(map, app))
+                                .expect("marked text selection must be within its buffer")
+                        };
+                        point(selected_range.start)..point(selected_range.end)
+                    }
+                    MarkedTextState::Inactive => selection_range,
+                };
+                DrawableSelection {
+                    range,
+                    clamp_direction: selection.clamp_direction,
+                    replica_id: replica_id.clone(),
+                }
             },
         )
     }

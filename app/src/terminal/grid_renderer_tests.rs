@@ -262,3 +262,23 @@ fn test_calculate_selection_bounds() {
     assert_selection_bounds(10.into_lines()); // Without scroll clipping (but on the cusp of clipping)
     assert_selection_bounds(80.into_lines()); // With scroll clipping
 }
+
+#[test]
+fn l0_07_native_cursor_blink_phase_has_bounded_repaint_deadlines() {
+    use std::time::Duration;
+
+    use instant::Instant;
+    let epoch = Instant::now();
+    for (ms, visible, next) in [
+        (0, true, 500),
+        (499, true, 500),
+        (500, false, 1000),
+        (999, false, 1000),
+        (1000, true, 1500),
+    ] {
+        assert_eq!(
+            super::cursor_blink_phase(epoch, epoch + Duration::from_millis(ms)),
+            (visible, epoch + Duration::from_millis(next))
+        );
+    }
+}

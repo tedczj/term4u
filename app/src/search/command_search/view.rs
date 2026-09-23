@@ -106,6 +106,8 @@ pub struct CommandSearchView {
     search_bar: ViewHandle<SearchBar<CommandSearchItemAction>>,
     search_bar_state: ModelHandle<SearchBarState<CommandSearchItemAction>>,
     mixer: ModelHandle<CommandSearchMixer>,
+    session: Option<Arc<Session>>,
+    working_directory: Option<PathBuf>,
 }
 
 impl CommandSearchView {
@@ -171,7 +173,25 @@ impl CommandSearchView {
                 resizable_state_handle(DEFAULT_UNIVERSAL_SEARCH_WIDTH)
             });
 
+        ctx.subscribe_to_model(&History::handle(ctx), |view, _, event, ctx| {
+            let crate::terminal::HistoryEvent::Initialized(session_id) = event;
+            if view
+                .session
+                .as_ref()
+                .is_some_and(|session| session.id() == *session_id)
+            {
+                view.reset_command_search_mixer(
+                    view.session.clone(),
+                    view.working_directory.clone(),
+                    ctx,
+                );
+                view.search_bar.update(ctx, |bar, ctx| bar.run_query(ctx));
+            }
+        });
+
         Self {
+            session: None,
+            working_directory: None,
             handle: ctx.handle(),
             zero_state_handle,
             menu_positioning: Default::default(),
@@ -232,6 +252,8 @@ impl CommandSearchView {
         menu_positioning: MenuPositioning,
         ctx: &mut ViewContext<Self>,
     ) {
+        self.session = session.clone();
+        self.working_directory = working_directory.clone();
         self.reset_command_search_mixer(session, working_directory, ctx);
         let ordering = match menu_positioning {
             MenuPositioning::AboveInputBox => SearchResultOrdering::BottomUp,
