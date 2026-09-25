@@ -1,0 +1,10 @@
+{
+  "command": [
+    "python3",
+    "script/l0_verify.py",
+    "validate"
+  ],
+  "exit_code": 0,
+  "started_utc": "2026-09-25T07:30:45.912382+00:00",
+  "finished_utc": "2026-09-25T07:30:45.962784+00:00"
+}

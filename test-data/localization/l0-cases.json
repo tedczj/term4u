@@ -1540,6 +1540,12 @@
             "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
           },
           {
+            "path": "app/src/terminal/view/local_output_tests.rs",
+            "function": "l0_08_cleared_output_stays_in_scrollback_after_repaint",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          },
+          {
             "path": "app/src/terminal/view/local_io_tests.rs",
             "function": "l0_08_shell_clear_then_completed_command_keeps_old_output_above_viewport",
             "package": "warp",
@@ -1966,7 +1972,8 @@
       "platform": "macOS aarch64, one unlocked login desktop",
       "status": "NOT_RUN",
       "preconditions": [
-        "独立HISTFILE种子A/B/重复A，两个pane，文件alpha/beta及SUFFIX草稿。"
+        "独立HISTFILE种子A/B/重复A，两个pane，文件alpha/beta及SUFFIX草稿。",
+        "GUI历史必须在已完成shell集成的输入编辑器中执行；exec zsh或readline的原生历史结果单列，不能代替GUI History。"
       ],
       "steps": [
         "Up/Down恢复草稿，Ctrl-R选中/取消，取消后立即输入。",
@@ -1994,7 +2001,8 @@
       "platform": "macOS aarch64, one unlocked login desktop",
       "status": "NOT_RUN",
       "preconditions": [
-        "合成中文多行剪贴板；草稿中部光标/非空选区。"
+        "合成中文多行剪贴板；草稿中部光标/非空选区。",
+        "先确认输入进入GUI EditorAction::UserInsert；原生ZLE/vim不适用本用例的Cmd-Z事务断言。"
       ],
       "steps": [
         "Cmd-V并观察后缀，Cmd-Z一次；再复制路径样式纯文本重复。"
@@ -2025,7 +2033,8 @@
       "platform": "macOS aarch64, one unlocked login desktop",
       "status": "NOT_RUN",
       "preconditions": [
-        "隔离无插件vim和readline子程序；raw PTY探针；bracketed on/off。"
+        "隔离vim配置与状态（vim -Nu NONE -i NONE -n）和readline子程序；raw PTY探针；bracketed on/off。",
+        "执行Vim/readline控制命令前确认ASCII输入源；拼音预编辑或全角冒号造成的无效命令不算产品失败。"
       ],
       "steps": [
         "粘贴中文多行，vim保存到测试文件后比较字节。",

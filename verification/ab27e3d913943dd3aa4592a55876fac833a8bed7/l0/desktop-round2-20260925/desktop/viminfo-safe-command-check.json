@@ -1,0 +1,29 @@
+{
+  "command": [
+    "/usr/bin/vim",
+    "-Nu",
+    "NONE",
+    "-i",
+    "NONE",
+    "-n",
+    "-es",
+    "-c",
+    "qa!"
+  ],
+  "exit_code": 0,
+  "observed_utc": "2026-09-25T09:05:32.815748+00:00",
+  "user_viminfo_metadata_unchanged": true,
+  "before": {
+    "mtime_ns": 1790322091691651107,
+    "size": 19196,
+    "inode": 24641466
+  },
+  "after": {
+    "mtime_ns": 1790322091691651107,
+    "size": 19196,
+    "inode": 24641466
+  },
+  "stdout": "",
+  "stderr": "",
+  "scope": "Noninteractive validation of corrected isolation flags only; not a replacement GUI Vim round and not a rollback of prior viminfo changes."
+}

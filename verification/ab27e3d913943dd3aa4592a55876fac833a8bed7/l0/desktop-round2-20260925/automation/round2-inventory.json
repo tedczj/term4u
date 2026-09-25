@@ -1,0 +1,8 @@
+{
+  "command": [
+    "./script/test_inventory"
+  ],
+  "exit_code": 0,
+  "started_utc": "2026-09-25T07:22:26.134820+00:00",
+  "finished_utc": "2026-09-25T07:22:54.081375+00:00"
+}

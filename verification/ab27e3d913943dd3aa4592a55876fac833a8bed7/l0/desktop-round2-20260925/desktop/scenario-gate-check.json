@@ -1,0 +1,6 @@
+{
+  "expected": "reject incomplete acceptance",
+  "result": "PASS for fail-closed rejection only",
+  "reason": "Incomplete/failing case CUA-01: PARTIAL",
+  "product_acceptance": "NOT_ACCEPTED"
+}

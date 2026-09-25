@@ -1,0 +1,15 @@
+{
+  "command": [
+    "cargo",
+    "nextest",
+    "list",
+    "--locked",
+    "-p",
+    "warpui",
+    "--message-format",
+    "json"
+  ],
+  "exit_code": 0,
+  "started_utc": "2026-09-25T07:31:32.686197+00:00",
+  "finished_utc": "2026-09-25T07:31:33.526662+00:00"
+}

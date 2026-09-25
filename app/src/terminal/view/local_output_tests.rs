@@ -1,5 +1,5 @@
 use warpui::units::IntoLines;
-use warpui::{App, TypedActionView};
+use warpui::{App, EntityIdSet, TypedActionView, WindowInvalidation};
 
 use super::*;
 use crate::terminal::find::BlockGridMatch;
@@ -163,6 +163,75 @@ fn l0_08_transcript_clear_preserves_draft_and_restored_blocks() {
                     .output_to_string(),
                 "kept"
             );
+        });
+    });
+}
+
+#[test]
+fn l0_08_cleared_output_stays_in_scrollback_after_repaint() {
+    App::test((), |mut app| async move {
+        initialize_app_for_terminal_view(&mut app);
+        let blocks =
+            [SerializedBlock::new_for_test(b"echo kept".to_vec(), b"kept".to_vec()).into()];
+        let (window, terminal) = add_window_with_id_and_terminal(&mut app, Some(&blocks));
+        let presenter = app.presenter(window).expect("test window has a presenter");
+        let window_size = app.read(|ctx| ctx.windows().platform_window(window).unwrap().size());
+        let mut updated = EntityIdSet::default();
+        updated.insert(app.root_view_id(window).unwrap());
+        updated.insert(terminal.id());
+        let invalidation = WindowInvalidation {
+            updated,
+            ..Default::default()
+        };
+        terminal.update(&mut app, |view, ctx| {
+            view.after_layout(window_size, ctx);
+            view.input
+                .update(ctx, |input, ctx| input.insert_text("draft 中文", ctx));
+            view.handle_wakeup(None, ctx);
+        });
+        app.update(|ctx| {
+            let mut presenter = presenter.borrow_mut();
+            presenter.invalidate(invalidation.clone(), ctx);
+            presenter.build_scene(window_size, 1., None, ctx);
+        });
+        terminal.update(&mut app, |view, ctx| {
+            view.handle_local_output_action(&LocalOutputAction::ClearVisible, ctx);
+        });
+        app.update(|ctx| {
+            let mut presenter = presenter.borrow_mut();
+            presenter.invalidate(invalidation.clone(), ctx);
+            presenter.build_scene(window_size, 1., None, ctx);
+        });
+        terminal.update(&mut app, |view, ctx| {
+            view.handle_wakeup(None, ctx);
+            view.after_layout(window_size, ctx);
+        });
+        app.update(|ctx| {
+            let mut presenter = presenter.borrow_mut();
+            presenter.invalidate(invalidation, ctx);
+            presenter.build_scene(window_size, 1., None, ctx);
+        });
+        terminal.read(&app, |view, ctx| {
+            let model = view.model.lock();
+            let block = &model.block_list().blocks()[0];
+            let output_bottom = (BlockListPoint::from_within_block_point(
+                &block.end_point().to_within_block_point(BlockIndex(0)),
+                model.block_list(),
+            )
+            .row
+            .as_f64() as f32
+                + 1.)
+                * view.size_info.cell_height_px().as_f32();
+            assert!(
+                view.transcript_scroll.scroll_start().as_f32() >= output_bottom,
+                "scroll={}, output_bottom={output_bottom}, height={}, pane={}, gap={:?}",
+                view.transcript_scroll.scroll_start().as_f32(),
+                view.transcript_height,
+                view.size_info.pane_height_px,
+                model.block_list().active_gap(),
+            );
+            assert_eq!(block.output_to_string(), "kept");
+            assert_eq!(view.input.as_ref(ctx).buffer_text(ctx), "draft 中文");
         });
     });
 }

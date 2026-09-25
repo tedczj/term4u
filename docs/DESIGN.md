@@ -1121,7 +1121,7 @@ Clippy、GUI build、实际 inventory 均 exit 0。完整 presubmit exit 0：wor
 
 #### 6.2.16 2026-09-25 分层收尾、测试路由与串行实机操作
 
-**本轮交付分支 `dev-20260924-l0`，测试基线 `f842572a25be00967da13847cd2a3eab6c25dd80`。L0 仍为 IN_PROGRESS。**
+**本轮交付分支 `dev-20260924-l0`，产品候选基线 `ab27e3d913943dd3aa4592a55876fac833a8bed7`，自动测试另含本轮测试差异。L0 仍为 IN_PROGRESS。**
 本节在原 66 个场景之上明确开发、自动验证和实机验证的边界；不重开 R0/R1/R2，也不另建
 roadmap。机器可执行路由在 `test-data/localization/l0-cases.json`，由本文原场景 ID 校验。
 清单不是测试结果：相关函数只标 `RELATED_PARTIAL_NOT_SCENARIO_PASS`，未映射项保持
@@ -1131,7 +1131,7 @@ roadmap。机器可执行路由在 `test-data/localization/l0-cases.json`，由�
 增加 `view/local_output.rs`：稳定 BlockId 的输出折叠/展开、上下块导航和 GUI 清屏；折叠保留
 命令行作为展开入口，Find 命中隐藏正文先展开再换算坐标。拒绝 active/stale block 与原生备用屏
 中的不适用动作；清屏保留草稿、正文和历史，不把原生 Ctrl-L 变成 GUI 清屏。入口走现有
-`CustomAction::ClearBlocks` 和输入可见 context；实际默认键以注册表为准，不把 Cmd-K 写成已测。
+`CustomAction::ClearBlocks` 和输入可见 context；实际默认键以注册表为准；本轮 macOS Cmd-K 的实测与限制见下方第二轮记录。
 `local_output_tests.rs` 已挂载六个真实测试，覆盖高度/正文、Find、active/stale、clear、alt 与导航。
 该产品增量的历史 CI 结果和候选区别见 `verification/abd94627476f6d68518de2c4bd37b8653b869fc6/l0/ci-20260924/manifest.json`。
 本轮重新在 macOS arm64 / Rust 1.92.0 执行下方自动门禁；不借用历史 CI 填当前 PASS。
@@ -1185,60 +1185,74 @@ cargo nextest run --locked --no-fail-fast -p warp_terminal -p warpui -p warp_tui
 `l0_verify.py validate` 没有 `--inventory` 时只验证静态定义，输出明确
 `registration_checked: false`，不能当成 actual nextest 注册证明。无匹配、歧义、截断/空 inventory
 均失败；immutable baseline 与 approved deletion 不变。本轮真实 inventory 校验结果为
-`registration_checked: true`：66 场景、88 条相关测试引用、13 场景无自动映射、18 个实机工作流。
+`registration_checked: true`：66 场景、89 条相关测试引用、13 场景无自动映射、18 个实机工作流。
 部分关联不等于完整场景覆盖。工具自身 22 项 Python 回归在本机 macOS 通过，仅证明清单、
 证据和锁的工具逻辑，不是产品实机通过。
 
-**本轮自动验证及修复。** 原始命令、退出码和日志归档在
-`verification/f842572a25be00967da13847cd2a3eab6c25dd80/l0/local-20260925/`；大型候选及原始
-实机材料保留在 `/Volumes/SN850X/term4u-l0-20260925/`，具体 SHA256 见 manifest。
-构建使用外置盘缓存、`CARGO_PROFILE_DEV_DEBUG=0`、`CARGO_INCREMENTAL=0`、4 个构建任务。
-首次 presubmit 在 `local_output.rs` 的 import 排序处失败，已按仓库 formatter 修正，后续完整通过。
-`check-results` 漏检 CUA-01 的三项反例先失败再通过；另补清单不得删除该前置工作流的回归。
-§7.2 的两条过时命令已纠正：`tui_integration` 是 test target，编辑器 package 是 `warp_editor`。
-原失败日志与纠正后的执行结果均保留，未删除或弱化测试门禁。
+**本轮自动验证与测试修正。** 解锁后的第二轮仍使用 `gpt-6-luna` / `high`，
+产品 GUI/TUI 冻结在 `ab27e3d9`。新增
+`l0_08_cleared_output_stays_in_scrollback_after_repaint`，使用测试窗口自己的 Presenter 和实际尺寸，
+覆盖清屏后再次布局、唤醒和绘制，断言旧输出留在 scrollback、正文与草稿仍保存；已加入
+L0-08-T01 的部分覆盖映射。初版诊断夹具误用独立 Presenter 与固定尺寸，造成假失败；修正
+夹具后原断言通过，不把这段诊断写成产品 red-to-green 修复。产品渲染和输入实现没有因此改写。
 
-| 当前实际执行 | 结果与范围 |
+本轮原始日志、截图、PTY、失败样本及独立复核索引在
+`verification/ab27e3d913943dd3aa4592a55876fac833a8bed7/l0/desktop-round2-20260925/`。
+冻结 bundle 与运行夹具在 `/Volumes/SN850X/term4u-l0-20260925/round2/`，体积较大的可执行文件
+只记录 hash，不放进 Git。第一轮窗口不可绑定的记录继续保留于
+`verification/f842572a25be00967da13847cd2a3eab6c25dd80/l0/local-20260925/`，不覆盖旧证据。
+
+| 第二轮实际执行 | 结果与范围 |
 |---|---|
-| GUI local_only 全量 nextest | 1609 passed / 3 既有 skipped |
-| warp_terminal / warpui / warp_tui nextest | 634 passed / 3 既有 skipped |
-| 完整 presubmit | PASS；三组严格 Clippy、格式/结构/许可证/网络检查、9 项 inventory 工具测试均通过；workspace 4865 passed / 20 skipped，completer v2 131 passed / 4 skipped，doc tests 通过 |
-| 额外 Clippy | local_only GUI、TUI、warpui_core tui、warp_editor + warp_tui test-util benches 均通过 |
-| warpui_core tui_integration | 2 passed / 0 skipped；不替代真实 PTY |
-| 实际 inventory / L0 注册 | baseline 9777、current 4885、批准删除 5084；88 条引用唯一匹配 |
-| L0 校验工具 | 22 passed；静态目录和带真实 inventory 的目录校验均通过 |
-| GUI/TUI Debug 构建 | local_only GUI、offline_hard + standalone TUI、GUI bundle 构建通过；实机冻结副本另记录签名和 hash |
-| R4 外链 checker | INCOMPLETE：设计列出的文件尚不存在，调用退出 127；R4 保持 OPEN |
+| GUI local_only 全量 nextest | 1610 passed / 3 既有 skipped；含新增重绘回归 |
+| 完整 presubmit | PASS；既定三组严格 Clippy、格式/结构/许可证/网络检查、9 项 inventory 工具测试通过；workspace 4866 passed / 20 skipped，completer v2 131 passed / 4 skipped，doc tests 通过 |
+| 额外 local_only GUI Clippy | PASS |
+| 实际 inventory / L0 注册 | baseline 9777、current 4886、批准删除 5084；89 条引用唯一匹配 |
+| L0 校验工具 | 22 passed；静态及实际 nextest 注册校验均通过 |
+| GUI/TUI Debug 构建 | local_only GUI bundle、offline_hard + standalone TUI 均通过；实机使用冻结副本 |
 
-以上测试集合存在重叠，不相加为独立用例数；skipped 均按原配置保留，未新增 ignore。
-Release、全工作区 build、供应链 cargo-deny、数据迁移完整夹具矩阵及特权网络采集未在本轮执行，
-不能从本轮自动门禁推导 R6/C1–C10 已验收。
+测试集合重叠，不相加为独立用例数；skipped 按原配置保留，未新增 ignore。
+本轮新增 Rust 代码只在测试模块中，GUI 实机产物不冒称包含尚未提交的测试文件。
+第一轮已修复 CUA-01 完整性漏检、import 格式及 §7.2 过时命令；R4 外链 checker 文件缺失仍 OPEN。
+Release、全工作区 build、cargo-deny、完整数据迁移夹具和特权网络采集未在第二轮执行，
+不据这些自动门禁关闭 R6/C1–C10。
 
-**本轮 Luna High 串行实机结果。** 实际执行模型为 `gpt-6-luna`，reasoning effort 为
-`high`，执行器为 `unified-computer-use/cua_repl`。18 个工作流逐项登记为 16 INCOMPLETE、
-2 BLOCKED（图片/隐私前置未实现），没有全工作流 PASS。本次只启动第 1 轮，最多 3 轮的上限未用满：
-CUA-01 无法取得候选窗口，`getApp` 返回 `cgWindowNotFound`；`getState` 能枚举运行进程，
-GUI 进程采样在正常 NSApplication 事件等待中，尚不能归因产品故障。未因此修改渲染器。
-依赖该前置的 GUI 操作未取得有效截图和交互结果，不记 PASS；相同环境未恢复时不重复后两轮。
-整个桌面操作时间窗由 `l0_verify.py serial` 启动的 lease keeper 持锁；独立第二进程取得锁
-被 exit 2 拒绝。CUA 工具调用不属于该 shell 子进程，只在已记录的持锁窗口内协作执行，
-并不宣称锁能约束用户或不遵守协议的其他程序。当前是隔离 profile，不是专用 macOS 账号；
-GUI 启动未设置清洁 ZDOTDIR，shell 环境隔离也未获证明，已作为 CUA-01 限制保留；
-未读取真实剪贴板、申请通知权限或录音。
+**解锁后的串行实机结果。** 已通过 CUA 取得候选窗口、AX 和真实截图，第一轮窗口前置阻塞已解除。
+GUI 明确传入隔离 profile、ZDOTDIR、HISTFILE；GUI→terminal-server→shell 链有进程证据。
+第二轮中执行会话中断，原候选保留，但旧代理和 lease keeper 已退出；约 07:33 UTC 发现，
+07:34:48 UTC 重新取同一机器锁。精确释放时间未知，06:55:43 UTC 只是旧日志最后 BEGIN，
+不能把它当作中断起点，也不能宣称整个区间已有连续租约证明。恢复后的工作流逐项写 BEGIN/END。
+GUI 后续受控重启仍使用同一冻结 bundle/profile，并重新记录 PID。
 
-CUA-18 保留首次未建 terminal tab 的无效样本，并完成一次干净 PTY 复现。后者使用独立
-profile、ZDOTDIR、HISTFILE 和冻结 TUI，120×40 起始，执行直接 UTF-8 中文输入、外部 CLI、
-备用屏进入/退出、Ctrl-C、100×30 resize 和 Ctrl-Q；退出码 0。主代理以 pyte 0.8.2 重放
-原始字节流独立核验：`你好 X` 的 `你/好/X` 分别在 0/2/5 列；备用屏显示合成 marker 后
-恢复旧输出；协议探针时间窗无 OSC52/9/777/BEL 向宿主透传。这些是有限子断言 PASS，
-不替代系统 IME、真实通知/剪贴板、完整进程树、全部字符和尺寸矩阵。
-CUA-18 全工作流仍为 INCOMPLETE，完整 termios 控制字符/速度恢复也未采齐。
+| 实机范围 | 已获得的有限结果与限制 |
+|---|---|
+| 历史、搜索、菜单、分屏 | GUI 精确前缀草稿的 Up/Up/Down/Down 底部输入依次为 A/B/A/原前缀；无匹配草稿保持。另观察 Ctrl-R 查找及 Esc 恢复、右键 Esc、Find Enter 导航、分屏；跨 pane 草稿隔离和完整异步竞态仍未验收 |
+| GUI 编辑器与设置 | 已确认 EditorAction::UserInsert/Undo；中文多行粘贴保留后缀，一次 Cmd-Z 恢复原草稿；路径样式纯文本保留空格、斜杠与中文。custom-size 设置开启后在同 profile 重启仍开启，测试后恢复关闭 |
+| 多行粘贴与原生 Vim | App.paste 返回超时时，画面仍可能已插入；必须先观察，不能重试叠加。确认 ABC 输入源后，无插件 Vim 粘贴、Escape、ZZ 保存退出成功，文件 UTF-8 与预期精确一致 |
+| 清屏与折叠 | 折叠/展开与菜单 ClearVisible 有实际观察。macOS 默认是 Cmd-K；此前 Cmd-Shift-K 来自主代理误读函数名，是无效测试输入。正确 Cmd-K 有 handler 日志，后续独立截图确认右 pane 清空、prompt 可见，左 pane 内容保留 |
+| 折叠后 Find | 后续右键使用了旧坐标，菜单复制项禁用，未能确认命中正文所在的已完成块；此分支仍未验证，不能据此登记产品缺少折叠菜单 |
+| 图像观察限制 | 部分清屏 JPEG 连 prompt/draft 都是黑的，不能由 AX 仍有内容就声称视觉通过；稳态截图、AX 和回调记录分开登记，暂未归因产品渲染或截图时序问题 |
+| 文件拖入与链接 | Finder 合成文件已可见，但第一次拖入未建立实际投递证据；普通点击后 loopback GET 计数日志未新增。跨窗口投递、hover-only、Cmd-click 等按执行器能力与后续证据判定，不以单测替代 |
+| 系统 IME | SCIM 源标识存在不等于已形成组合。Term4u 与新建空白 TextEdit 对照均只出现 literal nihao，无有效 marked-text/候选窗；IME 项未验收，不归因为 Term4u 专属故障 |
+| TUI | 独立新 profile、120×40 raw PTY、完整子树与 termios flags/cc/speed；中文输出 你/好/X 位于 0/2/5 列，备用屏出现后恢复，Ctrl-C/resize/Ctrl-Q 有记录，退出 0 |
+| TUI 协议 | 完整探针实际发送有效 OSC52 写及查询、OSC9、OSC777 与 BEL；子程序 0.75 秒查询窗口收到 0 字节，外层原始输出窗口无这四类控制序列。可打印的命令回显不等于控制序列透传 |
+| 权限、性能与未实现项 | 系统剪贴板权限矩阵、通知授权/声音未执行；完整性能采样和全入口审计未关闭；图片消费者、动态隐私保持 BLOCKED |
 
-termios 的已记录模式仅多出 `PENDIN`，独立无 Term4u 的 PTY 对照复现同样差值；
-[Apple XNU 的 termios 路径](https://github.com/apple-oss-distributions/xnu/blob/main/bsd/kern/tty.c)
-在恢复 ICANON 时设置此状态位，因此该差值不作为产品 FAIL，不通过 flush 输入来伪造一致。
-初版离线屏幕 oracle 在未完成的重绘字节处触发 pyte 异常，已保留日志；最终对已观察的帧边界
-执行同样断言并通过。66 场景未获完整产品验收，报告完整性检查必须继续拒绝关闭 L0。
+TUI 已记录模式唯一差值为 PENDIN，其他 flags、控制字符及速度相同。
+[Apple XNU termios 路径](https://github.com/apple-oss-distributions/xnu/blob/main/bsd/kern/tty.c)
+在恢复 ICANON 时设置该内核状态位，第一轮无 Term4u 的对照也复现；不通过 flush 输入伪造全位一致。
+本轮 Vim 夹具只使用 `-Nu NONE -n`，漏了 `-i NONE`：真实 `~/.viminfo` 的修改时间与测试保存
+一致，且包含本轮测试路径。未导出该文件内容，也没有测试前快照可安全还原；没有进一步删除或
+回写用户文件。该样本的文件字节结论有效，但不能声称 Vim 状态完全隔离。后续夹具统一使用
+`vim -Nu NONE -i NONE -n`，清单已修正；非交互退出检查确认该命令不改变现有 viminfo 的
+mtime/大小/inode，但不替代 GUI 重验或消除先前副作用。本轮隔离漏项如实保留，不改写为 PASS。
+上述均为明确范围的子断言，18 个复合工作流和 66 场景没有据此整体填 PASS；具体状态与未执行分支
+以第二轮 `round-results.json` 和主代理独立复核为准。所有测试源、截图与运行日志保留首次异常，
+测试前置修正与产品修复严格区分。
+最终计数为 11 PARTIAL、3 INCOMPLETE、2 NOT_RUN、2 BLOCKED，整体 INCOMPLETE / NOT_ACCEPTED。
+测试结束已恢复 SCIM.ITABC、关闭本轮候选及其 server、loopback server 和空白 TextEdit 对照，
+09:06:19 UTC 释放桌面锁；原用户实例未纳入清理。当前没有得到可归因的产品失败，修正集中在
+测试输入、判定依据与夹具隔离，并补充清屏重绘回归；不因实机可访问而关闭剩余验收项。
 
 **串行 computer-use 规格。** JSON 的 CUA-01–18 各有前置条件、步骤、可观察结果、证据类型和
 恢复动作；依次覆盖候选身份、历史、编辑器粘贴、vim/readline、布局、菜单、Finder、链接、
@@ -1254,6 +1268,10 @@ GUI PID及子程序祖先链。任何实例身份不明的截图作废，而不�
 因此应使用专用测试账号，并将“测试期间不接管鼠标键盘”作为运行前提。
 
 每次动作前看当前截图/窗口，不盲点旧坐标；一次只执行有明确目标的步骤，等待应用状态再观察。
+GUI 历史和 Undo 必须先确认事件进入 GUI 编辑器；`exec zsh` 后原生 ZLE 的行为不能代替
+GUI History/Undo，也不能用它制造 GUI 失败。只看 `printenv` 缺少 HISTFILE/ZDOTDIR 不足以判定
+隔离失败：shell 变量未必 export，启动集成也可能恢复变量；应结合实际测试历史文件写入和启动记录。
+控制命令先确认 ASCII 输入条件，IME 用例单独确认 marked-text；SCIM 标识本身不是组合成功证据。
 输入法要操作系统真实拼音组合，不能粘贴最终中文冒充IME；Finder拖入不能用内部函数替代。
 实际通知授权必须征得用户同意，未授权样本不能算授权投递/点击通过。声音需获准录音或人工
 听验，纯截图模型不能验听觉；输入P95/帧P95需采样仪器和原始时间戳，不能由模型看截图估算。

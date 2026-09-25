@@ -1,0 +1,21 @@
+{
+  "observed_utc": "2026-09-25T06:56:25.750566+00:00",
+  "root_pid": 11876,
+  "processes": [
+    {
+      "pid": 11876,
+      "ppid": 86301,
+      "command": "/Volumes/SN850X/term4u-l0-20260925/round2/Term4u-L0-Round2.app/Contents/MacOS/term4u"
+    },
+    {
+      "pid": 11877,
+      "ppid": 11876,
+      "command": "/Volumes/SN850X/term4u-l0-20260925/round2/Term4u-L0-Round2.app/Contents/MacOS/term4u terminal-server --parent-pid=11876"
+    },
+    {
+      "pid": 11883,
+      "ppid": 11877,
+      "command": "-zsh -g --no_rcs"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "command": [
+    "cargo",
+    "nextest",
+    "list",
+    "--locked",
+    "-p",
+    "warp",
+    "--no-default-features",
+    "--features",
+    "local_only,test-util",
+    "--message-format",
+    "json"
+  ],
+  "exit_code": 0,
+  "started_utc": "2026-09-25T07:31:30.865019+00:00",
+  "finished_utc": "2026-09-25T07:31:31.850007+00:00"
+}

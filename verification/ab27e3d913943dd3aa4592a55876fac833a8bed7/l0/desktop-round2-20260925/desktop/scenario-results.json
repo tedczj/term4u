@@ -1,0 +1,1186 @@
+{
+  "schema_version": 1,
+  "candidate": {
+    "source_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+    "source_tree": "14a17991abb74db93e1af58d361c80745c5d3507",
+    "binary_sha256": "a948af432f1105349dad6067f071c74934dc0f4b472c0921ec5b7a852abaf746",
+    "diff_sha256": null
+  },
+  "prerequisites": [
+    {
+      "id": "CUA-01",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "PARTIAL",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Window accessed and cleaned up; identity workflow is incomplete. See round-results.json.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": []
+    }
+  ],
+  "cases": [
+    {
+      "id": "L0-01-T01",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "INCOMPLETE",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-02",
+          "status": "PARTIAL",
+          "details": "round-results.json"
+        }
+      ]
+    },
+    {
+      "id": "L0-01-T02",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "INCOMPLETE",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-02",
+          "status": "PARTIAL",
+          "details": "round-results.json"
+        }
+      ]
+    },
+    {
+      "id": "L0-01-T03",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "INCOMPLETE",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-02",
+          "status": "PARTIAL",
+          "details": "round-results.json"
+        }
+      ]
+    },
+    {
+      "id": "L0-01-T04",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "INCOMPLETE",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-02",
+          "status": "PARTIAL",
+          "details": "round-results.json"
+        }
+      ]
+    },
+    {
+      "id": "L0-01-T05",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "INCOMPLETE",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-02",
+          "status": "PARTIAL",
+          "details": "round-results.json"
+        }
+      ]
+    },
+    {
+      "id": "L0-01-T06",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "INCOMPLETE",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-02",
+          "status": "PARTIAL",
+          "details": "round-results.json"
+        }
+      ]
+    },
+    {
+      "id": "L0-01-T07",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "INCOMPLETE",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-02",
+          "status": "PARTIAL",
+          "details": "round-results.json"
+        }
+      ]
+    },
+    {
+      "id": "L0-01-T08",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "INCOMPLETE",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-02",
+          "status": "PARTIAL",
+          "details": "round-results.json"
+        }
+      ]
+    },
+    {
+      "id": "L0-02-T01",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "INCOMPLETE",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-03",
+          "status": "PARTIAL",
+          "details": "round-results.json"
+        }
+      ]
+    },
+    {
+      "id": "L0-02-T02",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "INCOMPLETE",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-03",
+          "status": "PARTIAL",
+          "details": "round-results.json"
+        }
+      ]
+    },
+    {
+      "id": "L0-02-T03",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "INCOMPLETE",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-04",
+          "status": "PARTIAL",
+          "details": "round-results.json"
+        }
+      ]
+    },
+    {
+      "id": "L0-02-T04",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "INCOMPLETE",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-04",
+          "status": "PARTIAL",
+          "details": "round-results.json"
+        }
+      ]
+    },
+    {
+      "id": "L0-02-T05",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "INCOMPLETE",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-04",
+          "status": "PARTIAL",
+          "details": "round-results.json"
+        }
+      ]
+    },
+    {
+      "id": "L0-02-T06",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "INCOMPLETE",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-04",
+          "status": "PARTIAL",
+          "details": "round-results.json"
+        }
+      ]
+    },
+    {
+      "id": "L0-02-T07",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "INCOMPLETE",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-04",
+          "status": "PARTIAL",
+          "details": "round-results.json"
+        }
+      ]
+    },
+    {
+      "id": "L0-02-T08",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "INCOMPLETE",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-04",
+          "status": "PARTIAL",
+          "details": "round-results.json"
+        }
+      ]
+    },
+    {
+      "id": "L0-03-T01",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "INCOMPLETE",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-05",
+          "status": "PARTIAL",
+          "details": "round-results.json"
+        }
+      ]
+    },
+    {
+      "id": "L0-03-T02",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "INCOMPLETE",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-05",
+          "status": "PARTIAL",
+          "details": "round-results.json"
+        },
+        {
+          "workflow": "CUA-09",
+          "status": "INCOMPLETE",
+          "details": "round-results.json"
+        }
+      ]
+    },
+    {
+      "id": "L0-03-T03",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "INCOMPLETE",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-05",
+          "status": "PARTIAL",
+          "details": "round-results.json"
+        }
+      ]
+    },
+    {
+      "id": "L0-03-T04",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "INCOMPLETE",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-05",
+          "status": "PARTIAL",
+          "details": "round-results.json"
+        }
+      ]
+    },
+    {
+      "id": "L0-03-T05",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "INCOMPLETE",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-05",
+          "status": "PARTIAL",
+          "details": "round-results.json"
+        },
+        {
+          "workflow": "CUA-12",
+          "status": "NOT_RUN",
+          "details": "round-results.json"
+        }
+      ]
+    },
+    {
+      "id": "L0-03-T06",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "INCOMPLETE",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-05",
+          "status": "PARTIAL",
+          "details": "round-results.json"
+        }
+      ]
+    },
+    {
+      "id": "L0-04-T01",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "INCOMPLETE",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-06",
+          "status": "PARTIAL",
+          "details": "round-results.json"
+        }
+      ]
+    },
+    {
+      "id": "L0-04-T02",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "INCOMPLETE",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-06",
+          "status": "PARTIAL",
+          "details": "round-results.json"
+        }
+      ]
+    },
+    {
+      "id": "L0-04-T03",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "INCOMPLETE",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-06",
+          "status": "PARTIAL",
+          "details": "round-results.json"
+        }
+      ]
+    },
+    {
+      "id": "L0-04-T04",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "INCOMPLETE",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-06",
+          "status": "PARTIAL",
+          "details": "round-results.json"
+        }
+      ]
+    },
+    {
+      "id": "L0-04-T05",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "INCOMPLETE",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-06",
+          "status": "PARTIAL",
+          "details": "round-results.json"
+        }
+      ]
+    },
+    {
+      "id": "L0-04-T06",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "INCOMPLETE",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-06",
+          "status": "PARTIAL",
+          "details": "round-results.json"
+        }
+      ]
+    },
+    {
+      "id": "L0-04-T07",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "INCOMPLETE",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-06",
+          "status": "PARTIAL",
+          "details": "round-results.json"
+        }
+      ]
+    },
+    {
+      "id": "L0-05-T01",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "INCOMPLETE",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-07",
+          "status": "INCOMPLETE",
+          "details": "round-results.json"
+        }
+      ]
+    },
+    {
+      "id": "L0-05-T02",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "INCOMPLETE",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-07",
+          "status": "INCOMPLETE",
+          "details": "round-results.json"
+        }
+      ]
+    },
+    {
+      "id": "L0-05-T03",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "INCOMPLETE",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-07",
+          "status": "INCOMPLETE",
+          "details": "round-results.json"
+        }
+      ]
+    },
+    {
+      "id": "L0-05-T04",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "INCOMPLETE",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-07",
+          "status": "INCOMPLETE",
+          "details": "round-results.json"
+        }
+      ]
+    },
+    {
+      "id": "L0-05-T05",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "INCOMPLETE",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-04",
+          "status": "PARTIAL",
+          "details": "round-results.json"
+        }
+      ]
+    },
+    {
+      "id": "L0-05-T06",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "INCOMPLETE",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-07",
+          "status": "INCOMPLETE",
+          "details": "round-results.json"
+        }
+      ]
+    },
+    {
+      "id": "L0-05-T07",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "INCOMPLETE",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-07",
+          "status": "INCOMPLETE",
+          "details": "round-results.json"
+        }
+      ]
+    },
+    {
+      "id": "L0-06-T01",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "INCOMPLETE",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-08",
+          "status": "PARTIAL",
+          "details": "round-results.json"
+        }
+      ]
+    },
+    {
+      "id": "L0-06-T02",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "INCOMPLETE",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-08",
+          "status": "PARTIAL",
+          "details": "round-results.json"
+        }
+      ]
+    },
+    {
+      "id": "L0-06-T03",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "INCOMPLETE",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-08",
+          "status": "PARTIAL",
+          "details": "round-results.json"
+        }
+      ]
+    },
+    {
+      "id": "L0-06-T04",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "INCOMPLETE",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-08",
+          "status": "PARTIAL",
+          "details": "round-results.json"
+        }
+      ]
+    },
+    {
+      "id": "L0-06-T05",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "INCOMPLETE",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-08",
+          "status": "PARTIAL",
+          "details": "round-results.json"
+        }
+      ]
+    },
+    {
+      "id": "L0-06-T06",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "INCOMPLETE",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-08",
+          "status": "PARTIAL",
+          "details": "round-results.json"
+        }
+      ]
+    },
+    {
+      "id": "L0-06-T07",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "INCOMPLETE",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-08",
+          "status": "PARTIAL",
+          "details": "round-results.json"
+        }
+      ]
+    },
+    {
+      "id": "L0-07-T01",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "INCOMPLETE",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-09",
+          "status": "INCOMPLETE",
+          "details": "round-results.json"
+        },
+        {
+          "workflow": "CUA-10",
+          "status": "INCOMPLETE",
+          "details": "round-results.json"
+        }
+      ]
+    },
+    {
+      "id": "L0-07-T02",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "INCOMPLETE",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-09",
+          "status": "INCOMPLETE",
+          "details": "round-results.json"
+        },
+        {
+          "workflow": "CUA-10",
+          "status": "INCOMPLETE",
+          "details": "round-results.json"
+        }
+      ]
+    },
+    {
+      "id": "L0-07-T03",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "INCOMPLETE",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-09",
+          "status": "INCOMPLETE",
+          "details": "round-results.json"
+        },
+        {
+          "workflow": "CUA-10",
+          "status": "INCOMPLETE",
+          "details": "round-results.json"
+        }
+      ]
+    },
+    {
+      "id": "L0-07-T04",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "INCOMPLETE",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-11",
+          "status": "NOT_RUN",
+          "details": "round-results.json"
+        }
+      ]
+    },
+    {
+      "id": "L0-07-T05",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "INCOMPLETE",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-11",
+          "status": "NOT_RUN",
+          "details": "round-results.json"
+        }
+      ]
+    },
+    {
+      "id": "L0-07-T06",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "INCOMPLETE",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-11",
+          "status": "NOT_RUN",
+          "details": "round-results.json"
+        }
+      ]
+    },
+    {
+      "id": "L0-07-T07",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "INCOMPLETE",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-11",
+          "status": "NOT_RUN",
+          "details": "round-results.json"
+        }
+      ]
+    },
+    {
+      "id": "L0-07-T08",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "INCOMPLETE",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-12",
+          "status": "NOT_RUN",
+          "details": "round-results.json"
+        }
+      ]
+    },
+    {
+      "id": "L0-07-T09",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "INCOMPLETE",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-18",
+          "status": "PARTIAL",
+          "details": "round-results.json"
+        }
+      ]
+    },
+    {
+      "id": "L0-08-T01",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "INCOMPLETE",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-13",
+          "status": "PARTIAL",
+          "details": "round-results.json"
+        }
+      ]
+    },
+    {
+      "id": "L0-08-T02",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "INCOMPLETE",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-13",
+          "status": "PARTIAL",
+          "details": "round-results.json"
+        }
+      ]
+    },
+    {
+      "id": "L0-08-T03",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "INCOMPLETE",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-13",
+          "status": "PARTIAL",
+          "details": "round-results.json"
+        }
+      ]
+    },
+    {
+      "id": "L0-08-T04",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "INCOMPLETE",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-14",
+          "status": "PARTIAL",
+          "details": "round-results.json"
+        }
+      ]
+    },
+    {
+      "id": "L0-08-T05",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "BLOCKED",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-15",
+          "status": "BLOCKED",
+          "details": "round-results.json"
+        }
+      ]
+    },
+    {
+      "id": "L0-08-T06",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "BLOCKED",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-16",
+          "status": "BLOCKED",
+          "details": "round-results.json"
+        }
+      ]
+    },
+    {
+      "id": "L0-08-T07",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "INCOMPLETE",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-13",
+          "status": "PARTIAL",
+          "details": "round-results.json"
+        }
+      ]
+    },
+    {
+      "id": "L0-08-T08",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "INCOMPLETE",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-14",
+          "status": "PARTIAL",
+          "details": "round-results.json"
+        }
+      ]
+    },
+    {
+      "id": "L0-08-T09",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "INCOMPLETE",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-14",
+          "status": "PARTIAL",
+          "details": "round-results.json"
+        }
+      ]
+    },
+    {
+      "id": "L0-09-T01",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "INCOMPLETE",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-17",
+          "status": "PARTIAL",
+          "details": "round-results.json"
+        }
+      ]
+    },
+    {
+      "id": "L0-09-T02",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "BLOCKED",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-16",
+          "status": "BLOCKED",
+          "details": "round-results.json"
+        },
+        {
+          "workflow": "CUA-17",
+          "status": "PARTIAL",
+          "details": "round-results.json"
+        }
+      ]
+    },
+    {
+      "id": "L0-09-T03",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "INCOMPLETE",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-17",
+          "status": "PARTIAL",
+          "details": "round-results.json"
+        }
+      ]
+    },
+    {
+      "id": "L0-09-T04",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "BLOCKED",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-16",
+          "status": "BLOCKED",
+          "details": "round-results.json"
+        },
+        {
+          "workflow": "CUA-17",
+          "status": "PARTIAL",
+          "details": "round-results.json"
+        }
+      ]
+    },
+    {
+      "id": "L0-09-T05",
+      "candidate_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+      "status": "INCOMPLETE",
+      "automated_assertions_reviewed": false,
+      "command_exit_codes": [],
+      "oracle_review": "Related automated tests and bounded GUI/TUI samples are not complete scenario coverage.",
+      "reviewer": "root",
+      "artifacts": [],
+      "serial_results": [
+        {
+          "workflow": "CUA-17",
+          "status": "PARTIAL",
+          "details": "round-results.json"
+        },
+        {
+          "workflow": "CUA-18",
+          "status": "PARTIAL",
+          "details": "round-results.json"
+        }
+      ]
+    }
+  ]
+}

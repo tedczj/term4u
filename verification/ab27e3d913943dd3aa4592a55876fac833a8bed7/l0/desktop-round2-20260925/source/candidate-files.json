@@ -1,0 +1,180 @@
+{
+  "retained_external_root": "/Volumes/SN850X/term4u-l0-20260925/round2",
+  "files": [
+    {
+      "path": "Term4u-L0-Round2.app/Contents/Info.plist",
+      "size": 8067,
+      "sha256": "23816e07c040751e49aa71b09e5fbdd6b9da36970df754ae1ac907e7c09117d5"
+    },
+    {
+      "path": "Term4u-L0-Round2.app/Contents/MacOS/term4u",
+      "size": 316259776,
+      "sha256": "a948af432f1105349dad6067f071c74934dc0f4b472c0921ec5b7a852abaf746"
+    },
+    {
+      "path": "Term4u-L0-Round2.app/Contents/Resources/Term4u.icns",
+      "size": 334409,
+      "sha256": "5b061dd6e9c37dd51beaadbd3a978d91ffdd354779204a6ac36c04735a9718a8"
+    },
+    {
+      "path": "Term4u-L0-Round2.app/Contents/Resources/bundled/skills/change-keybinding/SKILL.md",
+      "size": 4559,
+      "sha256": "42ba205ee04efeed0c92286d695653913febef3dd57ee5404d51edb805f648e5"
+    },
+    {
+      "path": "Term4u-L0-Round2.app/Contents/Resources/bundled/skills/create-skill/LICENSE.txt",
+      "size": 11357,
+      "sha256": "58d1e17ffe5109a7ae296caafcadfdbe6a7d176f0bc4ab01e12a689b0499d8bd"
+    },
+    {
+      "path": "Term4u-L0-Round2.app/Contents/Resources/bundled/skills/create-skill/SKILL.md",
+      "size": 28951,
+      "sha256": "71243864e7a873bf3b0e3fa4aa4149d0457225829cec9f5d43179f8d7c0b0ff8"
+    },
+    {
+      "path": "Term4u-L0-Round2.app/Contents/Resources/bundled/skills/create-skill/agents/analyzer.md",
+      "size": 10376,
+      "sha256": "bf68f4cac5a56c673a928c2e6d619586c5b93ea364026ab37547772cb45a663a"
+    },
+    {
+      "path": "Term4u-L0-Round2.app/Contents/Resources/bundled/skills/create-skill/agents/comparator.md",
+      "size": 7287,
+      "sha256": "fe1fc9787c495d864c5d6eada47396478572325fde1b33a96d78bf4b849b7a3e"
+    },
+    {
+      "path": "Term4u-L0-Round2.app/Contents/Resources/bundled/skills/create-skill/agents/grader.md",
+      "size": 9049,
+      "sha256": "57134da0c1a4eea33fbd74a1c9c44aa814f07d6bc64de303edb586f941e5d21a"
+    },
+    {
+      "path": "Term4u-L0-Round2.app/Contents/Resources/bundled/skills/create-skill/assets/eval_review.html",
+      "size": 7058,
+      "sha256": "ce477dcc74dc1c0d1d3352646a79167b5a63634e936b1019160025065974e452"
+    },
+    {
+      "path": "Term4u-L0-Round2.app/Contents/Resources/bundled/skills/create-skill/eval-viewer/generate_review.py",
+      "size": 16365,
+      "sha256": "fc9d1b9243fe5ab6012ebd579bd76d0035de1b79fd3b969de114defab26478fb"
+    },
+    {
+      "path": "Term4u-L0-Round2.app/Contents/Resources/bundled/skills/create-skill/eval-viewer/viewer.html",
+      "size": 45002,
+      "sha256": "ea4f8ac712f74beedee69c6e21eb4019a0e5cfc231acfba728d2d296d1a532d9"
+    },
+    {
+      "path": "Term4u-L0-Round2.app/Contents/Resources/bundled/skills/create-skill/references/schemas.md",
+      "size": 12061,
+      "sha256": "8e8876180a8989b406a4d3edddf875b04cdfd5805cc8616686d552b11ce4455f"
+    },
+    {
+      "path": "Term4u-L0-Round2.app/Contents/Resources/bundled/skills/create-skill/scripts/__init__.py",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "Term4u-L0-Round2.app/Contents/Resources/bundled/skills/create-skill/scripts/aggregate_benchmark.py",
+      "size": 14386,
+      "sha256": "123ef128ea5ccc01a4b1ac212ef5567f21e9c13d3d240609780beeb3200c49aa"
+    },
+    {
+      "path": "Term4u-L0-Round2.app/Contents/Resources/bundled/skills/create-skill/scripts/generate_report.py",
+      "size": 12853,
+      "sha256": "52d67aae70a1fbbbd30d9f2934c90caee93d80b83022c8084609b5a9b62c02b2"
+    },
+    {
+      "path": "Term4u-L0-Round2.app/Contents/Resources/bundled/skills/create-skill/scripts/improve_description.py",
+      "size": 11042,
+      "sha256": "fd25ddf885f60fef65378a32d3ad043fb23b9967fca3f99b406a32f21a606e58"
+    },
+    {
+      "path": "Term4u-L0-Round2.app/Contents/Resources/bundled/skills/create-skill/scripts/package_skill.py",
+      "size": 4234,
+      "sha256": "1a33059b0db1ef73375d46d513e5ea81369d2e8838c970597b0d52ddef8d1c0f"
+    },
+    {
+      "path": "Term4u-L0-Round2.app/Contents/Resources/bundled/skills/create-skill/scripts/quick_validate.py",
+      "size": 3972,
+      "sha256": "67cf5703402013936c8fb75ad6a1afecd8841d45cc5e606b634eb05825fde365"
+    },
+    {
+      "path": "Term4u-L0-Round2.app/Contents/Resources/bundled/skills/create-skill/scripts/run_eval.py",
+      "size": 11469,
+      "sha256": "26cc55d7c307a455bee218d7c53515c2c4e75cfc7838b6e73a3bfb0a669ec0aa"
+    },
+    {
+      "path": "Term4u-L0-Round2.app/Contents/Resources/bundled/skills/create-skill/scripts/run_loop.py",
+      "size": 13605,
+      "sha256": "7bd6f674203168520517eec94c55f493c0d154339b061b4d7c0f0dad187d0f21"
+    },
+    {
+      "path": "Term4u-L0-Round2.app/Contents/Resources/bundled/skills/create-skill/scripts/utils.py",
+      "size": 1661,
+      "sha256": "3af8ae62c40c73ab712207436a0d9a981e845f25c5a7040229eb189cc8e45bb1"
+    },
+    {
+      "path": "Term4u-L0-Round2.app/Contents/Resources/bundled/skills/create-tab-config/SKILL.md",
+      "size": 1636,
+      "sha256": "0973564af2e7448b341a29b3339d8c7b048d1c54e374ea02bfd05ecbfc0b64a4"
+    },
+    {
+      "path": "Term4u-L0-Round2.app/Contents/Resources/bundled/skills/modify-settings/SKILL.md",
+      "size": 2719,
+      "sha256": "a5316ac530aaa4930db001e7460f67f0954f02cae88f4c95c543f9e9e0aa6673"
+    },
+    {
+      "path": "Term4u-L0-Round2.app/Contents/Resources/bundled/skills/modify-settings/scripts/find_setting.py",
+      "size": 1108,
+      "sha256": "bf8c0db2ebad66a4e3c96f3d3620ee4777a91ac99779c4260ec55e6d009979a2"
+    },
+    {
+      "path": "Term4u-L0-Round2.app/Contents/Resources/bundled/skills/pr-comments/SKILL.md",
+      "size": 4453,
+      "sha256": "de34e1a908114d99ceb97e4ad5cf77f6b1a66678eb727c616335d1467381b8e4"
+    },
+    {
+      "path": "Term4u-L0-Round2.app/Contents/Resources/bundled/skills/pr-comments/scripts/fetch_github_review_comments.py",
+      "size": 8027,
+      "sha256": "4af79cf3a7c067c861ada682069448fd8afa2a6b702bf4e09cbd330c497c1a99"
+    },
+    {
+      "path": "Term4u-L0-Round2.app/Contents/Resources/bundled/skills/pr-comments/scripts/test_fetch_comments.py",
+      "size": 8435,
+      "sha256": "3f281fba3ffc002eb686aa4a5eaf2455e3f453ee9188fa741f78838df15f5869"
+    },
+    {
+      "path": "Term4u-L0-Round2.app/Contents/Resources/bundled/skills/pr-comments/scripts/test_trim_diff_hunk.py",
+      "size": 23222,
+      "sha256": "b15d3a4e2b70eddb467538d718123595abea4aec623d90b8fd90db452b6b24fd"
+    },
+    {
+      "path": "Term4u-L0-Round2.app/Contents/Resources/bundled/skills/pr-comments/scripts/trim_diff_hunk.py",
+      "size": 6887,
+      "sha256": "5ee80414281cbd2746536e96a6b79a3a38cf4bd427a33eedf169eff317f12468"
+    },
+    {
+      "path": "Term4u-L0-Round2.app/Contents/Resources/bundled/skills/tab-configs/SKILL.md",
+      "size": 8495,
+      "sha256": "619868b8b00f2b1f0a0e97e73c607b02125d732d7cc43da75ee3dc238e94dd98"
+    },
+    {
+      "path": "Term4u-L0-Round2.app/Contents/Resources/bundled/skills/update-tab-config/SKILL.md",
+      "size": 1161,
+      "sha256": "3347aa45386d34483c32de669e61209e5406e2455abfce7b2187ef6a43c297f9"
+    },
+    {
+      "path": "Term4u-L0-Round2.app/Contents/Resources/bundled/skills/warpctrl/SKILL.md",
+      "size": 12056,
+      "sha256": "3dd589213bd435a0466442991f39b231a2463280f495566c6f5ad27e6fd366ce"
+    },
+    {
+      "path": "Term4u-L0-Round2.app/Contents/_CodeSignature/CodeResources",
+      "size": 11488,
+      "sha256": "58c04eca66f9529a42c83303d9046ee0c18b0224c8a651d66469ff69715b9c7b"
+    },
+    {
+      "path": "term4u-tui",
+      "size": 317713504,
+      "sha256": "9fb1c44f20e367c6c8bcf5f8ba80f9ea5b387c84139f37db4596587bca87b031"
+    }
+  ]
+}
