@@ -1,0 +1,49 @@
+{
+  "reviewer": "root independent raw-PTY review",
+  "parser": "pyte 0.8.2 / wcwidth 0.9.1",
+  "raw_sha256": "1a8e24e734725c63bbb20f9f40948a7f32be43ed0a74077dd9dafb1152b7f67d",
+  "chinese": {
+    "status": "PASS",
+    "at_raw_offset": 4776,
+    "row": 39,
+    "columns_zero_based": {
+      "你": 0,
+      "好": 2,
+      "X": 5
+    },
+    "scope": "Direct UTF8 input and resulting output layout at 120x40, not OS IME or all resize layouts"
+  },
+  "alternate_screen": {
+    "status": "PASS",
+    "visible_frame": {
+      "raw_offset": 4983,
+      "row": 1
+    },
+    "restored_output_at_raw_offset": 16982
+  },
+  "protocol": {
+    "status": "PASS",
+    "range": [
+      16982,
+      18737
+    ],
+    "forbidden_output_sequences": [
+      "OSC52",
+      "OSC9",
+      "OSC777",
+      "BEL"
+    ],
+    "scope": "No emitted host control sequence in captured outer PTY interval; does not certify GUI system permissions or all read/reply protocols"
+  },
+  "termios": {
+    "status": "NO_PRODUCT_DEFECT_ESTABLISHED",
+    "reference": "../pendin-control.json",
+    "scope": "Recorded iflag/oflag/cflag equal; sole lflag delta PENDIN is reproduced without Term4u. Control characters/speeds were not recorded in application driver."
+  },
+  "overall_workflow": "INCOMPLETE",
+  "limits": [
+    "CUA-01 GUI prerequisite incomplete",
+    "Application driver lacks complete control-character/speed restore comparison",
+    "No complete child process lineage captured during each command"
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "observed_utc_range": "2026-09-25T04:30Z through 2026-09-25T04:34Z",
+  "desktop_inventory": {
+    "candidate_app": {
+      "bundle_id": "dev.term4u.l0.round1",
+      "display_name": "Term4u L0 Round1",
+      "isRunning": true
+    },
+    "preexisting_candidate_notification_app": {
+      "bundle_id": "dev.term4u.l0.notification-routing",
+      "isRunning": true
+    },
+    "unrelated_preexisting_gui_pid": 42354
+  },
+  "attempts": [
+    {
+      "api": "cua.getApp",
+      "target": "dev.term4u.l0.round1",
+      "result": "Computer Use server error -10005: cgWindowNotFound"
+    },
+    {
+      "api": "cua.getApp",
+      "target": "/Volumes/SN850X/term4u-l0-20260925/round1/Term4u-L0-Round1.app",
+      "result": "Computer Use server error -10005: cgWindowNotFound"
+    },
+    {
+      "api": "cua.getApp",
+      "target": "Term4u L0 Round1",
+      "result": "Invalid app: Term4u L0 Round1"
+    },
+    {
+      "api": "cua.computer.launch_app",
+      "target": "dev.term4u.l0.round1",
+      "result": "TypeError: cua.computer.launch_app is not a function"
+    }
+  ],
+  "result": "No app-bound CUA handle, accessibility tree, or screenshot was available. The app process and terminal-server started, but UI behavior cannot be called PASS or FAIL from this environment observation."
+}

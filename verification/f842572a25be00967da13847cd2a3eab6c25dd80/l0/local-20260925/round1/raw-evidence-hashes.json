@@ -1,0 +1,153 @@
+{
+  "schema_version": 1,
+  "round": 1,
+  "generated_utc": "2026-09-25T04:50:21.055645+00:00",
+  "evidence_root": "/Volumes/SN850X/term4u-l0-20260925/round1",
+  "candidate_bundle_note": "Bundle contents excluded from per-file enumeration; executable, Info.plist, and Resources are recorded in candidate-identity.json and raw/gui-resource-manifest.json.",
+  "files": [
+    {
+      "path": "candidate-identity.json",
+      "size_bytes": 4534,
+      "sha256": "cb9c0343b6dec532c2a4e103a8260eae4c6844f9063c262e22034137ef94892b"
+    },
+    {
+      "path": "fixtures/zshdot/.zsh_history",
+      "size_bytes": 518,
+      "sha256": "76bc447319bd531d1e5b2267ef8b3da28a0dc395aa7e3198bfb99b4b4e1ec6fd"
+    },
+    {
+      "path": "fixtures/zshdot/.zshrc",
+      "size_bytes": 18,
+      "sha256": "503ffb24a7f208dea17273df4a6b22ac21edb4d0d43a6808a051e164a93c8d26"
+    },
+    {
+      "path": "independent-tui-review.json",
+      "size_bytes": 1480,
+      "sha256": "5f6f7320675f4e7bdfde1df354b0832577f971843d82909d2cd65539006ee3af"
+    },
+    {
+      "path": "lease_keeper.py",
+      "size_bytes": 1867,
+      "sha256": "797348bfa7be3e62325e441e7c8bcd5471b895143045d78d92eca49c621780d0"
+    },
+    {
+      "path": "logs/cua18-pty-clean.jsonl",
+      "size_bytes": 3370,
+      "sha256": "95d85e73dfe1f258ac74005f1e2324622de87441f1efa12633d4b32787452cab"
+    },
+    {
+      "path": "logs/cua18-pty.jsonl",
+      "size_bytes": 1690,
+      "sha256": "cf126c139df6bd185c4a31f964a8534eb538731651a5a6d4d142858e24350ab8"
+    },
+    {
+      "path": "logs/desktop-lease.jsonl",
+      "size_bytes": 2473,
+      "sha256": "abcef215d032f841a136e992716b505a1a69c8ccd2ca9aaed5328acf2ceb7b41"
+    },
+    {
+      "path": "raw/cua-observations.json",
+      "size_bytes": 1285,
+      "sha256": "e6529059ebd082ae085a1ac92abd4b66b5b8a01578b497fe6e74a51d099fd0cb"
+    },
+    {
+      "path": "raw/cua18-after-alt-frame.txt",
+      "size_bytes": 4844,
+      "sha256": "6e442d2c645418466b2fa218fc60818dcc3a83492eabca9dfa8c0f7b79cdd0d5",
+      "archive_path": "raw/cua18-after-alt-frame.txt.gz",
+      "encoding": "gzip",
+      "uncompressed_sha256": "6e442d2c645418466b2fa218fc60818dcc3a83492eabca9dfa8c0f7b79cdd0d5"
+    },
+    {
+      "path": "raw/cua18-alt-frame.txt",
+      "size_bytes": 4844,
+      "sha256": "177630fee8033cb93f9534970b696da4484520617cb4b7fcf014cf37bb696d51",
+      "archive_path": "raw/cua18-alt-frame.txt.gz",
+      "encoding": "gzip",
+      "uncompressed_sha256": "177630fee8033cb93f9534970b696da4484520617cb4b7fcf014cf37bb696d51"
+    },
+    {
+      "path": "raw/cua18-chinese-frame.txt",
+      "size_bytes": 4844,
+      "sha256": "bfbd08f0dacfa935d469ecf22572621dff857c747fb92708608b80856a0c1a49",
+      "archive_path": "raw/cua18-chinese-frame.txt.gz",
+      "encoding": "gzip",
+      "uncompressed_sha256": "bfbd08f0dacfa935d469ecf22572621dff857c747fb92708608b80856a0c1a49"
+    },
+    {
+      "path": "raw/cua18-chinese-pyte.json",
+      "size_bytes": 9007,
+      "sha256": "f88ad8bec0bcc6aa829dcfe9738ac06124fbcb9c917476e989a97f153b3fae56"
+    },
+    {
+      "path": "raw/cua18-pty-clean.raw",
+      "size_bytes": 30629,
+      "sha256": "1a8e24e734725c63bbb20f9f40948a7f32be43ed0a74077dd9dafb1152b7f67d",
+      "archive_path": "raw/cua18-pty-clean.raw.gz",
+      "encoding": "gzip",
+      "uncompressed_sha256": "1a8e24e734725c63bbb20f9f40948a7f32be43ed0a74077dd9dafb1152b7f67d"
+    },
+    {
+      "path": "raw/cua18-pty.raw",
+      "size_bytes": 1254,
+      "sha256": "9c6b4469d2ce2f6bbc7e43405f33a37576335d3d047cc487edac62da8afae441",
+      "archive_path": "raw/cua18-pty.raw.gz",
+      "encoding": "gzip",
+      "uncompressed_sha256": "9c6b4469d2ce2f6bbc7e43405f33a37576335d3d047cc487edac62da8afae441"
+    },
+    {
+      "path": "raw/gui-process-sample.txt",
+      "size_bytes": 386620,
+      "sha256": "3718708025ccbe386c64175609b599be71070146d1206c5d9c4affd777f1f3d4",
+      "archive_path": "raw/gui-process-sample.txt.gz",
+      "encoding": "gzip",
+      "uncompressed_sha256": "3718708025ccbe386c64175609b599be71070146d1206c5d9c4affd777f1f3d4"
+    },
+    {
+      "path": "raw/gui-process-tree.json",
+      "size_bytes": 1212,
+      "sha256": "75b834b68fde870752c8d5cb1711346f58519e6f951926f7ec4c0e47dc6caa5f"
+    },
+    {
+      "path": "raw/gui-resource-manifest.json",
+      "size_bytes": 6753,
+      "sha256": "81bdf082e17ae8627066704c851d98269d70f66f44d6d03007412e6f653a40a0"
+    },
+    {
+      "path": "raw/pendin-control.json",
+      "size_bytes": 555,
+      "sha256": "7c29dbe4343724c75eb8bd4276625c50d3b523d0b7974389daf645bcd8c7803e"
+    },
+    {
+      "path": "raw/workspace-diff-after-candidate.patch",
+      "size_bytes": 18535,
+      "sha256": "c6c2a549e39b5059db1992a353c80711e03e71ebde385f358cba8ef5a91f3468",
+      "archive_path": "raw/workspace-diff-after-candidate.patch.gz",
+      "encoding": "gzip",
+      "uncompressed_sha256": "c6c2a549e39b5059db1992a353c80711e03e71ebde385f358cba8ef5a91f3468"
+    },
+    {
+      "path": "review_pty.py",
+      "size_bytes": 1020,
+      "sha256": "8b8db35c56ceaea937146b97e84eb7c850d84249b59dddfec5010f201298bfcb"
+    },
+    {
+      "path": "round-results.json",
+      "size_bytes": 19415,
+      "sha256": "1bca46f8ab2fb6fe976c6b8e177cb6b103b8ce1fe93b494afad3a473c7fe3ac6"
+    },
+    {
+      "path": "term4u-tui",
+      "size_bytes": 317713504,
+      "sha256": "9fb1c44f20e367c6c8bcf5f8ba80f9ea5b387c84139f37db4596587bca87b031",
+      "external_path": "/Volumes/SN850X/term4u-l0-20260925/round1/term4u-tui"
+    },
+    {
+      "path": "tui_pty_driver.py",
+      "size_bytes": 5199,
+      "sha256": "9949f8af276ed8eb2b8fa4be4f1589f6f743ef65954ed9edf4a54ce150f5f6fc"
+    }
+  ],
+  "redaction": "User .pi diff removed from workspace-diff-after-candidate.patch before publishing.",
+  "archive_note": "Compressed leaves preserve exact bytes including terminal padding; decompress before checking original SHA256. The TUI executable is external only."
+}

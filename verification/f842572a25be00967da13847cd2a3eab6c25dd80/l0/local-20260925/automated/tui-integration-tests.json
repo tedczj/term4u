@@ -1,0 +1,17 @@
+{
+  "command": [
+    "cargo",
+    "nextest",
+    "run",
+    "--locked",
+    "-p",
+    "warpui_core",
+    "--test",
+    "tui_integration",
+    "--features",
+    "tui"
+  ],
+  "exit_code": 0,
+  "started_utc": "2026-09-25T04:35:35.833547+00:00",
+  "finished_utc": "2026-09-25T04:35:43.675763+00:00"
+}

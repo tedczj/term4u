@@ -1,4 +1,5 @@
 """Harness regression tests. These results do not certify the macOS product."""
+import copy
 import importlib.util
 from pathlib import Path
 import subprocess
@@ -44,6 +45,12 @@ class CatalogTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             verify.validate_catalog(self.data)
 
+    def test_candidate_identity_workflow_cannot_be_removed(self):
+        self.data['serial_workflows'] = [w for w in self.data['serial_workflows']
+                                         if w['id'] != 'CUA-01']
+        with self.assertRaises(ValueError):
+            verify.validate_catalog(self.data)
+
     def test_related_test_cannot_be_reported_as_full_coverage(self):
         self.data['cases'][0]['automated']['mapping_status'] = 'PASS'
         with self.assertRaises(ValueError):
@@ -74,8 +81,12 @@ class EvidenceTests(unittest.TestCase):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
         self.root = Path(self.tmp.name)
-        self.data = {'cases': [{'id': 'L0-01-T01', 'serial_workflows': ['CUA-01']}],
-                     'serial_workflows': [{'id': 'CUA-01', 'evidence_types': ['screenshot', 'pty']}]}
+        self.data = {'cases': [{'id': 'L0-01-T01', 'serial_workflows': ['CUA-02']}],
+                     'serial_workflows': [
+                         {'id': 'CUA-01', 'scenarios': [],
+                          'evidence_types': ['identity', 'screenshot', 'process_tree']},
+                         {'id': 'CUA-02', 'scenarios': ['L0-01-T01'],
+                          'evidence_types': ['screenshot', 'pty']}]}
         self.report = verify.result_template(self.data, 'a' * 40, 'b' * 40, 'c' * 64)
 
     def complete(self):
@@ -83,18 +94,43 @@ class EvidenceTests(unittest.TestCase):
         record.update(status='PASS', automated_assertions_reviewed=True,
                       command_exit_codes=[0], reviewer='independent fixture reviewer',
                       oracle_review='Synthetic integrity test; not a product verdict',
-                      serial_results=[{'workflow': 'CUA-01', 'status': 'PASS',
+                      serial_results=[{'workflow': 'CUA-02', 'status': 'PASS',
                                        'desktop_lock_held': True, 'model': 'test model',
                                        'harness': 'test harness', 'observed_utc': '2026-09-24T00:00:00Z'}])
-        for kind in ['identity', 'command_log', 'screenshot', 'pty']:
+        for kind in ['identity', 'command_log', 'screenshot', 'pty', 'process_tree']:
             path = self.root / kind
             path.write_bytes(b'Synthetic evidence fixture, not real macOS evidence')
             record['artifacts'].append({'type': kind, 'path': kind,
                                         'sha256': verify.sha256(path), 'candidate_head': 'a' * 40})
+        prerequisite = copy.deepcopy(record)
+        prerequisite['id'] = 'CUA-01'
+        prerequisite['serial_results'][0]['workflow'] = 'CUA-01'
+        self.report['prerequisites'] = [prerequisite]
         return record
+
+    def test_missing_candidate_identity_workflow_fails(self):
+        self.complete()
+        del self.report['prerequisites']
+        with self.assertRaises(ValueError):
+            verify.check_results(self.data, self.report, self.root)
+
+    def test_incomplete_candidate_identity_workflow_fails(self):
+        self.complete()
+        self.report['prerequisites'][0]['status'] = 'INCOMPLETE'
+        with self.assertRaises(ValueError):
+            verify.check_results(self.data, self.report, self.root)
+
+    def test_candidate_identity_requires_process_tree_evidence(self):
+        self.complete()
+        record = self.report['prerequisites'][0]
+        record['artifacts'] = [a for a in record['artifacts'] if a['type'] != 'process_tree']
+        with self.assertRaises(ValueError):
+            verify.check_results(self.data, self.report, self.root)
 
     def test_templates_start_not_run_and_fail_acceptance(self):
         self.assertEqual(self.report['cases'][0]['status'], 'NOT_RUN')
+        self.assertEqual(self.report['prerequisites'][0]['id'], 'CUA-01')
+        self.assertEqual(self.report['prerequisites'][0]['status'], 'NOT_RUN')
         with self.assertRaises(ValueError):
             verify.check_results(self.data, self.report, self.root)
 

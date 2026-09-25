@@ -1,0 +1,17 @@
+{
+  "command": [
+    "cargo",
+    "build",
+    "--locked",
+    "-p",
+    "warp",
+    "--bin",
+    "term4u",
+    "--no-default-features",
+    "--features",
+    "local_only"
+  ],
+  "exit_code": 0,
+  "started_utc": "2026-09-25T04:26:31.963667+00:00",
+  "finished_utc": "2026-09-25T04:26:52.881782+00:00"
+}

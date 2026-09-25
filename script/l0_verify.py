@@ -75,6 +75,8 @@ def validate_catalog(data, root=ROOT, inventories=None):
     workflows = data.get('serial_workflows', [])
     lookup = {item['id']: item for item in workflows}
     require(len(lookup) == len(workflows), 'Duplicate serial workflow ID')
+    require('CUA-01' in lookup and lookup['CUA-01']['scenarios'] == [],
+            'Missing mandatory candidate identity workflow CUA-01')
     for item in workflows:
         require(set(item['scenarios']) <= set(expected), 'Unknown serial scenario')
         for key in ('preconditions', 'steps', 'oracles', 'evidence_types', 'cleanup'):
@@ -116,13 +118,17 @@ def validate_catalog(data, root=ROOT, inventories=None):
 def result_template(data, source_head, source_tree, binary_sha256):
     for value, length in [(source_head, 40), (source_tree, 40), (binary_sha256, 64)]:
         require(re.fullmatch('[0-9a-f]{' + str(length) + '}', value), 'Invalid candidate hash')
+
+    def pending(ident):
+        return {'id': ident, 'candidate_head': source_head, 'status': 'NOT_RUN',
+                'automated_assertions_reviewed': False, 'command_exit_codes': [],
+                'oracle_review': '', 'reviewer': '', 'artifacts': [], 'serial_results': []}
+
     return {'schema_version': 1,
             'candidate': {'source_head': source_head, 'source_tree': source_tree,
                           'binary_sha256': binary_sha256, 'diff_sha256': None},
-            'cases': [{'id': case['id'], 'candidate_head': source_head, 'status': 'NOT_RUN',
-                       'automated_assertions_reviewed': False, 'command_exit_codes': [],
-                       'oracle_review': '', 'reviewer': '', 'artifacts': [],
-                       'serial_results': []} for case in data['cases']]}
+            'prerequisites': [pending('CUA-01')],
+            'cases': [pending(case['id']) for case in data['cases']]}
 
 
 def check_results(data, results, evidence_root):
@@ -139,7 +145,11 @@ def check_results(data, results, evidence_root):
     require(len({r['id'] for r in records}) == len(records), 'Duplicate results')
     require({r['id'] for r in records} == set(expected), 'Unknown/missing results')
     workflows = {item['id']: item for item in data['serial_workflows']}
-    for record in records:
+    prerequisites = results.get('prerequisites', [])
+    require(len(prerequisites) == 1 and prerequisites[0]['id'] == 'CUA-01',
+            'Missing mandatory candidate identity result CUA-01')
+    expected['CUA-01'] = {'serial_workflows': ['CUA-01']}
+    for record in prerequisites + records:
         ident = record['id']
         require(record['status'] == 'PASS', f"Incomplete/failing case {ident}: {record['status']}")
         require(record.get('candidate_head') == candidate['source_head'], 'Mixed candidate heads')

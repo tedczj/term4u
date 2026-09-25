@@ -199,7 +199,7 @@ sts.googleapis.com 按实际消费者审查，不误分类为 AWS STS。
 | R1 原批次 | CLOSED | 已核验的本地类型/初始化/编译调用链；后续新代码仍跑回归 |
 | R2 原批次 | CLOSED | 已有 GUI/TUI、本地数据与功能验收按原范围关闭；不是所有上游本地交互都已保留的证明 |
 | 原 GUI-shell | CLOSED | `eef716cd` 的补全/prompt/clear/基础焦点；完整 presubmit 与用户 H1/S8 已补齐，无遗留人工 H1 |
-| L0 本地交互保全 | IN_PROGRESS | 本地输入、粘贴、菜单及 IME 聚焦测试、完整 presubmit 和集中 GUI/PTY 复核已通过；本轮五项失败已消除，完整未关闭范围见 §6.2.15 |
+| L0 本地交互保全 | IN_PROGRESS | 2026-09-25 本机自动门禁已通过，Luna High 串行实机结果及限制见 §6.2.16；历史实测仅归属 §6.2.15 的各自候选，不代表本轮全部实机通过 |
 | R3-F1 菜单焦点 | PARTIALLY_VERIFIED | 打开/关闭焦点与 Esc/Enter/Find 路由测试已通过；跨 pane、目标销毁及完整实机矩阵仍待验收 |
 | R3 | OPEN | 本地功能恢复后再收尾云 UI/action/URI/auth/flag/keybinding 与孤儿源码，正反向测试不能省略 |
 | R4 | OPEN | 外链检查器/self-test/presubmit 接入、允许清单、Windows 例外审计 |
@@ -1119,9 +1119,9 @@ Clippy、GUI build、实际 inventory 均 exit 0。完整 presubmit exit 0：wor
 索引 `l0-scroll-anchor-`。这些是自动模型回归；上滚、追加、窗口 resize 的 GUI 实机读线保持仍未验收。
 单个巨大 grid、折叠 UI、图片、隐私出口、清屏入口与最终 R6 同一候选矩阵继续 OPEN，L0 仍为 IN_PROGRESS。
 
-#### 6.2.16 2026-09-24 分层收尾、测试路由与串行实机操作
+#### 6.2.16 2026-09-25 分层收尾、测试路由与串行实机操作
 
-**本轮交付分支 `dev-20260924-l0`，审查基线 `main@2a6026f9`。L0 仍为 IN_PROGRESS。**
+**本轮交付分支 `dev-20260924-l0`，测试基线 `f842572a25be00967da13847cd2a3eab6c25dd80`。L0 仍为 IN_PROGRESS。**
 本节在原 66 个场景之上明确开发、自动验证和实机验证的边界；不重开 R0/R1/R2，也不另建
 roadmap。机器可执行路由在 `test-data/localization/l0-cases.json`，由本文原场景 ID 校验。
 清单不是测试结果：相关函数只标 `RELATED_PARTIAL_NOT_SCENARIO_PASS`，未映射项保持
@@ -1133,8 +1133,9 @@ roadmap。机器可执行路由在 `test-data/localization/l0-cases.json`，由�
 中的不适用动作；清屏保留草稿、正文和历史，不把原生 Ctrl-L 变成 GUI 清屏。入口走现有
 `CustomAction::ClearBlocks` 和输入可见 context；实际默认键以注册表为准，不把 Cmd-K 写成已测。
 `local_output_tests.rs` 已挂载六个真实测试，覆盖高度/正文、Find、active/stale、clear、alt 与导航。
-对应提交由 macOS Rust 1.92.0 formatter 处理；原生构建/测试结果须按 run 35896007581 的实际日志判定，
-此处不预填 PASS。常规 L0 workflow 已扩展到 main/活动 L0 分支，并延长证据保留期。
+该产品增量的历史 CI 结果和候选区别见 `verification/abd94627476f6d68518de2c4bd37b8653b869fc6/l0/ci-20260924/manifest.json`。
+本轮重新在 macOS arm64 / Rust 1.92.0 执行下方自动门禁；不借用历史 CI 填当前 PASS。
+常规 L0 workflow 已覆盖 main/活动 L0 分支。
 
 | 剩余开发面 | 本轮审查结论与下一实现出口 | 自动验证 / 实机出口 |
 |---|---|---|
@@ -1144,8 +1145,8 @@ roadmap。机器可执行路由在 `test-data/localization/l0-cases.json`，由�
 | 全保留入口消费者 | 从实际注册表枚举本地设置/菜单/快捷键/Palette，补未接线消费者，记录GUI/TUI适用范围；清单不能代替完整枚举 | 原入口正向效果与错误context拒绝；CUA-17；残留空handler仍OPEN |
 | Privacy标题显示差异 | 尚不能判定是产品帧、窗口合成还是截图环节；不得为“修复”盲改渲染器 | 同一PID同时保存应用帧和桌面截图，继续归因，不能以单测替代像素结论 |
 
-本轮探索过图片链路，但尚未原生编译验证的草稿**不属于上述已提交产品候选**。不会把草稿计为
-已实现，亦不以外部临时路径作为交付。完成这张表仍需要后续实际开发；本节不是 L0 全开发完成声明。
+上述剩余产品能力仍需后续开发与实测；本轮未将图片、巨大 grid、隐私或入口审计登记为已完成。
+仅测试通过或实机前置受阻，不改变这些项目的实现状态。
 
 **自动验证划分。** 单元层验证历史排序/去重、请求代次、UTF-16/坐标、paste计划、资源限额、
 通知限流与序列化；后台集成层使用真实 ANSI、真实 raw/noecho PTY、Presenter 事件、可控异步
@@ -1183,8 +1184,61 @@ cargo nextest run --locked --no-fail-fast -p warp_terminal -p warpui -p warp_tui
 实际运行必须另行保存完整命令、退出码和原始输出；过滤运行不能代替这里的全量保留测试。
 `l0_verify.py validate` 没有 `--inventory` 时只验证静态定义，输出明确
 `registration_checked: false`，不能当成 actual nextest 注册证明。无匹配、歧义、截断/空 inventory
-均失败；immutable baseline 与 approved deletion 不变。工具自身 18 项 Python 测试在本轮 Linux
-编辑环境通过，仅证明清单/证据/锁的工具逻辑，不是 macOS 产品测试通过。
+均失败；immutable baseline 与 approved deletion 不变。本轮真实 inventory 校验结果为
+`registration_checked: true`：66 场景、88 条相关测试引用、13 场景无自动映射、18 个实机工作流。
+部分关联不等于完整场景覆盖。工具自身 22 项 Python 回归在本机 macOS 通过，仅证明清单、
+证据和锁的工具逻辑，不是产品实机通过。
+
+**本轮自动验证及修复。** 原始命令、退出码和日志归档在
+`verification/f842572a25be00967da13847cd2a3eab6c25dd80/l0/local-20260925/`；大型候选及原始
+实机材料保留在 `/Volumes/SN850X/term4u-l0-20260925/`，具体 SHA256 见 manifest。
+构建使用外置盘缓存、`CARGO_PROFILE_DEV_DEBUG=0`、`CARGO_INCREMENTAL=0`、4 个构建任务。
+首次 presubmit 在 `local_output.rs` 的 import 排序处失败，已按仓库 formatter 修正，后续完整通过。
+`check-results` 漏检 CUA-01 的三项反例先失败再通过；另补清单不得删除该前置工作流的回归。
+§7.2 的两条过时命令已纠正：`tui_integration` 是 test target，编辑器 package 是 `warp_editor`。
+原失败日志与纠正后的执行结果均保留，未删除或弱化测试门禁。
+
+| 当前实际执行 | 结果与范围 |
+|---|---|
+| GUI local_only 全量 nextest | 1609 passed / 3 既有 skipped |
+| warp_terminal / warpui / warp_tui nextest | 634 passed / 3 既有 skipped |
+| 完整 presubmit | PASS；三组严格 Clippy、格式/结构/许可证/网络检查、9 项 inventory 工具测试均通过；workspace 4865 passed / 20 skipped，completer v2 131 passed / 4 skipped，doc tests 通过 |
+| 额外 Clippy | local_only GUI、TUI、warpui_core tui、warp_editor + warp_tui test-util benches 均通过 |
+| warpui_core tui_integration | 2 passed / 0 skipped；不替代真实 PTY |
+| 实际 inventory / L0 注册 | baseline 9777、current 4885、批准删除 5084；88 条引用唯一匹配 |
+| L0 校验工具 | 22 passed；静态目录和带真实 inventory 的目录校验均通过 |
+| GUI/TUI Debug 构建 | local_only GUI、offline_hard + standalone TUI、GUI bundle 构建通过；实机冻结副本另记录签名和 hash |
+| R4 外链 checker | INCOMPLETE：设计列出的文件尚不存在，调用退出 127；R4 保持 OPEN |
+
+以上测试集合存在重叠，不相加为独立用例数；skipped 均按原配置保留，未新增 ignore。
+Release、全工作区 build、供应链 cargo-deny、数据迁移完整夹具矩阵及特权网络采集未在本轮执行，
+不能从本轮自动门禁推导 R6/C1–C10 已验收。
+
+**本轮 Luna High 串行实机结果。** 实际执行模型为 `gpt-6-luna`，reasoning effort 为
+`high`，执行器为 `unified-computer-use/cua_repl`。18 个工作流逐项登记为 16 INCOMPLETE、
+2 BLOCKED（图片/隐私前置未实现），没有全工作流 PASS。本次只启动第 1 轮，最多 3 轮的上限未用满：
+CUA-01 无法取得候选窗口，`getApp` 返回 `cgWindowNotFound`；`getState` 能枚举运行进程，
+GUI 进程采样在正常 NSApplication 事件等待中，尚不能归因产品故障。未因此修改渲染器。
+依赖该前置的 GUI 操作未取得有效截图和交互结果，不记 PASS；相同环境未恢复时不重复后两轮。
+整个桌面操作时间窗由 `l0_verify.py serial` 启动的 lease keeper 持锁；独立第二进程取得锁
+被 exit 2 拒绝。CUA 工具调用不属于该 shell 子进程，只在已记录的持锁窗口内协作执行，
+并不宣称锁能约束用户或不遵守协议的其他程序。当前是隔离 profile，不是专用 macOS 账号；
+GUI 启动未设置清洁 ZDOTDIR，shell 环境隔离也未获证明，已作为 CUA-01 限制保留；
+未读取真实剪贴板、申请通知权限或录音。
+
+CUA-18 保留首次未建 terminal tab 的无效样本，并完成一次干净 PTY 复现。后者使用独立
+profile、ZDOTDIR、HISTFILE 和冻结 TUI，120×40 起始，执行直接 UTF-8 中文输入、外部 CLI、
+备用屏进入/退出、Ctrl-C、100×30 resize 和 Ctrl-Q；退出码 0。主代理以 pyte 0.8.2 重放
+原始字节流独立核验：`你好 X` 的 `你/好/X` 分别在 0/2/5 列；备用屏显示合成 marker 后
+恢复旧输出；协议探针时间窗无 OSC52/9/777/BEL 向宿主透传。这些是有限子断言 PASS，
+不替代系统 IME、真实通知/剪贴板、完整进程树、全部字符和尺寸矩阵。
+CUA-18 全工作流仍为 INCOMPLETE，完整 termios 控制字符/速度恢复也未采齐。
+
+termios 的已记录模式仅多出 `PENDIN`，独立无 Term4u 的 PTY 对照复现同样差值；
+[Apple XNU 的 termios 路径](https://github.com/apple-oss-distributions/xnu/blob/main/bsd/kern/tty.c)
+在恢复 ICANON 时设置此状态位，因此该差值不作为产品 FAIL，不通过 flush 输入来伪造一致。
+初版离线屏幕 oracle 在未完成的重绘字节处触发 pyte 异常，已保留日志；最终对已观察的帧边界
+执行同样断言并通过。66 场景未获完整产品验收，报告完整性检查必须继续拒绝关闭 L0。
 
 **串行 computer-use 规格。** JSON 的 CUA-01–18 各有前置条件、步骤、可观察结果、证据类型和
 恢复动作；依次覆盖候选身份、历史、编辑器粘贴、vim/readline、布局、菜单、Finder、链接、
@@ -1224,8 +1278,10 @@ function calling的Chat Completions配置。公开依据：
 - https://developers.openai.com/api/docs/guides/tools-computer-use
 
 **证据与关闭。** `init-results` 必须传真实source/tree/binary SHA，创建全NOT_RUN清单且拒绝覆盖。
+模板另有必填 `prerequisites`，其中 CUA-01 使用与 case 相同的记录结构，包含自身的
+`serial_results`、身份、截图和进程树证据。CUA-01 不关联场景，不能因此漏检。
 执行后每个场景记录独立reviewer/oracle结论、真实命令退出码、同候选artifact路径及SHA256、
-serial workflow结果和桌面所有权。`check-results` 拒绝缺项、混候选、路径越界、空文件、hash不符、
+serial workflow结果和桌面所有权。`check-results` 拒绝缺失/未完成 CUA-01、缺项、混候选、路径越界、空文件、hash不符、
 缺截图/PTY及未执行场景；即便返回 `evidence_integrity: VALID`，也只表示报告完整性通过，
 不替代视觉/性能/声音的独立判定，不自动宣布L0关闭。最终关闭仍满足§6.2.14和后续R6。
 
@@ -1310,8 +1366,8 @@ cargo test --workspace
 cargo test --workspace --doc
 cargo deny check sources licenses bans advisories
 cargo clippy -p warpui_core --features tui --all-targets -- -D warnings
-cargo build -p warpui_core --bin tui_integration --features tui
-cargo clippy -p editor -p warp_tui --features test-util --benches -- -D warnings
+cargo nextest run -p warpui_core --test tui_integration --features tui
+cargo clippy -p warp_editor -p warp_tui --features test-util --benches -- -D warnings
 cargo build --workspace
 cargo build --locked -p warp --bin term4u --features offline_hard
 cargo build --locked -p warp --bin term4u --no-default-features --features local_only

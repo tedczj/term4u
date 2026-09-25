@@ -1,0 +1,18 @@
+{
+  "command": [
+    "cargo",
+    "clippy",
+    "--locked",
+    "-p",
+    "warpui_core",
+    "--features",
+    "tui",
+    "--all-targets",
+    "--",
+    "-D",
+    "warnings"
+  ],
+  "exit_code": 0,
+  "started_utc": "2026-09-25T04:33:50.381223+00:00",
+  "finished_utc": "2026-09-25T04:34:33.457503+00:00"
+}

@@ -1,0 +1,1 @@
+PROMPT='L0TUI%# '

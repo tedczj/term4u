@@ -1,0 +1,15 @@
+{
+  "command": [
+    "cargo",
+    "nextest",
+    "list",
+    "--locked",
+    "-p",
+    "warp_terminal",
+    "--message-format",
+    "json"
+  ],
+  "exit_code": 0,
+  "started_utc": "2026-09-25T04:34:17.378698+00:00",
+  "finished_utc": "2026-09-25T04:34:47.867219+00:00"
+}

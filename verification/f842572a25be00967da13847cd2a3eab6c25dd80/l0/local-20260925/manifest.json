@@ -1,0 +1,973 @@
+{
+  "schema_version": 1,
+  "source_identity": "source-identity.json",
+  "working_directory": "/Users/tedczj/workspace/term4u",
+  "created_utc": "2026-09-25T04:51:06.237581+00:00",
+  "design_section": "6.2.16",
+  "status": "AUTOMATED_CHECKS_PASS_SERIAL_INCOMPLETE",
+  "product_acceptance": "L0_IN_PROGRESS_R6_NOT_ACCEPTED",
+  "checks": [
+    {
+      "name": "app-tests",
+      "status": "PASS",
+      "command_record": "automated/app-tests.json",
+      "log": "automated/app-tests.log.gz",
+      "command": [
+        "cargo",
+        "nextest",
+        "run",
+        "--locked",
+        "--no-fail-fast",
+        "-p",
+        "warp",
+        "--no-default-features",
+        "--features",
+        "local_only,test-util"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-09-25T04:28:23.512762+00:00",
+      "finished_utc": "2026-09-25T04:29:00.430284+00:00"
+    },
+    {
+      "name": "terminal-ui-tui-tests",
+      "status": "PASS",
+      "command_record": "automated/terminal-ui-tui-tests.json",
+      "log": "automated/terminal-ui-tui-tests.log.gz",
+      "command": [
+        "cargo",
+        "nextest",
+        "run",
+        "--locked",
+        "--no-fail-fast",
+        "-p",
+        "warp_terminal",
+        "-p",
+        "warpui",
+        "-p",
+        "warp_tui"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-09-25T04:29:00.451152+00:00",
+      "finished_utc": "2026-09-25T04:29:40.745747+00:00"
+    },
+    {
+      "name": "inventory",
+      "status": "PASS",
+      "command_record": "automated/inventory.json",
+      "log": "automated/inventory.log.gz",
+      "command": [
+        "./script/test_inventory"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-09-25T04:29:40.775596+00:00",
+      "finished_utc": "2026-09-25T04:30:12.181805+00:00"
+    },
+    {
+      "name": "presubmit-after-format",
+      "status": "PASS",
+      "command_record": "automated/presubmit-after-format.json",
+      "log": "automated/presubmit-after-format.log.gz",
+      "command": [
+        "./script/presubmit"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-09-25T04:30:59.446684+00:00",
+      "finished_utc": "2026-09-25T04:32:40.694435+00:00"
+    },
+    {
+      "name": "clippy-local",
+      "status": "PASS",
+      "command_record": "automated/clippy-local.json",
+      "log": "automated/clippy-local.log.gz",
+      "command": [
+        "cargo",
+        "clippy",
+        "--locked",
+        "-p",
+        "warp",
+        "--all-targets",
+        "--tests",
+        "--no-default-features",
+        "--features",
+        "local_only",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-09-25T04:33:18.636419+00:00",
+      "finished_utc": "2026-09-25T04:33:32.300903+00:00"
+    },
+    {
+      "name": "clippy-tui",
+      "status": "PASS",
+      "command_record": "automated/clippy-tui.json",
+      "log": "automated/clippy-tui.log.gz",
+      "command": [
+        "cargo",
+        "clippy",
+        "--locked",
+        "-p",
+        "warp_tui",
+        "--all-targets",
+        "--tests",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-09-25T04:33:32.321321+00:00",
+      "finished_utc": "2026-09-25T04:33:50.359008+00:00"
+    },
+    {
+      "name": "clippy-tui-core",
+      "status": "PASS",
+      "command_record": "automated/clippy-tui-core.json",
+      "log": "automated/clippy-tui-core.log.gz",
+      "command": [
+        "cargo",
+        "clippy",
+        "--locked",
+        "-p",
+        "warpui_core",
+        "--features",
+        "tui",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-09-25T04:33:50.381223+00:00",
+      "finished_utc": "2026-09-25T04:34:33.457503+00:00"
+    },
+    {
+      "name": "tui-integration-tests",
+      "status": "PASS",
+      "command_record": "automated/tui-integration-tests.json",
+      "log": "automated/tui-integration-tests.log.gz",
+      "command": [
+        "cargo",
+        "nextest",
+        "run",
+        "--locked",
+        "-p",
+        "warpui_core",
+        "--test",
+        "tui_integration",
+        "--features",
+        "tui"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-09-25T04:35:35.833547+00:00",
+      "finished_utc": "2026-09-25T04:35:43.675763+00:00"
+    },
+    {
+      "name": "clippy-benches-corrected",
+      "status": "PASS",
+      "command_record": "automated/clippy-benches-corrected.json",
+      "log": "automated/clippy-benches-corrected.log.gz",
+      "command": [
+        "cargo",
+        "clippy",
+        "--locked",
+        "-p",
+        "warp_editor",
+        "-p",
+        "warp_tui",
+        "--features",
+        "test-util",
+        "--benches",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-09-25T04:35:43.704528+00:00",
+      "finished_utc": "2026-09-25T04:36:00.064455+00:00"
+    },
+    {
+      "name": "l0-registration",
+      "status": "PASS",
+      "command_record": "automated/l0-registration.json",
+      "log": "automated/l0-registration.log.gz",
+      "command": [
+        "python3",
+        "script/l0_verify.py",
+        "validate",
+        "--inventory",
+        "warp=/Volumes/SN850X/term4u-l0-20260925/warp-inventory.json",
+        "--inventory",
+        "warp_terminal=/Volumes/SN850X/term4u-l0-20260925/warp_terminal-inventory.json",
+        "--inventory",
+        "warpui=/Volumes/SN850X/term4u-l0-20260925/warpui-inventory.json"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-09-25T04:34:58.673974+00:00",
+      "finished_utc": "2026-09-25T04:34:58.743631+00:00"
+    },
+    {
+      "name": "final-verifier-tests",
+      "status": "PASS",
+      "command_record": "automated/final-verifier-tests.json",
+      "log": "automated/final-verifier-tests.log.gz",
+      "command": [
+        "python3",
+        "script/lib/l0_verify_tests.py"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-09-25T04:38:12.648772+00:00",
+      "finished_utc": "2026-09-25T04:38:12.760828+00:00"
+    },
+    {
+      "name": "gui-build",
+      "status": "PASS",
+      "command_record": "automated/gui-build.json",
+      "log": "automated/gui-build.log.gz",
+      "command": [
+        "cargo",
+        "build",
+        "--locked",
+        "-p",
+        "warp",
+        "--bin",
+        "term4u",
+        "--no-default-features",
+        "--features",
+        "local_only"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-09-25T04:26:31.963667+00:00",
+      "finished_utc": "2026-09-25T04:26:52.881782+00:00"
+    },
+    {
+      "name": "gui-bundle",
+      "status": "PASS",
+      "command_record": "automated/gui-bundle.json",
+      "log": "automated/gui-bundle.log.gz",
+      "command": [
+        "./script/run",
+        "--dont-open"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-09-25T04:27:39.796013+00:00",
+      "finished_utc": "2026-09-25T04:27:42.052602+00:00"
+    },
+    {
+      "name": "tui-build",
+      "status": "PASS",
+      "command_record": "automated/tui-build.json",
+      "log": "automated/tui-build.log.gz",
+      "command": [
+        "cargo",
+        "build",
+        "--locked",
+        "-p",
+        "warp_tui",
+        "--bin",
+        "term4u-tui",
+        "--no-default-features",
+        "--features",
+        "offline_hard,standalone"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-09-25T04:27:59.552754+00:00",
+      "finished_utc": "2026-09-25T04:28:20.238568+00:00"
+    },
+    {
+      "name": "final-format-check",
+      "status": "PASS",
+      "command_record": "automated/final-format-check.json",
+      "log": "automated/final-format-check.log.gz",
+      "command": [
+        "./script/format",
+        "--check"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-09-25T04:36:44.222800+00:00",
+      "finished_utc": "2026-09-25T04:36:46.878281+00:00"
+    },
+    {
+      "name": "final-diff-check",
+      "status": "PASS",
+      "command_record": "automated/final-diff-check.json",
+      "log": "automated/final-diff-check.log.gz",
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-09-25T04:36:46.898058+00:00",
+      "finished_utc": "2026-09-25T04:36:46.913426+00:00"
+    },
+    {
+      "name": "network-checker-selftest",
+      "status": "PASS",
+      "command_record": "automated/network-checker-selftest.json",
+      "log": "automated/network-checker-selftest.log.gz",
+      "command": [
+        "./script/check_network_boundaries",
+        "--self-test"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-09-25T04:30:33.380441+00:00",
+      "finished_utc": "2026-09-25T04:30:33.408169+00:00"
+    },
+    {
+      "name": "independent-pty-review",
+      "status": "PASS",
+      "command_record": "automated/independent-pty-review.json",
+      "log": "automated/independent-pty-review.log.gz",
+      "command": [
+        "python3",
+        "/Volumes/SN850X/term4u-l0-20260925/round1/review_pty.py"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-09-25T04:45:21.826525+00:00",
+      "finished_utc": "2026-09-25T04:45:21.875847+00:00"
+    }
+  ],
+  "test_counts": {
+    "app": {
+      "passed": 1609,
+      "skipped": 3
+    },
+    "terminal_ui_tui": {
+      "passed": 634,
+      "skipped": 3
+    },
+    "presubmit_workspace": {
+      "passed": 4865,
+      "skipped": 20
+    },
+    "completer_v2": {
+      "passed": 131,
+      "skipped": 4
+    },
+    "tui_integration": {
+      "passed": 2,
+      "skipped": 0
+    },
+    "l0_verifier_python": {
+      "passed": 22
+    },
+    "inventory": {
+      "baseline": 9777,
+      "current": 4885,
+      "approved_deleted": 5084
+    },
+    "note": "Overlapping test sets, not additive; pre-existing skipped tests were retained."
+  },
+  "initial_failures": [
+    {
+      "name": "presubmit",
+      "record": "automated/presubmit.json",
+      "exit_code": 1,
+      "resolution": "Formatting defect repaired with script/format"
+    },
+    {
+      "name": "l0-verifier-red",
+      "record": "automated/l0-verifier-red.json",
+      "exit_code": 1,
+      "resolution": "Three missing CUA-01 acceptance checks reproduced; 22 final tool tests pass"
+    },
+    {
+      "name": "tui-integration-build",
+      "record": "automated/tui-integration-build.json",
+      "exit_code": 101,
+      "resolution": "Outdated docs used --bin for actual --test target; corrected command passed"
+    },
+    {
+      "name": "clippy-benches",
+      "record": "automated/clippy-benches.json",
+      "exit_code": 101,
+      "resolution": "Outdated docs used editor instead of warp_editor package; corrected command passed"
+    },
+    {
+      "name": "independent-pty-review-initial",
+      "record": "automated/independent-pty-review-initial.json",
+      "exit_code": 1,
+      "resolution": "pyte could not render an intermediate incomplete repaint; final parser reads observed frames and retains all bounded assertions"
+    }
+  ],
+  "expected_rejections": [
+    {
+      "record": "automated/concurrent-desktop-rejected.json",
+      "exit_code": 2,
+      "meaning": "Second desktop lease rejected while Luna held first lease"
+    },
+    {
+      "record": "automated/scenario-acceptance-rejected.json",
+      "exit_code": 2,
+      "meaning": "Incomplete CUA-01 prevents acceptance despite related automatic tests passing"
+    }
+  ],
+  "incomplete_checks": [
+    {
+      "name": "R4 external product link checker and self-test",
+      "exit_code": 127,
+      "reason": "Planned checker file does not exist; R4 remains OPEN"
+    }
+  ],
+  "serial": {
+    "rounds_started": 1,
+    "round_limit": 3,
+    "rounds_2_and_3": "NOT_RUN: same unresolved GUI window-binding blocker; no product behavior fix justified a new round",
+    "model": "gpt-6-luna",
+    "reasoning_effort": "high",
+    "harness": "unified-computer-use/cua_repl, cooperative l0_verify.py serial lease",
+    "report": "round1/round-results.json",
+    "independent_review": "round1/independent-tui-review.json",
+    "workflow_counts": {
+      "INCOMPLETE": 16,
+      "BLOCKED": 2,
+      "PASS": 0
+    },
+    "scenario_report": "automated/scenario-results.json.gz"
+  },
+  "limits": [
+    "GUI CUA could not bind a window; no new GUI screenshot/interaction PASS.",
+    "No dedicated macOS test account; GUI launch inherited shell environment, so clean-shell isolation was not proven. Clean TUI sample used isolated ZDOTDIR/HISTFILE.",
+    "Partial TUI raw-PTY assertions passed but full child lineage and all termios fields were not captured.",
+    "Initial TUI sample is invalid setup evidence only; original driver version was not separately archived.",
+    "Image consumer, huge-grid performance, dynamic privacy and complete local entry audit remain open implementation/acceptance work.",
+    "Release, full workspace build, cargo-deny, full persistence fixture matrix and privileged network acceptance were not run.",
+    "GUI runtime binary was built from source HEAD before formatting-only import move. Presubmit used that import formatting fix; tooling changes do not alter product behavior.",
+    "User .pi changes are neither staged nor embedded in archived diffs.",
+    "Frozen binaries remain external at /Volumes/SN850X/term4u-l0-20260925/round1; this archive contains logs, fixtures and identity hashes, not a self-contained runnable bundle."
+  ],
+  "artifacts": [
+    {
+      "path": "automated/app-tests.json",
+      "bytes": 321,
+      "sha256": "06f4c48dc83f2e57e5a0c7831670218910ae2e33ba6a59b79c09525296c84aa3"
+    },
+    {
+      "path": "automated/app-tests.log.gz",
+      "bytes": 29638,
+      "sha256": "f2aff8294699d710dd7f05c56131dda5946cb2ecae86c0e1462ee783bbcfe310"
+    },
+    {
+      "path": "automated/clippy-benches-corrected.json",
+      "bytes": 333,
+      "sha256": "5e8d4a8b6c7977e7f3e266da09cab3ad7ad3692d08910476ef24b5850703e29a"
+    },
+    {
+      "path": "automated/clippy-benches-corrected.log.gz",
+      "bytes": 480,
+      "sha256": "1b3d7810460d903f947c4b22f6d7ea1f67b3173aac11ce6d6801876274c60ef8"
+    },
+    {
+      "path": "automated/clippy-benches.json",
+      "bytes": 330,
+      "sha256": "970becd495ec37b8f5b50a99f207dc225e78dee43fa711e062571a45f4ed51bf"
+    },
+    {
+      "path": "automated/clippy-benches.log.gz",
+      "bytes": 111,
+      "sha256": "3f72d77d1d4970f159092da07d3f09d28d411c17317d5b054dc4b3405caa09e6"
+    },
+    {
+      "path": "automated/clippy-local.json",
+      "bytes": 349,
+      "sha256": "35c8e5373f19e1ccbfe0cac0c3ad81ea0ea55b51d090304a3c0e08bd28dc3e36"
+    },
+    {
+      "path": "automated/clippy-local.log.gz",
+      "bytes": 132,
+      "sha256": "8d48158295c19bdd173db53503ac356eaf3d18bd912ff2b381929865becaf326"
+    },
+    {
+      "path": "automated/clippy-tui-core.json",
+      "bytes": 305,
+      "sha256": "0e1b778aa4d6c92a79fc93f80f8f3bc8e9fc0e482e6507372727f584a09fa99c"
+    },
+    {
+      "path": "automated/clippy-tui-core.log.gz",
+      "bytes": 1260,
+      "sha256": "b14039995edfbba0f2ead8b4f277bc1a03fd2fca5b7469f83e1e95b80ec07754"
+    },
+    {
+      "path": "automated/clippy-tui.json",
+      "bytes": 288,
+      "sha256": "102533ea0c2665e364a4bf9d6ccde5e874eeb78edb4e953ccff26fd97c168396"
+    },
+    {
+      "path": "automated/clippy-tui.log.gz",
+      "bytes": 792,
+      "sha256": "26bad3f02238e37b6bb625e9ba332ff6f1875b1844a11cdfa7688cfde1bca1c4"
+    },
+    {
+      "path": "automated/concurrent-desktop-rejected.json",
+      "bytes": 234,
+      "sha256": "f6f04766b039504f5943ff9fac05e1870770e54ef4d6d952379cbaa974d9d699"
+    },
+    {
+      "path": "automated/concurrent-desktop-rejected.log.gz",
+      "bytes": 74,
+      "sha256": "27ecbb7231a954280ed2b2c958470dc95c5c3d4fac36cdf7bfe3869c99364e2f"
+    },
+    {
+      "path": "automated/env.sh",
+      "bytes": 479,
+      "sha256": "2598dfe9efc08dab694cb6024229193e85b796d4379abcc199885f29e2bd8191"
+    },
+    {
+      "path": "automated/external-links-selftest.json",
+      "bytes": 213,
+      "sha256": "b5d249aa611b590fcc2649366dbc0d221c8164f2b2c61cd44a285856d8039335"
+    },
+    {
+      "path": "automated/external-links-selftest.log.gz",
+      "bytes": 96,
+      "sha256": "ff8af0223c8faf0525db6fe352c351665b80117dc3af22373d6ac6d09a576e1e"
+    },
+    {
+      "path": "automated/external-links.json",
+      "bytes": 194,
+      "sha256": "54e19c91ec284df141ead2671f7b74bb844ef333140103c76b5237c47658dcd1"
+    },
+    {
+      "path": "automated/external-links.log.gz",
+      "bytes": 96,
+      "sha256": "ff8af0223c8faf0525db6fe352c351665b80117dc3af22373d6ac6d09a576e1e"
+    },
+    {
+      "path": "automated/final-catalog.json",
+      "bytes": 205,
+      "sha256": "09dee401c21f763f9505d25b9d1c528b0f7ecb6ab1f502d29f321cc120f05bba"
+    },
+    {
+      "path": "automated/final-catalog.log.gz",
+      "bytes": 155,
+      "sha256": "88933a4d4757d0455700229a9eb21e600a31bf90274eab3cbcb496c7ade3b6c0"
+    },
+    {
+      "path": "automated/final-diff-check.json",
+      "bytes": 185,
+      "sha256": "e7398def765599f59af711c5e76673d6b6d7f679c93e0f4e56a9014eb7351c9e"
+    },
+    {
+      "path": "automated/final-diff-check.log.gz",
+      "bytes": 20,
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+    },
+    {
+      "path": "automated/final-format-check.json",
+      "bytes": 185,
+      "sha256": "6cb1a3ccea4e8b57139f44a6980a2fb6dc24585c5592e51f6f9e2c345cfed59a"
+    },
+    {
+      "path": "automated/final-format-check.log.gz",
+      "bytes": 20,
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+    },
+    {
+      "path": "automated/final-verifier-tests.json",
+      "bytes": 199,
+      "sha256": "3f281089dcc140b7b9aeaea93cc33f8e68aa4e79382c8a444979866ee07375f6"
+    },
+    {
+      "path": "automated/final-verifier-tests.log.gz",
+      "bytes": 486,
+      "sha256": "536d3d53419947313f4a39d79ed8d7c1d970eb7f85b8e69b3a142609aabd847c"
+    },
+    {
+      "path": "automated/format.json",
+      "bytes": 170,
+      "sha256": "a9d40e3a63dfb966aa5d1ddcd5be3beeeca455b7269dd7314c29da8a0c2bd5c1"
+    },
+    {
+      "path": "automated/format.log.gz",
+      "bytes": 20,
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+    },
+    {
+      "path": "automated/gui-build.json",
+      "bytes": 303,
+      "sha256": "99192a22f32f7e29e66a55c4010783b2314091b391fc2757a48ee30fe09f03f0"
+    },
+    {
+      "path": "automated/gui-build.log.gz",
+      "bytes": 131,
+      "sha256": "85373145da0b485ca3e69823ae501d96cd07ff6468128df0024d5872799708fa"
+    },
+    {
+      "path": "automated/gui-bundle.json",
+      "bytes": 186,
+      "sha256": "b9c8d1bcfcfa26ac6e84301e2b3f9faf3dfec78b370d7539667556da730fd776"
+    },
+    {
+      "path": "automated/gui-bundle.log.gz",
+      "bytes": 559,
+      "sha256": "901208b44a4985fd05906a4a35d54711ded3a702ae02337e5cc5e98b2d005e0d"
+    },
+    {
+      "path": "automated/independent-pty-review-initial.json",
+      "bytes": 225,
+      "sha256": "120301af97a54c9bdab546a061b7e5ae5040c68f0ec6cea1a0df2e6c0fd08034"
+    },
+    {
+      "path": "automated/independent-pty-review-initial.log.gz",
+      "bytes": 340,
+      "sha256": "1c976498c8812ae4aa501bfdfac52da06ade7b53c98fc08cf85734f6d23a2670"
+    },
+    {
+      "path": "automated/independent-pty-review.json",
+      "bytes": 225,
+      "sha256": "669e25d26509a25c150d87db19c8012e589b9f412e914e792d88d28be5ddc3db"
+    },
+    {
+      "path": "automated/independent-pty-review.log.gz",
+      "bytes": 84,
+      "sha256": "4ce776a815e9804c3edef635fab4110685196229f330d1d4122dc02d233ec12b"
+    },
+    {
+      "path": "automated/inventory.json",
+      "bytes": 178,
+      "sha256": "0168913d0f5211b1d6c45bc0c1c112b0f3aa050f13676dc017009c5ce368e715"
+    },
+    {
+      "path": "automated/inventory.log.gz",
+      "bytes": 235,
+      "sha256": "19c3e0e6f046b68378da13378b317ae29a8075b8612bb18516602c5194e63210"
+    },
+    {
+      "path": "automated/l0-catalog.json",
+      "bytes": 205,
+      "sha256": "f0a5145e6418241324ff95b0e99e469e98021ed890799536ce77cafa416204a9"
+    },
+    {
+      "path": "automated/l0-catalog.log.gz",
+      "bytes": 155,
+      "sha256": "88933a4d4757d0455700229a9eb21e600a31bf90274eab3cbcb496c7ade3b6c0"
+    },
+    {
+      "path": "automated/l0-registration.json",
+      "bytes": 485,
+      "sha256": "b07b4fc1d112d977043e906d8de58b2f0ab033f752dfbc653d81c2337a33d0f9"
+    },
+    {
+      "path": "automated/l0-registration.log.gz",
+      "bytes": 153,
+      "sha256": "576b4a4ef23ddab287af58532aad60689e46abbe7c7c6e9d3b040bc52e8bc14a"
+    },
+    {
+      "path": "automated/l0-verifier-final.json",
+      "bytes": 199,
+      "sha256": "ad2256dda83156821ed37aefb21c0614a6a5242e161ef53dc2d195654497a99f"
+    },
+    {
+      "path": "automated/l0-verifier-final.log.gz",
+      "bytes": 487,
+      "sha256": "1eaeace2f48bfd0c3967dd1476bf626ad5b90b10bc8136a3f5fd069055cbe8b0"
+    },
+    {
+      "path": "automated/l0-verifier-green.json",
+      "bytes": 199,
+      "sha256": "8ffbcfa57fc532ffa4d88b9f2614157ed9e0c7f3752f77ce284b958eb8c52ae1"
+    },
+    {
+      "path": "automated/l0-verifier-green.log.gz",
+      "bytes": 473,
+      "sha256": "f4dd127c72bd0148c75dbdac4456e8cbd1d65076719c32f066771ba29724fca1"
+    },
+    {
+      "path": "automated/l0-verifier-red.json",
+      "bytes": 199,
+      "sha256": "975994a43342dfebc2d2c42ac1e5e613c2ab17dcf65dcb76ca0f4fe19d950830"
+    },
+    {
+      "path": "automated/l0-verifier-red.log.gz",
+      "bytes": 684,
+      "sha256": "6dea8ee95f53ef76286cd20e3968abe864e4ba1227e49c70ee45885dc90cab8a"
+    },
+    {
+      "path": "automated/network-checker-selftest.json",
+      "bytes": 207,
+      "sha256": "b77830e6712165e1c9d91b9fe6bd661b8c612f178d23a4f7e8750f043911546d"
+    },
+    {
+      "path": "automated/network-checker-selftest.log.gz",
+      "bytes": 107,
+      "sha256": "18d23d2b30f2fc6eaad13c0af830f793eec091e3b56b250573242a93d5e1a368"
+    },
+    {
+      "path": "automated/oracle-tools-install.log.gz",
+      "bytes": 230,
+      "sha256": "c32f20dca74b7d16242c2e69f8c131aaeede454aac76afe0b7877c5bfc44653f"
+    },
+    {
+      "path": "automated/pendin-control.json",
+      "bytes": 555,
+      "sha256": "7c29dbe4343724c75eb8bd4276625c50d3b523d0b7974389daf645bcd8c7803e"
+    },
+    {
+      "path": "automated/presubmit-after-format.json",
+      "bytes": 173,
+      "sha256": "281989dc6b62c1957283d28dc4459347cd695a0272017d30de72a9f5549e9034"
+    },
+    {
+      "path": "automated/presubmit-after-format.log.gz",
+      "bytes": 88856,
+      "sha256": "2ee7efaa617c67f4440cb2d05e27053c058d2ef426a8b55f511365b2987f9380"
+    },
+    {
+      "path": "automated/presubmit.json",
+      "bytes": 173,
+      "sha256": "d657cafb5108c36216f1695ac0219412392c8fe903aa62020b74e7045d98f08a"
+    },
+    {
+      "path": "automated/presubmit.log.gz",
+      "bytes": 370,
+      "sha256": "fe0b4c2ea99936ba4594feb516781c3af6d371f08bd0e23344b691fec0266ee8"
+    },
+    {
+      "path": "automated/run.py",
+      "bytes": 719,
+      "sha256": "a385f75d86ca75e8a47c7a22c8a3aad278749a2937c9cbdabb92b0c13a592735"
+    },
+    {
+      "path": "automated/scenario-acceptance-rejected.json",
+      "bytes": 339,
+      "sha256": "b9ee58b698ae4474385c03b663ea0f29f72bcc8580393e5bdcf0d6b8d7fc41d2"
+    },
+    {
+      "path": "automated/scenario-acceptance-rejected.log.gz",
+      "bytes": 69,
+      "sha256": "ea52b28ae74c787eaf5988d0399dacedb76e6da8e5c6b0af8cd5de6564c12090"
+    },
+    {
+      "path": "automated/scenario-results.json.gz",
+      "bytes": 1024,
+      "sha256": "df85ecc5545d184eada7b83ed1d7f037144cf5be40d9eefc6b2dc5541a4794f5"
+    },
+    {
+      "path": "automated/scenario-template.json",
+      "bytes": 522,
+      "sha256": "fed02545bc7971c0e2ae41aa1cbbd77afc1e69873889a606814ba716bca711f3"
+    },
+    {
+      "path": "automated/scenario-template.log.gz",
+      "bytes": 119,
+      "sha256": "9c08ad8b7fb07974521cc45df636909955ae90576cfbc2ac2b067849fd76a9d7"
+    },
+    {
+      "path": "automated/terminal-ui-tui-tests.json",
+      "bytes": 305,
+      "sha256": "63680dc412f0d4e58697821bc0b241307c308d19fce3bd96ee18aaa940da8826"
+    },
+    {
+      "path": "automated/terminal-ui-tui-tests.log.gz",
+      "bytes": 11360,
+      "sha256": "9a457786ab1daf4dcf11cf6a19439869c6c71966d613570ce2ed947cafc368b4"
+    },
+    {
+      "path": "automated/tui-build.json",
+      "bytes": 324,
+      "sha256": "81fb302c324821e333fd9cd555f6ded314fbbe225bb8432ed74fb9381b95e1f2"
+    },
+    {
+      "path": "automated/tui-build.log.gz",
+      "bytes": 174,
+      "sha256": "0d246d065c5820b19fde59a24bc6d9382fbe5e612eaebabc6ae113a93587b7a1"
+    },
+    {
+      "path": "automated/tui-integration-build.json",
+      "bytes": 285,
+      "sha256": "a89239e13ecbe8088f6b5d90ee8f161f1ec5c204404fb6303a2d164ff06f02f3"
+    },
+    {
+      "path": "automated/tui-integration-build.log.gz",
+      "bytes": 81,
+      "sha256": "07a2d02301f9eb86f9d4c7d10249d1e6d078267bb790abd7bbbb3950f230b733"
+    },
+    {
+      "path": "automated/tui-integration-tests.json",
+      "bytes": 297,
+      "sha256": "ce604d8d1c54c6504e1abd570743387a8b2f3531ecad362c12d32b0d9fd17e7f"
+    },
+    {
+      "path": "automated/tui-integration-tests.log.gz",
+      "bytes": 1101,
+      "sha256": "0d190abdb5054be22776b463958f04792487ee6fe99821e57a9b577ba48709a7"
+    },
+    {
+      "path": "automated/warp-inventory-command.json",
+      "bytes": 336,
+      "sha256": "7b33ed0cfcebaa13c1d48cfac099d04645f4524152903d7c8712f9b49b44b030"
+    },
+    {
+      "path": "automated/warp-inventory.json.gz",
+      "bytes": 24381,
+      "sha256": "6932f586c077c7e92ce918fda602b4692a7cf204cd914fc53bcc22e3a02b063d"
+    },
+    {
+      "path": "automated/warp-inventory.log.gz",
+      "bytes": 163,
+      "sha256": "091f4b2210ece161846ae34477e25693ab5132931584bf71b4ab47ac8169ad31"
+    },
+    {
+      "path": "automated/warp_terminal-inventory-command.json",
+      "bytes": 270,
+      "sha256": "de6c5b9fae8604b1cab56e237a014f697eba86418a16689e946cd1848f767ea8"
+    },
+    {
+      "path": "automated/warp_terminal-inventory.json.gz",
+      "bytes": 7290,
+      "sha256": "396acc6f7cfd8701a0ba1bee32bdfc6342fef874f2cf108eb83069d38ba135d3"
+    },
+    {
+      "path": "automated/warp_terminal-inventory.log.gz",
+      "bytes": 438,
+      "sha256": "f2117df9ecf655ad8ea0fbc6ef0f63d1490909a1b0a29b7f29fddae8df7a339a"
+    },
+    {
+      "path": "automated/warpui-inventory-command.json",
+      "bytes": 263,
+      "sha256": "a2dc4df181c10eea729569a1e1ac10aee91950ca9b16db000efb1370874eb162"
+    },
+    {
+      "path": "automated/warpui-inventory.json",
+      "bytes": 8674,
+      "sha256": "ac69bbd8af0728f8e47dc9fbe45c21271cba33c4ebd8f80d70a0d9c713420be0"
+    },
+    {
+      "path": "automated/warpui-inventory.log.gz",
+      "bytes": 137,
+      "sha256": "76b64c9eac5fa45d04e266558bd86e8d75e1ab8602030c3d86448ec0e9c9ff1f"
+    },
+    {
+      "path": "round1/candidate-identity.json",
+      "bytes": 4534,
+      "sha256": "cb9c0343b6dec532c2a4e103a8260eae4c6844f9063c262e22034137ef94892b"
+    },
+    {
+      "path": "round1/fixtures/zshdot/.zsh_history",
+      "bytes": 518,
+      "sha256": "76bc447319bd531d1e5b2267ef8b3da28a0dc395aa7e3198bfb99b4b4e1ec6fd"
+    },
+    {
+      "path": "round1/fixtures/zshdot/.zshrc",
+      "bytes": 18,
+      "sha256": "503ffb24a7f208dea17273df4a6b22ac21edb4d0d43a6808a051e164a93c8d26"
+    },
+    {
+      "path": "round1/independent-tui-review.json",
+      "bytes": 1480,
+      "sha256": "5f6f7320675f4e7bdfde1df354b0832577f971843d82909d2cd65539006ee3af"
+    },
+    {
+      "path": "round1/lease_keeper.py",
+      "bytes": 1867,
+      "sha256": "797348bfa7be3e62325e441e7c8bcd5471b895143045d78d92eca49c621780d0"
+    },
+    {
+      "path": "round1/logs/cua18-pty-clean.jsonl",
+      "bytes": 3370,
+      "sha256": "95d85e73dfe1f258ac74005f1e2324622de87441f1efa12633d4b32787452cab"
+    },
+    {
+      "path": "round1/logs/cua18-pty.jsonl",
+      "bytes": 1690,
+      "sha256": "cf126c139df6bd185c4a31f964a8534eb538731651a5a6d4d142858e24350ab8"
+    },
+    {
+      "path": "round1/logs/desktop-lease.jsonl",
+      "bytes": 2473,
+      "sha256": "abcef215d032f841a136e992716b505a1a69c8ccd2ca9aaed5328acf2ceb7b41"
+    },
+    {
+      "path": "round1/raw/cua-observations.json",
+      "bytes": 1285,
+      "sha256": "e6529059ebd082ae085a1ac92abd4b66b5b8a01578b497fe6e74a51d099fd0cb"
+    },
+    {
+      "path": "round1/raw/cua18-after-alt-frame.txt.gz",
+      "bytes": 276,
+      "sha256": "87e5d64dfc251362bc988cee5f6e5066d59a53fcffe373246a52921b9a9c4f51"
+    },
+    {
+      "path": "round1/raw/cua18-alt-frame.txt.gz",
+      "bytes": 199,
+      "sha256": "d05d74ab0899aea7a7226408a71e1baf8da02e0ebae5373306c3b584d94af6fd"
+    },
+    {
+      "path": "round1/raw/cua18-chinese-frame.txt.gz",
+      "bytes": 183,
+      "sha256": "b2b750065295ffdd410f577c1db1ea7a97e9b9118d5641ac6535e51154b57db6"
+    },
+    {
+      "path": "round1/raw/cua18-chinese-pyte.json",
+      "bytes": 9007,
+      "sha256": "f88ad8bec0bcc6aa829dcfe9738ac06124fbcb9c917476e989a97f153b3fae56"
+    },
+    {
+      "path": "round1/raw/cua18-pty-clean.raw.gz",
+      "bytes": 1796,
+      "sha256": "5b7e18eda13af6ba3ee6cf5700bf792d29f46cb500896c17d0fe671a25bfb95d"
+    },
+    {
+      "path": "round1/raw/cua18-pty.raw.gz",
+      "bytes": 345,
+      "sha256": "b0314a4705f682e10838181b37e85d7a3effe492a1e658d6f244aa4c8463df13"
+    },
+    {
+      "path": "round1/raw/gui-process-sample.txt.gz",
+      "bytes": 68054,
+      "sha256": "d0aa6584f065eb8ae00781ae3ff744457266e6ac5df1dd746f6e055f84c6b7dc"
+    },
+    {
+      "path": "round1/raw/gui-process-tree.json",
+      "bytes": 1212,
+      "sha256": "75b834b68fde870752c8d5cb1711346f58519e6f951926f7ec4c0e47dc6caa5f"
+    },
+    {
+      "path": "round1/raw/gui-resource-manifest.json",
+      "bytes": 6753,
+      "sha256": "81bdf082e17ae8627066704c851d98269d70f66f44d6d03007412e6f653a40a0"
+    },
+    {
+      "path": "round1/raw/pendin-control.json",
+      "bytes": 555,
+      "sha256": "7c29dbe4343724c75eb8bd4276625c50d3b523d0b7974389daf645bcd8c7803e"
+    },
+    {
+      "path": "round1/raw/workspace-diff-after-candidate.patch.gz",
+      "bytes": 7824,
+      "sha256": "c2650fb1959c60a299acd617690a9c280219b68bb50d90567fd6b0d9a4d7fcc1"
+    },
+    {
+      "path": "round1/raw-evidence-hashes.json",
+      "bytes": 5894,
+      "sha256": "48c45f950e433f4e7eed54cdbefa207a6a51d71efb18d9085decb5283449d2ce"
+    },
+    {
+      "path": "round1/review_pty.py",
+      "bytes": 1020,
+      "sha256": "8b8db35c56ceaea937146b97e84eb7c850d84249b59dddfec5010f201298bfcb"
+    },
+    {
+      "path": "round1/round-results.json",
+      "bytes": 19415,
+      "sha256": "1bca46f8ab2fb6fe976c6b8e177cb6b103b8ce1fe93b494afad3a473c7fe3ac6"
+    },
+    {
+      "path": "round1/tui_pty_driver.py",
+      "bytes": 5199,
+      "sha256": "9949f8af276ed8eb2b8fa4be4f1589f6f743ef65954ed9edf4a54ce150f5f6fc"
+    },
+    {
+      "path": "source-identity.json",
+      "bytes": 705,
+      "sha256": "00831ab8c56b0443a0e389d88f6c791c40cd7de88b727b80b561d98db7944c00"
+    },
+    {
+      "path": "tested-source.patch.gz",
+      "bytes": 2472,
+      "sha256": "aeadcea516ae0b91eab3e563fc990bf376fc5c29c895e3310be85363bb996b72"
+    }
+  ],
+  "archive_note": "Round raw text, PTY bytes and source diff are gzip-compressed losslessly. See round1/raw-evidence-hashes.json archive_path fields; unpack to original paths to replay. No executable is committed."
+}

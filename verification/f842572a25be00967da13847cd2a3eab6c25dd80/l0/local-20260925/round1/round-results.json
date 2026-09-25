@@ -1,0 +1,480 @@
+{
+  "schema_version": 1,
+  "round": 1,
+  "candidate": {
+    "source_head": "f842572a25be00967da13847cd2a3eab6c25dd80",
+    "source_tree": "5d1c3324175bbd1560204ed5507958f2abb27372",
+    "build_source_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build_source_diff_scope": "tracked source at frozen build; user .pi/goal-events.jsonl explicitly excluded per parent handoff",
+    "workspace_diff_after_candidate": {
+      "path": "raw/workspace-diff-after-candidate.patch",
+      "sha256": "c6c2a549e39b5059db1992a353c80711e03e71ebde385f358cba8ef5a91f3468",
+      "meaning": "Post-candidate workspace diff with user .pi changes excluded; not in frozen product candidate. Original unredacted capture retained privately outside the round archive."
+    },
+    "gui_bundle": "/Volumes/SN850X/term4u-l0-20260925/round1/Term4u-L0-Round1.app",
+    "gui_bundle_identifier": "dev.term4u.l0.round1",
+    "gui_bundle_name": "Term4u-L0-Round1",
+    "gui_bundle_display_name": "Term4u L0 Round1",
+    "gui_executable_sha256": "ee84e39feb98344442160a3fc1f73c0f4252f4c65272e56616d9f682aa2e1416",
+    "gui_info_plist_sha256": "c4e4c93821b031052acd4859464917460712b1de223d52a56e788c37305b7dc8",
+    "gui_resource_file_count": 31,
+    "gui_resources_manifest_sha256": "6505c791f38122009f41f4092dedb54694c0c60e3818a1701f85821849d04404",
+    "gui_signature": "ad-hoc; codesign --verify --deep --strict passed; arm64",
+    "tui_executable": "/Volumes/SN850X/term4u-l0-20260925/round1/term4u-tui",
+    "tui_executable_sha256": "9fb1c44f20e367c6c8bcf5f8ba80f9ea5b387c84139f37db4596587bca87b031",
+    "gui_data_profile": {
+      "WARP_DATA_PROFILE": "term4u-l0-20260925-round1",
+      "expected_isolated_profile_path": "/Users/tedczj/.term4u-term4u-l0-20260925-round1",
+      "note": "isolated suffix only; no user DB was opened by this agent"
+    },
+    "tui_data_profile": "term4u-l0-20260925-round1-tui-clean",
+    "gui_resources_manifest_path": "raw/gui-resource-manifest.json",
+    "gui_resources_aggregate_sha256": "6505c791f38122009f41f4092dedb54694c0c60e3818a1701f85821849d04404"
+  },
+  "harness": {
+    "model": "gpt-6-luna",
+    "reasoning_effort": "high",
+    "tool": "unified-computer-use / mcp__cua_repl",
+    "lease_command": "python3 script/l0_verify.py serial -- python3 -u lease_keeper.py <round1-root>",
+    "lease_artifact": "logs/desktop-lease.jsonl",
+    "lease_semantics": "External keeper remained a child of l0_verify.py serial while CUA tools were called. This attests the protocol window but cannot prevent non-cooperating desktop operators.",
+    "lease_ended_utc": "2026-09-25T04:46:17.240240+00:00"
+  },
+  "restrictions_applied": [
+    "No interaction with old GUI PID 42354.",
+    "No real clipboard contents read or OS clipboard mutation attempted.",
+    "No notification authorization or recording requested.",
+    "The GUI process used WARP_DATA_PROFILE isolation but inherited its launching shell environment; a clean GUI ZDOTDIR/HISTFILE was not verified. The clean ZDOTDIR/HISTFILE fixture applied to the TUI PTY run.",
+    "No Cargo command was run by this agent."
+  ],
+  "workflow_results": [
+    {
+      "workflow": "CUA-01",
+      "title": "候选身份与隔离基线",
+      "scenarios": [],
+      "status": "INCOMPLETE",
+      "summary": "Candidate identity and isolated profile recorded; candidate process and terminal-server were present and later closed. CUA getApp returned cgWindowNotFound for bundle ID and absolute path, so no current-window screenshot or accessibility observation was possible.",
+      "preconditions_met": false,
+      "executed_steps": [
+        "candidate identity capture and unique isolated bundle/process launch; CUA window binding attempts; owned candidate shutdown"
+      ],
+      "command_exit_codes": {
+        "bundle_copy_resign_verify": 0,
+        "candidate_launch_session_after_owned_SIGTERM": 143
+      },
+      "evidence": [
+        "candidate-identity.json",
+        "raw/cua-observations.json",
+        "raw/gui-process-tree.json",
+        "logs/desktop-lease.jsonl",
+        "raw/gui-resource-manifest.json"
+      ],
+      "unmet_oracles": {
+        "CUA-01": [
+          "No screenshot or AX tree; unique bundle/process evidence exists but UI visibility was not independently observed."
+        ]
+      }
+    },
+    {
+      "workflow": "CUA-02",
+      "title": "历史、搜索和补全",
+      "scenarios": [
+        "L0-01-T01",
+        "L0-01-T02",
+        "L0-01-T03",
+        "L0-01-T04",
+        "L0-01-T05",
+        "L0-01-T06",
+        "L0-01-T07",
+        "L0-01-T08"
+      ],
+      "status": "INCOMPLETE",
+      "summary": "No controllable candidate window or shell pane; history/search/completion actions and their DB evidence were not run.",
+      "preconditions_met": false,
+      "executed_steps": [],
+      "command_exit_codes": {},
+      "evidence": [],
+      "unmet_oracles": [
+        "Workflow not executed to avoid interpreting unavailable GUI state or unapproved host permissions as PASS."
+      ]
+    },
+    {
+      "workflow": "CUA-03",
+      "title": "编辑器粘贴",
+      "scenarios": [
+        "L0-02-T01",
+        "L0-02-T02"
+      ],
+      "status": "INCOMPLETE",
+      "summary": "No controllable candidate editor; precondition also requires a dedicated account and synthetic-only system clipboard. No system clipboard access was attempted.",
+      "preconditions_met": false,
+      "executed_steps": [],
+      "command_exit_codes": {},
+      "evidence": [],
+      "unmet_oracles": [
+        "Workflow not executed to avoid interpreting unavailable GUI state or unapproved host permissions as PASS."
+      ]
+    },
+    {
+      "workflow": "CUA-04",
+      "title": "真实vim/readline粘贴",
+      "scenarios": [
+        "L0-02-T03",
+        "L0-02-T04",
+        "L0-02-T05",
+        "L0-02-T06",
+        "L0-02-T07",
+        "L0-02-T08",
+        "L0-05-T05"
+      ],
+      "status": "INCOMPLETE",
+      "summary": "No controllable candidate UI or dedicated interactive vim/readline surface; no paste interaction was attempted.",
+      "preconditions_met": false,
+      "executed_steps": [],
+      "command_exit_codes": {},
+      "evidence": [],
+      "unmet_oracles": [
+        "Workflow not executed to avoid interpreting unavailable GUI state or unapproved host permissions as PASS."
+      ]
+    },
+    {
+      "workflow": "CUA-05",
+      "title": "字体、布局、PS1、光标",
+      "scenarios": [
+        "L0-03-T01",
+        "L0-03-T02",
+        "L0-03-T03",
+        "L0-03-T04",
+        "L0-03-T05",
+        "L0-03-T06"
+      ],
+      "status": "INCOMPLETE",
+      "summary": "No controllable candidate window; GUI settings, resize, and IME-anchor oracles were not available.",
+      "preconditions_met": false,
+      "executed_steps": [],
+      "command_exit_codes": {},
+      "evidence": [],
+      "unmet_oracles": [
+        "Workflow not executed to avoid interpreting unavailable GUI state or unapproved host permissions as PASS."
+      ]
+    },
+    {
+      "workflow": "CUA-06",
+      "title": "菜单焦点全链路",
+      "scenarios": [
+        "L0-04-T01",
+        "L0-04-T02",
+        "L0-04-T03",
+        "L0-04-T04",
+        "L0-04-T05",
+        "L0-04-T06",
+        "L0-04-T07"
+      ],
+      "status": "INCOMPLETE",
+      "summary": "No controllable candidate GUI; menu focus, pane changes, async completion, and event-log checks were not run.",
+      "preconditions_met": false,
+      "executed_steps": [],
+      "command_exit_codes": {},
+      "evidence": [],
+      "unmet_oracles": [
+        "Workflow not executed to avoid interpreting unavailable GUI state or unapproved host permissions as PASS."
+      ]
+    },
+    {
+      "workflow": "CUA-07",
+      "title": "Finder跨pane文件投递",
+      "scenarios": [
+        "L0-05-T01",
+        "L0-05-T02",
+        "L0-05-T03",
+        "L0-05-T04",
+        "L0-05-T06",
+        "L0-05-T07"
+      ],
+      "status": "INCOMPLETE",
+      "summary": "No controllable candidate pane; Finder drag/drop was not attempted.",
+      "preconditions_met": false,
+      "executed_steps": [],
+      "command_exit_codes": {},
+      "evidence": [],
+      "unmet_oracles": [
+        "Workflow not executed to avoid interpreting unavailable GUI state or unapproved host permissions as PASS."
+      ]
+    },
+    {
+      "workflow": "CUA-08",
+      "title": "链接、文件与选择",
+      "scenarios": [
+        "L0-06-T01",
+        "L0-06-T02",
+        "L0-06-T03",
+        "L0-06-T04",
+        "L0-06-T05",
+        "L0-06-T06",
+        "L0-06-T07"
+      ],
+      "status": "INCOMPLETE",
+      "summary": "No controllable candidate UI; loopback service and link/file interaction fixture were not started.",
+      "preconditions_met": false,
+      "executed_steps": [],
+      "command_exit_codes": {},
+      "evidence": [],
+      "unmet_oracles": [
+        "Workflow not executed to avoid interpreting unavailable GUI state or unapproved host permissions as PASS."
+      ]
+    },
+    {
+      "workflow": "CUA-09",
+      "title": "编辑器系统IME",
+      "scenarios": [
+        "L0-07-T01",
+        "L0-07-T02",
+        "L0-07-T03",
+        "L0-03-T02"
+      ],
+      "status": "INCOMPLETE",
+      "summary": "No controllable candidate window; system input source was not changed or used.",
+      "preconditions_met": false,
+      "executed_steps": [],
+      "command_exit_codes": {},
+      "evidence": [],
+      "unmet_oracles": [
+        "Workflow not executed to avoid interpreting unavailable GUI state or unapproved host permissions as PASS."
+      ]
+    },
+    {
+      "workflow": "CUA-10",
+      "title": "原生普通与备用屏IME",
+      "scenarios": [
+        "L0-07-T01",
+        "L0-07-T02",
+        "L0-07-T03"
+      ],
+      "status": "INCOMPLETE",
+      "summary": "No controllable candidate native terminal window; raw GUI IME probes were not run.",
+      "preconditions_met": false,
+      "executed_steps": [],
+      "command_exit_codes": {},
+      "evidence": [],
+      "unmet_oracles": [
+        "Workflow not executed to avoid interpreting unavailable GUI state or unapproved host permissions as PASS."
+      ]
+    },
+    {
+      "workflow": "CUA-11",
+      "title": "系统剪贴板权限",
+      "scenarios": [
+        "L0-07-T04",
+        "L0-07-T05",
+        "L0-07-T06",
+        "L0-07-T07"
+      ],
+      "status": "INCOMPLETE",
+      "summary": "Dedicated test account and Deny initial permission state are unavailable. No OS clipboard read/write or permission change was attempted.",
+      "preconditions_met": false,
+      "executed_steps": [],
+      "command_exit_codes": {},
+      "evidence": [],
+      "unmet_oracles": [
+        "Workflow not executed to avoid interpreting unavailable GUI state or unapproved host permissions as PASS."
+      ]
+    },
+    {
+      "workflow": "CUA-12",
+      "title": "响铃、通知投递与点击",
+      "scenarios": [
+        "L0-07-T08",
+        "L0-03-T05"
+      ],
+      "status": "INCOMPLETE",
+      "summary": "No explicit authorization for system notification delivery/clicking or audio recording/listening; notification permission and recording paths were not used.",
+      "preconditions_met": false,
+      "executed_steps": [],
+      "command_exit_codes": {},
+      "evidence": [],
+      "unmet_oracles": [
+        "Workflow not executed to avoid interpreting unavailable GUI state or unapproved host permissions as PASS."
+      ]
+    },
+    {
+      "workflow": "CUA-13",
+      "title": "清屏、块折叠、查找和复制",
+      "scenarios": [
+        "L0-08-T01",
+        "L0-08-T02",
+        "L0-08-T03",
+        "L0-08-T07"
+      ],
+      "status": "INCOMPLETE",
+      "summary": "No controllable candidate GUI and no isolated prior-DB clone fixture was prepared; block folding, clear, find, copy, and restart were not run.",
+      "preconditions_met": false,
+      "executed_steps": [],
+      "command_exit_codes": {},
+      "evidence": [],
+      "unmet_oracles": [
+        "Workflow not executed to avoid interpreting unavailable GUI state or unapproved host permissions as PASS."
+      ]
+    },
+    {
+      "workflow": "CUA-14",
+      "title": "持续输出、阅读锚点与性能",
+      "scenarios": [
+        "L0-08-T04",
+        "L0-08-T08",
+        "L0-08-T09"
+      ],
+      "status": "INCOMPLETE",
+      "summary": "No controllable candidate GUI or frozen performance instrumentation/condition set; no timing or frame metrics were collected.",
+      "preconditions_met": false,
+      "executed_steps": [],
+      "command_exit_codes": {},
+      "evidence": [],
+      "unmet_oracles": [
+        "Workflow not executed to avoid interpreting unavailable GUI state or unapproved host permissions as PASS."
+      ]
+    },
+    {
+      "workflow": "CUA-15",
+      "title": "图片协议与资源边界",
+      "scenarios": [
+        "L0-08-T05"
+      ],
+      "status": "BLOCKED",
+      "summary": "DESIGN §6.2.16 says the image consumer and resource budgets remain undeveloped; workflow prerequisite is therefore not met. No image path was falsely counted as passing.",
+      "preconditions_met": false,
+      "executed_steps": [],
+      "command_exit_codes": {},
+      "evidence": [],
+      "unmet_oracles": [
+        "Workflow not executed to avoid interpreting unavailable GUI state or unapproved host permissions as PASS."
+      ]
+    },
+    {
+      "workflow": "CUA-16",
+      "title": "隐私显示与复制出口",
+      "scenarios": [
+        "L0-08-T06",
+        "L0-09-T02",
+        "L0-09-T04"
+      ],
+      "status": "BLOCKED",
+      "summary": "DESIGN §6.2.16 says dynamic SafeMode consumers and per-output policy remain undeveloped; workflow prerequisite is therefore not met. No secret was created or exported.",
+      "preconditions_met": false,
+      "executed_steps": [],
+      "command_exit_codes": {},
+      "evidence": [],
+      "unmet_oracles": [
+        "Workflow not executed to avoid interpreting unavailable GUI state or unapproved host permissions as PASS."
+      ]
+    },
+    {
+      "workflow": "CUA-17",
+      "title": "完整本地入口审计",
+      "scenarios": [
+        "L0-09-T01",
+        "L0-09-T02",
+        "L0-09-T03",
+        "L0-09-T04",
+        "L0-09-T05"
+      ],
+      "status": "INCOMPLETE",
+      "summary": "No controllable candidate GUI; full registered-setting/action enumeration and interaction could not be observed.",
+      "preconditions_met": false,
+      "executed_steps": [],
+      "command_exit_codes": {},
+      "evidence": [],
+      "unmet_oracles": [
+        "Workflow not executed to avoid interpreting unavailable GUI state or unapproved host permissions as PASS."
+      ]
+    },
+    {
+      "workflow": "CUA-18",
+      "title": "真实TUI和CLI交互",
+      "scenarios": [
+        "L0-07-T09",
+        "L0-09-T05"
+      ],
+      "status": "INCOMPLETE",
+      "summary": "Real 120x40 PTY run of frozen standalone/offline TUI completed with exit 0. Independent pyte 0.8.2/wcwidth 0.9.1 review passed direct UTF-8 CJK layout (row 39: 你 col 0, 好 col 2, X col 5), alternate-screen frame at raw offset 4983 with restoration at 16982, and no outer-PTY OSC52/9/777/BEL leakage in [16982,18737). PENDIN-only lflag delta was independently reproduced without Term4u and is not a product defect. Overall workflow remains INCOMPLETE because CUA-01 GUI identity/screenshot is incomplete, driver did not record all termios control characters/speeds or full child lineage, and real host clipboard/notification permissions were intentionally untouched.",
+      "preconditions_met": false,
+      "executed_steps": [
+        "120x40 PTY; Ctrl-T; external Python CLI output; direct UTF-8 Chinese input; alternate screen enter/exit; synthetic OSC52/9/777/BEL output; Ctrl-C; resize to 30x100; Ctrl-Q; raw byte and pyte oracle review"
+      ],
+      "command_exit_codes": {
+        "pty_driver": 0,
+        "tui_process": 0
+      },
+      "evidence": [
+        "raw/cua18-pty-clean.raw",
+        "logs/cua18-pty-clean.jsonl",
+        "independent-tui-review.json",
+        "raw/cua18-chinese-frame.txt",
+        "raw/cua18-alt-frame.txt",
+        "raw/cua18-after-alt-frame.txt",
+        "raw/pendin-control.json",
+        "raw/cua18-pty.raw"
+      ],
+      "unmet_oracles": {
+        "CUA-18": [
+          "Complete termios control-character/speed comparison absent.",
+          "Full shell child process lineage absent.",
+          "No real GUI host permission path executed."
+        ]
+      },
+      "limits": [
+        "CUA-01 GUI prerequisite incomplete.",
+        "GUI candidate inherited shell environment; only WARP_DATA_PROFILE was explicitly set, and GUI ZDOTDIR/HISTFILE isolation was not verified.",
+        "Complete termios control-character/speed comparison and full shell child process lineage are absent.",
+        "Real GUI host clipboard/notification permissions were intentionally untouched.",
+        "Initial raw/cua18-pty.raw is an invalid setup sample: input was sent before Ctrl-T created the terminal tab; clean subassertion evidence is raw/cua18-pty-clean.raw."
+      ]
+    }
+  ],
+  "overall_round_status": "INCOMPLETE",
+  "product_acceptance": "NOT_EVALUATED",
+  "evidence_manifest": "raw-evidence-hashes.json",
+  "round_notes": [
+    "Initial TUI PTY attempt did not send Ctrl-T before input; its raw capture is retained as an invalid setup sample. It is not counted as a product result.",
+    "The clean CUA-18 driver script was revised in place after the first sample; the first script version was not separately archived.",
+    "The initial app inventory exposed no screenshot or lock-screen state. No screenshot was fabricated.",
+    "Independent pyte review used the same clean raw PTY SHA256 and recorded frame files; review supports only the listed assertions."
+  ],
+  "archived_evidence_storage": {
+    "raw/cua18-after-alt-frame.txt": {
+      "archive_path": "raw/cua18-after-alt-frame.txt.gz",
+      "encoding": "gzip",
+      "uncompressed_sha256": "6e442d2c645418466b2fa218fc60818dcc3a83492eabca9dfa8c0f7b79cdd0d5"
+    },
+    "raw/workspace-diff-after-candidate.patch": {
+      "archive_path": "raw/workspace-diff-after-candidate.patch.gz",
+      "encoding": "gzip",
+      "uncompressed_sha256": "c6c2a549e39b5059db1992a353c80711e03e71ebde385f358cba8ef5a91f3468"
+    },
+    "raw/cua18-pty-clean.raw": {
+      "archive_path": "raw/cua18-pty-clean.raw.gz",
+      "encoding": "gzip",
+      "uncompressed_sha256": "1a8e24e734725c63bbb20f9f40948a7f32be43ed0a74077dd9dafb1152b7f67d"
+    },
+    "raw/cua18-pty.raw": {
+      "archive_path": "raw/cua18-pty.raw.gz",
+      "encoding": "gzip",
+      "uncompressed_sha256": "9c6b4469d2ce2f6bbc7e43405f33a37576335d3d047cc487edac62da8afae441"
+    },
+    "raw/cua18-alt-frame.txt": {
+      "archive_path": "raw/cua18-alt-frame.txt.gz",
+      "encoding": "gzip",
+      "uncompressed_sha256": "177630fee8033cb93f9534970b696da4484520617cb4b7fcf014cf37bb696d51"
+    },
+    "raw/cua18-chinese-frame.txt": {
+      "archive_path": "raw/cua18-chinese-frame.txt.gz",
+      "encoding": "gzip",
+      "uncompressed_sha256": "bfbd08f0dacfa935d469ecf22572621dff857c747fb92708608b80856a0c1a49"
+    },
+    "raw/gui-process-sample.txt": {
+      "archive_path": "raw/gui-process-sample.txt.gz",
+      "encoding": "gzip",
+      "uncompressed_sha256": "3718708025ccbe386c64175609b599be71070146d1206c5d9c4affd777f1f3d4"
+    }
+  },
+  "external_binary_storage": "/Volumes/SN850X/term4u-l0-20260925/round1/term4u-tui"
+}

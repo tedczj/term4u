@@ -1,0 +1,12 @@
+{
+  "command": [
+    "python3",
+    "script/l0_verify.py",
+    "serial",
+    "--",
+    "/usr/bin/true"
+  ],
+  "exit_code": 2,
+  "started_utc": "2026-09-25T04:39:40.642662+00:00",
+  "finished_utc": "2026-09-25T04:39:40.671169+00:00"
+}

@@ -1,0 +1,20 @@
+{
+  "command": [
+    "cargo",
+    "clippy",
+    "--locked",
+    "-p",
+    "editor",
+    "-p",
+    "warp_tui",
+    "--features",
+    "test-util",
+    "--benches",
+    "--",
+    "-D",
+    "warnings"
+  ],
+  "exit_code": 101,
+  "started_utc": "2026-09-25T04:34:33.806332+00:00",
+  "finished_utc": "2026-09-25T04:34:34.223384+00:00"
+}

@@ -1,0 +1,13 @@
+{
+  "source_head": "f842572a25be00967da13847cd2a3eab6c25dd80",
+  "source_tree": "5d1c3324175bbd1560204ed5507958f2abb27372",
+  "tested_diff_sha256": "427119db07b5c277ce157d2ec8a33c3a1a6af170a89063b4ae73aa1f4faebc9f",
+  "product_diff_sha256": "3a0fb52279ac8884d75d1aa8dee358d7174b9cd04daac5ba5e1bb4f6b4a434e4",
+  "product_diff_scope": "Only import ordering in local_output.rs; initial GUI and full local tests preceded formatting, presubmit and extra Clippy used formatted source.",
+  "excluded_user_changes": [
+    ".pi/goal-events.jsonl"
+  ],
+  "rustc": "1.92.0 (ded5c06cf 2025-12-08)",
+  "platform": "ProductName:\t\tmacOS\nProductVersion:\t\t26.2\nBuildVersion:\t\t25C56\n",
+  "architecture": "arm64"
+}

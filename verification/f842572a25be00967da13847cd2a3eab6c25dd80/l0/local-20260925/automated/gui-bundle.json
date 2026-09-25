@@ -1,0 +1,9 @@
+{
+  "command": [
+    "./script/run",
+    "--dont-open"
+  ],
+  "exit_code": 0,
+  "started_utc": "2026-09-25T04:27:39.796013+00:00",
+  "finished_utc": "2026-09-25T04:27:42.052602+00:00"
+}

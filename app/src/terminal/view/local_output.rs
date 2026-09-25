@@ -2,6 +2,7 @@
 
 use std::sync::atomic::Ordering;
 
+use warp_core::semantic_selection::SemanticSelection;
 use warpui::text::SelectionType;
 use warpui::units::IntoPixels;
 use warpui::{SingletonEntity, ViewContext};
@@ -13,7 +14,6 @@ use crate::terminal::model::blocks::BlockListPoint;
 use crate::terminal::model::index::Side;
 use crate::terminal::model::terminal_model::WithinBlock;
 use crate::terminal::model_events::ModelEvent;
-use warp_core::semantic_selection::SemanticSelection;
 
 #[derive(Clone, Debug)]
 pub enum LocalOutputAction {
