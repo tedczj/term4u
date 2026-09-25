@@ -56,6 +56,26 @@ class CatalogTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             verify.validate_catalog(self.data)
 
+    def test_missing_atomic_assertions_fail(self):
+        self.data['serial_workflows'][0].pop('assertion_cases')
+        with self.assertRaisesRegex(ValueError, 'Missing atomic assertions'):
+            verify.validate_catalog(self.data)
+
+    def test_duplicate_or_misrouted_atomic_assertion_fails(self):
+        assertions = self.data['serial_workflows'][0]['assertion_cases']
+        original_id = assertions[1]['id']
+        for invalid_id in (assertions[0]['id'], 'CUA-99-A01'):
+            with self.subTest(invalid_id=invalid_id):
+                assertions[1]['id'] = invalid_id
+                with self.assertRaises(ValueError):
+                    verify.validate_catalog(self.data)
+        assertions[1]['id'] = original_id
+
+    def test_atomic_assertion_requires_expected_result(self):
+        self.data['serial_workflows'][0]['assertion_cases'][0]['expected'] = ''
+        with self.assertRaisesRegex(ValueError, 'Incomplete atomic assertion'):
+            verify.validate_catalog(self.data)
+
     def test_actual_inventory_requires_unique_registration(self):
         inventories = {}
         for case in self.data['cases']:
@@ -74,6 +94,56 @@ class CatalogTests(unittest.TestCase):
                      {'rust-suites': {'bin': {'testcases': {}}}}):
             with self.subTest(data=data), self.assertRaises(ValueError):
                 verify.inventory_names(data)
+
+
+class AtomicResultTests(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name)
+        (self.root / 'sample.txt').write_text('synthetic observation')
+        assertion = {'id': 'CUA-03-A01', 'action': 'paste into selection',
+                     'expected': 'selection replaced, suffix preserved'}
+        self.data = {'serial_workflows': [{'assertion_cases': [assertion]}]}
+        self.record = dict(assertion, status='PASS', observed='expected text visible',
+                           evidence=['sample.txt'], reason='')
+        self.results = {'assertions': [self.record]}
+
+    def test_evidence_accounting_does_not_approve_product(self):
+        result = verify.check_assertions(self.data, self.results, self.root)
+        self.assertEqual(result['product_acceptance'], 'REQUIRES_INDEPENDENT_ORACLE_REVIEW')
+
+    def test_omitted_or_duplicated_assertion_fails(self):
+        for records in ([], [self.record, self.record]):
+            with self.subTest(count=len(records)), self.assertRaises(ValueError):
+                verify.check_assertions(self.data, {'assertions': records}, self.root)
+
+    def test_partial_cannot_hide_unexecuted_assertions(self):
+        self.record['status'] = 'PARTIAL'
+        with self.assertRaisesRegex(ValueError, 'Invalid atomic status'):
+            verify.check_assertions(self.data, self.results, self.root)
+
+    def test_pass_needs_observation_evidence_and_original_contract(self):
+        for key, value in [('observed', ''), ('evidence', []), ('expected', 'weaker assertion')]:
+            with self.subTest(key=key):
+                record = dict(self.record, **{key: value})
+                with self.assertRaises(ValueError):
+                    verify.check_assertions(self.data, {'assertions': [record]}, self.root)
+
+    def test_blocker_requires_reason_and_does_not_accept(self):
+        self.record.update(status='BLOCKED', evidence=[], reason='')
+        with self.assertRaisesRegex(ValueError, 'Missing non-pass reason'):
+            verify.check_assertions(self.data, self.results, self.root)
+        self.record['reason'] = 'No marked-text received through this input path'
+        result = verify.check_assertions(self.data, self.results, self.root)
+        self.assertEqual(result['product_acceptance'], 'NOT_ACCEPTED')
+        self.assertEqual(result['status_counts']['BLOCKED'], 1)
+
+    def test_missing_or_escaping_evidence_fails(self):
+        for path in ('missing.txt', '../sample.txt'):
+            with self.subTest(path=path), self.assertRaises(ValueError):
+                self.record['evidence'] = [path]
+                verify.check_assertions(self.data, self.results, self.root)
 
 
 class EvidenceTests(unittest.TestCase):

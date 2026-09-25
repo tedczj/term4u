@@ -81,6 +81,15 @@ def validate_catalog(data, root=ROOT, inventories=None):
         require(set(item['scenarios']) <= set(expected), 'Unknown serial scenario')
         for key in ('preconditions', 'steps', 'oracles', 'evidence_types', 'cleanup'):
             require(item.get(key), f"Incomplete workflow {item['id']}: {key}")
+        assertions = item.get('assertion_cases', [])
+        require(assertions, f"Missing atomic assertions: {item['id']}")
+        assertion_ids = [assertion['id'] for assertion in assertions]
+        require(len(set(assertion_ids)) == len(assertion_ids), 'Duplicate atomic assertion ID')
+        for assertion in assertions:
+            require(re.fullmatch(re.escape(item['id']) + r'-A\d{2}', assertion['id']),
+                    'Atomic assertion belongs to the wrong workflow')
+            for key in ('title', 'action', 'expected', 'evidence_types'):
+                require(assertion.get(key), f"Incomplete atomic assertion {assertion['id']}: {key}")
     refs = 0
     unmapped = 0
     for case in cases:
@@ -111,6 +120,7 @@ def validate_catalog(data, root=ROOT, inventories=None):
                 require(len(matches) == 1, f'Unregistered/ambiguous actual test: {name}')
     return {'scenarios': len(cases), 'related_references': refs,
             'unmapped_scenarios': unmapped, 'serial_workflows': len(workflows),
+            'atomic_assertions': sum(len(item['assertion_cases']) for item in workflows),
             'registration_checked': inventories is not None,
             'product_acceptance': 'NOT_EVALUATED'}
 
@@ -129,6 +139,36 @@ def result_template(data, source_head, source_tree, binary_sha256):
                           'binary_sha256': binary_sha256, 'diff_sha256': None},
             'prerequisites': [pending('CUA-01')],
             'cases': [pending(case['id']) for case in data['cases']]}
+
+
+def check_assertions(data, results, evidence_root):
+    """Check atomic execution accounting; evidence presence does not certify its oracle."""
+    expected = {item['id']: item for workflow in data['serial_workflows']
+                for item in workflow['assertion_cases']}
+    records = results.get('assertions', [])
+    require(len(records) == len(expected), 'Incomplete atomic result count')
+    require(len({item['id'] for item in records}) == len(records), 'Duplicate atomic results')
+    require({item['id'] for item in records} == set(expected), 'Unknown/missing atomic results')
+    counts = {status: 0 for status in ('PASS', 'FAIL', 'INCOMPLETE', 'BLOCKED', 'NOT_RUN')}
+    for record in records:
+        ident = record['id']
+        status = record['status']
+        require(status in counts, f'Invalid atomic status: {status}')
+        for key in ('action', 'expected'):
+            require(record.get(key) == expected[ident][key], f'Changed atomic contract: {ident}')
+        require(record.get('observed'), f'Missing actual observation: {ident}')
+        if status != 'PASS':
+            require(record.get('reason'), f'Missing non-pass reason: {ident}')
+        evidence = record.get('evidence', [])
+        if status == 'PASS':
+            require(evidence, f'No evidence for atomic PASS: {ident}')
+        for path in evidence:
+            require(confined(evidence_root, path).stat().st_size > 0, 'Empty atomic evidence')
+        counts[status] += 1
+    return {'assertions': len(records), 'status_counts': counts,
+            'execution_accounting': 'COMPLETE',
+            'product_acceptance': 'REQUIRES_INDEPENDENT_ORACLE_REVIEW'
+            if counts['PASS'] == len(records) else 'NOT_ACCEPTED'}
 
 
 def check_results(data, results, evidence_root):
@@ -218,6 +258,9 @@ def main(argv=None):
     results = sub.add_parser('check-results')
     results.add_argument('report', type=Path)
     results.add_argument('--evidence-root', type=Path, required=True)
+    assertions = sub.add_parser('check-assertions')
+    assertions.add_argument('report', type=Path)
+    assertions.add_argument('--evidence-root', type=Path, required=True)
     lease = sub.add_parser('serial')
     lease.add_argument('argv', nargs=argparse.REMAINDER)
     args = parser.parse_args(argv)
@@ -247,8 +290,10 @@ def main(argv=None):
             summary = {'created': str(args.output), 'status': 'ALL_NOT_RUN'}
         elif args.command == 'check-results':
             summary = check_results(data, load_json(args.report), args.evidence_root)
+        elif args.command == 'check-assertions':
+            summary = check_assertions(data, load_json(args.report), args.evidence_root)
         print(json.dumps(summary, ensure_ascii=False, indent=2))
-        return 0
+        return 2 if summary.get('product_acceptance') == 'NOT_ACCEPTED' else 0
     except (OSError, ValueError, KeyError, TypeError) as error:
         print(f'ERROR: {error}', file=sys.stderr)
         return 2

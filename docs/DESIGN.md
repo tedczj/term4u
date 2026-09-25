@@ -1185,8 +1185,8 @@ cargo nextest run --locked --no-fail-fast -p warp_terminal -p warpui -p warp_tui
 `l0_verify.py validate` 没有 `--inventory` 时只验证静态定义，输出明确
 `registration_checked: false`，不能当成 actual nextest 注册证明。无匹配、歧义、截断/空 inventory
 均失败；immutable baseline 与 approved deletion 不变。本轮真实 inventory 校验结果为
-`registration_checked: true`：66 场景、89 条相关测试引用、13 场景无自动映射、18 个实机工作流。
-部分关联不等于完整场景覆盖。工具自身 22 项 Python 回归在本机 macOS 通过，仅证明清单、
+`registration_checked: true`：66 场景、90 条相关测试引用、13 场景无自动映射、18 个实机工作流。
+部分关联不等于完整场景覆盖。工具自身 31 项 Python 回归在本机 macOS 通过，仅证明清单、
 证据和锁的工具逻辑，不是产品实机通过。
 
 **本轮自动验证与测试修正。** 解锁后的第二轮仍使用 `gpt-6-luna` / `high`，
@@ -1259,6 +1259,30 @@ mtime/大小/inode，但不替代 GUI 重验或消除先前副作用。本轮隔
 编辑器IME、原生IME、系统剪贴板、通知/光标、块输出、性能、图片、隐私、全入口与TUI。
 CUA-01 是每轮强制前置，必须证明 source/tree/diff、资源/二进制hash、唯一bundle/profile、
 GUI PID及子程序祖先链。任何实例身份不明的截图作废，而不是解释为产品失败或通过。
+
+第三轮将上一轮未完成步骤细分为 `serial_workflows[].assertion_cases` 中的 72 条检查，
+保留原 66 场景和 18 工作流的映射。每条有稳定 ID、操作、预期和证据类型；结果逐条记录
+实际观察、证据路径及未通过原因，不允许用工作流级 PARTIAL 代替执行明细。不同入口和设置
+仍须逐入口登记，静态存在不等于运行有效。`check-assertions` 检查遗漏、重复、改弱预期、
+空观察及无证据 PASS；存在未通过项返回非零。结构完整和证据存在不等于独立断言验收，
+原 `check-results` 的完整场景门禁仍保留。
+
+```bash
+python3 script/l0_verify.py check-assertions "$ROUND/assertion-results.json" --evidence-root "$ROUND"
+```
+
+本轮按用户要求仅再执行一轮，计为总计第三轮；不通过反复重启或复测把它改记为额外轮次。
+使用唯一 round3 bundle/profile；产品代码仍与第二轮冻结产物一致，新增变更只影响用例与
+验证工具时明确记录这一来源。原始证据在 `/Volumes/SN850X/term4u-l0-20260925/round3/`。
+第三轮运行及独立复核尚在进行，不能据拆分完成或工具检查通过更新产品验收状态。
+第三轮新增 `l0_01_editor_focus_selects_its_split_terminal`，通过真实 Workspace 分屏与
+Presenter 场景，验证编辑器获得焦点后活动终端同步切换；该测试在未修改业务实现时通过，
+不把先前实机归属不清的样本登记为产品焦点缺陷。当前 GUI 全量 1611 passed / 3 skipped，
+presubmit 4867 passed / 20 skipped、completer v2 131 passed / 4 skipped，全部规定的严格
+Clippy、格式和工具测试通过；实际 inventory 为 4887，批准删除与原始 baseline 不变。
+历史光标和 Tab 用例补充明确的种子、草稿、光标偏移及文件类型，避免将不匹配草稿或 `cd`
+文件补全的空结果误判为失败。剪贴板写入以不同的前后合成值验证；TUI 等待实际启动画面、
+shell 子进程与回执，而不以固定 sleep 或退出码零代替成功执行。
 
 同一登录桌面始终只有一个执行代理：整个 external harness 会话（含模型切换/复核）由
 `python3 script/l0_verify.py serial -- <现有computer-use执行器及其参数>` 持锁。锁固定到

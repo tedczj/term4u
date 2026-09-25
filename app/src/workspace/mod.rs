@@ -30,7 +30,7 @@ use crate::notebooks::manager::NotebookSource;
 use crate::palette::PaletteMode;
 use crate::search::QueryFilter;
 use crate::server::telemetry::PaletteSource;
-use crate::settings_view::SettingsSection;
+use crate::settings_view::{SettingsSection, ToggleSettingActionPair, flags};
 use crate::util::bindings::CustomAction;
 
 #[derive(PartialEq, Copy, Clone, Debug)]
@@ -79,6 +79,16 @@ const HISTORY_SEARCH_AVAILABLE_KEY: &str = "CommandHistoryAvailable";
 
 fn register_bindings(app: &mut AppContext) {
     use warpui::keymap::macros::*;
+
+    ToggleSettingActionPair::add_toggle_setting_action_pairs_as_bindings(
+        vec![ToggleSettingActionPair::new(
+            "Vim keybindings",
+            WorkspaceAction::ToggleVimMode,
+            &id!("Workspace"),
+            flags::VIM_MODE_CONTEXT_FLAG,
+        )],
+        app,
+    );
 
     app.register_editable_bindings([EditableBinding::new(
         "workspace:open_code_review",

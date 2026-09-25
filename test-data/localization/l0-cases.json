@@ -247,6 +247,12 @@
             "function": "l0_01_ctrl_r_is_not_captured_by_history_in_a_native_program",
             "package": "warp",
             "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          },
+          {
+            "path": "app/src/workspace/view_tests.rs",
+            "function": "l0_01_editor_focus_selects_its_split_terminal",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
           }
         ],
         "additional_assertions": [
@@ -1954,6 +1960,39 @@
       ],
       "cleanup": [
         "不终止用户的其他进程；保留原始证据。"
+      ],
+      "assertion_cases": [
+        {
+          "id": "CUA-01-A01",
+          "title": "候选与签名",
+          "action": "启动round3唯一bundle/profile，保存哈希、codesign、进程祖先链和整窗截图。",
+          "expected": "截图窗口对应指定PID/profile；签名校验退出0；不操作用户实例。",
+          "evidence_types": [
+            "identity",
+            "screenshot",
+            "process_tree"
+          ]
+        },
+        {
+          "id": "CUA-01-A02",
+          "title": "重启身份",
+          "action": "本轮需要重启时记录新PID并复核资源哈希、签名及同一profile。",
+          "expected": "重启前后候选资源不变且仍为同一隔离profile。",
+          "evidence_types": [
+            "identity",
+            "process_tree"
+          ]
+        },
+        {
+          "id": "CUA-01-A03",
+          "title": "收尾与租约",
+          "action": "完成后恢复输入源、退出测试进程，使用ps检查并释放serial锁。",
+          "expected": "测试进程不存在，原用户实例未清理；中断如实标记。",
+          "evidence_types": [
+            "process_tree",
+            "event_log"
+          ]
+        }
       ]
     },
     {
@@ -1989,6 +2028,93 @@
       ],
       "cleanup": [
         "关闭受控子进程；保留HISTFILE和DB副本。"
+      ],
+      "assertion_cases": [
+        {
+          "id": "CUA-02-A01",
+          "title": "历史光标与草稿",
+          "action": "GUI编辑器建立可匹配的草稿并把光标放中间，Up/Down返回后插入标记字符。",
+          "expected": "草稿完整恢复，标记插入原光标处，未提交命令。",
+          "evidence_types": [
+            "screenshot",
+            "event_log"
+          ],
+          "fixture": {
+            "seed_commands": [
+              "echo R3HISTA",
+              "echo R3HISTB",
+              "echo R3HISTA"
+            ],
+            "draft": "echo R3HIST",
+            "cursor_byte_offset": 5,
+            "keys": [
+              "Up",
+              "Down"
+            ],
+            "insert_after_return": "X",
+            "expected_draft_after_insert": "echo XR3HIST",
+            "note": "History matches the entire draft prefix; do not append an unmatched SUFFIX. Tab suffix preservation is a separate case."
+          }
+        },
+        {
+          "id": "CUA-02-A02",
+          "title": "搜索取消后输入",
+          "action": "GUI Ctrl-R查询种子，Esc后立即输入X。",
+          "expected": "原草稿保留，X进入编辑器，搜索不提交命令。",
+          "evidence_types": [
+            "screenshot",
+            "event_log"
+          ]
+        },
+        {
+          "id": "CUA-02-A03",
+          "title": "搜索接受不执行",
+          "action": "GUI Ctrl-R选中种子并接受，观察输入与已执行块。",
+          "expected": "接受仅替换草稿，无新执行块；光标位置符合用例。",
+          "evidence_types": [
+            "screenshot",
+            "event_log"
+          ]
+        },
+        {
+          "id": "CUA-02-A04",
+          "title": "Tab候选与后缀",
+          "action": "在含文件alpha/alpine的合成目录里，草稿cat alSUFFIX的al后按Tab循环候选。",
+          "expected": "候选正确且SUFFIX不丢失、不重复插入，无提交。",
+          "evidence_types": [
+            "screenshot"
+          ],
+          "fixture": {
+            "entries": {
+              "alpha": "empty file",
+              "alpine": "empty file"
+            },
+            "draft": "cat alSUFFIX",
+            "cursor_byte_offset": 6,
+            "expected_suffix": "SUFFIX",
+            "note": "Use file completion with cat; cd only completes directories and is not a valid setup for these files. Do not submit the completed draft."
+          }
+        },
+        {
+          "id": "CUA-02-A05",
+          "title": "跨pane旧搜索",
+          "action": "A打开历史搜索后切B，尝试接受或关闭A的旧搜索。",
+          "expected": "B草稿和执行记录不被A结果修改；无法建立旧搜索条件须记INCOMPLETE。",
+          "evidence_types": [
+            "screenshot",
+            "event_log"
+          ]
+        },
+        {
+          "id": "CUA-02-A06",
+          "title": "原生readline搜索",
+          "action": "隔离Python/readline历史，Ctrl-R选中或取消，保存子程序实际输入回执。",
+          "expected": "原生搜索仍由子程序处理；取消不产生输入记录。",
+          "evidence_types": [
+            "pty",
+            "file"
+          ]
+        }
       ]
     },
     {
@@ -2016,6 +2142,37 @@
       ],
       "cleanup": [
         "恢复测试账号原剪贴板，不记录其中真实内容。"
+      ],
+      "assertion_cases": [
+        {
+          "id": "CUA-03-A01",
+          "title": "选区多行粘贴",
+          "action": "GUI echo LEFT-MIDDLE-RIGHT选中MIDDLE，粘贴两行中文。",
+          "expected": "只替换选区，前后缀完整，未提交。",
+          "evidence_types": [
+            "screenshot",
+            "event_log"
+          ]
+        },
+        {
+          "id": "CUA-03-A02",
+          "title": "Undo恢复选区",
+          "action": "上一步一次Cmd-Z后输入X，用插入结果检验选区恢复。",
+          "expected": "Undo恢复原文；X替换原MIDDLE选区而非插在错误位置。",
+          "evidence_types": [
+            "screenshot",
+            "event_log"
+          ]
+        },
+        {
+          "id": "CUA-03-A03",
+          "title": "路径选区粘贴撤销",
+          "action": "非空选区粘贴Folder Name/绘本.txt后一次Undo。",
+          "expected": "路径逐字插入且无shell转义，撤销恢复原草稿和选区。",
+          "evidence_types": [
+            "screenshot"
+          ]
+        }
       ]
     },
     {
@@ -2050,6 +2207,78 @@
       ],
       "cleanup": [
         "退出vim不修改用户配置；恢复termios。"
+      ],
+      "assertion_cases": [
+        {
+          "id": "CUA-04-A01",
+          "title": "Vim完整隔离",
+          "action": "使用vim -Nu NONE -i NONE -n写入合成两行中文并退出，比较文件及viminfo元数据。",
+          "expected": "文件UTF-8精确匹配；用户viminfo元数据未变化。",
+          "evidence_types": [
+            "file",
+            "screenshot"
+          ]
+        },
+        {
+          "id": "CUA-04-A02",
+          "title": "bracketed开启",
+          "action": "raw PTY探针开启2004，粘贴合成两行文本。",
+          "expected": "回执精确为200~/201~包围的文本，无额外输入。",
+          "evidence_types": [
+            "pty",
+            "file"
+          ]
+        },
+        {
+          "id": "CUA-04-A03",
+          "title": "bracketed关闭取消",
+          "action": "探针关闭2004，多行粘贴弹确认后点击Cancel。",
+          "expected": "探针收到0个粘贴字节；取消后焦点恢复。",
+          "evidence_types": [
+            "screenshot",
+            "pty"
+          ]
+        },
+        {
+          "id": "CUA-04-A04",
+          "title": "bracketed关闭默认Return",
+          "action": "新探针关闭2004，多行粘贴确认时按Return。",
+          "expected": "默认安全动作不发送粘贴字节。",
+          "evidence_types": [
+            "screenshot",
+            "pty"
+          ]
+        },
+        {
+          "id": "CUA-04-A05",
+          "title": "bracketed关闭显式Paste",
+          "action": "新探针关闭2004，多行粘贴确认时显式选择Paste。",
+          "expected": "只发送批准文本一次，不增加bracketed标记。",
+          "evidence_types": [
+            "screenshot",
+            "pty"
+          ]
+        },
+        {
+          "id": "CUA-04-A06",
+          "title": "确认过期切pane",
+          "action": "A粘贴待确认时切B，再尝试旧确认。",
+          "expected": "B零粘贴字节；旧请求不得重定向。",
+          "evidence_types": [
+            "screenshot",
+            "pty"
+          ]
+        },
+        {
+          "id": "CUA-04-A07",
+          "title": "确认过期进程退出",
+          "action": "探针待确认时退出子程序，再尝试确认。",
+          "expected": "已退出进程的请求不会发送到新shell/会话。",
+          "evidence_types": [
+            "screenshot",
+            "pty"
+          ]
+        }
       ]
     },
     {
@@ -2083,6 +2312,67 @@
       ],
       "cleanup": [
         "还原原测试设置和窗口尺寸。"
+      ],
+      "assertion_cases": [
+        {
+          "id": "CUA-05-A01",
+          "title": "多行与窄窗",
+          "action": "20/80列附近窗口中输入长CJK/emoji及三行草稿，然后Undo。",
+          "expected": "无字符裁剪或丢失；行数和光标随布局更新。",
+          "evidence_types": [
+            "screenshot"
+          ]
+        },
+        {
+          "id": "CUA-05-A02",
+          "title": "字体与行高",
+          "action": "从真实设置分别调整字体大小和行高，在同一长草稿观察并恢复。",
+          "expected": "文字、输入高度、光标随设置变化，无重叠；恢复原值。",
+          "evidence_types": [
+            "settings",
+            "screenshot"
+          ]
+        },
+        {
+          "id": "CUA-05-A03",
+          "title": "Vim编辑偏好",
+          "action": "开启GUI编辑器Vim模式，验证Esc及一次光标移动，然后恢复。",
+          "expected": "按键进入对应编辑模式，草稿不提交；关闭后普通输入正常。",
+          "evidence_types": [
+            "settings",
+            "screenshot"
+          ]
+        },
+        {
+          "id": "CUA-05-A04",
+          "title": "输入位置与PS1",
+          "action": "分别改变实际存在的输入位置、PS1设置并观察同pane，随后恢复。",
+          "expected": "可见位置/提示符符合设置；不存在入口必须明确记录。",
+          "evidence_types": [
+            "settings",
+            "screenshot"
+          ]
+        },
+        {
+          "id": "CUA-05-A05",
+          "title": "焦点光标",
+          "action": "两pane切换及应用失焦，用带时间戳连续截图观察光标。",
+          "expected": "仅当前焦点目标按设置闪烁，不以单帧判闪烁。",
+          "evidence_types": [
+            "screenshot",
+            "timing"
+          ]
+        },
+        {
+          "id": "CUA-05-A06",
+          "title": "修改项重启持久化",
+          "action": "对本轮实际修改的字体/行高等记录值，重启同profile复查并恢复。",
+          "expected": "UI/配置值对应且跨重启保留，逐设置记录结果。",
+          "evidence_types": [
+            "settings",
+            "screenshot"
+          ]
+        }
       ]
     },
     {
@@ -2117,6 +2407,58 @@
       ],
       "cleanup": [
         "关闭测试菜单/Find，结束受控慢命令。"
+      ],
+      "assertion_cases": [
+        {
+          "id": "CUA-06-A01",
+          "title": "Copy菜单Enter",
+          "action": "在已完成合成块菜单选择Copy command并按Enter。",
+          "expected": "动作一次，菜单关闭，草稿未执行；不读取原用户剪贴板。",
+          "evidence_types": [
+            "screenshot",
+            "event_log"
+          ]
+        },
+        {
+          "id": "CUA-06-A02",
+          "title": "禁用菜单Enter",
+          "action": "明确打开含禁用目标的菜单并在该目标按Enter。",
+          "expected": "禁用动作不触发，草稿不提交；无法选中禁用项须记录实际状态。",
+          "evidence_types": [
+            "screenshot",
+            "event_log"
+          ]
+        },
+        {
+          "id": "CUA-06-A03",
+          "title": "跨pane旧菜单",
+          "action": "A菜单打开后切B，再关闭旧菜单。",
+          "expected": "焦点保持B，输入X进入B而非A。",
+          "evidence_types": [
+            "screenshot",
+            "event_log"
+          ]
+        },
+        {
+          "id": "CUA-06-A04",
+          "title": "目标销毁",
+          "action": "打开受控pane的菜单后关闭该pane。",
+          "expected": "旧菜单不操作其他pane，无panic，存活pane可输入。",
+          "evidence_types": [
+            "screenshot",
+            "event_log"
+          ]
+        },
+        {
+          "id": "CUA-06-A05",
+          "title": "完成回调不抢Find",
+          "action": "运行受控延迟输出，打开Find输入查询，等待命令完成后继续输入X。",
+          "expected": "完成回调不抢焦点，X仍进入Find查询。",
+          "evidence_types": [
+            "screenshot",
+            "event_log"
+          ]
+        }
       ]
     },
     {
@@ -2149,6 +2491,47 @@
       ],
       "cleanup": [
         "删除仅本次生成的测试目录；不操作其他Finder文件。"
+      ],
+      "assertion_cases": [
+        {
+          "id": "CUA-07-A01",
+          "title": "单文件真实投递",
+          "action": "Finder将合成空格/CJK文件拖至编辑器，保存前后截图。",
+          "expected": "仅命中pane插入一次；实际进入shell argv的字节还原文件名。",
+          "evidence_types": [
+            "screenshot",
+            "file"
+          ]
+        },
+        {
+          "id": "CUA-07-A02",
+          "title": "多文件与特殊字符",
+          "action": "Finder多选单引号/双引号/换行名文件拖入并执行合成argv回执程序。",
+          "expected": "每个文件恰好一个argv，名称逐字节匹配，无额外命令。",
+          "evidence_types": [
+            "screenshot",
+            "file"
+          ]
+        },
+        {
+          "id": "CUA-07-A03",
+          "title": "跨pane输出和边缘",
+          "action": "携文件经过A投B输出区，再验证边缘投递；每次使用独立草稿。",
+          "expected": "仅实际命中目标接受，边界不误投相邻pane。",
+          "evidence_types": [
+            "screenshot",
+            "file"
+          ]
+        },
+        {
+          "id": "CUA-07-A04",
+          "title": "hover取消及目标关闭",
+          "action": "拖过pane后拖出取消；另一次hover后关闭目标。",
+          "expected": "取消和失效目标均零插入，无旧投递重定向。",
+          "evidence_types": [
+            "screenshot"
+          ]
+        }
       ]
     },
     {
@@ -2184,6 +2567,58 @@
       ],
       "cleanup": [
         "只关闭本次浏览器页与loopback服务。"
+      ],
+      "assertion_cases": [
+        {
+          "id": "CUA-08-A01",
+          "title": "显式链接打开",
+          "action": "用实际可用的Cmd-click或Open Link动作打开合成loopback URL。",
+          "expected": "业务请求恰好一次；favicon单列，不以普通click代替。",
+          "evidence_types": [
+            "screenshot",
+            "http_log"
+          ]
+        },
+        {
+          "id": "CUA-08-A02",
+          "title": "hover与拖选",
+          "action": "hover合成URL，再拖选经过链接后松开。",
+          "expected": "没有业务请求，选择不被误识别为打开。",
+          "evidence_types": [
+            "screenshot",
+            "http_log"
+          ]
+        },
+        {
+          "id": "CUA-08-A03",
+          "title": "OSC8目标",
+          "action": "输出显示文本与target不同的OSC8，显式打开。",
+          "expected": "请求目标为OSC8 target，恰好一次。",
+          "evidence_types": [
+            "screenshot",
+            "http_log"
+          ]
+        },
+        {
+          "id": "CUA-08-A04",
+          "title": "文件行列及旧cwd",
+          "action": "在目录A输出合成文件:7:3，切cwd再打开，重启后重复。",
+          "expected": "解析旧块cwd；定位第7行第3列，不误开当前cwd同名文件。",
+          "evidence_types": [
+            "screenshot",
+            "file"
+          ]
+        },
+        {
+          "id": "CUA-08-A05",
+          "title": "鼠标报告与Shift",
+          "action": "原生鼠标报告开/关时操作链接与Shift拖选。",
+          "expected": "程序鼠标事件与本地选择按模式区分，不多次打开。",
+          "evidence_types": [
+            "screenshot",
+            "pty"
+          ]
+        }
       ]
     },
     {
@@ -2214,6 +2649,37 @@
       ],
       "cleanup": [
         "还原输入源；不要关闭系统其他应用。"
+      ],
+      "assertion_cases": [
+        {
+          "id": "CUA-09-A01",
+          "title": "GUI真实组合确认",
+          "action": "确认系统拼音后按键形成marked-text和候选窗，中途截图再确认。",
+          "expected": "组合期不提交；最终你好恰好一次；未形成组合即INCOMPLETE。",
+          "evidence_types": [
+            "screenshot",
+            "event_log"
+          ]
+        },
+        {
+          "id": "CUA-09-A02",
+          "title": "GUI组合取消",
+          "action": "新组合按Esc。",
+          "expected": "原草稿保留、零新增、没有命令提交。",
+          "evidence_types": [
+            "screenshot",
+            "event_log"
+          ]
+        },
+        {
+          "id": "CUA-09-A03",
+          "title": "GUI候选锚点",
+          "action": "97字符、换行/emoji草稿中间组合并移动光标，跨pane再组合。",
+          "expected": "候选窗跟随实际caret，字符不裂开、不串pane。",
+          "evidence_types": [
+            "screenshot"
+          ]
+        }
       ]
     },
     {
@@ -2242,6 +2708,28 @@
       ],
       "cleanup": [
         "探针finally恢复termios与alt模式。"
+      ],
+      "assertion_cases": [
+        {
+          "id": "CUA-10-A01",
+          "title": "原生普通屏组合",
+          "action": "raw普通屏探针收集系统拼音确认/取消字节并截图。",
+          "expected": "确认恰好6字节你好，取消0；marked-text真实存在。",
+          "evidence_types": [
+            "screenshot",
+            "pty"
+          ]
+        },
+        {
+          "id": "CUA-10-A02",
+          "title": "原生备用屏组合",
+          "action": "raw备用屏探针重复确认/取消与跨pane。",
+          "expected": "字节精确，候选锚点随原生光标，退出恢复模式。",
+          "evidence_types": [
+            "screenshot",
+            "pty"
+          ]
+        }
       ]
     },
     {
@@ -2272,6 +2760,74 @@
       ],
       "cleanup": [
         "恢复Deny和测试账号原剪贴板；严禁导出真实内容。"
+      ],
+      "assertion_cases": [
+        {
+          "id": "CUA-11-A01",
+          "title": "Deny读写",
+          "action": "保存并临时放入合成剪贴板值；Deny下发送OSC52写与查询。",
+          "expected": "写不覆盖合成值；查询不返回正文。原内容不导出并由安全工具恢复。",
+          "evidence_types": [
+            "pty",
+            "settings"
+          ]
+        },
+        {
+          "id": "CUA-11-A02",
+          "title": "WriteOnly写",
+          "action": "WriteOnly下发送合成OSC52写，粘贴到未提交的测试输入观察。",
+          "expected": "系统剪贴板更新为指定合成值一次。",
+          "evidence_types": [
+            "screenshot",
+            "settings"
+          ]
+        },
+        {
+          "id": "CUA-11-A03",
+          "title": "WriteOnly读",
+          "action": "WriteOnly下向raw探针发送OSC52查询。",
+          "expected": "不返回剪贴板正文。",
+          "evidence_types": [
+            "pty",
+            "settings"
+          ]
+        },
+        {
+          "id": "CUA-11-A04",
+          "title": "ReadWrite读写",
+          "action": "ReadWrite下写合成值再查询，保存仅合成值的回复。",
+          "expected": "回复解码精确等于合成值；原用户内容不读取到证据。",
+          "evidence_types": [
+            "pty",
+            "settings"
+          ],
+          "fixture": {
+            "clipboard_before": "L0R3_RW_BEFORE",
+            "osc_write": "L0R3_RW_AFTER",
+            "expected_query_text": "L0R3_RW_AFTER",
+            "note": "Different before/after values are required to observe a write; identical values only establish the read path."
+          }
+        },
+        {
+          "id": "CUA-11-A05",
+          "title": "权限持久化与撤权",
+          "action": "隔离profile设置后重启复查，恢复Deny再查询。",
+          "expected": "保存值跨重启一致；撤权后查询不返回正文。",
+          "evidence_types": [
+            "settings",
+            "pty"
+          ]
+        },
+        {
+          "id": "CUA-11-A06",
+          "title": "旧会话请求",
+          "action": "在可建立的队列条件下退出/重建会话再释放旧OSC请求。",
+          "expected": "旧回复不进入新PTY；无法构造待处理窗口须如实标注。",
+          "evidence_types": [
+            "pty",
+            "event_log"
+          ]
+        }
       ]
     },
     {
@@ -2302,6 +2858,47 @@
       ],
       "cleanup": [
         "恢复通知偏好；系统权限只按用户授权恢复，不擅改其他应用。"
+      ],
+      "assertion_cases": [
+        {
+          "id": "CUA-12-A01",
+          "title": "通知拒绝路径",
+          "action": "记录候选当前通知权限；不申请新权限，禁用本地通知后发送合成OSC。",
+          "expected": "无授权申请、无通知、无焦点变化。",
+          "evidence_types": [
+            "screenshot",
+            "event_log"
+          ]
+        },
+        {
+          "id": "CUA-12-A02",
+          "title": "关闭响铃及突发",
+          "action": "关闭声音/通知后前后台分别发送100 BEL/OSC，记录设置与焦点。",
+          "expected": "关闭路径无可见通知/抢焦点；限流必须有计数证据，听觉不由截图代判。",
+          "evidence_types": [
+            "settings",
+            "event_log"
+          ]
+        },
+        {
+          "id": "CUA-12-A03",
+          "title": "授权投递点击",
+          "action": "仅已有有效系统授权时发送后台完成通知并点击；否则明确权限阻塞。",
+          "expected": "点击定位正确当前tab/pane；旧目标不误激活。",
+          "evidence_types": [
+            "notification",
+            "screenshot"
+          ]
+        },
+        {
+          "id": "CUA-12-A04",
+          "title": "声音验证",
+          "action": "仅已有获准录音或人工听验条件才执行声音断言。",
+          "expected": "声音符合设置和限流；没有听觉证据就BLOCKED，不猜测。",
+          "evidence_types": [
+            "timing"
+          ]
+        }
       ]
     },
     {
@@ -2334,6 +2931,67 @@
       ],
       "cleanup": [
         "不迁移或清空用户DB；关闭隔离实例。"
+      ],
+      "assertion_cases": [
+        {
+          "id": "CUA-13-A01",
+          "title": "折叠后Find",
+          "action": "合成块正文唯一标记不出现在命令行；新截图定位该块折叠后Find该标记。",
+          "expected": "Find自动展开且定位正文；命令行命中不算。",
+          "evidence_types": [
+            "screenshot",
+            "event_log"
+          ]
+        },
+        {
+          "id": "CUA-13-A02",
+          "title": "折叠resize与块导航",
+          "action": "折叠/展开后resize并上下块导航。",
+          "expected": "锚定相同模型位置，导航落正确块，不丢正文。",
+          "evidence_types": [
+            "screenshot"
+          ]
+        },
+        {
+          "id": "CUA-13-A03",
+          "title": "清屏重启历史",
+          "action": "有非空草稿时GUI清屏，再重启同profile搜索旧正文。",
+          "expected": "当前草稿不被清屏删除；旧正文和历史仍可找回。",
+          "evidence_types": [
+            "screenshot",
+            "database"
+          ]
+        },
+        {
+          "id": "CUA-13-A04",
+          "title": "shellclear与原生CtrlL",
+          "action": "分别执行shell clear、原生readline Ctrl-L，保留前后记录。",
+          "expected": "各走自身语义，原生Ctrl-L不触发GUI清屏动作。",
+          "evidence_types": [
+            "screenshot",
+            "event_log"
+          ]
+        },
+        {
+          "id": "CUA-13-A05",
+          "title": "跨块CJK复制",
+          "action": "选择跨块中文并复制到合成测试接收器。",
+          "expected": "高亮对应字节、换行正确，没有额外内容。",
+          "evidence_types": [
+            "screenshot",
+            "file"
+          ]
+        },
+        {
+          "id": "CUA-13-A06",
+          "title": "矩形复制",
+          "action": "建立矩形选择并复制到合成接收器。",
+          "expected": "逐行列范围与可见高亮一致；无矩形能力须记录具体阻塞。",
+          "evidence_types": [
+            "screenshot",
+            "file"
+          ]
+        }
       ]
     },
     {
@@ -2363,6 +3021,47 @@
       ],
       "cleanup": [
         "停止只属于该测试的输出进程，恢复窗口。"
+      ],
+      "assertion_cases": [
+        {
+          "id": "CUA-14-A01",
+          "title": "持续输出阅读锚点",
+          "action": "受控程序分批输出带编号行，上滚记录锚点，继续输出，再到底。",
+          "expected": "上滚时锚点不跳；到底恢复跟随最新行。",
+          "evidence_types": [
+            "screenshot",
+            "timing"
+          ]
+        },
+        {
+          "id": "CUA-14-A02",
+          "title": "resize锚点",
+          "action": "阅读中改变窗口宽度再恢复。",
+          "expected": "仍锚定同一文本位置，软换行不跳到无关内容。",
+          "evidence_types": [
+            "screenshot"
+          ]
+        },
+        {
+          "id": "CUA-14-A03",
+          "title": "多块性能",
+          "action": "按原规格100/1000/10000块，固定尺寸预热后上中下各3次采样。",
+          "expected": "保留原始输入/帧时间与CPU/RSS；与设计预算比对，缺采样工具不得估算PASS。",
+          "evidence_types": [
+            "metrics",
+            "timing"
+          ]
+        },
+        {
+          "id": "CUA-14-A04",
+          "title": "巨大单块",
+          "action": "合成单块20万行并记录滚动/输入样本及构造、clone计数能力。",
+          "expected": "不凭不卡截图断言虚拟化或P95达标；缺计数/帧仪器逐项标注。",
+          "evidence_types": [
+            "metrics",
+            "timing"
+          ]
+        }
       ]
     },
     {
@@ -2390,6 +3089,17 @@
       ],
       "cleanup": [
         "取消解码任务，释放本次缓存；未实现时标BLOCKED，不跳过变PASS。"
+      ],
+      "assertion_cases": [
+        {
+          "id": "CUA-15-A01",
+          "title": "图片消费者前置",
+          "action": "静态核查图片事件到解码、元数据、绘制是否已接通。",
+          "expected": "未接通保持BLOCKED，本轮不以自动相关测试替代显示。",
+          "evidence_types": [
+            "contract"
+          ]
+        }
       ]
     },
     {
@@ -2419,6 +3129,17 @@
       ],
       "cleanup": [
         "删除只含合成secret的临时输出；还原设置。"
+      ],
+      "assertion_cases": [
+        {
+          "id": "CUA-16-A01",
+          "title": "隐私消费者前置",
+          "action": "静态核查动态订阅、reveal及各出口策略。",
+          "expected": "未接通保持BLOCKED，不用真实secret或宣称全链路脱敏。",
+          "evidence_types": [
+            "contract"
+          ]
+        }
       ]
     },
     {
@@ -2452,6 +3173,36 @@
       ],
       "cleanup": [
         "恢复各设置；完整原始表纳入evidence。"
+      ],
+      "assertion_cases": [
+        {
+          "id": "CUA-17-A01",
+          "title": "实际入口注册表",
+          "action": "从本候选源码导出实际本地菜单/快捷键/Palette/设置清单。",
+          "expected": "列出来源与GUI/TUI适用性；无法完整枚举须明确缺口。",
+          "evidence_types": [
+            "contract"
+          ]
+        },
+        {
+          "id": "CUA-17-A02",
+          "title": "逐入口触发",
+          "action": "对导出的每个保留入口分别记录触发、handler、可见效果和证据。",
+          "expected": "逐入口单独结果，未触发不能以相邻入口PASS代替。",
+          "evidence_types": [
+            "event_log",
+            "screenshot"
+          ]
+        },
+        {
+          "id": "CUA-17-A03",
+          "title": "搜索和标题",
+          "action": "搜索本地项和退役云项，对Privacy标题保存应用帧/整窗证据。",
+          "expected": "本地项可达；退役入口不恢复；标题异常未归因保持OPEN。",
+          "evidence_types": [
+            "screenshot"
+          ]
+        }
       ]
     },
     {
@@ -2479,6 +3230,36 @@
       ],
       "cleanup": [
         "正常退出后关闭外层PTY；只停止本次子进程。"
+      ],
+      "assertion_cases": [
+        {
+          "id": "CUA-18-A01",
+          "title": "CLI字节与退出",
+          "action": "隔离真实PTY执行UTF8/stdout/stderr/非零退出合成程序。",
+          "expected": "各流/退出状态符合命令，TUI仍能继续输入。",
+          "evidence_types": [
+            "pty"
+          ]
+        },
+        {
+          "id": "CUA-18-A02",
+          "title": "中断与尺寸回执",
+          "action": "子程序记录收到的SIGINT及tty尺寸，再resize并退出TUI。",
+          "expected": "SIGINT到达正确子程序；尺寸精确更新；退出0且终端模式恢复。",
+          "evidence_types": [
+            "pty",
+            "process_tree"
+          ]
+        },
+        {
+          "id": "CUA-18-A03",
+          "title": "协议边界",
+          "action": "真实PTY分别发送分段及不同终止符OSC52/9/777/BEL样本。",
+          "expected": "外层无宿主透传，查询不泄漏正文，后续DONE和退出正常。",
+          "evidence_types": [
+            "pty"
+          ]
+        }
       ]
     }
   ]
