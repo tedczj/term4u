@@ -1,9 +1,11 @@
 use pathfinder_geometry::vector::vec2f;
+use warpui::keymap::DescriptionContext;
 use warpui::platform::WindowStyle;
 use warpui::{App, Presenter, WindowInvalidation};
 
 use super::*;
 use crate::server::telemetry::PaletteSource;
+use crate::terminal::view::TerminalAction;
 use crate::test_util::terminal::initialize_app_for_pane_group;
 
 fn initialize_workspace(app: &mut App) -> ViewHandle<Workspace> {
@@ -126,6 +128,107 @@ fn toast_events_reach_only_the_target_window_and_can_be_dismissed() {
         });
         workspace.read(&app, |workspace, ctx| {
             assert!(!workspace.toasts.as_ref(ctx).has_toasts())
+        });
+    });
+}
+
+#[test]
+fn l0_03_vim_palette_action_tracks_the_setting_without_changing_draft() {
+    App::test((), |mut app| async move {
+        let workspace = initialize_workspace(&mut app);
+        let (window, input) = workspace.update(&mut app, |workspace, ctx| {
+            workspace.insert_in_input("keep draft", true, ctx);
+            (
+                ctx.window_id(),
+                workspace.terminal_for_input(ctx).as_ref(ctx).input().clone(),
+            )
+        });
+        let vim_descriptions = |app: &App| {
+            app.read(|ctx| {
+                ctx.key_bindings_for_view(window, workspace.id())
+                    .into_iter()
+                    .filter_map(|binding| binding.description)
+                    .map(|description| {
+                        description
+                            .materialized(ctx)
+                            .in_context(DescriptionContext::Default)
+                            .to_owned()
+                    })
+                    .filter(|description| description.ends_with("Vim Keybindings"))
+                    .collect::<Vec<_>>()
+            })
+        };
+        assert_eq!(vim_descriptions(&app), ["Enable Vim Keybindings"]);
+
+        workspace.update(&mut app, |workspace, ctx| {
+            workspace.handle_action(&WorkspaceAction::ToggleVimMode, ctx);
+        });
+        assert_eq!(vim_descriptions(&app), ["Disable Vim Keybindings"]);
+        input.read(&app, |input, ctx| {
+            assert_eq!(input.buffer_text(ctx), "keep draft");
+            assert!(input.editor().as_ref(ctx).vim_mode_enabled(ctx));
+        });
+
+        workspace.update(&mut app, |workspace, ctx| {
+            workspace.handle_action(&WorkspaceAction::ToggleVimMode, ctx);
+        });
+        assert_eq!(vim_descriptions(&app), ["Enable Vim Keybindings"]);
+        input.read(&app, |input, ctx| {
+            assert_eq!(input.buffer_text(ctx), "keep draft");
+            assert!(!input.editor().as_ref(ctx).vim_mode_enabled(ctx));
+        });
+    });
+}
+
+#[test]
+fn l0_01_editor_focus_selects_its_split_terminal() {
+    App::test((), |mut app| async move {
+        let workspace = initialize_workspace(&mut app);
+        let group = workspace.read(&app, |workspace, _| {
+            workspace.active_tab_pane_group().clone()
+        });
+        let first = group.read(&app, |group, ctx| group.active_session_view(ctx).unwrap());
+        first.update(&mut app, |view, ctx| {
+            view.handle_action(&TerminalAction::SplitRight(None), ctx);
+        });
+        let second = group.read(&app, |group, ctx| group.active_session_view(ctx).unwrap());
+        assert_ne!(first.id(), second.id());
+        let first_editor = first.read(&app, |view, ctx| view.input().as_ref(ctx).editor().clone());
+        let second_editor =
+            second.read(&app, |view, ctx| view.input().as_ref(ctx).editor().clone());
+        let window = workspace.update(&mut app, |_, ctx| ctx.window_id());
+        let presenter = app.presenter(window).unwrap();
+        let size = app.read(|ctx| ctx.windows().platform_window(window).unwrap().size());
+        app.update(|ctx| {
+            let mut presenter = presenter.borrow_mut();
+            presenter.invalidate(
+                WindowInvalidation {
+                    updated: [workspace.id(), group.id(), first.id(), second.id()]
+                        .into_iter()
+                        .collect(),
+                    ..Default::default()
+                },
+                ctx,
+            );
+            presenter.build_scene(size, 1., None, ctx);
+        });
+
+        first.update(&mut app, |view, ctx| {
+            view.input()
+                .update(ctx, |input, ctx| input.focus_input_box(ctx));
+        });
+        group.read(&app, |group, ctx| {
+            assert!(first_editor.is_focused(ctx));
+            assert_eq!(group.active_session_view(ctx).unwrap().id(), first.id());
+        });
+
+        second.update(&mut app, |view, ctx| {
+            view.input()
+                .update(ctx, |input, ctx| input.focus_input_box(ctx));
+        });
+        group.read(&app, |group, ctx| {
+            assert!(second_editor.is_focused(ctx));
+            assert_eq!(group.active_session_view(ctx).unwrap().id(), second.id());
         });
     });
 }

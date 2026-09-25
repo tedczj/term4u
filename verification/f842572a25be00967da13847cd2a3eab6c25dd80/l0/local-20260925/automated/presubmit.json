@@ -1,0 +1,8 @@
+{
+  "command": [
+    "./script/presubmit"
+  ],
+  "exit_code": 1,
+  "started_utc": "2026-09-25T04:30:12.202544+00:00",
+  "finished_utc": "2026-09-25T04:30:14.943305+00:00"
+}

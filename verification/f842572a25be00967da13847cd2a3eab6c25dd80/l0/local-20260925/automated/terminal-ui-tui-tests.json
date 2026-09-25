@@ -1,0 +1,18 @@
+{
+  "command": [
+    "cargo",
+    "nextest",
+    "run",
+    "--locked",
+    "--no-fail-fast",
+    "-p",
+    "warp_terminal",
+    "-p",
+    "warpui",
+    "-p",
+    "warp_tui"
+  ],
+  "exit_code": 0,
+  "started_utc": "2026-09-25T04:29:00.451152+00:00",
+  "finished_utc": "2026-09-25T04:29:40.745747+00:00"
+}

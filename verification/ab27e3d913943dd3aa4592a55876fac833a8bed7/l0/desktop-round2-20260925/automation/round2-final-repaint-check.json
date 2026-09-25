@@ -1,0 +1,18 @@
+{
+  "command": [
+    "cargo",
+    "nextest",
+    "run",
+    "--locked",
+    "-p",
+    "warp",
+    "--no-default-features",
+    "--features",
+    "local_only,test-util",
+    "-E",
+    "test(l0_08_cleared_output_stays_in_scrollback_after_repaint)"
+  ],
+  "exit_code": 0,
+  "started_utc": "2026-09-25T08:51:39.954018+00:00",
+  "finished_utc": "2026-09-25T08:52:06.669672+00:00"
+}

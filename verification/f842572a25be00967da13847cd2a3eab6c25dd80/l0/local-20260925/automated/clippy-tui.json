@@ -1,0 +1,17 @@
+{
+  "command": [
+    "cargo",
+    "clippy",
+    "--locked",
+    "-p",
+    "warp_tui",
+    "--all-targets",
+    "--tests",
+    "--",
+    "-D",
+    "warnings"
+  ],
+  "exit_code": 0,
+  "started_utc": "2026-09-25T04:33:32.321321+00:00",
+  "finished_utc": "2026-09-25T04:33:50.359008+00:00"
+}

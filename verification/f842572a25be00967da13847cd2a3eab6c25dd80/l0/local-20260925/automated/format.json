@@ -1,0 +1,8 @@
+{
+  "command": [
+    "./script/format"
+  ],
+  "exit_code": 0,
+  "started_utc": "2026-09-25T04:30:30.577075+00:00",
+  "finished_utc": "2026-09-25T04:30:33.289173+00:00"
+}

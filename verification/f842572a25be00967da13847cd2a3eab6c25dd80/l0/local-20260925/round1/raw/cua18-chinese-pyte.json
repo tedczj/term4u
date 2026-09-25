@@ -1,0 +1,563 @@
+{
+  "raw_offset": 4776,
+  "rows": [
+    {
+      "row": 0,
+      "display": "Term4u local terminal  [2/2]  ctrl-t new  ctrl-w close  ctrl-q exit",
+      "glyphs": [
+        {
+          "col": 0,
+          "text": "T"
+        },
+        {
+          "col": 1,
+          "text": "e"
+        },
+        {
+          "col": 2,
+          "text": "r"
+        },
+        {
+          "col": 3,
+          "text": "m"
+        },
+        {
+          "col": 4,
+          "text": "4"
+        },
+        {
+          "col": 5,
+          "text": "u"
+        },
+        {
+          "col": 7,
+          "text": "l"
+        },
+        {
+          "col": 8,
+          "text": "o"
+        },
+        {
+          "col": 9,
+          "text": "c"
+        },
+        {
+          "col": 10,
+          "text": "a"
+        },
+        {
+          "col": 11,
+          "text": "l"
+        },
+        {
+          "col": 13,
+          "text": "t"
+        },
+        {
+          "col": 14,
+          "text": "e"
+        },
+        {
+          "col": 15,
+          "text": "r"
+        },
+        {
+          "col": 16,
+          "text": "m"
+        },
+        {
+          "col": 17,
+          "text": "i"
+        },
+        {
+          "col": 18,
+          "text": "n"
+        },
+        {
+          "col": 19,
+          "text": "a"
+        },
+        {
+          "col": 20,
+          "text": "l"
+        },
+        {
+          "col": 23,
+          "text": "["
+        },
+        {
+          "col": 24,
+          "text": "2"
+        },
+        {
+          "col": 25,
+          "text": "/"
+        },
+        {
+          "col": 26,
+          "text": "2"
+        },
+        {
+          "col": 27,
+          "text": "]"
+        },
+        {
+          "col": 30,
+          "text": "c"
+        },
+        {
+          "col": 31,
+          "text": "t"
+        },
+        {
+          "col": 32,
+          "text": "r"
+        },
+        {
+          "col": 33,
+          "text": "l"
+        },
+        {
+          "col": 34,
+          "text": "-"
+        },
+        {
+          "col": 35,
+          "text": "t"
+        },
+        {
+          "col": 37,
+          "text": "n"
+        },
+        {
+          "col": 38,
+          "text": "e"
+        },
+        {
+          "col": 39,
+          "text": "w"
+        },
+        {
+          "col": 42,
+          "text": "c"
+        },
+        {
+          "col": 43,
+          "text": "t"
+        },
+        {
+          "col": 44,
+          "text": "r"
+        },
+        {
+          "col": 45,
+          "text": "l"
+        },
+        {
+          "col": 46,
+          "text": "-"
+        },
+        {
+          "col": 47,
+          "text": "w"
+        },
+        {
+          "col": 49,
+          "text": "c"
+        },
+        {
+          "col": 50,
+          "text": "l"
+        },
+        {
+          "col": 51,
+          "text": "o"
+        },
+        {
+          "col": 52,
+          "text": "s"
+        },
+        {
+          "col": 53,
+          "text": "e"
+        },
+        {
+          "col": 56,
+          "text": "c"
+        },
+        {
+          "col": 57,
+          "text": "t"
+        },
+        {
+          "col": 58,
+          "text": "r"
+        },
+        {
+          "col": 59,
+          "text": "l"
+        },
+        {
+          "col": 60,
+          "text": "-"
+        },
+        {
+          "col": 61,
+          "text": "q"
+        },
+        {
+          "col": 63,
+          "text": "e"
+        },
+        {
+          "col": 64,
+          "text": "x"
+        },
+        {
+          "col": 65,
+          "text": "i"
+        },
+        {
+          "col": 66,
+          "text": "t"
+        }
+      ]
+    },
+    {
+      "row": 35,
+      "display": "! python3 -c 'print(\"L0_CUA18_CLI_OK\")'",
+      "glyphs": [
+        {
+          "col": 0,
+          "text": "!"
+        },
+        {
+          "col": 2,
+          "text": "p"
+        },
+        {
+          "col": 3,
+          "text": "y"
+        },
+        {
+          "col": 4,
+          "text": "t"
+        },
+        {
+          "col": 5,
+          "text": "h"
+        },
+        {
+          "col": 6,
+          "text": "o"
+        },
+        {
+          "col": 7,
+          "text": "n"
+        },
+        {
+          "col": 8,
+          "text": "3"
+        },
+        {
+          "col": 10,
+          "text": "-"
+        },
+        {
+          "col": 11,
+          "text": "c"
+        },
+        {
+          "col": 13,
+          "text": "'"
+        },
+        {
+          "col": 14,
+          "text": "p"
+        },
+        {
+          "col": 15,
+          "text": "r"
+        },
+        {
+          "col": 16,
+          "text": "i"
+        },
+        {
+          "col": 17,
+          "text": "n"
+        },
+        {
+          "col": 18,
+          "text": "t"
+        },
+        {
+          "col": 19,
+          "text": "("
+        },
+        {
+          "col": 20,
+          "text": "\""
+        },
+        {
+          "col": 21,
+          "text": "L"
+        },
+        {
+          "col": 22,
+          "text": "0"
+        },
+        {
+          "col": 23,
+          "text": "_"
+        },
+        {
+          "col": 24,
+          "text": "C"
+        },
+        {
+          "col": 25,
+          "text": "U"
+        },
+        {
+          "col": 26,
+          "text": "A"
+        },
+        {
+          "col": 27,
+          "text": "1"
+        },
+        {
+          "col": 28,
+          "text": "8"
+        },
+        {
+          "col": 29,
+          "text": "_"
+        },
+        {
+          "col": 30,
+          "text": "C"
+        },
+        {
+          "col": 31,
+          "text": "L"
+        },
+        {
+          "col": 32,
+          "text": "I"
+        },
+        {
+          "col": 33,
+          "text": "_"
+        },
+        {
+          "col": 34,
+          "text": "O"
+        },
+        {
+          "col": 35,
+          "text": "K"
+        },
+        {
+          "col": 36,
+          "text": "\""
+        },
+        {
+          "col": 37,
+          "text": ")"
+        },
+        {
+          "col": 38,
+          "text": "'"
+        }
+      ]
+    },
+    {
+      "row": 36,
+      "display": "L0_CUA18_CLI_OK",
+      "glyphs": [
+        {
+          "col": 0,
+          "text": "L"
+        },
+        {
+          "col": 1,
+          "text": "0"
+        },
+        {
+          "col": 2,
+          "text": "_"
+        },
+        {
+          "col": 3,
+          "text": "C"
+        },
+        {
+          "col": 4,
+          "text": "U"
+        },
+        {
+          "col": 5,
+          "text": "A"
+        },
+        {
+          "col": 6,
+          "text": "1"
+        },
+        {
+          "col": 7,
+          "text": "8"
+        },
+        {
+          "col": 8,
+          "text": "_"
+        },
+        {
+          "col": 9,
+          "text": "C"
+        },
+        {
+          "col": 10,
+          "text": "L"
+        },
+        {
+          "col": 11,
+          "text": "I"
+        },
+        {
+          "col": 12,
+          "text": "_"
+        },
+        {
+          "col": 13,
+          "text": "O"
+        },
+        {
+          "col": 14,
+          "text": "K"
+        }
+      ]
+    },
+    {
+      "row": 38,
+      "display": "! python3 -c 'print(\"你好 X\")'",
+      "glyphs": [
+        {
+          "col": 0,
+          "text": "!"
+        },
+        {
+          "col": 2,
+          "text": "p"
+        },
+        {
+          "col": 3,
+          "text": "y"
+        },
+        {
+          "col": 4,
+          "text": "t"
+        },
+        {
+          "col": 5,
+          "text": "h"
+        },
+        {
+          "col": 6,
+          "text": "o"
+        },
+        {
+          "col": 7,
+          "text": "n"
+        },
+        {
+          "col": 8,
+          "text": "3"
+        },
+        {
+          "col": 10,
+          "text": "-"
+        },
+        {
+          "col": 11,
+          "text": "c"
+        },
+        {
+          "col": 13,
+          "text": "'"
+        },
+        {
+          "col": 14,
+          "text": "p"
+        },
+        {
+          "col": 15,
+          "text": "r"
+        },
+        {
+          "col": 16,
+          "text": "i"
+        },
+        {
+          "col": 17,
+          "text": "n"
+        },
+        {
+          "col": 18,
+          "text": "t"
+        },
+        {
+          "col": 19,
+          "text": "("
+        },
+        {
+          "col": 20,
+          "text": "\""
+        },
+        {
+          "col": 21,
+          "text": "你"
+        },
+        {
+          "col": 23,
+          "text": "好"
+        },
+        {
+          "col": 26,
+          "text": "X"
+        },
+        {
+          "col": 27,
+          "text": "\""
+        },
+        {
+          "col": 28,
+          "text": ")"
+        },
+        {
+          "col": 29,
+          "text": "'"
+        }
+      ]
+    },
+    {
+      "row": 39,
+      "display": "你好 X",
+      "glyphs": [
+        {
+          "col": 0,
+          "text": "你"
+        },
+        {
+          "col": 2,
+          "text": "好"
+        },
+        {
+          "col": 5,
+          "text": "X"
+        }
+      ]
+    }
+  ]
+}

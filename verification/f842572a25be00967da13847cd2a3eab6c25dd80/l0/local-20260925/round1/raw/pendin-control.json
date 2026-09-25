@@ -1,0 +1,11 @@
+{
+  "observed_utc": "2026-09-25T04:41:43.930376+00:00",
+  "experiment": "New PTY: tcgetattr -> tty.setraw -> tcsetattr(TCSANOW, original); no Term4u process involved",
+  "before_lflag": 1483,
+  "after_lflag": 536872395,
+  "xor_lflag": 536870912,
+  "PENDIN": 536870912,
+  "all_other_attributes_equal": true,
+  "kernel_source": "https://github.com/apple-oss-distributions/xnu/blob/main/bsd/kern/tty.c",
+  "interpretation": "Kernel sets PENDIN when ICANON is restored without flush; this difference alone does not prove an application restoration defect."
+}

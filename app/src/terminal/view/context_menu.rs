@@ -4,7 +4,7 @@ use pathfinder_geometry::vector::Vector2F;
 use warp_core::context_flag::ContextFlag;
 use warpui::{AppContext, ViewContext};
 
-use super::{ContextMenuState, TerminalAction, TerminalView};
+use super::{ContextMenuState, LocalOutputAction, TerminalAction, TerminalView};
 use crate::menu::{MenuItem, MenuItemFields};
 use crate::pane_group::SplitPaneState;
 use crate::terminal::available_shells::AvailableShell;
@@ -51,6 +51,12 @@ impl TerminalView {
             if let Some(block) = model.block_list().block_at(block_index) {
                 let command_is_empty = block.command_to_string().trim().is_empty();
                 let output_is_empty = block.output_to_string().trim().is_empty();
+                let collapse = (!command_is_empty
+                    && !output_is_empty
+                    && !block.should_hide_command_grid()
+                    && !block.is_executing()
+                    && block_index != model.block_list().active_block_index())
+                .then(|| (block.id().clone(), block.should_hide_output_grid()));
                 drop(model);
 
                 items.push(MenuItem::Separator);
@@ -72,6 +78,19 @@ impl TerminalView {
                         .with_disabled(command_is_empty && output_is_empty)
                         .into_item(),
                 );
+                if let Some((id, collapsed)) = collapse {
+                    items.push(
+                        MenuItemFields::new(if collapsed {
+                            "Expand output"
+                        } else {
+                            "Collapse output"
+                        })
+                        .with_on_select_action(TerminalAction::LocalOutput(
+                            LocalOutputAction::ToggleBlockOutput(id),
+                        ))
+                        .into_item(),
+                    );
+                }
             }
         }
 
@@ -87,6 +106,19 @@ impl TerminalView {
                 .with_on_select_action(TerminalAction::ClearBuffer)
                 .into_item(),
         );
+
+        items.push(MenuItem::Separator);
+        for (label, action) in [
+            ("Previous block", LocalOutputAction::PreviousBlock),
+            ("Next block", LocalOutputAction::NextBlock),
+            ("Clear visible output", LocalOutputAction::ClearVisible),
+        ] {
+            items.push(
+                MenuItemFields::new(label)
+                    .with_on_select_action(TerminalAction::LocalOutput(action))
+                    .into_item(),
+            );
+        }
 
         let shell = self.model.lock().shell_launch_state().available_shell();
         let mut pane_items = self.pane_context_menu_items(shell, ctx);

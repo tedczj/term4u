@@ -1,0 +1,66 @@
+{
+  "reviewer": "root",
+  "candidate_scope": "round2 frozen TUI, complete isolated real PTY sample",
+  "raw_sha256": "9374ad7d936d94865a39b34a31c8728d3d9cc7d2ebc5c10fe06b4ed09f341aee",
+  "events_sha256": "9c82ce2cc5717fabb1e477c02c2723687f64ef3a5cdb51ed4cf5532a488f5a92",
+  "parser": "pyte 0.8.2 / wcwidth 0.9.1",
+  "bounded_assertions": "PASS",
+  "chinese_output": {
+    "row": 39,
+    "columns": {
+      "你": 0,
+      "好": 2,
+      "X": 5
+    }
+  },
+  "alternate_screen_visible_at_raw_offset": 4961,
+  "old_output_restored_before": 16960,
+  "protocol_observation_interval": [
+    16960,
+    23507
+  ],
+  "emitted_control_sequence_counts": {
+    "OSC52": 0,
+    "OSC9": 0,
+    "OSC777": 0,
+    "BEL": 0
+  },
+  "clipboard_query_response_bytes": 0,
+  "query_observation_seconds": 0.75,
+  "protocol_probe": {
+    "pid": 35171,
+    "ppid": 34832,
+    "tty": "/dev/ttys016",
+    "sent_hex": "1b5d35323b633b5444416763336c756447686c64476c6a49474e7361584269623246795a413d3d071b5d35323b633b3f071b5d393b4c302073796e746865746963206e6f74696669636174696f6e071b5d3737373b6e6f746966793b4c30207469746c653b4c3020626f64790707",
+    "response_hex": ""
+  },
+  "full_termios_restored_except_kernel_PENDIN": true,
+  "lflag_delta": 536870912,
+  "process_tree": [
+    {
+      "pid": 34827,
+      "ppid": 34826,
+      "command": "/Volumes/SN850X/term4u-l0-20260925/round2/term4u-tui"
+    },
+    {
+      "pid": 34828,
+      "ppid": 34827,
+      "command": "/Volumes/SN850X/term4u-l0-20260925/round2/term4u-tui terminal-server --parent-pid=34827"
+    },
+    {
+      "pid": 34831,
+      "ppid": 34828,
+      "command": "-zsh -g --no_rcs"
+    },
+    {
+      "pid": 34832,
+      "ppid": 34828,
+      "command": "-zsh -g --no_rcs"
+    }
+  ],
+  "exit_code": 0,
+  "limits": [
+    "No GUI system-permission or OS IME acceptance inferred from this TUI byte test.",
+    "The check covers the captured output interval; not all protocol requests or resources."
+  ]
+}

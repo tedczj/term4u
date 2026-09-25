@@ -1,0 +1,13 @@
+{
+  "command": [
+    "python3",
+    "script/l0_verify.py",
+    "check-results",
+    "/Volumes/SN850X/term4u-l0-20260925/scenario-results.json",
+    "--evidence-root",
+    "/Volumes/SN850X/term4u-l0-20260925"
+  ],
+  "exit_code": 2,
+  "started_utc": "2026-09-25T04:47:14.305154+00:00",
+  "finished_utc": "2026-09-25T04:47:14.353986+00:00"
+}

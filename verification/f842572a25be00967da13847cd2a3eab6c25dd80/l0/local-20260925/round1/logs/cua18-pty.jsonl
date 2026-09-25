@@ -1,0 +1,12 @@
+{"observed_utc": "2026-09-25T04:35:23.646465+00:00", "event": "pty_created", "rows": 40, "cols": 120, "profile": "term4u-l0-20260925-round1-tui", "argv": ["/Volumes/SN850X/term4u-l0-20260925/round1/term4u-tui"], "cwd": "/Volumes/SN850X/term4u-l0-20260925/round1/fixtures/tui-cwd"}
+{"observed_utc": "2026-09-25T04:35:23.661336+00:00", "event": "process_started", "pid": 2381, "ppid": 2380}
+{"observed_utc": "2026-09-25T04:35:25.667939+00:00", "event": "initial_screen_captured"}
+{"observed_utc": "2026-09-25T04:35:25.668236+00:00", "event": "input_sent", "label": "cli_output", "bytes_hex": "7072696e746620274c305f43554131385f434c495f4f4b5c6e270d"}
+{"observed_utc": "2026-09-25T04:35:27.673995+00:00", "event": "input_sent", "label": "chinese_input", "bytes_hex": "7072696e746620274c305f43554131385f5a485f5c7865345c7862645c7861305c7865355c7861355c7862645c6e270d"}
+{"observed_utc": "2026-09-25T04:35:29.674582+00:00", "event": "input_sent", "label": "start_interruptible_command", "bytes_hex": "736c65657020350d"}
+{"observed_utc": "2026-09-25T04:35:30.176425+00:00", "event": "input_sent", "label": "ctrl_c", "bytes_hex": "03"}
+{"observed_utc": "2026-09-25T04:35:31.178575+00:00", "event": "resize_sent", "rows": 30, "cols": 100}
+{"observed_utc": "2026-09-25T04:35:32.182923+00:00", "event": "input_sent", "label": "ctrl_q_exit", "bytes_hex": "11"}
+{"observed_utc": "2026-09-25T04:35:32.198399+00:00", "event": "process_exited", "exit_code": 0}
+{"observed_utc": "2026-09-25T04:35:32.198484+00:00", "event": "pty_termios_after", "lflag": 1483, "iflag": 11010, "oflag": 3, "cflag": 19200}
+{"observed_utc": "2026-09-25T04:35:32.198560+00:00", "event": "pty_size_after", "rows": 30, "cols": 100}

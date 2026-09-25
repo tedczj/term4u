@@ -1,0 +1,16 @@
+{
+  "command": [
+    "python3",
+    "script/l0_verify.py",
+    "validate",
+    "--inventory",
+    "warp=/Volumes/SN850X/term4u-l0-20260925/round2-warp-inventory.json",
+    "--inventory",
+    "warp_terminal=/Volumes/SN850X/term4u-l0-20260925/round2-warp_terminal-inventory.json",
+    "--inventory",
+    "warpui=/Volumes/SN850X/term4u-l0-20260925/round2-warpui-inventory.json"
+  ],
+  "exit_code": 0,
+  "started_utc": "2026-09-25T07:31:33.548695+00:00",
+  "finished_utc": "2026-09-25T07:31:33.617661+00:00"
+}

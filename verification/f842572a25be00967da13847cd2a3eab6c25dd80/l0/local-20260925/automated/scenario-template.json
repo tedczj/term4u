@@ -1,0 +1,18 @@
+{
+  "command": [
+    "python3",
+    "script/l0_verify.py",
+    "init-results",
+    "--source-head",
+    "f842572a25be00967da13847cd2a3eab6c25dd80",
+    "--source-tree",
+    "5d1c3324175bbd1560204ed5507958f2abb27372",
+    "--binary-sha256",
+    "ee84e39feb98344442160a3fc1f73c0f4252f4c65272e56616d9f682aa2e1416",
+    "--output",
+    "/Volumes/SN850X/term4u-l0-20260925/scenario-results.json"
+  ],
+  "exit_code": 0,
+  "started_utc": "2026-09-25T04:46:56.901678+00:00",
+  "finished_utc": "2026-09-25T04:46:56.960964+00:00"
+}

@@ -1,7 +1,7 @@
 use warpui::AppContext;
 use warpui::keymap::{EditableBinding, FixedBinding};
 
-use super::TerminalAction;
+use super::{LocalOutputAction, TerminalAction};
 use crate::terminal::TerminalView;
 use crate::util::bindings::{CustomAction, is_binding_pty_compliant};
 
@@ -14,6 +14,27 @@ pub fn init(app: &mut AppContext) {
 
     app.register_binding_validator::<TerminalView>(is_binding_pty_compliant);
     app.register_editable_bindings([
+        EditableBinding::new(
+            "terminal:clear_blocks",
+            "Clear Visible Output",
+            TerminalAction::LocalOutput(LocalOutputAction::ClearVisible),
+        )
+        .with_context_predicate(id!("Terminal") & id!(INPUT_BOX_VISIBLE_KEY))
+        .with_custom_action(CustomAction::ClearBlocks),
+        EditableBinding::new(
+            "terminal:select_previous_block",
+            "Previous Block",
+            TerminalAction::LocalOutput(LocalOutputAction::PreviousBlock),
+        )
+        .with_context_predicate(id!("Terminal") & id!(INPUT_BOX_VISIBLE_KEY))
+        .with_key_binding("cmd-up"),
+        EditableBinding::new(
+            "terminal:select_next_block",
+            "Next Block",
+            TerminalAction::LocalOutput(LocalOutputAction::NextBlock),
+        )
+        .with_context_predicate(id!("Terminal") & id!(INPUT_BOX_VISIBLE_KEY))
+        .with_key_binding("cmd-down"),
         EditableBinding::new(
             "terminal:find",
             "Find in Terminal",

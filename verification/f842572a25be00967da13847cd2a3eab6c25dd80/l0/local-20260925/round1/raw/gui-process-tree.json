@@ -1,0 +1,43 @@
+{
+  "captured_candidate_processes": [
+    {
+      "pid": 91819,
+      "ppid": 86301,
+      "stat": "running at capture",
+      "command": "/Volumes/SN850X/term4u-l0-20260925/round1/Term4u-L0-Round1.app/Contents/MacOS/term4u"
+    },
+    {
+      "pid": 91820,
+      "ppid": 91819,
+      "stat": "running at capture",
+      "command": ".../Contents/MacOS/term4u terminal-server --parent-pid=91819"
+    }
+  ],
+  "shell_ancestor_chain": [
+    {
+      "pid": 86301,
+      "ppid": 86300,
+      "command": "codex --ask-for-approval never --sandbox danger-full-access"
+    },
+    {
+      "pid": 86300,
+      "ppid": 15735,
+      "command": "sh ../start_codex.sh"
+    },
+    {
+      "pid": 15735,
+      "ppid": 15728,
+      "command": "-zsh -zsh"
+    }
+  ],
+  "launch": {
+    "argv": "env WARP_DATA_PROFILE=term4u-l0-20260925-round1 /Volumes/SN850X/term4u-l0-20260925/round1/Term4u-L0-Round1.app/Contents/MacOS/term4u",
+    "open_a_activation_attempt": "open -a <unique bundle>; no extra candidate PID appeared"
+  },
+  "cleanup": {
+    "action": "SIGTERM sent only to own candidate PID 91819",
+    "shell_session_exit_code": 143,
+    "final_ps_observation": "no rows for 91819/91820",
+    "pid_42354_touched": false
+  }
+}

@@ -51,8 +51,11 @@ use crate::search::command_palette::view::{
 use crate::search::command_search::searcher::{AcceptedWorkflow, CommandSearchItemAction};
 use crate::search::command_search::view::{CommandSearchEvent, CommandSearchView};
 use crate::session_management::SessionSource;
+use crate::settings::AppEditorSettings;
 use crate::settings_view::pane_manager::SettingsPaneManager;
-use crate::settings_view::{SettingsSection, SettingsView};
+use crate::settings_view::{
+    FeaturesPageAction, SettingsAction, SettingsSection, SettingsView, flags,
+};
 use crate::tab::{SelectedTabColor, TabData};
 use crate::terminal::TerminalView;
 use crate::terminal::input::MenuPositioning;
@@ -1615,6 +1618,15 @@ impl TypedActionView for Workspace {
             WorkspaceAction::ShowSettings => {
                 self.open_settings(SettingsSection::default(), None, ctx)
             }
+            WorkspaceAction::ToggleVimMode => {
+                let settings = SettingsPaneManager::as_ref(ctx).settings_view(ctx.window_id());
+                settings.update(ctx, |view, ctx| {
+                    view.handle_action(
+                        &SettingsAction::FeaturesPageToggle(FeaturesPageAction::ToggleVimMode),
+                        ctx,
+                    );
+                });
+            }
             WorkspaceAction::ShowSettingsPage(section) => self.open_settings(*section, None, ctx),
             WorkspaceAction::ShowSettingsPageWithSearch {
                 search_query,
@@ -1830,6 +1842,9 @@ impl View for Workspace {
             });
         if available {
             context.set.insert(super::HISTORY_SEARCH_AVAILABLE_KEY);
+        }
+        if AppEditorSettings::as_ref(app).vim_mode_enabled() {
+            context.set.insert(flags::VIM_MODE_CONTEXT_FLAG);
         }
         context
     }

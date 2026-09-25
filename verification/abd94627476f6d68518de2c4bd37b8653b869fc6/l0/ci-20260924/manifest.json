@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "design_section": "6.2.16",
+  "status": "PARTIAL_L0_IN_PROGRESS",
+  "source_head": "abd94627476f6d68518de2c4bd37b8653b869fc6",
+  "product_branch": "dev-20260924-l0",
+  "subsequent_test_routing_commit": "da9d26239fdc3bb1651366996f3476a345bd03aa",
+  "platform": {"os": "macOS", "version": "26.6.2", "build": "25G83", "architecture": "arm64"},
+  "native_ci": {
+    "run_id": 35896007581,
+    "job_id": 107300306040,
+    "conclusion": "success",
+    "workflow_head": "7ab002cf7ba81d15d997c17a7e298529cf368ec4",
+    "workflow_branch": "dev-20260924-l0-delivery",
+    "run_url": "https://github.com/tedczj/term4u/actions/runs/35896007581",
+    "note": "Workflow revision and tested product source are different; source-head.txt pins the tested product."
+  },
+  "checks": [
+    {"name": "native_compile", "command": "cargo check --locked -p warp --all-targets --tests --no-default-features --features local_only", "exit_code": 0, "status": "PASS", "log": "gui-check.log"},
+    {"name": "tagged_app_l0_tests", "command": "cargo nextest run --locked --no-fail-fast -p warp --no-default-features --features local_only,test-util -E 'test(l0_)'", "exit_code": 0, "status": "PASS", "passed": 66, "skipped_or_filtered": 1546, "log": "l0-tests.log"},
+    {"name": "full_local_app_tests", "command": "cargo nextest run --locked --no-fail-fast -p warp --no-default-features --features local_only,test-util", "exit_code": 0, "status": "PASS", "passed": 1609, "existing_skipped": 3, "log": "app-tests.log"},
+    {"name": "strict_local_clippy", "command": "cargo clippy --locked -p warp --all-targets --tests --no-default-features --features local_only -- -D warnings", "exit_code": 0, "status": "PASS", "log": "clippy-local.log"},
+    {"name": "actual_test_inventory", "command": "./script/test_inventory", "exit_code": 0, "status": "PASS", "baseline": 9777, "current": 4885, "approved_deleted": 5084, "log": "inventory.log"}
+  ],
+  "new_product_tests": [
+    "terminal::view::local_output::tests::l0_08_active_and_stale_block_collapse_requests_are_harmless",
+    "terminal::view::local_output::tests::l0_08_block_navigation_skips_hidden_blocks_and_does_not_edit_draft",
+    "terminal::view::local_output::tests::l0_08_collapse_keeps_payload_and_command_and_updates_height",
+    "terminal::view::local_output::tests::l0_08_find_expands_collapsed_output_before_mapping_the_match",
+    "terminal::view::local_output::tests::l0_08_native_screen_rejects_transcript_actions_and_keeps_contents",
+    "terminal::view::local_output::tests::l0_08_transcript_clear_preserves_draft_and_restored_blocks"
+  ],
+  "new_product_tests_status": "All six passed in both focused and full app logs.",
+  "artifact": {
+    "id": 10767828776,
+    "name": "l0-native-abd94627476f6d68518de2c4bd37b8653b869fc6",
+    "size_bytes": 113182135,
+    "sha256": "877f1f522f94528f462d4ef64df2dc6b447782655730092c7df01ccfd2fd4f79",
+    "created_utc": "2026-09-23T18:01:31Z",
+    "expires_utc": "2026-10-23T18:01:26Z",
+    "storage": "GitHub Actions artifact; raw logs and candidate-source.tar.gz are inside the ZIP, not adjacent committed files. Archive externally before expiry for permanent retention."
+  },
+  "artifact_members": {
+    "gui-check.log": {"bytes": 88249, "sha256": "aecd48d58e8cea1ff4e96cff1f94defa2554d2dec6c7ca3596af3c0b1f9e943a"},
+    "l0-tests.log": {"bytes": 61076, "sha256": "83d256cd6ebe1943009decd65d53b841a840a9ee295094145fe82cf3ec71880b"},
+    "app-tests.log": {"bytes": 274206, "sha256": "42060b55a0bd112cbe81eeaedc4f9c0f9070abf50a66d7ff254cefe06af4439a"},
+    "clippy-local.log": {"bytes": 5870, "sha256": "93387ce5e183a4981f95adde4d9f9d07c8a78b60ceea487f49d8c1b2923d9775"},
+    "inventory.log": {"bytes": 25066, "sha256": "5c1e5994bc41612a4344ce7d5ffb1eb5bebd31761b0912a7c127ddaf5ff6ec7e"},
+    "platform.txt": {"bytes": 65, "sha256": "cd5d6399b3785b04ceaae75045a9ca9f80f0bbc3526eff9d0c36b170ed1ec348"},
+    "source-head.txt": {"bytes": 41, "sha256": "72e49d27b9af7a0db17cfd9c6fd0a2c408c4ab4211061337d1c51984e61b638e"}
+  },
+  "test_tooling": {
+    "source_head": "da9d26239fdc3bb1651366996f3476a345bd03aa",
+    "run_id": 35899771693,
+    "workflow_head": "26b5de95f6f85a4de0881e65205071a8e3ea90ec",
+    "run_url": "https://github.com/tedczj/term4u/actions/runs/35899771693",
+    "status": "PASS",
+    "commands": ["python3 script/l0_verify.py validate", "python3 script/lib/l0_verify_tests.py"],
+    "python_tests_passed": 18,
+    "registration_checked": false
+  },
+  "limits": [
+    "The 66 tagged Rust test functions are not the 66 canonical design scenarios; no full-scenario or L0 closure is claimed.",
+    "The scenario catalogue specifies additional assertions and 18 serial desktop workflows. Related existing tests are partial coverage, and unmapped assertions still need executable tests.",
+    "Full script/presubmit, all additional Clippy configurations, signed GUI bundle, runtime performance budgets and serial computer-use acceptance were not executed by this native batch.",
+    "The subsequent test-routing commit changes docs, JSON and Python only; native results remain attributed to abd94627476f6d68518de2c4bd37b8653b869fc6 rather than falsely claiming a rerun on the later commit.",
+    "Images, single-huge-grid optimization, dynamic privacy consumers and complete retained-entry audit remain implementation work under DESIGN 6.2.16.",
+    "This manifest is evidence, not a second design or a claim that local screenshots, clipboard access, notifications, IME or real desktop interactions passed."
+  ]
+}

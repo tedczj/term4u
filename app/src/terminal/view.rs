@@ -3,6 +3,7 @@ mod context_menu;
 pub mod init;
 mod link_detection;
 mod local_io;
+mod local_output;
 mod scroll;
 use std::borrow::Cow;
 use std::cell::RefCell;
@@ -14,6 +15,7 @@ pub use action::TerminalAction;
 use async_channel::{Receiver, Sender};
 use instant::Instant;
 use local_io::NotificationKind;
+pub use local_output::LocalOutputAction;
 use parking_lot::FairMutex;
 use pathfinder_geometry::vector::Vector2F;
 use sum_tree::SeekBias;
@@ -1007,6 +1009,15 @@ impl TerminalView {
         }
         if !model.is_alt_screen_active() {
             let scroll = self.capture_scroll(&model);
+            if let Some(matched) = &find_match
+                && matched.grid_type == GridType::Output
+                && let Some(block) = model.block_list().block_at(matched.block_index)
+            {
+                let id = block.id().clone();
+                model
+                    .block_list_mut()
+                    .set_block_output_collapsed(&id, false);
+            }
             model.block_list_mut().update_background_block_height();
             model.block_list_mut().update_active_block_height();
             self.restore_scroll(scroll, &model);
@@ -1527,6 +1538,7 @@ impl TypedActionView for TerminalView {
                 }
             }
             TerminalAction::ClearBuffer => self.clear_buffer(ctx),
+            TerminalAction::LocalOutput(action) => self.handle_local_output_action(action, ctx),
             TerminalAction::Focus => self.focus(ctx),
             TerminalAction::FinishSelection => {
                 self.is_selecting = false;

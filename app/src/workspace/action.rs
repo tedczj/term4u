@@ -73,6 +73,7 @@ pub enum WorkspaceAction {
         shell: AvailableShell,
     },
     ShowSettings,
+    ToggleVimMode,
     ShowSettingsPage(SettingsSection),
     ShowSettingsPageWithSearch {
         search_query: String,

@@ -1,0 +1,107 @@
+{
+  "reviewer": "root",
+  "reviewed_utc": "2026-09-25T09:11:39.220199+00:00",
+  "actor": {
+    "requested_model": "gpt-6-luna",
+    "requested_effort": "high",
+    "runtime_model_id": "not separately exposed",
+    "harness": "mcp__cua_repl native app API; version not exposed",
+    "serial_command": [
+      "python3",
+      "script/l0_verify.py",
+      "serial",
+      "--",
+      "python3",
+      "/Volumes/SN850X/term4u-l0-20260925/round2/lease_keeper.py",
+      "/Volumes/SN850X/term4u-l0-20260925/round2"
+    ],
+    "lease_scope": "cooperating actor holds shared desktop lease; CUA calls are not subprocess descendants; interrupted and reacquired as recorded"
+  },
+  "overall_status": "INCOMPLETE",
+  "product_acceptance": "NOT_ACCEPTED",
+  "confirmed_product_defects": [],
+  "reviewed_assertions": [
+    {
+      "scope": "GUI history",
+      "result": "PASS for matched-prefix sample only",
+      "observation": "Bottom input in prefix-up1/up2/down1/down2 is A/B/A/original prefix; unmatched suffix images did not recall history."
+    },
+    {
+      "scope": "GUI paste/undo",
+      "result": "PASS for synthetic no-selection sample only",
+      "observation": "Multiline Chinese paste preserves RIGHT suffix; one Cmd-Z restores echo LEFT-RIGHT. GUI event type summary confirms UserInsert/Undo."
+    },
+    {
+      "scope": "Settings",
+      "result": "PASS for custom-size sample only",
+      "observation": "Reviewed enabled, after-restart enabled, restored-off screenshots. Full settings matrix not covered."
+    },
+    {
+      "scope": "IME",
+      "result": "INCOMPLETE",
+      "observation": "Blank TextEdit control also has literal nihao and no visible candidates; not attributed to Term4u."
+    },
+    {
+      "scope": "Clear",
+      "result": "PARTIAL",
+      "observation": "Independent stable screenshot shows cleared right pane with prompt, left content preserved. Black early frames are not visual PASS."
+    },
+    {
+      "scope": "Fold then Find",
+      "result": "INCOMPLETE",
+      "observation": "Fresh marker near y640; actor used old y704, disabled Copy items. Target hit not established, not a missing product menu."
+    },
+    {
+      "scope": "Vim",
+      "result": "PARTIAL",
+      "observation": "File bytes exactly match Chinese lines; -i NONE omitted, user viminfo updated. No backup or rollback. Safe noninteractive command check only validates future flags."
+    },
+    {
+      "scope": "TUI",
+      "result": "PASS for bounded independent assertions only",
+      "evidence": "independent-complete-pty-review.json"
+    }
+  ],
+  "test_corrections": [
+    "Use macOS Cmd-K, not Cmd-Shift-K",
+    "Do not substitute native exec/ZLE history or Undo for GUI Editor",
+    "Treat App.paste timeout as ambiguous until observing content",
+    "Require ABC source for ASCII Vim commands",
+    "Inspect bottom input, not prior command output",
+    "Use fresh coordinate mapping and confirm completed block hit",
+    "Use Vim -i NONE to isolate state"
+  ],
+  "source_changes": "Test-only repaint regression plus catalog preconditions and existing design documentation. No product implementation changed.",
+  "supersedes": "Early raw action logs may contain optimistic verdicts; final workflow report and these bounded independent assertions govern. No composite workflow is PASS.",
+  "limits": [
+    "No guaranteed uninterrupted lease across executor interruption",
+    "No full 66-scenario acceptance",
+    "No privileged network capture or permission/audio validation"
+  ],
+  "vim_expected_bytes_equal": true,
+  "workflow_status_counts": {
+    "PARTIAL": 11,
+    "INCOMPLETE": 3,
+    "NOT_RUN": 2,
+    "BLOCKED": 2
+  },
+  "final_owned_process_check": {
+    "pids": [
+      11876,
+      11877,
+      31750,
+      32576,
+      32577,
+      34827,
+      34828,
+      35267,
+      35379,
+      35381,
+      36250,
+      36251
+    ],
+    "exit_code": 1,
+    "output": ""
+  },
+  "final_lock_probe": "FREE"
+}

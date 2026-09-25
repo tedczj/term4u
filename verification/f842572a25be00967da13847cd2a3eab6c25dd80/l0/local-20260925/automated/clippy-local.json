@@ -1,0 +1,20 @@
+{
+  "command": [
+    "cargo",
+    "clippy",
+    "--locked",
+    "-p",
+    "warp",
+    "--all-targets",
+    "--tests",
+    "--no-default-features",
+    "--features",
+    "local_only",
+    "--",
+    "-D",
+    "warnings"
+  ],
+  "exit_code": 0,
+  "started_utc": "2026-09-25T04:33:18.636419+00:00",
+  "finished_utc": "2026-09-25T04:33:32.300903+00:00"
+}

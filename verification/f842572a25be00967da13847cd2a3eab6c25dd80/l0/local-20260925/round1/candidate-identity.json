@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "candidate": {
+    "source_head": "f842572a25be00967da13847cd2a3eab6c25dd80",
+    "source_tree": "5d1c3324175bbd1560204ed5507958f2abb27372",
+    "build_source_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build_source_diff_scope": "tracked source at frozen build; user .pi/goal-events.jsonl explicitly excluded per parent handoff",
+    "workspace_diff_after_candidate": {
+      "path": "raw/workspace-diff-after-candidate.patch",
+      "sha256": "c6c2a549e39b5059db1992a353c80711e03e71ebde385f358cba8ef5a91f3468",
+      "meaning": "Post-candidate workspace diff with user .pi changes excluded; not in frozen product candidate. Original unredacted capture retained privately outside the round archive."
+    },
+    "gui_bundle": "/Volumes/SN850X/term4u-l0-20260925/round1/Term4u-L0-Round1.app",
+    "gui_bundle_identifier": "dev.term4u.l0.round1",
+    "gui_bundle_name": "Term4u-L0-Round1",
+    "gui_bundle_display_name": "Term4u L0 Round1",
+    "gui_executable_sha256": "ee84e39feb98344442160a3fc1f73c0f4252f4c65272e56616d9f682aa2e1416",
+    "gui_info_plist_sha256": "c4e4c93821b031052acd4859464917460712b1de223d52a56e788c37305b7dc8",
+    "gui_resource_file_count": 31,
+    "gui_signature": "ad-hoc; codesign --verify --deep --strict passed; arm64",
+    "tui_executable": "/Volumes/SN850X/term4u-l0-20260925/round1/term4u-tui",
+    "tui_executable_sha256": "9fb1c44f20e367c6c8bcf5f8ba80f9ea5b387c84139f37db4596587bca87b031",
+    "gui_data_profile": {
+      "WARP_DATA_PROFILE": "term4u-l0-20260925-round1",
+      "expected_isolated_profile_path": "/Users/tedczj/.term4u-term4u-l0-20260925-round1",
+      "note": "Only WARP_DATA_PROFILE was explicitly set; the GUI inherited its launching shell environment. ZDOTDIR/HISTFILE isolation was not verified. The TUI PTY run used a separate ZDOTDIR/HISTFILE fixture.",
+      "shell_environment_isolated": false
+    },
+    "tui_data_profile": "term4u-l0-20260925-round1-tui-clean",
+    "gui_resources_manifest_path": "raw/gui-resource-manifest.json",
+    "gui_resources_manifest_algorithm": "SHA256 of UTF-8 concatenation, sorted by relative resource path, each line: <file_sha256><two spaces><relative_path><two spaces><size_bytes><newline>",
+    "gui_resources_aggregate_sha256": "6505c791f38122009f41f4092dedb54694c0c60e3818a1701f85821849d04404"
+  },
+  "verification": {
+    "bundle_copy_sign_verify_exit_code": 0,
+    "gui_launch_command": "env WARP_DATA_PROFILE=term4u-l0-20260925-round1 <unique bundle>/Contents/MacOS/term4u",
+    "gui_launch_shell_exit_code_after_owned_SIGTERM_cleanup": 143,
+    "gui_candidate_pid": 91819,
+    "gui_terminal_server_pid": 91820,
+    "gui_candidate_process_closed": true,
+    "old_user_test_pid_42354_manipulated": false,
+    "cua_getState_target": {
+      "bundle_id": "dev.term4u.l0.round1",
+      "display_name": "Term4u L0 Round1",
+      "isRunning": true
+    },
+    "cua_getApp_errors": [
+      "Computer Use server error -10005: cgWindowNotFound (bundle id)",
+      "Computer Use server error -10005: cgWindowNotFound (absolute bundle path)",
+      "Invalid app: Term4u L0 Round1"
+    ],
+    "cua_screenshot_captured": false,
+    "cua_native_launch_app_api": "cua.computer.launch_app is not a function",
+    "gui_process_ancestry_at_capture": [
+      {
+        "pid": 91819,
+        "ppid": 86301,
+        "argv": "/Volumes/SN850X/term4u-l0-20260925/round1/Term4u-L0-Round1.app/Contents/MacOS/term4u"
+      },
+      {
+        "pid": 91820,
+        "ppid": 91819,
+        "argv": ".../Contents/MacOS/term4u terminal-server --parent-pid=91819"
+      },
+      {
+        "pid": 86301,
+        "ppid": 86300,
+        "argv": "codex --ask-for-approval never --sandbox danger-full-access"
+      },
+      {
+        "pid": 86300,
+        "ppid": 15735,
+        "argv": "sh ../start_codex.sh"
+      },
+      {
+        "pid": 15735,
+        "ppid": 15728,
+        "argv": "-zsh -zsh"
+      }
+    ],
+    "tui_driver_exit_code": 0,
+    "tui_process_pid": 2959,
+    "tui_process_exit_code": 0,
+    "tui_termios_before": {
+      "lflag": 1483,
+      "iflag": 11010,
+      "oflag": 3,
+      "cflag": 19200
+    },
+    "tui_termios_after": {
+      "lflag": 536872395,
+      "iflag": 11010,
+      "oflag": 3,
+      "cflag": 19200
+    },
+    "tui_termios_difference": {
+      "xor_lflag": 536870912,
+      "flag": "PENDIN",
+      "interpretation": "same delta reproduced without Term4u; not evidence of product defect"
+    },
+    "tui_independent_screen_review": "independent-tui-review.json"
+  }
+}

@@ -1,0 +1,710 @@
+{
+  "schema_version": 1,
+  "round": 2,
+  "candidate": {
+    "source_head": "ab27e3d913943dd3aa4592a55876fac833a8bed7",
+    "source_tree": "14a17991abb74db93e1af58d361c80745c5d3507",
+    "source_basis": "ab27e3d913943dd3aa4592a55876fac833a8bed7; parent-only added test and routing edits were not in candidate binary",
+    "gui_bundle": "/Volumes/SN850X/term4u-l0-20260925/round2/Term4u-L0-Round2.app",
+    "gui_bundle_identifier": "dev.term4u.l0.round2",
+    "gui_executable_sha256": "a948af432f1105349dad6067f071c74934dc0f4b472c0921ec5b7a852abaf746",
+    "tui_executable": "/Volumes/SN850X/term4u-l0-20260925/round2/term4u-tui",
+    "tui_executable_sha256": "9fb1c44f20e367c6c8bcf5f8ba80f9ea5b387c84139f37db4596587bca87b031",
+    "gui_data_profile": "term4u-l0-20260925-round2",
+    "tui_data_profiles": [
+      "term4u-l0-20260925-round2-tui-complete",
+      "term4u-l0-20260925-round2-tui-final",
+      "term4u-l0-20260925-round2-tui-resume"
+    ],
+    "post_settings_restart_pids": {
+      "gui": 36250,
+      "terminal_server": 36251,
+      "profile": "term4u-l0-20260925-round2",
+      "bundle_sha256": "a948af432f1105349dad6067f071c74934dc0f4b472c0921ec5b7a852abaf746"
+    },
+    "restart_environment": {
+      "WARP_DATA_PROFILE": "term4u-l0-20260925-round2",
+      "ZDOTDIR": "/Volumes/SN850X/term4u-l0-20260925/round2/zshdot",
+      "HISTFILE": "/Volumes/SN850X/term4u-l0-20260925/round2/zshdot/.zsh_history",
+      "WARP_SHELL_PATH": "/bin/zsh"
+    },
+    "post_settings_restart_cleanup": "candidate bundle had one controlled same-profile restart; final PID 36250/36251 absent on final process check"
+  },
+  "lease": {
+    "original_log_last_begin_utc": "2026-09-25T06:55:43Z",
+    "old_release_time": "unknown",
+    "interruption_detected_around_utc": "2026-09-25T07:33:00Z",
+    "reacquired_utc": "2026-09-25T07:34:48Z",
+    "reacquired_pid": 32577,
+    "lock_device": 16777230,
+    "lock_inode": 24633596,
+    "correction": "Do not infer an uninterrupted lease from 06:55:43; that timestamp is only the prior last BEGIN event.",
+    "final_released_utc": "2026-09-25T09:06:19.964152+00:00"
+  },
+  "workflow_results": [
+    {
+      "id": "CUA-01",
+      "status": "PARTIAL",
+      "summary": "Candidate GUI bound by CUA; bundle ID dev.term4u.l0.round2; initial process-tree snapshot records GUI/terminal-server/shell PIDs 11876/11877/11883; AX/screenshot separately bind the candidate window. A controlled same-profile settings restart used GUI/server PIDs 36250/36251. Final process checks confirmed those PIDs, loopback server 31750, and test TextEdit 35267 absent. The round2 candidate was cleaned up; no third round was started.",
+      "evidence": [
+        "logs/desktop-lease.jsonl",
+        "raw/resume-current-state.txt",
+        "raw/resume-current-window.png",
+        "root-process-tree-initial.json"
+      ],
+      "not_executed": [
+        "post-restart full resource manifest/codesign revalidation"
+      ]
+    },
+    {
+      "id": "CUA-02",
+      "status": "PARTIAL",
+      "summary": "The unmatched draft echo L0HIST_SUFFIX stayed unchanged on Up, a correct no-match result; it must not be read as recalled A/B output. On the original GUI InputEditor under ABC, executed synthetic echo L0HISTA, echo L0HISTB, echo L0HISTA; for exact draft echo L0HIST, bottom-input screenshots showed Up=A, Up=B, Down=A, Down=echo L0HIST restored. Nested exec/fc zsh history was native-only and is excluded. Cross-pane GUI draft isolation remains incomplete.",
+      "evidence": [
+        "raw/resume-cua02-gui-seed-a1-output.png",
+        "raw/resume-cua02-gui-seed-b-output.png",
+        "raw/resume-cua02-gui-seed-a2-output.png",
+        "raw/resume-cua02-gui-prefix-draft.png",
+        "raw/resume-cua02-gui-prefix-up1.png",
+        "raw/resume-cua02-gui-prefix-up2.png",
+        "raw/resume-cua02-gui-prefix-down1.png",
+        "raw/resume-cua02-gui-prefix-down2.png",
+        "raw/resume-editor-action-types.txt"
+      ],
+      "not_executed": [
+        "cross-pane GUI draft restoration/isolation",
+        "complete duplicate-history/search/tab-completion matrix"
+      ]
+    },
+    {
+      "id": "CUA-03",
+      "status": "PARTIAL",
+      "summary": "On the original GUI EditorInput, the runtime log showed EditorAction::UserInsert and EditorAction::Undo. With echo LEFT-RIGHT and the caret between prefix and suffix, a two-line Chinese paste preserved the suffix; one Cmd-Z restored the exact original draft. A path-style paste Folder Name/绘本.txt appeared literally between prefix and suffix with its space/slash/CJK and no shell quoting; no command was submitted. The earlier nested ZLE paste/undo attempt is native-only and excluded.",
+      "evidence": [
+        "raw/resume-gui-editor-probe.png",
+        "raw/resume-cua03-gui-cursor-middle.png",
+        "raw/resume-cua03-gui-multiline-paste.png",
+        "raw/resume-cua03-gui-after-undo.png",
+        "raw/resume-cua03-gui-path-cursor.png",
+        "raw/resume-cua03-gui-path-pasted.png",
+        "raw/resume-cua03-gui-path-cleared.png",
+        "raw/resume-editor-action-types.txt"
+      ],
+      "not_executed": [
+        "clipboard contents validation; no user clipboard data was inspected"
+      ]
+    },
+    {
+      "id": "CUA-04",
+      "status": "PARTIAL",
+      "summary": "Under a verified ABC input source, fresh no-plugin Vim accepted two synthetic Chinese lines and ZZ saved/quit; UTF-8 file bytes exactly matched expected. The paste API reported timeout after consuming text. Vim was launched without `-i NONE`, so the real user ~/.viminfo mtime changed and now records the synthetic fixture path; file contents were not exported and no prior snapshot exists. No attempt was made to delete or rewrite .viminfo. This sample proves the save bytes, not full Vim isolation.",
+      "evidence": [
+        "raw/resume-cua04-abc-insert.png",
+        "raw/resume-cua04-abc-escape.png",
+        "raw/resume-cua04-abc-zz.png",
+        "fixtures/work/resume-vim.txt",
+        "viminfo-isolation-limitation.json"
+      ],
+      "not_executed": [
+        "readline bracketed paste modes",
+        "stale confirmation/pane switch",
+        "fully isolated Vim info state"
+      ]
+    },
+    {
+      "id": "CUA-05",
+      "status": "PARTIAL",
+      "summary": "The earlier zoom/split spot-check remains partial. Settings search found Appearance > Window > Open new windows with custom size, initially off. Turning it on showed Columns 80; after a controlled same-profile restart it remained on. It was restored off. Font rendering, PS1, cursor and the full layout matrix remain incomplete.",
+      "evidence": [
+        "raw/cua05-zoom-split.jpg",
+        "raw/resume-cua17-settings-search.png",
+        "raw/resume-cua17-settings-customsize-on.png",
+        "raw/resume-cua17-after-restart-settings.png",
+        "raw/resume-cua17-settings-restored.png"
+      ],
+      "not_executed": [
+        "font, PS1, caret, and full zoom/layout assertions"
+      ]
+    },
+    {
+      "id": "CUA-06",
+      "status": "PARTIAL",
+      "summary": "Right-click then Escape retained draft; Find query CUA06 then Enter navigated and Escape retained draft; Cmd-D created a second pane.",
+      "evidence": [
+        "raw/cua06-split-two-panes.jpg"
+      ],
+      "not_executed": [
+        "all menu focus, stale target and cross-pane routes"
+      ]
+    },
+    {
+      "id": "CUA-07",
+      "status": "INCOMPLETE",
+      "summary": "Finder Go-to-folder showed synthetic CJK/space/quote/newline fixtures. One initial drag toward candidate input produced no visible insertion. Move & Resize Left/Right options were later exposed and the two windows were tiled for a possible retry, but a second drag was not performed. No file was modified; no product drop regression is claimed.",
+      "evidence": [
+        "raw/resume-cua07-fixtures-folder.png",
+        "raw/resume-cua07-drop-to-input.png",
+        "raw/resume-cua07-after-drag-finder.png",
+        "raw/resume-cua07-finder-window-menu.txt",
+        "raw/resume-cua07-finder-left-tile.png",
+        "raw/resume-cua07-candidate-right-tile.png"
+      ],
+      "not_executed": [
+        "cross-window drop after tiling",
+        "multi-select/output/edge drop",
+        "argv filename receipt"
+      ]
+    },
+    {
+      "id": "CUA-08",
+      "status": "PARTIAL",
+      "summary": "Ordinary click on synthetic loopback URL produced no request; context menu lacked Open Link. Hover-only and explicit Cmd-click were not available through the documented CUA API.",
+      "evidence": [
+        "raw/resume-cua08-link-output.png",
+        "raw/resume-cua08-context-menu.png"
+      ],
+      "not_executed": [
+        "hover-only",
+        "Cmd-click/open request",
+        "OSC8/file targets/selection"
+      ]
+    },
+    {
+      "id": "CUA-09",
+      "status": "INCOMPLETE",
+      "summary": "SCIM.ITABC was verified before and after keying with the candidate window explicitly raised and focused. Individual pressKey letters remained literal nihao with no visible marked span or candidate; Ctrl-C cleared the draft. A newly created blank TextEdit control document under the same source also received literal nihao and showed no marked span/candidate, so the current CUA/input condition did not demonstrate composition and does not establish a Term4u-specific failure.",
+      "evidence": [
+        "raw/resume-cua09-raised-focused.png",
+        "raw/resume-cua09-raised-keyseq.png",
+        "raw/resume-cua09-raised-clear.png",
+        "raw/resume-cua09-textedit-new-document.png",
+        "raw/resume-cua09-textedit-keyseq.png"
+      ],
+      "not_executed": [
+        "marked-text/candidate",
+        "caret movement and candidate anchoring"
+      ]
+    },
+    {
+      "id": "CUA-10",
+      "status": "INCOMPLETE",
+      "summary": "Candidate TUI launched; Ctrl-T opened a tab; literal nihao key sequence appeared in the TUI shell; Ctrl-C and Ctrl-Q returned to shell. No marked-text/candidate UI or alternate-screen IME behavior was confirmed.",
+      "evidence": [
+        "raw/resume-cua10-tui-open.png",
+        "raw/resume-cua10-terminal-tab.png",
+        "raw/resume-cua10-tui-pinyin-keys.png",
+        "raw/resume-cua10-tui-exit.png"
+      ],
+      "not_executed": [
+        "normal/alternate screen composition, confirm/cancel, UTF-16/emoji"
+      ]
+    },
+    {
+      "id": "CUA-11",
+      "status": "NOT_RUN",
+      "summary": "System clipboard permission modes were not changed or exercised; no authorized clipboard data read was performed.",
+      "evidence": [],
+      "not_executed": [
+        "Deny/WriteOnly/ReadWrite OSC52 matrix"
+      ]
+    },
+    {
+      "id": "CUA-12",
+      "status": "NOT_RUN",
+      "summary": "Notification/audio permission and recording actions were not exercised; no sound conclusion is available.",
+      "evidence": [],
+      "not_executed": [
+        "BEL/OSC delivery, background click, authorized listening"
+      ]
+    },
+    {
+      "id": "CUA-13",
+      "status": "PARTIAL",
+      "summary": "Earlier Collapse/Expand and Cmd-K runtime handler observations remain partial; black/stale screenshots do not prove complete draft preservation. A valid GUI command invoked a fixture whose command text omitted unique body marker L0CUA13_FIND_BODY_UNIQUE. The last right-click used stale y704 after the fresh screenshot placed the marker near y640; although a context menu event reported BlockIndex(6), disabled Copy command/output show that the target block was not reliably hit. No product menu or Find-after-collapse conclusion is drawn; the target block remains unverified.",
+      "evidence": [
+        "raw/cua13-before-clear-combined.jpg",
+        "raw/cua13-clear-cmd-k-after.jpg",
+        "raw/root-independent-current.jpg",
+        "raw/root-independent-current.ax.txt",
+        "raw/resume-cua13-fixture-command.png",
+        "raw/resume-cua13-fixture-output.png",
+        "raw/resume-cua13-pre-rightclick-fresh.png",
+        "raw/resume-cua13-valid-block-rightclick.png",
+        "raw/resume-editor-action-types.txt",
+        "fixtures/cua13_find_body_resume.py"
+      ],
+      "not_executed": [
+        "reliable right-click on marker body after fresh coordinate mapping",
+        "collapse followed by Find on hidden match"
+      ]
+    },
+    {
+      "id": "CUA-14",
+      "status": "PARTIAL",
+      "summary": "One real-window page-up exposed prior output and page-down returned to prompt/end. No output-under-scroll, resize, repeated anchor samples, or performance metrics were collected.",
+      "evidence": [
+        "raw/resume-cua14-scroll-up.png",
+        "raw/resume-cua14-scroll-down.png"
+      ],
+      "not_executed": [
+        "20k-line benchmark",
+        "input/frame/GPU/CPU/RSS percentiles"
+      ]
+    },
+    {
+      "id": "CUA-15",
+      "status": "BLOCKED",
+      "summary": "Image output consumer and resource lifecycle are not implemented in the candidate; no visual image-path assertion was possible.",
+      "evidence": [],
+      "not_executed": [
+        "image parser/decode/render/budget/expiry"
+      ]
+    },
+    {
+      "id": "CUA-16",
+      "status": "BLOCKED",
+      "summary": "Dynamic privacy/reveal/copy consumers remain unimplemented; no secret-bearing test was run.",
+      "evidence": [],
+      "not_executed": [
+        "settings subscription, reveal, copy/log output assertions"
+      ]
+    },
+    {
+      "id": "CUA-17",
+      "status": "PARTIAL",
+      "summary": "Blocks menu AX showed Clear Visible Output and two display entries; full registry review remains incomplete. Settings search found the local custom-size item, initially off; toggled on, observed Columns 80, and after explicit same-profile restart it remained on. The test restored it off. No full menu/shortcut/Palette handler audit was done.",
+      "evidence": [
+        "raw/resume-cua17-blocks-menu.txt",
+        "raw/resume-cua17-settings-search.png",
+        "raw/resume-cua17-settings-customsize-on.png",
+        "raw/resume-cua17-after-restart-settings.png",
+        "raw/resume-cua17-customsize-values.png",
+        "raw/resume-cua17-settings-restored.png",
+        "logs/post-settings-restart-stdout.log"
+      ],
+      "not_executed": [
+        "complete menu/shortcut/Palette registry",
+        "all setting persistence branches"
+      ]
+    },
+    {
+      "id": "CUA-18",
+      "status": "PARTIAL",
+      "summary": "GUI TUI start/render and Ctrl-Q exit observed. Independent PTY raw capture used a unique round2 profile/cwd/zshdot at 120x40, captured TUI/server/zsh process tree and full termios cc/speed; CLI/CJK/alternate-screen, Ctrl-C, resize to 30x100, Ctrl-Q exit 0. A complete synthetic OSC52 write+query/9/777/BEL probe returned zero bytes and the outer PTY probe window contained zero ESC]52/9/777 or BEL passthrough. PENDIN-only lflag difference is recorded as Darwin behavior; no real host clipboard or notification was accessed.",
+      "evidence": [
+        "raw/resume-cua18-tui-start.png",
+        "raw/resume-cua18-after-ctrl-q.png",
+        "raw/final-cua18-pty.raw",
+        "logs/final-cua18-pty.jsonl",
+        "raw/final-cua18-pyte-screen.txt",
+        "fixtures/tui_pty_driver_final.py",
+        "raw/complete-cua18-pty.raw",
+        "logs/complete-cua18-pty.jsonl",
+        "raw/tui-protocol-receipt.json",
+        "raw/complete-cua18-pyte-screen.txt",
+        "fixtures/tui_pty_driver_complete.py",
+        "fixtures/tui_protocol_probe.py"
+      ],
+      "not_executed": [
+        "independent OSC host-passthrough oracle",
+        "full TUI CLI/IME cases"
+      ]
+    }
+  ],
+  "overall_round_status": "INCOMPLETE",
+  "product_acceptance": "NOT_ACCEPTED",
+  "round_notes": [
+    "This is a resumed round 2, not a third round. No product code or candidate binary was changed by this desktop operator.",
+    "The candidate bundle identity and evidence are kept separate from the parent worktree changes.",
+    "Screenshot/AX, independent PTY, and file-byte assertions remain distinct. Partial workflows are not upgraded to PASS.",
+    "CUA11/CUA12 were not exercised because those workflows would require changing or reading real system clipboard contents or notification/recording permissions.",
+    "A same-source, raised/focused blank TextEdit control also showed literal nihao without marked text or candidates; this does not establish a Term4u-specific IME failure.",
+    "The final round2 PTY protocol probe and process-tree capture are separate immutable artifacts; protocol strings stayed in the synthetic child PTY, with no real host clipboard or notification access.",
+    "GUI History is based on exact bottom-input evidence: unmatched echo L0HIST_SUFFIX stayed unchanged; matched echo L0HIST traversed A/B/A and restored the prefix. Nested exec/fc ZLE experiments are native-only and excluded from GUI assertions.",
+    "GUI Undo is supported by the original GUI EditorInput screenshots and EditorAction::UserInsert/Undo action-type summary. Nested ZLE Cmd-Z samples are excluded.",
+    "CUA13 target block was not reliably hit: the fresh marker was near y640 but the click used stale y704. BlockIndex Some(6) with disabled Copy command/output does not identify the target; fold-to-Find remains unverified, with no product failure claim.",
+    "The custom-size setting remained enabled after explicit same-profile restart and was restored off. SCIM.ITABC was verified after testing.",
+    "Vim ran without -i NONE; user ~/.viminfo mtime changed and now references the synthetic fixture path. Its contents were not exported, no prior snapshot exists, and no delete or rewrite was attempted. Exact fixture file bytes remain valid evidence, but Vim isolation is incomplete."
+  ],
+  "evidence_manifest": [
+    {
+      "path": "fixtures/cua13_find_body_resume.py",
+      "size_bytes": 34,
+      "sha256": "55752966f9e382bb96acd731471602eb8aa2cf33ccdff3c77cb3acab365c74b8"
+    },
+    {
+      "path": "fixtures/tui_protocol_probe.py",
+      "size_bytes": 1064,
+      "sha256": "4f0033d121e560e789c19fde0a8542bb8ca6884792d602ecdf31c2ad8a66d903"
+    },
+    {
+      "path": "fixtures/tui_pty_driver_complete.py",
+      "size_bytes": 5947,
+      "sha256": "c9ab08d202ad59ef66be3f3b87d881ffcdfdfd3309ff6344fefdc73fc8d41e3d"
+    },
+    {
+      "path": "fixtures/tui_pty_driver_final.py",
+      "size_bytes": 6045,
+      "sha256": "3b0a28aa50e0d4959157cce2a1b8f8d15d801c600b468c422e02a9bcfceee383"
+    },
+    {
+      "path": "fixtures/work/resume-vim.txt",
+      "size_bytes": 35,
+      "sha256": "6636179e7387e02a8e0c6cd81334441395893ef112f676706ca0a87ed63881b5"
+    },
+    {
+      "path": "logs/complete-cua18-pty.jsonl",
+      "size_bytes": 4093,
+      "sha256": "9c82ce2cc5717fabb1e477c02c2723687f64ef3a5cdb51ed4cf5532a488f5a92"
+    },
+    {
+      "path": "logs/desktop-lease.jsonl",
+      "size_bytes": 31475,
+      "sha256": "bbe67be1abec070ddea6ed4da5bb851e7ea7c316caa443cf0dab1dc303fccf85"
+    },
+    {
+      "path": "logs/final-cua18-pty.jsonl",
+      "size_bytes": 4315,
+      "sha256": "3c0b1b2894ae57ceee3cd479e52bb57107fbb53b0cd221ba567efaf9410b011c"
+    },
+    {
+      "path": "logs/post-settings-restart-stdout.log",
+      "size_bytes": 108,
+      "sha256": "529a4196484a6501ef2a9e8232f4f2eea0537c3ba05b1bc22b9dfc3ff4be2a90"
+    },
+    {
+      "path": "raw/complete-cua18-pty.raw",
+      "size_bytes": 34760,
+      "sha256": "9374ad7d936d94865a39b34a31c8728d3d9cc7d2ebc5c10fe06b4ed09f341aee"
+    },
+    {
+      "path": "raw/complete-cua18-pyte-screen.txt",
+      "size_bytes": 4844,
+      "sha256": "71db16402955a6d3d7b5338898d98d41ef8c6528b7c5d968b70b60d967c5e110"
+    },
+    {
+      "path": "raw/cua05-zoom-split.jpg",
+      "size_bytes": 35339,
+      "sha256": "aeda9466a814eb961890569f2be63ea4451d94c54c0b6d1739295c32324fcb3d"
+    },
+    {
+      "path": "raw/cua06-split-two-panes.jpg",
+      "size_bytes": 20559,
+      "sha256": "3c61b1d0ef59cc66175b444e2c537267813219587ad70eaa913fe8e305fbdf46"
+    },
+    {
+      "path": "raw/cua13-before-clear-combined.jpg",
+      "size_bytes": 24895,
+      "sha256": "e96a635a0404d1aa6318a4aedac5cb4972197b82b6e77f9190d3b2b32175f11a"
+    },
+    {
+      "path": "raw/cua13-clear-cmd-k-after.jpg",
+      "size_bytes": 35181,
+      "sha256": "3ac12f505c5ecacad1e5add53053336d1ba62b8ebea27d933b400b25d4d5f27a"
+    },
+    {
+      "path": "raw/final-cua18-pty.raw",
+      "size_bytes": 30622,
+      "sha256": "33c588a67c70fbb00cba091361fbb067bf59139df57e1f43288d9ec87ae8ad90"
+    },
+    {
+      "path": "raw/final-cua18-pyte-screen.txt",
+      "size_bytes": 4844,
+      "sha256": "66f0906dc435dea2c58cfa42b5b6ddde2381d6089a196772a410c6d2683e14a8"
+    },
+    {
+      "path": "raw/resume-cua02-gui-prefix-down1.png",
+      "size_bytes": 19943,
+      "sha256": "c7ab720e23078b7b2ef75216ea35e210c407d0fee1395cdd471aff7dce0c7c81"
+    },
+    {
+      "path": "raw/resume-cua02-gui-prefix-down2.png",
+      "size_bytes": 19895,
+      "sha256": "5adff9f9e3ec3dea7fced0779e60dedaded1272ba2ea5cb48d907a3f3371d6c5"
+    },
+    {
+      "path": "raw/resume-cua02-gui-prefix-draft.png",
+      "size_bytes": 19896,
+      "sha256": "48c6a375708158528e31144b146513f2f76054645d2e836c70aca70f975b22b2"
+    },
+    {
+      "path": "raw/resume-cua02-gui-prefix-up1.png",
+      "size_bytes": 19943,
+      "sha256": "c7ab720e23078b7b2ef75216ea35e210c407d0fee1395cdd471aff7dce0c7c81"
+    },
+    {
+      "path": "raw/resume-cua02-gui-prefix-up2.png",
+      "size_bytes": 19932,
+      "sha256": "14ad87de399a3e35f0fb4f8987470f4d742a2eef8d4d325d78c81b2db20877d2"
+    },
+    {
+      "path": "raw/resume-cua02-gui-seed-a1-output.png",
+      "size_bytes": 16662,
+      "sha256": "f4151a36792766b8c08847356b24a6932015a51d46524b890ad08bc3e1cd29e5"
+    },
+    {
+      "path": "raw/resume-cua02-gui-seed-a2-output.png",
+      "size_bytes": 19296,
+      "sha256": "65df144ad2a727770671e66d37f0c9bc8c86d64516c23e5e023d256c65d3b187"
+    },
+    {
+      "path": "raw/resume-cua02-gui-seed-b-output.png",
+      "size_bytes": 17979,
+      "sha256": "ee1b6801260a63a51d1ecb3eaf18651fa84486a7ce2bcf7391227096efa47b20"
+    },
+    {
+      "path": "raw/resume-cua03-gui-after-undo.png",
+      "size_bytes": 16287,
+      "sha256": "1b33a76d1b24ce10489a8126d0c4047cb6bf3ae4fd7987dfa322b76589e0a95b"
+    },
+    {
+      "path": "raw/resume-cua03-gui-cursor-middle.png",
+      "size_bytes": 16287,
+      "sha256": "d2504f24d58f3c883049b69d1988bf2f2563b4f1bd024a4745d3cc4428ae3976"
+    },
+    {
+      "path": "raw/resume-cua03-gui-multiline-paste.png",
+      "size_bytes": 16617,
+      "sha256": "7818fb4a81322e298427f4e3f3b64e6fe710cd959d8ef76ac89e6f0d018f18e1"
+    },
+    {
+      "path": "raw/resume-cua03-gui-path-cleared.png",
+      "size_bytes": 19296,
+      "sha256": "cf088d1f7f24e2914d45823aace6c5075f5426d821e72f228a23164ed478fad9"
+    },
+    {
+      "path": "raw/resume-cua03-gui-path-cursor.png",
+      "size_bytes": 20231,
+      "sha256": "6def17af60cff15a4fd2a051fe84d654030f2c2fb7f376e4e7b813a1ca6c64ac"
+    },
+    {
+      "path": "raw/resume-cua03-gui-path-pasted.png",
+      "size_bytes": 21269,
+      "sha256": "cecff135e61a2a960c7cd2957156e3dcf719fb3317c99c082b12bbba6d38b774"
+    },
+    {
+      "path": "raw/resume-cua04-abc-escape.png",
+      "size_bytes": 54469,
+      "sha256": "a5b7bf8779969bc322ba81ce671ce280452fa3b8767de6399006276659d89d8e"
+    },
+    {
+      "path": "raw/resume-cua04-abc-insert.png",
+      "size_bytes": 54729,
+      "sha256": "95739915b9c05e90667ca71c8ea7c1419f09d280a87c742dd6721e8effca4a0f"
+    },
+    {
+      "path": "raw/resume-cua04-abc-zz.png",
+      "size_bytes": 64247,
+      "sha256": "b823c98c997b6cee5ec7233a68019c8dcba2d990efaef7faac250a82b528d1d9"
+    },
+    {
+      "path": "raw/resume-cua07-after-drag-finder.png",
+      "size_bytes": 14606,
+      "sha256": "67c4354223de24792b79040d6bb38d121b73af5fb957df4a93bd6fe6e59efcd5"
+    },
+    {
+      "path": "raw/resume-cua07-candidate-right-tile.png",
+      "size_bytes": 17333,
+      "sha256": "51221a191cc310c811784e277c496ba4468b09e7db950c1a9bc489fd2d49ebb0"
+    },
+    {
+      "path": "raw/resume-cua07-drop-to-input.png",
+      "size_bytes": 70190,
+      "sha256": "f11c99c6ba45b6858c359900c8a93c3a860367da0e829697a70a1ced9a3e2b2c"
+    },
+    {
+      "path": "raw/resume-cua07-finder-left-tile.png",
+      "size_bytes": 63896,
+      "sha256": "7dda68e8ad676b1ec32eb15321e59f436ad956adf51a52051e737d211aea4aa6"
+    },
+    {
+      "path": "raw/resume-cua07-finder-window-menu.txt",
+      "size_bytes": 1298,
+      "sha256": "309fdae2cec4d5777df983bafeb5543a4a4508d6ade0ef2048851a4d60156568"
+    },
+    {
+      "path": "raw/resume-cua07-fixtures-folder.png",
+      "size_bytes": 58114,
+      "sha256": "90049bd9be9bd470890f7a1d4465e54fc2f3ea62a575419cae0ea9c8814b0908"
+    },
+    {
+      "path": "raw/resume-cua08-context-menu.png",
+      "size_bytes": 67305,
+      "sha256": "7752bba7d2934ab85afa5c9d38d0f538fb826634cf0076009eb8b97197edad2c"
+    },
+    {
+      "path": "raw/resume-cua08-link-output.png",
+      "size_bytes": 56396,
+      "sha256": "593d9ece7248c62cd433ec7bcb4dd43c40ecd308470799105e84533ee687e590"
+    },
+    {
+      "path": "raw/resume-cua09-raised-clear.png",
+      "size_bytes": 70190,
+      "sha256": "f2cd1737d7509d8f091dbd7bdc3ef8bceaaa20a221ddd75cf633a42a4af8ee84"
+    },
+    {
+      "path": "raw/resume-cua09-raised-focused.png",
+      "size_bytes": 70194,
+      "sha256": "e2331863d894fb29d4221675729b0ab44287bfc2f678b60bef3a6ce259824aac"
+    },
+    {
+      "path": "raw/resume-cua09-raised-keyseq.png",
+      "size_bytes": 70470,
+      "sha256": "0ff4e943090da46a6b2e23e7a2ba925507d7f4fb2abe030c354403a457858879"
+    },
+    {
+      "path": "raw/resume-cua09-textedit-keyseq.png",
+      "size_bytes": 10673,
+      "sha256": "3faef16a1c469107538c946dcf7f2ff82457ebdec6fe36eb5ff35653675fa26c"
+    },
+    {
+      "path": "raw/resume-cua09-textedit-new-document.png",
+      "size_bytes": 8870,
+      "sha256": "5112c559923c127f9e84db1be11579952201addbe264ffe9b5d05cc68bfcb5cb"
+    },
+    {
+      "path": "raw/resume-cua10-terminal-tab.png",
+      "size_bytes": 59414,
+      "sha256": "d0254056ff8dcacbfe5772752873bee556788d19281e34075465f3f66275600a"
+    },
+    {
+      "path": "raw/resume-cua10-tui-exit.png",
+      "size_bytes": 67780,
+      "sha256": "f8c21e5a9f35532937c04e38f916d03c56a4fd84413946deb8489504f59474cc"
+    },
+    {
+      "path": "raw/resume-cua10-tui-open.png",
+      "size_bytes": 59393,
+      "sha256": "33f8401e5e77df96289d97ee85a16c3857ccf57b39493d7330fd7ef8161e25c1"
+    },
+    {
+      "path": "raw/resume-cua10-tui-pinyin-keys.png",
+      "size_bytes": 57331,
+      "sha256": "98e7dd9f5c9a2fa443f8dda0aa0fe7552762f5e47e0615354eaf009f4271d65e"
+    },
+    {
+      "path": "raw/resume-cua13-fixture-command.png",
+      "size_bytes": 23491,
+      "sha256": "f82d1fc64ce8025f896f1a0cb0ae46a4cec29698b0e8231f52e4bb1217fc9909"
+    },
+    {
+      "path": "raw/resume-cua13-fixture-output.png",
+      "size_bytes": 25714,
+      "sha256": "90f7eb8381815564fc2e30f2232163f8dbe97a50ab549600e2978e22472a00ca"
+    },
+    {
+      "path": "raw/resume-cua13-pre-rightclick-fresh.png",
+      "size_bytes": 26012,
+      "sha256": "7938fee84d6a1318448923aef08a457e42ae29e24686272f48269744a9d8143e"
+    },
+    {
+      "path": "raw/resume-cua13-valid-block-rightclick.png",
+      "size_bytes": 31682,
+      "sha256": "408b5a442f06e250bb5c379261b15f603dac5ef5c848c8f2585a9795b4659a3c"
+    },
+    {
+      "path": "raw/resume-cua14-scroll-down.png",
+      "size_bytes": 64498,
+      "sha256": "cd7ae3cdd47f31b17391c9128fb0e6b3c87fc3315184e55d52bbf007dfaeeeeb"
+    },
+    {
+      "path": "raw/resume-cua14-scroll-up.png",
+      "size_bytes": 61607,
+      "sha256": "3d43403ff5989c6e755a8dd4f2eaab6df0063d15cc2aab7d2c4ff5e927c9a52e"
+    },
+    {
+      "path": "raw/resume-cua17-after-restart-settings.png",
+      "size_bytes": 43621,
+      "sha256": "fe8cee500c355639b718bf3a7610e7b5c8a28548e7a5da332e4749ec122901ab"
+    },
+    {
+      "path": "raw/resume-cua17-blocks-menu.txt",
+      "size_bytes": 267,
+      "sha256": "5ef58d9ba1a924c1fd3ea00db153b696012c33276ade14eea29c6b1348d2fd4b"
+    },
+    {
+      "path": "raw/resume-cua17-customsize-values.png",
+      "size_bytes": 44330,
+      "sha256": "88f07c05ee5f5faff5125bd17454ba463a3e87cc879c26594d28b7f81f066a45"
+    },
+    {
+      "path": "raw/resume-cua17-settings-customsize-on.png",
+      "size_bytes": 33520,
+      "sha256": "8e15496b0856d6ae2af6be933539fe453217246d732ede92f79a6959ff8bb550"
+    },
+    {
+      "path": "raw/resume-cua17-settings-restored.png",
+      "size_bytes": 44607,
+      "sha256": "c72a629b7aa8dec93247b35089318bfe1d9fcc99b11ff79034f2ff0baab206b2"
+    },
+    {
+      "path": "raw/resume-cua17-settings-search.png",
+      "size_bytes": 32352,
+      "sha256": "64bd3c43e1461fba61760b7f10b9f7dc2edde55617dd8e258c9209baabfe7a8c"
+    },
+    {
+      "path": "raw/resume-cua18-after-ctrl-q.png",
+      "size_bytes": 67171,
+      "sha256": "55d46ccd30054e75d46971492aea2f06c8427fc481158f0731a339769ebae4f9"
+    },
+    {
+      "path": "raw/resume-cua18-tui-start.png",
+      "size_bytes": 68079,
+      "sha256": "cfa13a9f70c60ff99a2807d89b0a9173f9c5bfc44d9ac61206b4fff32e595928"
+    },
+    {
+      "path": "raw/resume-current-state.txt",
+      "size_bytes": 384,
+      "sha256": "d50374639822ef0e9b0c57306d6c415bbb34816788709a45ac40beb196651fb8"
+    },
+    {
+      "path": "raw/resume-current-window.png",
+      "size_bytes": 50932,
+      "sha256": "f2d277fdd035f2068d5a218b14f8a040fbd0524983e3f6b3fa99b4200ddfa958"
+    },
+    {
+      "path": "raw/resume-editor-action-types.txt",
+      "size_bytes": 511,
+      "sha256": "20e693e301a73d327b2d63c2fcda5f770e29775851a82edaac506efeb4d306a4"
+    },
+    {
+      "path": "raw/resume-gui-editor-probe.png",
+      "size_bytes": 15672,
+      "sha256": "c71559b85570630707a43d728eb6538b7b80fd4b10503af90a7df0811758afe3"
+    },
+    {
+      "path": "raw/root-independent-current.ax.txt",
+      "size_bytes": 384,
+      "sha256": "d50374639822ef0e9b0c57306d6c415bbb34816788709a45ac40beb196651fb8"
+    },
+    {
+      "path": "raw/root-independent-current.jpg",
+      "size_bytes": 34055,
+      "sha256": "a26218e049f996eff797a57e689505b50080580375caf74bb803199ad028f016"
+    },
+    {
+      "path": "raw/tui-protocol-receipt.json",
+      "size_bytes": 321,
+      "sha256": "ab776f2c47eb861caff1d8b7ad580255c04f83082d278783979f29c96ddf347e"
+    },
+    {
+      "path": "root-process-tree-initial.json",
+      "size_bytes": 540,
+      "sha256": "d423e77f12ca854eca416cb5e1cd30395a8ab93b370d7854ac6fd3de6a22a833"
+    },
+    {
+      "path": "viminfo-isolation-limitation.json",
+      "size_bytes": 294,
+      "sha256": "5a4fa7b7756f40993845431b550597c3883f0d22025073a907f7093796d51727"
+    }
+  ],
+  "cleanup": {
+    "final_candidate_pids": [
+      36250,
+      36251
+    ],
+    "final_process_check": "both absent on final ps check; loopback 31750 and TextEdit 35267 absent; no second termination signal was sent",
+    "input_source": "SCIM.ITABC restored and verified via defaults",
+    "lease": "held through final report/manifest update; released with keeper END_SESSION"
+  }
+}

@@ -12,7 +12,7 @@ use super::settings_page::{
     SettingsWidget, ToggleState, render_body_item,
 };
 use crate::appearance::Appearance;
-use crate::settings::{InputSettings, SelectionSettings};
+use crate::settings::{AppEditorSettings, InputSettings, SelectionSettings};
 use crate::terminal::general_settings::GeneralSettings;
 use crate::terminal::session_settings::{
     NotificationsMode, NotificationsSettings, SessionSettings,
@@ -23,6 +23,7 @@ use crate::workspace::ToastStack;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum FeaturesPageAction {
+    ToggleVimMode,
     ToggleRestoreSession,
     ToggleCopyOnSelect,
     ToggleConfirmCloseSession,
@@ -40,6 +41,7 @@ pub struct FeaturesPageView {
 
 impl FeaturesPageView {
     pub fn new(ctx: &mut ViewContext<Self>) -> Self {
+        ctx.subscribe_to_model(&AppEditorSettings::handle(ctx), |_, _, _, ctx| ctx.notify());
         ctx.subscribe_to_model(&GeneralSettings::handle(ctx), |_, _, _, ctx| ctx.notify());
         ctx.subscribe_to_model(&SelectionSettings::handle(ctx), |_, _, _, ctx| ctx.notify());
         ctx.subscribe_to_model(&SessionSettings::handle(ctx), |_, _, _, ctx| ctx.notify());
@@ -49,6 +51,7 @@ impl FeaturesPageView {
         Self {
             page: PageType::new_uncategorized(
                 vec![
+                    Box::new(VimModeWidget::default()),
                     Box::new(RestoreSessionWidget::default()),
                     Box::new(CopyOnSelectWidget::default()),
                     Box::new(ConfirmCloseSessionWidget::default()),
@@ -107,6 +110,11 @@ impl TypedActionView for FeaturesPageView {
 
     fn handle_action(&mut self, action: &Self::Action, ctx: &mut ViewContext<Self>) {
         match action {
+            FeaturesPageAction::ToggleVimMode => {
+                AppEditorSettings::handle(ctx).update(ctx, |settings, ctx| {
+                    report_if_error!(settings.vim_mode.toggle_and_save_value(ctx));
+                });
+            }
             FeaturesPageAction::ToggleRestoreSession => {
                 GeneralSettings::handle(ctx).update(ctx, |settings, ctx| {
                     report_if_error!(settings.restore_session.toggle_and_save_value(ctx));
@@ -239,6 +247,35 @@ fn render_switch(
             .finish(),
         Some(description.to_owned()),
     )
+}
+
+#[derive(Default)]
+struct VimModeWidget {
+    state: SwitchStateHandle,
+}
+
+impl SettingsWidget for VimModeWidget {
+    type View = FeaturesPageView;
+
+    fn search_terms(&self) -> &str {
+        "vim mode keybindings modal editing terminal input code"
+    }
+
+    fn render(
+        &self,
+        _: &Self::View,
+        appearance: &Appearance,
+        app: &AppContext,
+    ) -> Box<dyn Element> {
+        render_switch(
+            "Vim keybindings",
+            "Use Vim-style editing in terminal input and local editors.",
+            AppEditorSettings::as_ref(app).vim_mode_enabled(),
+            self.state.clone(),
+            FeaturesPageAction::ToggleVimMode,
+            appearance,
+        )
+    }
 }
 
 #[derive(Default)]

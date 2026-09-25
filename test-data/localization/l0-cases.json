@@ -1,0 +1,3266 @@
+{
+  "schema_version": 1,
+  "design": "docs/DESIGN.md#implementation",
+  "source_audit_base": "2a6026f9a34fcd61dbcf2cd487ee744c2247cd25",
+  "delivered_output_commit": "abd94627476f6d68518de2c4bd37b8653b869fc6",
+  "purpose": "Executable test routing; requirements/status authority remains docs/DESIGN.md. Related references do not prove full scenario coverage.",
+  "global_preconditions": [
+    "Run validate before any case. Resolve exact nextest test IDs from actual inventories; no zero-match success.",
+    "Freeze source/tree/diff, build hash, resources, profile, bundle ID, GUI PID and process ancestry.",
+    "One test agent per login desktop for the full session; use serial-lock across all profiles/models.",
+    "No user credentials, real clipboard, live DB or unrelated processes. Use synthetic fixtures and isolated copies.",
+    "Permission changes require explicit user approval; without it mark BLOCKED.",
+    "Capture each step outcome and actual machine oracle. Missing/ambiguous evidence is INCOMPLETE, never PASS."
+  ],
+  "cases": [
+    {
+      "id": "L0-01-T01",
+      "scenario": "Up/Up/Down/Down",
+      "required_result": "候选顺序正确；草稿和原光标完全恢复",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [
+          {
+            "path": "app/src/terminal/input_local_tests.rs",
+            "function": "history_navigation_restores_the_draft_and_original_cursor",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          },
+          {
+            "path": "app/src/terminal/input_local_tests.rs",
+            "function": "l0_01_history_keeps_the_latest_duplicate_without_losing_chronology",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          }
+        ],
+        "additional_assertions": [
+          "注入时间戳 [A@1,B@2,A@3] 和草稿“中🙂尾”；实发 Up×2/Down×2，核对顺序、文本、光标及 ExecuteCommand=0。"
+        ],
+        "mapping_status": "PARTIAL"
+      },
+      "serial_workflows": [
+        "CUA-02"
+      ],
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "L0-01-T02",
+      "scenario": "Unicode 前缀、无匹配、非空选区",
+      "required_result": "不破坏 UTF-8/选择区；无匹配无变化",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [
+          {
+            "path": "app/src/terminal/input_local_tests.rs",
+            "function": "history_does_not_replace_a_selected_range",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          }
+        ],
+        "additional_assertions": [
+          "分别传入 Unicode 前缀、无匹配前缀和非空选区；比较缓冲区、选择起止和撤销栈。"
+        ],
+        "mapping_status": "PARTIAL"
+      },
+      "serial_workflows": [
+        "CUA-02"
+      ],
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "L0-01-T03",
+      "scenario": "多行首/中/末行与软换行真实按键",
+      "required_result": "只在规定边界进入历史；其他情况只移动光标",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [
+          {
+            "path": "app/src/terminal/local_interaction_tests.rs",
+            "function": "multiline_vertical_navigation_stays_inside_the_editor",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          }
+        ],
+        "additional_assertions": [
+          "用真实字形布局 fixture 覆盖显式换行/软换行首中末行、Vim insert/normal；从按键入口断言光标与 NavigateHistory 次数。"
+        ],
+        "mapping_status": "PARTIAL"
+      },
+      "serial_workflows": [
+        "CUA-02"
+      ],
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "L0-01-T04",
+      "scenario": "会话 A 回看后切换 B",
+      "required_result": "不复用 A 的遍历状态；ShellHost/会话策略正确",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [
+          {
+            "path": "app/src/terminal/input_local_tests.rs",
+            "function": "changing_sessions_does_not_reuse_another_sessions_history",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          },
+          {
+            "path": "app/src/workspace/view_tests.rs",
+            "function": "l0_01_history_result_does_not_follow_a_tab_switch",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          }
+        ],
+        "additional_assertions": [
+          "为同 ShellHost 的两个会话及不同 host 建立独立历史；A 遍历后切 B，再回 A，核对会话规则及草稿。"
+        ],
+        "mapping_status": "PARTIAL"
+      },
+      "serial_workflows": [
+        "CUA-02"
+      ],
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "L0-01-T05",
+      "scenario": "编辑历史结果，再 Down/Up",
+      "required_result": "不恢复已废弃的旧遍历状态",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [
+          {
+            "path": "app/src/terminal/input_local_tests.rs",
+            "function": "editing_a_history_result_starts_a_new_traversal",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          },
+          {
+            "path": "app/src/workspace/view_tests.rs",
+            "function": "l0_01_history_result_rejects_a_changed_then_restored_draft",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          }
+        ],
+        "additional_assertions": [
+          "回看后修改再恢复同文本，修订号仍应变化；Down/Up 不使用旧遍历游标。"
+        ],
+        "mapping_status": "PARTIAL"
+      },
+      "serial_workflows": [
+        "CUA-02"
+      ],
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "L0-01-T06",
+      "scenario": "历史异步加载期间执行命令",
+      "required_result": "新命令不丢失、不重复、不被旧数据覆盖",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [
+          {
+            "path": "app/src/search/command_search/view_tests.rs",
+            "function": "l0_01_history_loading_refreshes_the_current_search_query",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          }
+        ],
+        "additional_assertions": [
+          "用可控 barrier 阻塞 History 初始化，中间执行新命令，再释放加载；时间顺序正确且每条命令仅一次。"
+        ],
+        "mapping_status": "PARTIAL"
+      },
+      "serial_workflows": [
+        "CUA-02"
+      ],
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "L0-01-T07",
+      "scenario": "请求补全→开始历史回看→旧结果返回",
+      "required_result": "旧结果被丢弃；草稿不被覆盖",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [
+          {
+            "path": "app/src/terminal/input_local_tests.rs",
+            "function": "l0_01_programmatic_draft_changes_invalidate_async_results_synchronously",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          }
+        ],
+        "additional_assertions": [
+          "依次在补全请求后历史导航、失焦、切会话和改目录，释放旧 future；文本、光标、弹窗均不得复活。"
+        ],
+        "mapping_status": "PARTIAL"
+      },
+      "serial_workflows": [
+        "CUA-02"
+      ],
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "L0-01-T08",
+      "scenario": "搜索→选择/取消；Tab 候选循环",
+      "required_result": "选择只填回；取消恢复；补全保留后缀",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [
+          {
+            "path": "app/src/workspace/view_tests.rs",
+            "function": "l0_01_history_accept_fills_origin_without_execution_and_cancel_keeps_cursor",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          },
+          {
+            "path": "app/src/workspace/view_tests.rs",
+            "function": "l0_01_cancelled_search_accepts_text_before_the_next_frame",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          },
+          {
+            "path": "app/src/workspace/view_tests.rs",
+            "function": "l0_01_ctrl_r_is_not_captured_by_history_in_a_native_program",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          },
+          {
+            "path": "app/src/workspace/view_tests.rs",
+            "function": "l0_01_editor_focus_selects_its_split_terminal",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          }
+        ],
+        "additional_assertions": [
+          "按 Ctrl-R→Enter/取消及 Tab 循环发真实按键；核对 origin、suffix、执行计数；原生程序 Ctrl-R 只进入 PTY。"
+        ],
+        "mapping_status": "PARTIAL"
+      },
+      "serial_workflows": [
+        "CUA-02"
+      ],
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "L0-02-T01",
+      "scenario": "光标中部 Unicode/多行 paste",
+      "required_result": "选区、后缀正确；一次 Undo 恢复",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [
+          {
+            "path": "app/src/terminal/input_local_tests.rs",
+            "function": "inserting_at_a_cursor_preserves_the_suffix_and_undo",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          },
+          {
+            "path": "app/src/terminal/input_local_tests.rs",
+            "function": "insertion_replaces_the_selected_range_without_submitting",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          }
+        ],
+        "additional_assertions": [
+          "中部光标与跨字符选区分别 paste“中🙂\n第二行”，一次 Undo 精确恢复文本和选择；执行计数保持零。"
+        ],
+        "mapping_status": "PARTIAL"
+      },
+      "serial_workflows": [
+        "CUA-03"
+      ],
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "L0-02-T02",
+      "scenario": "输入带文件样式但实际纯文本",
+      "required_result": "不错误 shell escape",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [
+          {
+            "path": "app/src/terminal/view/local_io_tests.rs",
+            "function": "l0_02_paste_plan_preserves_editor_text_and_rejects_native_control_injection",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          }
+        ],
+        "additional_assertions": [
+          "ClipboardContent 的 plain_text 为路径样式但 paths=None；内容字节原样插入；paths=Some 才 shell escape。"
+        ],
+        "mapping_status": "PARTIAL"
+      },
+      "serial_workflows": [
+        "CUA-03"
+      ],
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "L0-02-T03",
+      "scenario": "bracketed mode on",
+      "required_result": "精确字节 `200~ + payload + 201~`，仅一组",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [
+          {
+            "path": "app/src/terminal/view/local_io_tests.rs",
+            "function": "l0_02_native_paste_uses_parsed_mode_and_a_real_raw_pty",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          }
+        ],
+        "additional_assertions": [
+          "从 ANSI 开启 bracketed mode，经 Paste 动作送真实 raw PTY；捕获仅一对 ESC[200~/201~，含 CR/LF/CJK。"
+        ],
+        "mapping_status": "PARTIAL"
+      },
+      "serial_workflows": [
+        "CUA-04"
+      ],
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "L0-02-T04",
+      "scenario": "mode off、普通单行",
+      "required_result": "无标记、不额外追加换行",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [
+          {
+            "path": "app/src/terminal/view/local_io_tests.rs",
+            "function": "l0_02_paste_plan_preserves_editor_text_and_rejects_native_control_injection",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          }
+        ],
+        "additional_assertions": [
+          "ANSI 关闭 bracketed mode，粘贴不带 LF 的中文单行；捕获精确 payload，不含标记和附加换行。"
+        ],
+        "mapping_status": "PARTIAL"
+      },
+      "serial_workflows": [
+        "CUA-04"
+      ],
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "L0-02-T05",
+      "scenario": "mode off、多行确认/取消",
+      "required_result": "取消零 PTY 写；确认仅原定 payload",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [
+          {
+            "path": "app/src/terminal/view/local_io_tests.rs",
+            "function": "l0_02_multiline_confirmation_cancels_and_rejects_stale_requests",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          }
+        ],
+        "additional_assertions": [
+          "确认框 Cancel/默认 Return/显式 Paste 分开；前两者零字节，确认一个 payload；不能直接调用 writer 代替动作。"
+        ],
+        "mapping_status": "PARTIAL"
+      },
+      "serial_workflows": [
+        "CUA-04"
+      ],
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "L0-02-T06",
+      "scenario": "ESC/NUL/嵌入终止序列",
+      "required_result": "默认不写；无静默截断/隐藏改写",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [
+          {
+            "path": "app/src/terminal/view/local_io_tests.rs",
+            "function": "l0_02_paste_plan_preserves_editor_text_and_rejects_native_control_injection",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          }
+        ],
+        "additional_assertions": [
+          "参数化 ESC、NUL、BEL、DEL、嵌入 bracket terminator；除允许的 TAB/CR/LF 外拒绝并保留原输入。"
+        ],
+        "mapping_status": "PARTIAL"
+      },
+      "serial_workflows": [
+        "CUA-04"
+      ],
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "L0-02-T07",
+      "scenario": "空内容、mode 在确认前变化、session 重建",
+      "required_result": "空内容零写；过期请求取消，不能发到新 session",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [
+          {
+            "path": "app/src/terminal/view/local_io_tests.rs",
+            "function": "l0_02_parsed_mode_changes_invalidate_a_pending_confirmation",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          }
+        ],
+        "additional_assertions": [
+          "空内容、超 1 MiB、确认前模式/会话/焦点变化；无写入且旧确认不能发送给新目标。"
+        ],
+        "mapping_status": "PARTIAL"
+      },
+      "serial_workflows": [
+        "CUA-04"
+      ],
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "L0-02-T08",
+      "scenario": "paste 同时发生输入/第二次 paste",
+      "required_result": "写队列保持事务边界和次序",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [
+          {
+            "path": "crates/warp_terminal/src/local_tty/event_loop_tests.rs",
+            "function": "l0_07_clipboard_reply_order_and_debug_redaction_are_preserved",
+            "package": "warp_terminal",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          }
+        ],
+        "additional_assertions": [
+          "可控部分 writer 排队 paste A、键入 B、paste C；核对各整组标记的 FIFO 与无交错，不能用 OSC 回复顺序测试替代 paste 测试。"
+        ],
+        "mapping_status": "PARTIAL"
+      },
+      "serial_workflows": [
+        "CUA-04"
+      ],
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "L0-03-T01",
+      "scenario": "一行→多行→Undo",
+      "required_result": "输入增高/回缩，输出区尺寸随之变化",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [],
+        "additional_assertions": [
+          "Presenter 布局从一行改三行再 Undo，检查编辑器高度、输出高度、PTY rows 通知，禁止只看 options 值。"
+        ],
+        "mapping_status": "UNMAPPED"
+      },
+      "serial_workflows": [
+        "CUA-05"
+      ],
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "L0-03-T02",
+      "scenario": "长英文/CJK/emoji，窄 pane",
+      "required_result": "软换行与光标位置一致，没有截断/越界",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [
+          {
+            "path": "app/src/editor/view/marked_text_tests.rs",
+            "function": "l0_07_marked_caret_maps_selection_across_newlines_and_emoji",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          }
+        ],
+        "additional_assertions": [
+          "固定宽度 20/80/120 列，ASCII/CJK/emoji/组合重音分别换行，核对 caret 与显示行及 selection 映射。"
+        ],
+        "mapping_status": "PARTIAL"
+      },
+      "serial_workflows": [
+        "CUA-05",
+        "CUA-09"
+      ],
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "L0-03-T03",
+      "scenario": "字号/行高动态修改、重启",
+      "required_result": "当场生效且持久化；相同尺寸不重复 resize",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [],
+        "additional_assertions": [
+          "通过设置 action 修改字体和行高，监听实际 Resize；同尺寸不重复通知，隔离设置序列化/重启恢复。"
+        ],
+        "mapping_status": "UNMAPPED"
+      },
+      "serial_workflows": [
+        "CUA-05"
+      ],
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "L0-03-T04",
+      "scenario": "Vim insert/normal，上下键",
+      "required_result": "普通导航不误入历史，键盘行为与编辑模式一致",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [],
+        "additional_assertions": [
+          "Vim normal/insert 模式各发 Up/Down/Home/End，非边界不触发历史；保留撤销和草稿。"
+        ],
+        "mapping_status": "UNMAPPED"
+      },
+      "serial_workflows": [
+        "CUA-05"
+      ],
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "L0-03-T05",
+      "scenario": "光标形状/闪烁、焦点 A→B",
+      "required_result": "只有实际焦点拥有者按设置显示活动光标",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [
+          {
+            "path": "app/src/terminal/view/local_io_tests.rs",
+            "function": "l0_07_cursor_blink_respects_setting_focus_and_parsed_modes",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          },
+          {
+            "path": "app/src/terminal/view/local_io_tests.rs",
+            "function": "l0_07_native_cursor_repaint_timer_alternates_scene_visibility",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          }
+        ],
+        "additional_assertions": [
+          "前台/后台窗口×活动/非活动 pane×隐藏/稳定/闪烁光标，注入时钟核对实际 Scene 和重绘上限。"
+        ],
+        "mapping_status": "PARTIAL"
+      },
+      "serial_workflows": [
+        "CUA-05",
+        "CUA-12"
+      ],
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "L0-03-T06",
+      "scenario": "PS1 与所有保留输入定位模式",
+      "required_result": "提示符、菜单和编辑器位置正确，设置不是空操作",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [
+          {
+            "path": "app/src/terminal/local_view_tests.rs",
+            "function": "prompt_tracks_directory_branch_and_leaving_a_repository",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          }
+        ],
+        "additional_assertions": [
+          "枚举当前实际注册的 PS1/输入定位选项，逐项 action→真实布局断言，不能以固定一模式覆盖全部。"
+        ],
+        "mapping_status": "PARTIAL"
+      },
+      "serial_workflows": [
+        "CUA-05"
+      ],
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "L0-04-T01",
+      "scenario": "打开→Esc",
+      "required_result": "菜单关闭；草稿不变；返回原合法目标",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [
+          {
+            "path": "app/src/terminal/local_interaction_tests.rs",
+            "function": "escape_closes_the_context_menu_and_restores_input_focus",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          }
+        ],
+        "additional_assertions": [
+          "菜单经真实右键打开再 Esc，排空 queued focus 后核对原目标/草稿；随后未重绘直接键入字符仍成功。"
+        ],
+        "mapping_status": "PARTIAL"
+      },
+      "serial_workflows": [
+        "CUA-06"
+      ],
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "L0-04-T02",
+      "scenario": "打开 Copy command→Enter",
+      "required_result": "仅复制；ExecuteCommand 计数为 0",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [
+          {
+            "path": "app/src/terminal/local_interaction_tests.rs",
+            "function": "menu_enter_runs_the_menu_action_not_the_draft_command",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          },
+          {
+            "path": "app/src/terminal/local_view_tests.rs",
+            "function": "block_menu_copies_command_output_and_both",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          }
+        ],
+        "additional_assertions": [
+          "真实按键选 Copy command 再 Enter，fake clipboard 恰好一次、ExecuteCommand=0。"
+        ],
+        "mapping_status": "PARTIAL"
+      },
+      "serial_workflows": [
+        "CUA-06"
+      ],
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "L0-04-T03",
+      "scenario": "菜单 Find→Enter",
+      "required_result": "Find 保持焦点；关闭菜单不抢回",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [
+          {
+            "path": "app/src/terminal/local_interaction_tests.rs",
+            "function": "closing_the_menu_does_not_take_focus_back_from_find",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          }
+        ],
+        "additional_assertions": [
+          "选 Find 再 Enter 并排空所有 deferred action，Find 是最后焦点所有者且查询可输入。"
+        ],
+        "mapping_status": "PARTIAL"
+      },
+      "serial_workflows": [
+        "CUA-06"
+      ],
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "L0-04-T04",
+      "scenario": "菜单/Find 打开时命令完成/补全返回",
+      "required_result": "焦点不变",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [
+          {
+            "path": "app/src/workspace/view_tests.rs",
+            "function": "l0_01_cancelled_search_accepts_text_before_the_next_frame",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          }
+        ],
+        "additional_assertions": [
+          "菜单和 Find 分别打开时释放命令完成/补全 barrier，核对 focused_view_id 保持。"
+        ],
+        "mapping_status": "PARTIAL"
+      },
+      "serial_workflows": [
+        "CUA-06"
+      ],
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "L0-04-T05",
+      "scenario": "菜单打开→点另一个 pane→关闭旧菜单",
+      "required_result": "另一 pane 保持焦点",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [],
+        "additional_assertions": [
+          "打开 A 菜单，平台点击 B 后关闭 A 菜单；旧 generation 不得夺回 B 焦点。"
+        ],
+        "mapping_status": "UNMAPPED"
+      },
+      "serial_workflows": [
+        "CUA-06"
+      ],
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "L0-04-T06",
+      "scenario": "禁用项、无选中项、目标 pane 关闭",
+      "required_result": "不执行草稿；无悬空引用；无 panic",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [
+          {
+            "path": "app/src/terminal/local_view_tests.rs",
+            "function": "copy_entries_are_disabled_without_a_selection_or_block_text",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          }
+        ],
+        "additional_assertions": [
+          "禁用/无选择/销毁 pane/销毁窗口各一路，Enter 不执行命令，弱引用失败安全返回。"
+        ],
+        "mapping_status": "PARTIAL"
+      },
+      "serial_workflows": [
+        "CUA-06"
+      ],
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "L0-04-T07",
+      "scenario": "菜单上下键、鼠标选择、外部点击",
+      "required_result": "路由正确；原有六个鼠标测试继续通过",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [
+          {
+            "path": "app/src/terminal/local_view_tests.rs",
+            "function": "right_clicking_a_block_opens_a_menu_with_local_entries_only",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          },
+          {
+            "path": "app/src/terminal/local_view_tests.rs",
+            "function": "right_mouse_down_opens_the_menu_anywhere_in_the_transcript",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          }
+        ],
+        "additional_assertions": [
+          "实发菜单 Up/Down、鼠标选择和外部点击；与原 local_view_tests 全集一起跑。"
+        ],
+        "mapping_status": "PARTIAL"
+      },
+      "serial_workflows": [
+        "CUA-06"
+      ],
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "L0-05-T01",
+      "scenario": "OS DragFiles→DragExit",
+      "required_result": "反馈出现/清除；输入和 PTY 均无副作用",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [
+          {
+            "path": "app/src/terminal/view/local_io_tests.rs",
+            "function": "l0_05_platform_drop_hits_input_and_output_once_but_not_outside",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          }
+        ],
+        "additional_assertions": [
+          "平台 DragFiles/DragExit 经过 Presenter，反馈变化但 PTY/草稿零副作用。"
+        ],
+        "mapping_status": "PARTIAL"
+      },
+      "serial_workflows": [
+        "CUA-07"
+      ],
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "L0-05-T02",
+      "scenario": "输出/输入区与区域边缘投递",
+      "required_result": "每个合法区域恰好插入一次",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [
+          {
+            "path": "app/src/terminal/view/local_io_tests.rs",
+            "function": "l0_05_platform_drop_hits_input_and_output_once_but_not_outside",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          }
+        ],
+        "additional_assertions": [
+          "半开 bounds 的四边内外及输入/输出区投递，多层事件只产生一次插入。"
+        ],
+        "mapping_status": "PARTIAL"
+      },
+      "serial_workflows": [
+        "CUA-07"
+      ],
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "L0-05-T03",
+      "scenario": "A/B pane，先经过 A 后投到 B",
+      "required_result": "A 不吞事件、不插入；只有 B 收到",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [],
+        "additional_assertions": [
+          "两个真实 pane 布局：hover A 后 drop B，A 反馈清理且不吞冒泡，B 恰好一次。"
+        ],
+        "mapping_status": "UNMAPPED"
+      },
+      "serial_workflows": [
+        "CUA-07"
+      ],
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "L0-05-T04",
+      "scenario": "空格、单引号、双引号、CJK、换行路径",
+      "required_result": "按 shell 得到原路径；不产生额外命令",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [
+          {
+            "path": "app/src/terminal/local_interaction_tests.rs",
+            "function": "dropping_paths_inserts_into_the_draft_without_running_it",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          }
+        ],
+        "additional_assertions": [
+          "合成五种特殊路径，在 zsh/bash/fish 受控 shell 解析到 argv 文件；逐字节匹配原名且无额外命令。"
+        ],
+        "mapping_status": "PARTIAL"
+      },
+      "serial_workflows": [
+        "CUA-07"
+      ],
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "L0-05-T05",
+      "scenario": "原生程序、bracketed mode on/off",
+      "required_result": "复用 paste 字节策略，不额外执行",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [
+          {
+            "path": "app/src/terminal/view/local_io_tests.rs",
+            "function": "l0_02_native_paste_uses_parsed_mode_and_a_real_raw_pty",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          }
+        ],
+        "additional_assertions": [
+          "原生程序 on/off bracketed 两模式投递文件列表，走同一 paste planner；模式关闭多行确认不得自动执行。"
+        ],
+        "mapping_status": "PARTIAL"
+      },
+      "serial_workflows": [
+        "CUA-04"
+      ],
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "L0-05-T06",
+      "scenario": "非文件载荷、空列表、无法无损表示的路径",
+      "required_result": "拒绝/忽略有明确定义，不污染草稿",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [
+          {
+            "path": "app/src/terminal/view/local_io_tests.rs",
+            "function": "l0_05_non_utf8_drop_is_atomic_and_never_lossy",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          }
+        ],
+        "additional_assertions": [
+          "非文件、空列表、非法 UTF-8 混在合法项中，原子拒绝且不会插入合法项前缀。"
+        ],
+        "mapping_status": "PARTIAL"
+      },
+      "serial_workflows": [
+        "CUA-07"
+      ],
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "L0-05-T07",
+      "scenario": "投递前关闭 pane/切换 session",
+      "required_result": "过期请求无效果，无 panic",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [],
+        "additional_assertions": [
+          "平台 hover 后关闭 pane/切会话再投递；明确只对当前实际 hit target 路由，排队旧请求失效。"
+        ],
+        "mapping_status": "UNMAPPED"
+      },
+      "serial_workflows": [
+        "CUA-07"
+      ],
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "L0-06-T01",
+      "scenario": "URL hover、普通点击、Cmd-click",
+      "required_result": "hover 0 次打开；只有规定动作 1 次",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [
+          {
+            "path": "app/src/terminal/view/link_detection_tests.rs",
+            "function": "l0_06_url_hover_and_plain_click_do_not_open_but_cmd_click_opens_once",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          }
+        ],
+        "additional_assertions": [
+          "fake opener 统计 hover/普通 click/Cmd-click/提示 click：0/0/1/1；只有用户动作开放外部副作用。"
+        ],
+        "mapping_status": "PARTIAL"
+      },
+      "serial_workflows": [
+        "CUA-08"
+      ],
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "L0-06-T02",
+      "scenario": "OSC 8 显示文本和 target 不同",
+      "required_result": "使用真实 target；提示可见真实目标",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [
+          {
+            "path": "app/src/terminal/view/link_detection_tests.rs",
+            "function": "l0_06_osc8_uses_true_target_and_rejects_dangerous_schemes",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          }
+        ],
+        "additional_assertions": [
+          "显示 benign 文字但 OSC8 target 不同，tooltip 和 opener 均为真实目标；危险 scheme 拒绝。"
+        ],
+        "mapping_status": "PARTIAL"
+      },
+      "serial_workflows": [
+        "CUA-08"
+      ],
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "L0-06-T03",
+      "scenario": "file:line:column、含空格相对路径、旧 cwd",
+      "required_result": "正确 FileTarget 与行列；不错误绑定新 cwd",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [
+          {
+            "path": "app/src/terminal/view/link_detection_tests.rs",
+            "function": "l0_06_file_open_uses_historical_cwd_spaces_and_line_column",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          },
+          {
+            "path": "app/src/terminal/view/link_detection_tests.rs",
+            "function": "l0_06_file_link_converts_one_based_column_for_builtin_editor",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          },
+          {
+            "path": "app/src/terminal/view/link_detection_tests.rs",
+            "function": "l0_06_snapshot_preserves_known_local_remote_and_unknown_origins",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          }
+        ],
+        "additional_assertions": [
+          "合成“目录 空格/中文.txt:7:3”，旧 block cwd 与新 cwd 不同；内置零基列/外置一基列正确且原文件不变。"
+        ],
+        "mapping_status": "PARTIAL"
+      },
+      "serial_workflows": [
+        "CUA-08"
+      ],
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "L0-06-T04",
+      "scenario": "拖选 URL 后抬鼠标",
+      "required_result": "不打开链接，选区保持",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [
+          {
+            "path": "app/src/terminal/view/link_detection_tests.rs",
+            "function": "l0_06_dragging_suppresses_link_activation",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          },
+          {
+            "path": "app/src/terminal/view/link_detection_tests.rs",
+            "function": "l0_06_transcript_platform_mouse_hover_click_and_drag",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          }
+        ],
+        "additional_assertions": [
+          "同一帧 drag begin/update/end，链接 opener=0 且选区文本一致；普通与 alt 两路径。"
+        ],
+        "mapping_status": "PARTIAL"
+      },
+      "serial_workflows": [
+        "CUA-08"
+      ],
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "L0-06-T05",
+      "scenario": "危险 scheme、缺文件、不可定位远端路径",
+      "required_result": "拒绝/提示，0 shell 执行和 0 外部请求",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [
+          {
+            "path": "app/src/terminal/view/link_detection_tests.rs",
+            "function": "l0_06_remote_file_output_never_starts_a_local_file_scan",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          },
+          {
+            "path": "app/src/terminal/view/link_detection_tests.rs",
+            "function": "l0_06_file_scan_is_cancelled_when_pointer_leaves",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          }
+        ],
+        "additional_assertions": [
+          "不支持 scheme/缺文件/远端未知 origin，fake opener/shell/网络计数均零；错误提示不泄漏正文。"
+        ],
+        "mapping_status": "PARTIAL"
+      },
+      "serial_workflows": [
+        "CUA-08"
+      ],
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "L0-06-T06",
+      "scenario": "block 删除/重排、resize、切换 session",
+      "required_result": "不用旧坐标打开另一个链接",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [
+          {
+            "path": "app/src/terminal/view/link_detection_tests.rs",
+            "function": "l0_06_pending_tooltip_cannot_open_replaced_output_or_session",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          }
+        ],
+        "additional_assertions": [
+          "后台文件检测尚未返回时删除/重排 block、resize、换会话，再释放 future；旧结果不得打开新坐标目标。"
+        ],
+        "mapping_status": "PARTIAL"
+      },
+      "serial_workflows": [
+        "CUA-08"
+      ],
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "L0-06-T07",
+      "scenario": "alt-screen 与普通 block 各重复测试",
+      "required_result": "两条渲染路径都可用；鼠标报告程序不被误截获",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [
+          {
+            "path": "app/src/terminal/view/link_detection_tests.rs",
+            "function": "l0_06_alt_screen_platform_mouse_hover_click_and_drag",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          },
+          {
+            "path": "app/src/terminal/view/local_io_tests.rs",
+            "function": "l0_08_alt_screen_mouse_reporting_uses_live_session_state",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          }
+        ],
+        "additional_assertions": [
+          "普通/alt×mouse reporting on/off×Shift/Cmd 修饰键矩阵；宿主选择与程序鼠标报告不得双重消费。"
+        ],
+        "mapping_status": "PARTIAL"
+      },
+      "serial_workflows": [
+        "CUA-08"
+      ],
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "L0-07-T01",
+      "scenario": "IME 多次更新→commit",
+      "required_result": "更新期 PTY 0 字节，最终文本恰好 1 次",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [
+          {
+            "path": "app/src/terminal/view/local_io_tests.rs",
+            "function": "l0_07_ime_platform_composition_commits_once_and_cancels_without_bytes",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          }
+        ],
+        "additional_assertions": [
+          "平台 SetMarkedText 更新三次但 PTY 0 字节，TypedCharacters 提交一份中文；普通/alt/editor 三路。"
+        ],
+        "mapping_status": "PARTIAL"
+      },
+      "serial_workflows": [
+        "CUA-09",
+        "CUA-10"
+      ],
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "L0-07-T02",
+      "scenario": "IME cancel、候选 Enter/Esc",
+      "required_result": "不误提交命令，不重复写入",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [
+          {
+            "path": "app/src/terminal/view/local_io_tests.rs",
+            "function": "l0_07_ime_platform_composition_commits_once_and_cancels_without_bytes",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          }
+        ],
+        "additional_assertions": [
+          "组合更新后 Esc 取消，或候选 Enter 仅确认文本；ExecuteCommand=0，取消后无新增字节。"
+        ],
+        "mapping_status": "PARTIAL"
+      },
+      "serial_workflows": [
+        "CUA-09",
+        "CUA-10"
+      ],
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "L0-07-T03",
+      "scenario": "中文、组合重音、emoji、跨 pane",
+      "required_result": "字符/光标范围正确，组合不串 pane",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [
+          {
+            "path": "crates/warpui/src/platform/mac/window_tests.rs",
+            "function": "l0_07_marked_selection_converts_utf16_to_character_offsets",
+            "package": "warpui",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          },
+          {
+            "path": "crates/warpui/src/platform/mac/window_tests.rs",
+            "function": "l0_07_marked_selection_clamps_without_splitting_surrogates",
+            "package": "warpui",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          },
+          {
+            "path": "app/src/editor/view/marked_text_tests.rs",
+            "function": "l0_07_marked_caret_controls_horizontal_and_vertical_autoscroll",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          }
+        ],
+        "additional_assertions": [
+          "UTF-16 surrogate、组合重音、跨行 caret 和 pane A→B 事件绑定；比较字符索引、选区、当前帧 anchor。"
+        ],
+        "mapping_status": "PARTIAL"
+      },
+      "serial_workflows": [
+        "CUA-09",
+        "CUA-10"
+      ],
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "L0-07-T04",
+      "scenario": "OSC write 允许/拒绝",
+      "required_result": "fake clipboard 只在允许时修改",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [
+          {
+            "path": "app/src/settings_view/privacy_page_tests.rs",
+            "function": "l0_07_privacy_setting_action_controls_the_actual_osc_consumer",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          }
+        ],
+        "additional_assertions": [
+          "从 OSC52 ANSI 字节触发 Deny/WriteOnly/ReadWrite；fake clipboard 修改次数 0/1/1。"
+        ],
+        "mapping_status": "PARTIAL"
+      },
+      "serial_workflows": [
+        "CUA-11"
+      ],
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "L0-07-T05",
+      "scenario": "OSC read 允许/拒绝/无交互能力",
+      "required_result": "未授权不读取 clipboard，不泄漏内容",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [
+          {
+            "path": "app/src/terminal/view/local_io_tests.rs",
+            "function": "l0_07_osc52_parser_obeys_separate_read_write_policy_and_exact_response",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          },
+          {
+            "path": "app/src/settings_view/privacy_page_tests.rs",
+            "function": "l0_07_permission_actions_keep_read_and_write_separate",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          }
+        ],
+        "additional_assertions": [
+          "同三权限读取，Deny/WriteOnly 禁止调用 clipboard.read；ReadWrite 精确编码回复，TUI 默认不透传。"
+        ],
+        "mapping_status": "PARTIAL"
+      },
+      "serial_workflows": [
+        "CUA-11"
+      ],
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "L0-07-T06",
+      "scenario": "授权前 session 退出/重建",
+      "required_result": "旧响应不写新 PTY",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [
+          {
+            "path": "app/src/terminal/view/local_io_tests.rs",
+            "function": "l0_07_reset_discards_queued_clipboard_reads_and_writes",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          },
+          {
+            "path": "crates/warp_terminal/src/local_tty/event_loop_tests.rs",
+            "function": "l0_07_stale_clipboard_response_never_reaches_the_writer",
+            "package": "warp_terminal",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          },
+          {
+            "path": "crates/warp_terminal/src/local_tty/event_loop_tests.rs",
+            "function": "l0_07_epoch_change_discards_the_remainder_of_a_partial_clipboard_write",
+            "package": "warp_terminal",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          },
+          {
+            "path": "app/src/terminal/view/local_io_tests.rs",
+            "function": "l0_07_revoking_permission_invalidates_an_already_encoded_reply",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          }
+        ],
+        "additional_assertions": [
+          "排队/已编码/部分写入三个阶段分别退出/重建/撤权；剩余回复失效且普通输入继续 FIFO。"
+        ],
+        "mapping_status": "PARTIAL"
+      },
+      "serial_workflows": [
+        "CUA-11"
+      ],
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "L0-07-T07",
+      "scenario": "OSC 无效编码、超限、分段、不同终止符",
+      "required_result": "有界内存、正确拒绝/组帧，不阻塞后续输出",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [
+          {
+            "path": "crates/warp_terminal/src/model/ansi/mod_tests.rs",
+            "function": "l0_07_osc52_streaming_preserves_selection_and_terminators",
+            "package": "warp_terminal",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          },
+          {
+            "path": "crates/warp_terminal/src/model/ansi/mod_tests.rs",
+            "function": "l0_07_unterminated_osc_is_bounded_and_recovers_after_bel",
+            "package": "warp_terminal",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          },
+          {
+            "path": "crates/warp_terminal/src/model/ansi/mod_tests.rs",
+            "function": "l0_07_oversized_osc_can_be_aborted_by_a_new_escape_sequence",
+            "package": "warp_terminal",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          },
+          {
+            "path": "app/src/terminal/view/local_io_tests.rs",
+            "function": "l0_07_clipboard_queue_is_bounded_and_recovers_after_delivery",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          }
+        ],
+        "additional_assertions": [
+          "BEL/ST 分段、非法 base64、复合 selection、边界+1、未终止超长 OSC、队列>8；拒绝后 DONE 正常解析。"
+        ],
+        "mapping_status": "PARTIAL"
+      },
+      "serial_workflows": [
+        "CUA-11"
+      ],
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "L0-07-T08",
+      "scenario": "Bell 开关、前后台、连续一百次",
+      "required_result": "按设置生效、限流、不抢焦点、不重复消费",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [
+          {
+            "path": "app/src/terminal/view/local_io_tests.rs",
+            "function": "l0_07_bell_and_notification_policy_limits_effects_without_changing_focus",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          },
+          {
+            "path": "app/src/workspace/view_tests.rs",
+            "function": "l0_07_notification_click_resolves_live_terminal_and_rejects_stale_data",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          },
+          {
+            "path": "app/src/terminal/view/local_io_tests.rs",
+            "function": "l0_07_command_completion_notifications_use_duration_and_independent_preference",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          }
+        ],
+        "additional_assertions": [
+          "注入时钟送 100 BEL/OSC通知，前台/后台及权限状态矩阵；核对限流、不抢焦点、完成通知独立开关。"
+        ],
+        "mapping_status": "PARTIAL"
+      },
+      "serial_workflows": [
+        "CUA-12"
+      ],
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "L0-07-T09",
+      "scenario": "TUI 收到 OSC/Bell",
+      "required_result": "不绕过权限；终端显示/退出正常",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [],
+        "additional_assertions": [
+          "真实 PTY 启动独立 TUI，子程序发 OSC52/9/777/BEL 和中文；外层捕获无控制串、无读取泄漏，Ctrl-C/Ctrl-Q 正常退出。"
+        ],
+        "mapping_status": "UNMAPPED"
+      },
+      "serial_workflows": [
+        "CUA-18"
+      ],
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "L0-08-T01",
+      "scenario": "clear 后执行新命令、滚动与重启",
+      "required_result": "可见行为正确；历史和数据库未删除",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [
+          {
+            "path": "app/src/terminal/view/local_output_tests.rs",
+            "function": "l0_08_transcript_clear_preserves_draft_and_restored_blocks",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          },
+          {
+            "path": "app/src/terminal/view/local_output_tests.rs",
+            "function": "l0_08_cleared_output_stays_in_scrollback_after_repaint",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          },
+          {
+            "path": "app/src/terminal/view/local_io_tests.rs",
+            "function": "l0_08_shell_clear_then_completed_command_keeps_old_output_above_viewport",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          },
+          {
+            "path": "app/src/terminal/local_view_tests.rs",
+            "function": "clear_moves_output_into_scrollback_without_deleting_history",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          }
+        ],
+        "additional_assertions": [
+          "分别 shell clear、GUI ClearBlocks、原生 Ctrl-L；对原始 SQLite 副本比较历史和正文，保存重启后 Find 仍可定位旧内容。"
+        ],
+        "mapping_status": "PARTIAL"
+      },
+      "serial_workflows": [
+        "CUA-13"
+      ],
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "L0-08-T02",
+      "scenario": "跨 block/CJK/换行/矩形选择",
+      "required_result": "复制文本与模型范围一致，画面高亮正确",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [],
+        "additional_assertions": [
+          "跨 block、CJK/emoji、软换行与矩形 selection，exact clipboard bytes 与模型范围一致，并验证 Scene 高亮范围。"
+        ],
+        "mapping_status": "UNMAPPED"
+      },
+      "serial_workflows": [
+        "CUA-13"
+      ],
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "L0-08-T03",
+      "scenario": "查找→跳转→折叠/展开→resize",
+      "required_result": "仍定位同一内容，不跳错行/错 block",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [
+          {
+            "path": "app/src/terminal/view/local_output_tests.rs",
+            "function": "l0_08_find_expands_collapsed_output_before_mapping_the_match",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          },
+          {
+            "path": "app/src/terminal/view/local_output_tests.rs",
+            "function": "l0_08_collapse_keeps_payload_and_command_and_updates_height",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          },
+          {
+            "path": "app/src/terminal/view/local_output_tests.rs",
+            "function": "l0_08_active_and_stale_block_collapse_requests_are_harmless",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          },
+          {
+            "path": "app/src/terminal/view/local_output_tests.rs",
+            "function": "l0_08_block_navigation_skips_hidden_blocks_and_does_not_edit_draft",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          },
+          {
+            "path": "app/src/terminal/view/viewport_tests.rs",
+            "function": "l0_08_find_uses_the_same_padding_and_gap_coordinates_as_selection",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          }
+        ],
+        "additional_assertions": [
+          "用户动作折叠→Find 隐藏正文→展开→resize→上下块导航，稳定 BlockId/文本范围不变；active/stale ID 无效果。"
+        ],
+        "mapping_status": "PARTIAL"
+      },
+      "serial_workflows": [
+        "CUA-13"
+      ],
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "L0-08-T04",
+      "scenario": "用户上滚时连续输出；重新到底部",
+      "required_result": "阅读位置保持；显式到底后恢复跟随",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [
+          {
+            "path": "app/src/terminal/view/viewport_tests.rs",
+            "function": "l0_08_reading_anchor_survives_height_change_above_viewport",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          },
+          {
+            "path": "app/src/terminal/view/viewport_tests.rs",
+            "function": "l0_08_reading_anchor_survives_soft_wrap_resize",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          },
+          {
+            "path": "app/src/terminal/view/local_io_tests.rs",
+            "function": "l0_08_reading_anchor_pauses_output_following_until_scrolled_to_bottom",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          }
+        ],
+        "additional_assertions": [
+          "上滚半行以上，追加输出、隐藏前块、图片高度变化和 resize 后仍锚定同一行；显式到底恢复跟随。"
+        ],
+        "mapping_status": "PARTIAL"
+      },
+      "serial_workflows": [
+        "CUA-14"
+      ],
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "L0-08-T05",
+      "scenario": "合法/损坏/超限图片，异步完成",
+      "required_result": "位置/高度正确，错误局部化，无网络下载",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [],
+        "additional_assertions": [
+          "真实图片协议→消费者→解码/缓存/渲染；合法图出现，损坏/尺寸/压缩/缓存超限局部拒绝，无隐式下载；stale callback 不发布。"
+        ],
+        "mapping_status": "UNMAPPED"
+      },
+      "serial_workflows": [
+        "CUA-15"
+      ],
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "L0-08-T06",
+      "scenario": "隐私设置开关、hover、复制、导出",
+      "required_result": "每个入口符合已登记策略，没有虚假的全链路脱敏声明",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [],
+        "additional_assertions": [
+          "逐入口登记 SafeMode/SecretDisplay/hover/复制原文/复制脱敏/日志导出，用合成 secret 断言；不以画面遮挡冒充全出口脱敏。"
+        ],
+        "mapping_status": "UNMAPPED"
+      },
+      "serial_workflows": [
+        "CUA-16"
+      ],
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "L0-08-T07",
+      "scenario": "alt screen 选择、鼠标报告、退出恢复",
+      "required_result": "不串状态、焦点真实，普通输出恢复正确",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [
+          {
+            "path": "app/src/terminal/view/local_io_tests.rs",
+            "function": "l0_08_alt_screen_mouse_reporting_uses_live_session_state",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          },
+          {
+            "path": "app/src/terminal/view/local_output_tests.rs",
+            "function": "l0_08_native_screen_rejects_transcript_actions_and_keeps_contents",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          }
+        ],
+        "additional_assertions": [
+          "非活动 pane 的 alt screen 不冒充活动；鼠标报告按实际会话路由，退出后原草稿/普通输出恢复。"
+        ],
+        "mapping_status": "PARTIAL"
+      },
+      "serial_workflows": [
+        "CUA-13"
+      ],
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "L0-08-T08",
+      "scenario": "100/1000/10000 个 block，每个 20 行，重复 clear",
+      "required_result": "元素构造数量随可见区而非总历史线性增长；无 G×N 后缀扫描",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [
+          {
+            "path": "app/src/terminal/view/viewport_tests.rs",
+            "function": "l0_08_transcript_construction_work",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          },
+          {
+            "path": "app/src/terminal/view/viewport_tests.rs",
+            "function": "l0_08_hidden_history_updates_height_and_does_not_expand_viewport_work",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          }
+        ],
+        "additional_assertions": [
+          "100/1000/10000块×20行×0/1/2次clear×上中下视口计数；另测单块20万行，clone/paint工作随视口而非全历史增长。"
+        ],
+        "mapping_status": "PARTIAL"
+      },
+      "serial_workflows": [
+        "CUA-14"
+      ],
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "L0-08-T09",
+      "scenario": "同一候选持续输出、滚动、输入",
+      "required_result": "记录输入延迟/帧耗时/CPU/内存及原始数据",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [],
+        "additional_assertions": [
+          "同机器同产物预热后三轮持续输出/滚动/输入，使用时间戳采样而非截图猜测：输入P95≤50ms、帧P95≤33ms；记录CPU/RSS原始序列。"
+        ],
+        "mapping_status": "UNMAPPED"
+      },
+      "serial_workflows": [
+        "CUA-14"
+      ],
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "L0-09-T01",
+      "scenario": "逐个保留 action 从菜单/快捷键进入",
+      "required_result": "到达同一真实效果；错误 context 不执行",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [
+          {
+            "path": "app/src/settings_view/privacy_page_tests.rs",
+            "function": "l0_07_privacy_setting_action_controls_the_actual_osc_consumer",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          }
+        ],
+        "additional_assertions": [
+          "枚举实际注册本地 action，菜单/快捷键/Command Palette 各发入口，真实消费者计数与错误context拒绝成对断言。"
+        ],
+        "mapping_status": "PARTIAL"
+      },
+      "serial_workflows": [
+        "CUA-17"
+      ],
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "L0-09-T02",
+      "scenario": "设置修改→立即观察→重启",
+      "required_result": "显示/行为真实变化且持久化",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [
+          {
+            "path": "app/src/settings_view/features_page_tests.rs",
+            "function": "l0_09_notifications_controls_filter_and_preserve_other_preferences",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          }
+        ],
+        "additional_assertions": [
+          "每个持久化设置 action 修改后读取实际消费者和TOML，重启隔离profile核对；复合字段未被覆盖。"
+        ],
+        "mapping_status": "PARTIAL"
+      },
+      "serial_workflows": [
+        "CUA-16",
+        "CUA-17"
+      ],
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "L0-09-T03",
+      "scenario": "Settings 搜索与 Command Palette 搜索",
+      "required_result": "本地项可用；不把云历史/Agent 项重新带回",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [
+          {
+            "path": "app/src/settings_view/privacy_page_tests.rs",
+            "function": "l0_09_clipboard_permission_is_independently_searchable",
+            "package": "warp",
+            "coverage": "RELATED_PARTIAL_NOT_SCENARIO_PASS"
+          }
+        ],
+        "additional_assertions": [
+          "搜索本地历史、OSC52、Bell、编辑器，断言正确项可操作；Drive/云Agent/认证等退役项不可见。"
+        ],
+        "mapping_status": "PARTIAL"
+      },
+      "serial_workflows": [
+        "CUA-17"
+      ],
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "L0-09-T04",
+      "scenario": "输入/渲染各保留选项组合",
+      "required_result": "不出现可点击空分支和互相覆盖的设置",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [],
+        "additional_assertions": [
+          "对字体/行高/光标/Vim/PS1/隐私与输出模式做风险组合；建立注册→handler→observable清单，所有未映射保留OPEN。"
+        ],
+        "mapping_status": "UNMAPPED"
+      },
+      "serial_workflows": [
+        "CUA-16",
+        "CUA-17"
+      ],
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "L0-09-T05",
+      "scenario": "GUI/TUI 适用项分别验证",
+      "required_result": "GUI 测试不替代 TUI；不适用项有原因而非虚假 PASS",
+      "automated": {
+        "lanes": [
+          "unit",
+          "headless_or_pty"
+        ],
+        "references": [],
+        "additional_assertions": [
+          "GUI/TUI 分别列适用行为，TUI全量测试+真实PTY；不适用理由逐项审查，不允许用N/A闭合实际契约。"
+        ],
+        "mapping_status": "UNMAPPED"
+      },
+      "serial_workflows": [
+        "CUA-17",
+        "CUA-18"
+      ],
+      "result": "NOT_RUN"
+    }
+  ],
+  "serial_workflows": [
+    {
+      "id": "CUA-01",
+      "title": "候选身份与隔离基线",
+      "scenarios": [],
+      "platform": "macOS aarch64, one unlocked login desktop",
+      "status": "NOT_RUN",
+      "preconditions": [
+        "专用测试账号；工作区/剪贴板仅合成数据；读当前源树、diff、bundle哈希。"
+      ],
+      "steps": [
+        "启动唯一隔离bundle/profile，记录GUI PID和子shell完整祖先链。",
+        "确认真实窗口输入源和屏幕缩放；截取初始整窗。",
+        "关闭后由进程列表核对，不调用可能自动重开的bundle绑定API。"
+      ],
+      "oracles": [
+        "只存在目标测试实例；PID、bundle、profile、build hash一致。"
+      ],
+      "evidence_types": [
+        "identity",
+        "screenshot",
+        "process_tree"
+      ],
+      "cleanup": [
+        "不终止用户的其他进程；保留原始证据。"
+      ],
+      "assertion_cases": [
+        {
+          "id": "CUA-01-A01",
+          "title": "候选与签名",
+          "action": "启动round3唯一bundle/profile，保存哈希、codesign、进程祖先链和整窗截图。",
+          "expected": "截图窗口对应指定PID/profile；签名校验退出0；不操作用户实例。",
+          "evidence_types": [
+            "identity",
+            "screenshot",
+            "process_tree"
+          ]
+        },
+        {
+          "id": "CUA-01-A02",
+          "title": "重启身份",
+          "action": "本轮需要重启时记录新PID并复核资源哈希、签名及同一profile。",
+          "expected": "重启前后候选资源不变且仍为同一隔离profile。",
+          "evidence_types": [
+            "identity",
+            "process_tree"
+          ]
+        },
+        {
+          "id": "CUA-01-A03",
+          "title": "收尾与租约",
+          "action": "完成后恢复输入源、退出测试进程，使用ps检查并释放serial锁。",
+          "expected": "测试进程不存在，原用户实例未清理；中断如实标记。",
+          "evidence_types": [
+            "process_tree",
+            "event_log"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CUA-02",
+      "title": "历史、搜索和补全",
+      "scenarios": [
+        "L0-01-T01",
+        "L0-01-T02",
+        "L0-01-T03",
+        "L0-01-T04",
+        "L0-01-T05",
+        "L0-01-T06",
+        "L0-01-T07",
+        "L0-01-T08"
+      ],
+      "platform": "macOS aarch64, one unlocked login desktop",
+      "status": "NOT_RUN",
+      "preconditions": [
+        "独立HISTFILE种子A/B/重复A，两个pane，文件alpha/beta及SUFFIX草稿。",
+        "GUI历史必须在已完成shell集成的输入编辑器中执行；exec zsh或readline的原生历史结果单列，不能代替GUI History。"
+      ],
+      "steps": [
+        "Up/Down恢复草稿，Ctrl-R选中/取消，取消后立即输入。",
+        "Tab循环alpha/beta，切pane再接受旧搜索；原生readline内Ctrl-R。"
+      ],
+      "oracles": [
+        "执行记录未增加；草稿光标/SUFFIX不变；当前pane无旧结果。"
+      ],
+      "evidence_types": [
+        "screenshot",
+        "pty",
+        "database"
+      ],
+      "cleanup": [
+        "关闭受控子进程；保留HISTFILE和DB副本。"
+      ],
+      "assertion_cases": [
+        {
+          "id": "CUA-02-A01",
+          "title": "历史光标与草稿",
+          "action": "GUI编辑器建立可匹配的草稿并把光标放中间，Up/Down返回后插入标记字符。",
+          "expected": "草稿完整恢复，标记插入原光标处，未提交命令。",
+          "evidence_types": [
+            "screenshot",
+            "event_log"
+          ],
+          "fixture": {
+            "seed_commands": [
+              "echo R3HISTA",
+              "echo R3HISTB",
+              "echo R3HISTA"
+            ],
+            "draft": "echo R3HIST",
+            "cursor_byte_offset": 5,
+            "keys": [
+              "Up",
+              "Down"
+            ],
+            "insert_after_return": "X",
+            "expected_draft_after_insert": "echo XR3HIST",
+            "note": "History matches the entire draft prefix; do not append an unmatched SUFFIX. Tab suffix preservation is a separate case."
+          }
+        },
+        {
+          "id": "CUA-02-A02",
+          "title": "搜索取消后输入",
+          "action": "GUI Ctrl-R查询种子，Esc后立即输入X。",
+          "expected": "原草稿保留，X进入编辑器，搜索不提交命令。",
+          "evidence_types": [
+            "screenshot",
+            "event_log"
+          ]
+        },
+        {
+          "id": "CUA-02-A03",
+          "title": "搜索接受不执行",
+          "action": "GUI Ctrl-R选中种子并接受，观察输入与已执行块。",
+          "expected": "接受仅替换草稿，无新执行块；光标位置符合用例。",
+          "evidence_types": [
+            "screenshot",
+            "event_log"
+          ]
+        },
+        {
+          "id": "CUA-02-A04",
+          "title": "Tab候选与后缀",
+          "action": "在含文件alpha/alpine的合成目录里，草稿cat alSUFFIX的al后按Tab循环候选。",
+          "expected": "候选正确且SUFFIX不丢失、不重复插入，无提交。",
+          "evidence_types": [
+            "screenshot"
+          ],
+          "fixture": {
+            "entries": {
+              "alpha": "empty file",
+              "alpine": "empty file"
+            },
+            "draft": "cat alSUFFIX",
+            "cursor_byte_offset": 6,
+            "expected_suffix": "SUFFIX",
+            "note": "Use file completion with cat; cd only completes directories and is not a valid setup for these files. Do not submit the completed draft."
+          }
+        },
+        {
+          "id": "CUA-02-A05",
+          "title": "跨pane旧搜索",
+          "action": "A打开历史搜索后切B，尝试接受或关闭A的旧搜索。",
+          "expected": "B草稿和执行记录不被A结果修改；无法建立旧搜索条件须记INCOMPLETE。",
+          "evidence_types": [
+            "screenshot",
+            "event_log"
+          ]
+        },
+        {
+          "id": "CUA-02-A06",
+          "title": "原生readline搜索",
+          "action": "隔离Python/readline历史，Ctrl-R选中或取消，保存子程序实际输入回执。",
+          "expected": "原生搜索仍由子程序处理；取消不产生输入记录。",
+          "evidence_types": [
+            "pty",
+            "file"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CUA-03",
+      "title": "编辑器粘贴",
+      "scenarios": [
+        "L0-02-T01",
+        "L0-02-T02"
+      ],
+      "platform": "macOS aarch64, one unlocked login desktop",
+      "status": "NOT_RUN",
+      "preconditions": [
+        "合成中文多行剪贴板；草稿中部光标/非空选区。",
+        "先确认输入进入GUI EditorAction::UserInsert；原生ZLE/vim不适用本用例的Cmd-Z事务断言。"
+      ],
+      "steps": [
+        "Cmd-V并观察后缀，Cmd-Z一次；再复制路径样式纯文本重复。"
+      ],
+      "oracles": [
+        "一次Undo恢复整份草稿和选区；没有执行命令。"
+      ],
+      "evidence_types": [
+        "screenshot",
+        "pty"
+      ],
+      "cleanup": [
+        "恢复测试账号原剪贴板，不记录其中真实内容。"
+      ],
+      "assertion_cases": [
+        {
+          "id": "CUA-03-A01",
+          "title": "选区多行粘贴",
+          "action": "GUI echo LEFT-MIDDLE-RIGHT选中MIDDLE，粘贴两行中文。",
+          "expected": "只替换选区，前后缀完整，未提交。",
+          "evidence_types": [
+            "screenshot",
+            "event_log"
+          ]
+        },
+        {
+          "id": "CUA-03-A02",
+          "title": "Undo恢复选区",
+          "action": "上一步一次Cmd-Z后输入X，用插入结果检验选区恢复。",
+          "expected": "Undo恢复原文；X替换原MIDDLE选区而非插在错误位置。",
+          "evidence_types": [
+            "screenshot",
+            "event_log"
+          ]
+        },
+        {
+          "id": "CUA-03-A03",
+          "title": "路径选区粘贴撤销",
+          "action": "非空选区粘贴Folder Name/绘本.txt后一次Undo。",
+          "expected": "路径逐字插入且无shell转义，撤销恢复原草稿和选区。",
+          "evidence_types": [
+            "screenshot"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CUA-04",
+      "title": "真实vim/readline粘贴",
+      "scenarios": [
+        "L0-02-T03",
+        "L0-02-T04",
+        "L0-02-T05",
+        "L0-02-T06",
+        "L0-02-T07",
+        "L0-02-T08",
+        "L0-05-T05"
+      ],
+      "platform": "macOS aarch64, one unlocked login desktop",
+      "status": "NOT_RUN",
+      "preconditions": [
+        "隔离vim配置与状态（vim -Nu NONE -i NONE -n）和readline子程序；raw PTY探针；bracketed on/off。",
+        "执行Vim/readline控制命令前确认ASCII输入源；拼音预编辑或全角冒号造成的无效命令不算产品失败。"
+      ],
+      "steps": [
+        "粘贴中文多行，vim保存到测试文件后比较字节。",
+        "模式关闭时分别Cancel、默认Return和显式Paste；等待确认时切pane/结束进程。"
+      ],
+      "oracles": [
+        "无自动多命令执行；探针字节和文件精确匹配；过期确认零字节。"
+      ],
+      "evidence_types": [
+        "screenshot",
+        "pty",
+        "file"
+      ],
+      "cleanup": [
+        "退出vim不修改用户配置；恢复termios。"
+      ],
+      "assertion_cases": [
+        {
+          "id": "CUA-04-A01",
+          "title": "Vim完整隔离",
+          "action": "使用vim -Nu NONE -i NONE -n写入合成两行中文并退出，比较文件及viminfo元数据。",
+          "expected": "文件UTF-8精确匹配；用户viminfo元数据未变化。",
+          "evidence_types": [
+            "file",
+            "screenshot"
+          ]
+        },
+        {
+          "id": "CUA-04-A02",
+          "title": "bracketed开启",
+          "action": "raw PTY探针开启2004，粘贴合成两行文本。",
+          "expected": "回执精确为200~/201~包围的文本，无额外输入。",
+          "evidence_types": [
+            "pty",
+            "file"
+          ]
+        },
+        {
+          "id": "CUA-04-A03",
+          "title": "bracketed关闭取消",
+          "action": "探针关闭2004，多行粘贴弹确认后点击Cancel。",
+          "expected": "探针收到0个粘贴字节；取消后焦点恢复。",
+          "evidence_types": [
+            "screenshot",
+            "pty"
+          ]
+        },
+        {
+          "id": "CUA-04-A04",
+          "title": "bracketed关闭默认Return",
+          "action": "新探针关闭2004，多行粘贴确认时按Return。",
+          "expected": "默认安全动作不发送粘贴字节。",
+          "evidence_types": [
+            "screenshot",
+            "pty"
+          ]
+        },
+        {
+          "id": "CUA-04-A05",
+          "title": "bracketed关闭显式Paste",
+          "action": "新探针关闭2004，多行粘贴确认时显式选择Paste。",
+          "expected": "只发送批准文本一次，不增加bracketed标记。",
+          "evidence_types": [
+            "screenshot",
+            "pty"
+          ]
+        },
+        {
+          "id": "CUA-04-A06",
+          "title": "确认过期切pane",
+          "action": "A粘贴待确认时切B，再尝试旧确认。",
+          "expected": "B零粘贴字节；旧请求不得重定向。",
+          "evidence_types": [
+            "screenshot",
+            "pty"
+          ]
+        },
+        {
+          "id": "CUA-04-A07",
+          "title": "确认过期进程退出",
+          "action": "探针待确认时退出子程序，再尝试确认。",
+          "expected": "已退出进程的请求不会发送到新shell/会话。",
+          "evidence_types": [
+            "screenshot",
+            "pty"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CUA-05",
+      "title": "字体、布局、PS1、光标",
+      "scenarios": [
+        "L0-03-T01",
+        "L0-03-T02",
+        "L0-03-T03",
+        "L0-03-T04",
+        "L0-03-T05",
+        "L0-03-T06"
+      ],
+      "platform": "macOS aarch64, one unlocked login desktop",
+      "status": "NOT_RUN",
+      "preconditions": [
+        "记录实际设置项和值；20/80列pane、CJK/emoji长草稿。"
+      ],
+      "steps": [
+        "一行改三行再Undo；逐项改字体/行高/Vim/输入位置/PS1。",
+        "resize、切pane和切窗口，重启同profile核对。"
+      ],
+      "oracles": [
+        "无裁剪；光标和IMEanchor对应实际行；只有当前焦点闪烁；TOML和值一致。"
+      ],
+      "evidence_types": [
+        "screenshot",
+        "settings",
+        "pty",
+        "timing"
+      ],
+      "cleanup": [
+        "还原原测试设置和窗口尺寸。"
+      ],
+      "assertion_cases": [
+        {
+          "id": "CUA-05-A01",
+          "title": "多行与窄窗",
+          "action": "20/80列附近窗口中输入长CJK/emoji及三行草稿，然后Undo。",
+          "expected": "无字符裁剪或丢失；行数和光标随布局更新。",
+          "evidence_types": [
+            "screenshot"
+          ]
+        },
+        {
+          "id": "CUA-05-A02",
+          "title": "字体与行高",
+          "action": "从真实设置分别调整字体大小和行高，在同一长草稿观察并恢复。",
+          "expected": "文字、输入高度、光标随设置变化，无重叠；恢复原值。",
+          "evidence_types": [
+            "settings",
+            "screenshot"
+          ]
+        },
+        {
+          "id": "CUA-05-A03",
+          "title": "Vim编辑偏好",
+          "action": "开启GUI编辑器Vim模式，验证Esc及一次光标移动，然后恢复。",
+          "expected": "按键进入对应编辑模式，草稿不提交；关闭后普通输入正常。",
+          "evidence_types": [
+            "settings",
+            "screenshot"
+          ]
+        },
+        {
+          "id": "CUA-05-A04",
+          "title": "输入位置与PS1",
+          "action": "分别改变实际存在的输入位置、PS1设置并观察同pane，随后恢复。",
+          "expected": "可见位置/提示符符合设置；不存在入口必须明确记录。",
+          "evidence_types": [
+            "settings",
+            "screenshot"
+          ]
+        },
+        {
+          "id": "CUA-05-A05",
+          "title": "焦点光标",
+          "action": "两pane切换及应用失焦，用带时间戳连续截图观察光标。",
+          "expected": "仅当前焦点目标按设置闪烁，不以单帧判闪烁。",
+          "evidence_types": [
+            "screenshot",
+            "timing"
+          ]
+        },
+        {
+          "id": "CUA-05-A06",
+          "title": "修改项重启持久化",
+          "action": "对本轮实际修改的字体/行高等记录值，重启同profile复查并恢复。",
+          "expected": "UI/配置值对应且跨重启保留，逐设置记录结果。",
+          "evidence_types": [
+            "settings",
+            "screenshot"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CUA-06",
+      "title": "菜单焦点全链路",
+      "scenarios": [
+        "L0-04-T01",
+        "L0-04-T02",
+        "L0-04-T03",
+        "L0-04-T04",
+        "L0-04-T05",
+        "L0-04-T06",
+        "L0-04-T07"
+      ],
+      "platform": "macOS aarch64, one unlocked login desktop",
+      "status": "NOT_RUN",
+      "preconditions": [
+        "两pane与Find可用；受控慢命令会在菜单打开后完成。"
+      ],
+      "steps": [
+        "右键→Esc；Copy command→Enter；Find→Enter。",
+        "点B后关闭A旧菜单；销毁目标；无选项/禁用项按Enter。",
+        "命令完成、补全返回时输入Find查询，观察焦点。"
+      ],
+      "oracles": [
+        "仅所选动作一次；草稿不执行；晚回调不抢焦点；无panic。"
+      ],
+      "evidence_types": [
+        "screenshot",
+        "pty",
+        "event_log"
+      ],
+      "cleanup": [
+        "关闭测试菜单/Find，结束受控慢命令。"
+      ],
+      "assertion_cases": [
+        {
+          "id": "CUA-06-A01",
+          "title": "Copy菜单Enter",
+          "action": "在已完成合成块菜单选择Copy command并按Enter。",
+          "expected": "动作一次，菜单关闭，草稿未执行；不读取原用户剪贴板。",
+          "evidence_types": [
+            "screenshot",
+            "event_log"
+          ]
+        },
+        {
+          "id": "CUA-06-A02",
+          "title": "禁用菜单Enter",
+          "action": "明确打开含禁用目标的菜单并在该目标按Enter。",
+          "expected": "禁用动作不触发，草稿不提交；无法选中禁用项须记录实际状态。",
+          "evidence_types": [
+            "screenshot",
+            "event_log"
+          ]
+        },
+        {
+          "id": "CUA-06-A03",
+          "title": "跨pane旧菜单",
+          "action": "A菜单打开后切B，再关闭旧菜单。",
+          "expected": "焦点保持B，输入X进入B而非A。",
+          "evidence_types": [
+            "screenshot",
+            "event_log"
+          ]
+        },
+        {
+          "id": "CUA-06-A04",
+          "title": "目标销毁",
+          "action": "打开受控pane的菜单后关闭该pane。",
+          "expected": "旧菜单不操作其他pane，无panic，存活pane可输入。",
+          "evidence_types": [
+            "screenshot",
+            "event_log"
+          ]
+        },
+        {
+          "id": "CUA-06-A05",
+          "title": "完成回调不抢Find",
+          "action": "运行受控延迟输出，打开Find输入查询，等待命令完成后继续输入X。",
+          "expected": "完成回调不抢焦点，X仍进入Find查询。",
+          "evidence_types": [
+            "screenshot",
+            "event_log"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CUA-07",
+      "title": "Finder跨pane文件投递",
+      "scenarios": [
+        "L0-05-T01",
+        "L0-05-T02",
+        "L0-05-T03",
+        "L0-05-T04",
+        "L0-05-T06",
+        "L0-05-T07"
+      ],
+      "platform": "macOS aarch64, one unlocked login desktop",
+      "status": "NOT_RUN",
+      "preconditions": [
+        "测试目录含空格/单引号/双引号/CJK/换行文件名；两个pane。"
+      ],
+      "steps": [
+        "Finder多选，经过A后投到B，分别投输入区、输出区、边缘。",
+        "hover后拖出；hover后关闭pane；图片同普通文件投递。"
+      ],
+      "oracles": [
+        "只有实际命中pane插入一次；argv回执还原原名，无额外命令；hover零写入。"
+      ],
+      "evidence_types": [
+        "screenshot",
+        "pty",
+        "file"
+      ],
+      "cleanup": [
+        "删除仅本次生成的测试目录；不操作其他Finder文件。"
+      ],
+      "assertion_cases": [
+        {
+          "id": "CUA-07-A01",
+          "title": "单文件真实投递",
+          "action": "Finder将合成空格/CJK文件拖至编辑器，保存前后截图。",
+          "expected": "仅命中pane插入一次；实际进入shell argv的字节还原文件名。",
+          "evidence_types": [
+            "screenshot",
+            "file"
+          ]
+        },
+        {
+          "id": "CUA-07-A02",
+          "title": "多文件与特殊字符",
+          "action": "Finder多选单引号/双引号/换行名文件拖入并执行合成argv回执程序。",
+          "expected": "每个文件恰好一个argv，名称逐字节匹配，无额外命令。",
+          "evidence_types": [
+            "screenshot",
+            "file"
+          ]
+        },
+        {
+          "id": "CUA-07-A03",
+          "title": "跨pane输出和边缘",
+          "action": "携文件经过A投B输出区，再验证边缘投递；每次使用独立草稿。",
+          "expected": "仅实际命中目标接受，边界不误投相邻pane。",
+          "evidence_types": [
+            "screenshot",
+            "file"
+          ]
+        },
+        {
+          "id": "CUA-07-A04",
+          "title": "hover取消及目标关闭",
+          "action": "拖过pane后拖出取消；另一次hover后关闭目标。",
+          "expected": "取消和失效目标均零插入，无旧投递重定向。",
+          "evidence_types": [
+            "screenshot"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CUA-08",
+      "title": "链接、文件与选择",
+      "scenarios": [
+        "L0-06-T01",
+        "L0-06-T02",
+        "L0-06-T03",
+        "L0-06-T04",
+        "L0-06-T05",
+        "L0-06-T06",
+        "L0-06-T07"
+      ],
+      "platform": "macOS aarch64, one unlocked login desktop",
+      "status": "NOT_RUN",
+      "preconditions": [
+        "本机loopback HTTP计数服务；合成文件含空格及第7行；普通/alt屏幕。"
+      ],
+      "steps": [
+        "hover、普通click、Cmd-click、提示click、拖选后抬起分别操作。",
+        "OSC8 target不同；在旧cwd输出:7:3；重启后再打开。",
+        "鼠标报告开关/Shift、resize和会话切换各复核。"
+      ],
+      "oracles": [
+        "只在显式打开动作有一次业务请求；favicon单列；列号正确；拖选不打开。"
+      ],
+      "evidence_types": [
+        "screenshot",
+        "http_log",
+        "file",
+        "pty"
+      ],
+      "cleanup": [
+        "只关闭本次浏览器页与loopback服务。"
+      ],
+      "assertion_cases": [
+        {
+          "id": "CUA-08-A01",
+          "title": "显式链接打开",
+          "action": "用实际可用的Cmd-click或Open Link动作打开合成loopback URL。",
+          "expected": "业务请求恰好一次；favicon单列，不以普通click代替。",
+          "evidence_types": [
+            "screenshot",
+            "http_log"
+          ]
+        },
+        {
+          "id": "CUA-08-A02",
+          "title": "hover与拖选",
+          "action": "hover合成URL，再拖选经过链接后松开。",
+          "expected": "没有业务请求，选择不被误识别为打开。",
+          "evidence_types": [
+            "screenshot",
+            "http_log"
+          ]
+        },
+        {
+          "id": "CUA-08-A03",
+          "title": "OSC8目标",
+          "action": "输出显示文本与target不同的OSC8，显式打开。",
+          "expected": "请求目标为OSC8 target，恰好一次。",
+          "evidence_types": [
+            "screenshot",
+            "http_log"
+          ]
+        },
+        {
+          "id": "CUA-08-A04",
+          "title": "文件行列及旧cwd",
+          "action": "在目录A输出合成文件:7:3，切cwd再打开，重启后重复。",
+          "expected": "解析旧块cwd；定位第7行第3列，不误开当前cwd同名文件。",
+          "evidence_types": [
+            "screenshot",
+            "file"
+          ]
+        },
+        {
+          "id": "CUA-08-A05",
+          "title": "鼠标报告与Shift",
+          "action": "原生鼠标报告开/关时操作链接与Shift拖选。",
+          "expected": "程序鼠标事件与本地选择按模式区分，不多次打开。",
+          "evidence_types": [
+            "screenshot",
+            "pty"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CUA-09",
+      "title": "编辑器系统IME",
+      "scenarios": [
+        "L0-07-T01",
+        "L0-07-T02",
+        "L0-07-T03",
+        "L0-03-T02"
+      ],
+      "platform": "macOS aarch64, one unlocked login desktop",
+      "status": "NOT_RUN",
+      "preconditions": [
+        "系统拼音确实绑定当前窗口；97字符前缀、软换行/显式换行和emoji。"
+      ],
+      "steps": [
+        "分步输入nihao，组合内移动caret；中间截图再确认。",
+        "第二段组合Esc取消；再跨pane开始/取消组合。"
+      ],
+      "oracles": [
+        "组合期无命令；确认仅一份你好；取消零新增；候选窗锚定当前caret，不靠近旧pane。"
+      ],
+      "evidence_types": [
+        "screenshot",
+        "pty",
+        "identity"
+      ],
+      "cleanup": [
+        "还原输入源；不要关闭系统其他应用。"
+      ],
+      "assertion_cases": [
+        {
+          "id": "CUA-09-A01",
+          "title": "GUI真实组合确认",
+          "action": "确认系统拼音后按键形成marked-text和候选窗，中途截图再确认。",
+          "expected": "组合期不提交；最终你好恰好一次；未形成组合即INCOMPLETE。",
+          "evidence_types": [
+            "screenshot",
+            "event_log"
+          ]
+        },
+        {
+          "id": "CUA-09-A02",
+          "title": "GUI组合取消",
+          "action": "新组合按Esc。",
+          "expected": "原草稿保留、零新增、没有命令提交。",
+          "evidence_types": [
+            "screenshot",
+            "event_log"
+          ]
+        },
+        {
+          "id": "CUA-09-A03",
+          "title": "GUI候选锚点",
+          "action": "97字符、换行/emoji草稿中间组合并移动光标，跨pane再组合。",
+          "expected": "候选窗跟随实际caret，字符不裂开、不串pane。",
+          "evidence_types": [
+            "screenshot"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CUA-10",
+      "title": "原生普通与备用屏IME",
+      "scenarios": [
+        "L0-07-T01",
+        "L0-07-T02",
+        "L0-07-T03"
+      ],
+      "platform": "macOS aarch64, one unlocked login desktop",
+      "status": "NOT_RUN",
+      "preconditions": [
+        "两个raw探针：普通运行网格和alt；隐藏/可见光标。"
+      ],
+      "steps": [
+        "各执行组合更新、截图、确认、取消；跨pane后重复。"
+      ],
+      "oracles": [
+        "确认恰好6字节你好；取消0；候选窗口实际位置正确；UTF-16/emoji不裂开。"
+      ],
+      "evidence_types": [
+        "screenshot",
+        "pty",
+        "identity"
+      ],
+      "cleanup": [
+        "探针finally恢复termios与alt模式。"
+      ],
+      "assertion_cases": [
+        {
+          "id": "CUA-10-A01",
+          "title": "原生普通屏组合",
+          "action": "raw普通屏探针收集系统拼音确认/取消字节并截图。",
+          "expected": "确认恰好6字节你好，取消0；marked-text真实存在。",
+          "evidence_types": [
+            "screenshot",
+            "pty"
+          ]
+        },
+        {
+          "id": "CUA-10-A02",
+          "title": "原生备用屏组合",
+          "action": "raw备用屏探针重复确认/取消与跨pane。",
+          "expected": "字节精确，候选锚点随原生光标，退出恢复模式。",
+          "evidence_types": [
+            "screenshot",
+            "pty"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CUA-11",
+      "title": "系统剪贴板权限",
+      "scenarios": [
+        "L0-07-T04",
+        "L0-07-T05",
+        "L0-07-T06",
+        "L0-07-T07"
+      ],
+      "platform": "macOS aarch64, one unlocked login desktop",
+      "status": "NOT_RUN",
+      "preconditions": [
+        "专用账号，仅合成剪贴板值；Permission Deny初始状态。"
+      ],
+      "steps": [
+        "Deny/WriteOnly/ReadWrite分别发送OSC52写/读；保存、重启核对。",
+        "撤权、终止/重建会话后再释放排队请求；恢复Deny。"
+      ],
+      "oracles": [
+        "真实系统剪贴板与PTY回复符合权限；拒绝读时无访问；旧请求不发新会话。"
+      ],
+      "evidence_types": [
+        "screenshot",
+        "pty",
+        "settings"
+      ],
+      "cleanup": [
+        "恢复Deny和测试账号原剪贴板；严禁导出真实内容。"
+      ],
+      "assertion_cases": [
+        {
+          "id": "CUA-11-A01",
+          "title": "Deny读写",
+          "action": "保存并临时放入合成剪贴板值；Deny下发送OSC52写与查询。",
+          "expected": "写不覆盖合成值；查询不返回正文。原内容不导出并由安全工具恢复。",
+          "evidence_types": [
+            "pty",
+            "settings"
+          ]
+        },
+        {
+          "id": "CUA-11-A02",
+          "title": "WriteOnly写",
+          "action": "WriteOnly下发送合成OSC52写，粘贴到未提交的测试输入观察。",
+          "expected": "系统剪贴板更新为指定合成值一次。",
+          "evidence_types": [
+            "screenshot",
+            "settings"
+          ]
+        },
+        {
+          "id": "CUA-11-A03",
+          "title": "WriteOnly读",
+          "action": "WriteOnly下向raw探针发送OSC52查询。",
+          "expected": "不返回剪贴板正文。",
+          "evidence_types": [
+            "pty",
+            "settings"
+          ]
+        },
+        {
+          "id": "CUA-11-A04",
+          "title": "ReadWrite读写",
+          "action": "ReadWrite下写合成值再查询，保存仅合成值的回复。",
+          "expected": "回复解码精确等于合成值；原用户内容不读取到证据。",
+          "evidence_types": [
+            "pty",
+            "settings"
+          ],
+          "fixture": {
+            "clipboard_before": "L0R3_RW_BEFORE",
+            "osc_write": "L0R3_RW_AFTER",
+            "expected_query_text": "L0R3_RW_AFTER",
+            "note": "Different before/after values are required to observe a write; identical values only establish the read path."
+          }
+        },
+        {
+          "id": "CUA-11-A05",
+          "title": "权限持久化与撤权",
+          "action": "隔离profile设置后重启复查，恢复Deny再查询。",
+          "expected": "保存值跨重启一致；撤权后查询不返回正文。",
+          "evidence_types": [
+            "settings",
+            "pty"
+          ]
+        },
+        {
+          "id": "CUA-11-A06",
+          "title": "旧会话请求",
+          "action": "在可建立的队列条件下退出/重建会话再释放旧OSC请求。",
+          "expected": "旧回复不进入新PTY；无法构造待处理窗口须如实标注。",
+          "evidence_types": [
+            "pty",
+            "event_log"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CUA-12",
+      "title": "响铃、通知投递与点击",
+      "scenarios": [
+        "L0-07-T08",
+        "L0-03-T05"
+      ],
+      "platform": "macOS aarch64, one unlocked login desktop",
+      "status": "NOT_RUN",
+      "preconditions": [
+        "专用测试bundle；系统通知授权必须用户明确同意；无权限也测拒绝路径。"
+      ],
+      "steps": [
+        "前后台100 BEL/OSC通知；切独立开关和长命令阈值。",
+        "后台sleep后真实通知到达，点击切回正确tab/pane；目标关闭/旧运行通知再点。",
+        "以视频/时间序列观察光标；声音由获准录音或人工听验。"
+      ],
+      "oracles": [
+        "限流、不抢焦点；通知点击唯一当前目标；无授权不申请/不投递；不能用截图判断声音。"
+      ],
+      "evidence_types": [
+        "screenshot",
+        "notification",
+        "settings",
+        "timing"
+      ],
+      "cleanup": [
+        "恢复通知偏好；系统权限只按用户授权恢复，不擅改其他应用。"
+      ],
+      "assertion_cases": [
+        {
+          "id": "CUA-12-A01",
+          "title": "通知拒绝路径",
+          "action": "记录候选当前通知权限；不申请新权限，禁用本地通知后发送合成OSC。",
+          "expected": "无授权申请、无通知、无焦点变化。",
+          "evidence_types": [
+            "screenshot",
+            "event_log"
+          ]
+        },
+        {
+          "id": "CUA-12-A02",
+          "title": "关闭响铃及突发",
+          "action": "关闭声音/通知后前后台分别发送100 BEL/OSC，记录设置与焦点。",
+          "expected": "关闭路径无可见通知/抢焦点；限流必须有计数证据，听觉不由截图代判。",
+          "evidence_types": [
+            "settings",
+            "event_log"
+          ]
+        },
+        {
+          "id": "CUA-12-A03",
+          "title": "授权投递点击",
+          "action": "仅已有有效系统授权时发送后台完成通知并点击；否则明确权限阻塞。",
+          "expected": "点击定位正确当前tab/pane；旧目标不误激活。",
+          "evidence_types": [
+            "notification",
+            "screenshot"
+          ]
+        },
+        {
+          "id": "CUA-12-A04",
+          "title": "声音验证",
+          "action": "仅已有获准录音或人工听验条件才执行声音断言。",
+          "expected": "声音符合设置和限流；没有听觉证据就BLOCKED，不猜测。",
+          "evidence_types": [
+            "timing"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CUA-13",
+      "title": "清屏、块折叠、查找和复制",
+      "scenarios": [
+        "L0-08-T01",
+        "L0-08-T02",
+        "L0-08-T03",
+        "L0-08-T07"
+      ],
+      "platform": "macOS aarch64, one unlocked login desktop",
+      "status": "NOT_RUN",
+      "preconditions": [
+        "隔离旧DB副本；三块中文输出，块间不同cwd，非空草稿。"
+      ],
+      "steps": [
+        "右键折叠/展开、上/下块；Find隐藏输出后resize。",
+        "shell clear、GUI清屏、原生Ctrl-L分别操作；重启继续Find旧内容。",
+        "跨块/矩形/CJK拖选复制到仅测试文件比较。"
+      ],
+      "oracles": [
+        "稳定文本位置；草稿和历史不删除；高亮对应复制字节；原生Ctrl-L不变GUI清屏。"
+      ],
+      "evidence_types": [
+        "screenshot",
+        "database",
+        "pty",
+        "file"
+      ],
+      "cleanup": [
+        "不迁移或清空用户DB；关闭隔离实例。"
+      ],
+      "assertion_cases": [
+        {
+          "id": "CUA-13-A01",
+          "title": "折叠后Find",
+          "action": "合成块正文唯一标记不出现在命令行；新截图定位该块折叠后Find该标记。",
+          "expected": "Find自动展开且定位正文；命令行命中不算。",
+          "evidence_types": [
+            "screenshot",
+            "event_log"
+          ]
+        },
+        {
+          "id": "CUA-13-A02",
+          "title": "折叠resize与块导航",
+          "action": "折叠/展开后resize并上下块导航。",
+          "expected": "锚定相同模型位置，导航落正确块，不丢正文。",
+          "evidence_types": [
+            "screenshot"
+          ]
+        },
+        {
+          "id": "CUA-13-A03",
+          "title": "清屏重启历史",
+          "action": "有非空草稿时GUI清屏，再重启同profile搜索旧正文。",
+          "expected": "当前草稿不被清屏删除；旧正文和历史仍可找回。",
+          "evidence_types": [
+            "screenshot",
+            "database"
+          ]
+        },
+        {
+          "id": "CUA-13-A04",
+          "title": "shellclear与原生CtrlL",
+          "action": "分别执行shell clear、原生readline Ctrl-L，保留前后记录。",
+          "expected": "各走自身语义，原生Ctrl-L不触发GUI清屏动作。",
+          "evidence_types": [
+            "screenshot",
+            "event_log"
+          ]
+        },
+        {
+          "id": "CUA-13-A05",
+          "title": "跨块CJK复制",
+          "action": "选择跨块中文并复制到合成测试接收器。",
+          "expected": "高亮对应字节、换行正确，没有额外内容。",
+          "evidence_types": [
+            "screenshot",
+            "file"
+          ]
+        },
+        {
+          "id": "CUA-13-A06",
+          "title": "矩形复制",
+          "action": "建立矩形选择并复制到合成接收器。",
+          "expected": "逐行列范围与可见高亮一致；无矩形能力须记录具体阻塞。",
+          "evidence_types": [
+            "screenshot",
+            "file"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CUA-14",
+      "title": "持续输出、阅读锚点与性能",
+      "scenarios": [
+        "L0-08-T04",
+        "L0-08-T08",
+        "L0-08-T09"
+      ],
+      "platform": "macOS aarch64, one unlocked login desktop",
+      "status": "NOT_RUN",
+      "preconditions": [
+        "冻结机器/产物/profile/字号/窗口；固定20行每块100/1000/10000块。"
+      ],
+      "steps": [
+        "预热后上/中/下各3次，连续输出时上滚、resize、到底。",
+        "另测单块20万行，计数clone/构造；采集输入提交→可见帧时间、GPU帧、CPU/RSS。"
+      ],
+      "oracles": [
+        "阅读锚点不跳；到最底恢复跟随；原始样本算P95，不用模型猜毫秒；预算不达标FAIL。"
+      ],
+      "evidence_types": [
+        "screenshot",
+        "timing",
+        "metrics"
+      ],
+      "cleanup": [
+        "停止只属于该测试的输出进程，恢复窗口。"
+      ],
+      "assertion_cases": [
+        {
+          "id": "CUA-14-A01",
+          "title": "持续输出阅读锚点",
+          "action": "受控程序分批输出带编号行，上滚记录锚点，继续输出，再到底。",
+          "expected": "上滚时锚点不跳；到底恢复跟随最新行。",
+          "evidence_types": [
+            "screenshot",
+            "timing"
+          ]
+        },
+        {
+          "id": "CUA-14-A02",
+          "title": "resize锚点",
+          "action": "阅读中改变窗口宽度再恢复。",
+          "expected": "仍锚定同一文本位置，软换行不跳到无关内容。",
+          "evidence_types": [
+            "screenshot"
+          ]
+        },
+        {
+          "id": "CUA-14-A03",
+          "title": "多块性能",
+          "action": "按原规格100/1000/10000块，固定尺寸预热后上中下各3次采样。",
+          "expected": "保留原始输入/帧时间与CPU/RSS；与设计预算比对，缺采样工具不得估算PASS。",
+          "evidence_types": [
+            "metrics",
+            "timing"
+          ]
+        },
+        {
+          "id": "CUA-14-A04",
+          "title": "巨大单块",
+          "action": "合成单块20万行并记录滚动/输入样本及构造、clone计数能力。",
+          "expected": "不凭不卡截图断言虚拟化或P95达标；缺计数/帧仪器逐项标注。",
+          "evidence_types": [
+            "metrics",
+            "timing"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CUA-15",
+      "title": "图片协议与资源边界",
+      "scenarios": [
+        "L0-08-T05"
+      ],
+      "platform": "macOS aarch64, one unlocked login desktop",
+      "status": "NOT_RUN",
+      "preconditions": [
+        "先补产品图片消费者/预算；仅本地合成PNG/损坏/大尺寸/压缩炸弹受限fixture。"
+      ],
+      "steps": [
+        "普通与alt输出合法图并滚动/resize；损坏/超限后打印DONE。",
+        "解码未完成时关闭pane/重启会话；观察位置和缓存预算。"
+      ],
+      "oracles": [
+        "合法图可见、损坏局部化、无自动网络下载；旧结果不覆盖新图；资源有界。"
+      ],
+      "evidence_types": [
+        "screenshot",
+        "metrics",
+        "event_log"
+      ],
+      "cleanup": [
+        "取消解码任务，释放本次缓存；未实现时标BLOCKED，不跳过变PASS。"
+      ],
+      "assertion_cases": [
+        {
+          "id": "CUA-15-A01",
+          "title": "图片消费者前置",
+          "action": "静态核查图片事件到解码、元数据、绘制是否已接通。",
+          "expected": "未接通保持BLOCKED，本轮不以自动相关测试替代显示。",
+          "evidence_types": [
+            "contract"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CUA-16",
+      "title": "隐私显示与复制出口",
+      "scenarios": [
+        "L0-08-T06",
+        "L0-09-T02",
+        "L0-09-T04"
+      ],
+      "platform": "macOS aarch64, one unlocked login desktop",
+      "status": "NOT_RUN",
+      "preconditions": [
+        "先接通SafeMode动态消费者；仅合成secret，明确每个复制/导出策略。"
+      ],
+      "steps": [
+        "切显示/遮挡/reveal-on-hover，观察已打开pane和重启。",
+        "分别复制原文、脱敏文本，检查合成导出/日志；移动鼠标离开。"
+      ],
+      "oracles": [
+        "即时生效；仅显式原文复制暴露；每个出口单独判定；不宣称全链路脱敏。"
+      ],
+      "evidence_types": [
+        "screenshot",
+        "settings",
+        "file"
+      ],
+      "cleanup": [
+        "删除只含合成secret的临时输出；还原设置。"
+      ],
+      "assertion_cases": [
+        {
+          "id": "CUA-16-A01",
+          "title": "隐私消费者前置",
+          "action": "静态核查动态订阅、reveal及各出口策略。",
+          "expected": "未接通保持BLOCKED，不用真实secret或宣称全链路脱敏。",
+          "evidence_types": [
+            "contract"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CUA-17",
+      "title": "完整本地入口审计",
+      "scenarios": [
+        "L0-09-T01",
+        "L0-09-T02",
+        "L0-09-T03",
+        "L0-09-T04",
+        "L0-09-T05"
+      ],
+      "platform": "macOS aarch64, one unlocked login desktop",
+      "status": "NOT_RUN",
+      "preconditions": [
+        "导出当前实际注册本地setting/action列表，不以预先挑选列表冒充完整。"
+      ],
+      "steps": [
+        "逐项菜单/快捷键/Palette触发，记录handler和可见结果。",
+        "搜索本地项和退役云项；修改持久化设置后重启。",
+        "Privacy标题异常同时留应用帧和整窗截图，避免未定位先改渲染器。"
+      ],
+      "oracles": [
+        "无保留功能空handler；实际注册项全部映射；标题异常若未归因保持OPEN。"
+      ],
+      "evidence_types": [
+        "screenshot",
+        "settings",
+        "contract",
+        "event_log"
+      ],
+      "cleanup": [
+        "恢复各设置；完整原始表纳入evidence。"
+      ],
+      "assertion_cases": [
+        {
+          "id": "CUA-17-A01",
+          "title": "实际入口注册表",
+          "action": "从本候选源码导出实际本地菜单/快捷键/Palette/设置清单。",
+          "expected": "列出来源与GUI/TUI适用性；无法完整枚举须明确缺口。",
+          "evidence_types": [
+            "contract"
+          ]
+        },
+        {
+          "id": "CUA-17-A02",
+          "title": "逐入口触发",
+          "action": "对导出的每个保留入口分别记录触发、handler、可见效果和证据。",
+          "expected": "逐入口单独结果，未触发不能以相邻入口PASS代替。",
+          "evidence_types": [
+            "event_log",
+            "screenshot"
+          ]
+        },
+        {
+          "id": "CUA-17-A03",
+          "title": "搜索和标题",
+          "action": "搜索本地项和退役云项，对Privacy标题保存应用帧/整窗证据。",
+          "expected": "本地项可达；退役入口不恢复；标题异常未归因保持OPEN。",
+          "evidence_types": [
+            "screenshot"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CUA-18",
+      "title": "真实TUI和CLI交互",
+      "scenarios": [
+        "L0-07-T09",
+        "L0-09-T05"
+      ],
+      "platform": "macOS aarch64, one unlocked login desktop",
+      "status": "NOT_RUN",
+      "preconditions": [
+        "独立profile、120x40真实PTY；无登录/云服务；外层原始字节捕获。"
+      ],
+      "steps": [
+        "中文输入、外部CLI输出、Ctrl-C中断、备用屏幕退出、resize、Ctrl-Q退出。",
+        "发送OSC52/9/777/BEL并读响应，核对不透传宿主。"
+      ],
+      "oracles": [
+        "TUI不是GUI截图替代；中文显示列正确；拒绝宿主副作用；PTY/termios恢复。"
+      ],
+      "evidence_types": [
+        "pty",
+        "process_tree"
+      ],
+      "cleanup": [
+        "正常退出后关闭外层PTY；只停止本次子进程。"
+      ],
+      "assertion_cases": [
+        {
+          "id": "CUA-18-A01",
+          "title": "CLI字节与退出",
+          "action": "隔离真实PTY执行UTF8/stdout/stderr/非零退出合成程序。",
+          "expected": "各流/退出状态符合命令，TUI仍能继续输入。",
+          "evidence_types": [
+            "pty"
+          ]
+        },
+        {
+          "id": "CUA-18-A02",
+          "title": "中断与尺寸回执",
+          "action": "子程序记录收到的SIGINT及tty尺寸，再resize并退出TUI。",
+          "expected": "SIGINT到达正确子程序；尺寸精确更新；退出0且终端模式恢复。",
+          "evidence_types": [
+            "pty",
+            "process_tree"
+          ]
+        },
+        {
+          "id": "CUA-18-A03",
+          "title": "协议边界",
+          "action": "真实PTY分别发送分段及不同终止符OSC52/9/777/BEL样本。",
+          "expected": "外层无宿主透传，查询不泄漏正文，后续DONE和退出正常。",
+          "evidence_types": [
+            "pty"
+          ]
+        }
+      ]
+    }
+  ]
+}

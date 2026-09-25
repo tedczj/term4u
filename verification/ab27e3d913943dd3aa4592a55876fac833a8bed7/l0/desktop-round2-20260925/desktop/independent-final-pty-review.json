@@ -1,0 +1,57 @@
+{
+  "reviewer": "root",
+  "candidate_scope": "round2 frozen TUI, final isolated real PTY sample",
+  "raw_sha256": "33c588a67c70fbb00cba091361fbb067bf59139df57e1f43288d9ec87ae8ad90",
+  "events_sha256": "3c0b1b2894ae57ceee3cd479e52bb57107fbb53b0cd221ba567efaf9410b011c",
+  "parser": "pyte 0.8.2 / wcwidth 0.9.1",
+  "bounded_assertions": "PASS",
+  "chinese_output": {
+    "row": 39,
+    "columns": {
+      "你": 0,
+      "好": 2,
+      "X": 5
+    }
+  },
+  "alternate_screen_visible_at_raw_offset": 5005,
+  "old_output_restored_before": 16975,
+  "protocol_observation_interval": [
+    16975,
+    18730
+  ],
+  "emitted_control_sequence_counts": {
+    "OSC52": 0,
+    "OSC9": 0,
+    "OSC777": 0,
+    "BEL": 0
+  },
+  "full_termios_restored_except_kernel_PENDIN": true,
+  "lflag_delta": 536870912,
+  "process_tree": [
+    {
+      "pid": 33759,
+      "ppid": 33758,
+      "command": "/Volumes/SN850X/term4u-l0-20260925/round2/term4u-tui"
+    },
+    {
+      "pid": 33760,
+      "ppid": 33759,
+      "command": "/Volumes/SN850X/term4u-l0-20260925/round2/term4u-tui terminal-server --parent-pid=33759"
+    },
+    {
+      "pid": 33763,
+      "ppid": 33760,
+      "command": "-zsh -g --no_rcs"
+    },
+    {
+      "pid": 33764,
+      "ppid": 33760,
+      "command": "-zsh -g --no_rcs"
+    }
+  ],
+  "exit_code": 0,
+  "limits": [
+    "No GUI system-permission or OS IME acceptance inferred from this TUI byte test.",
+    "The check covers the captured output interval; not all protocol requests or resources."
+  ]
+}

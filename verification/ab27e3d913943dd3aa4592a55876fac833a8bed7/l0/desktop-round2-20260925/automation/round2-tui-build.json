@@ -1,0 +1,17 @@
+{
+  "command": [
+    "cargo",
+    "build",
+    "--locked",
+    "-p",
+    "warp_tui",
+    "--bin",
+    "term4u-tui",
+    "--no-default-features",
+    "--features",
+    "offline_hard,standalone"
+  ],
+  "exit_code": 0,
+  "started_utc": "2026-09-25T06:53:05.479943+00:00",
+  "finished_utc": "2026-09-25T06:53:22.963970+00:00"
+}

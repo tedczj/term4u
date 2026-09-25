@@ -12,6 +12,7 @@ use crate::terminal::model::terminal_model::{BlockIndex, WithinModel};
 
 #[derive(Clone, Debug)]
 pub enum TerminalAction {
+    LocalOutput(super::LocalOutputAction),
     Scroll {
         delta: Lines,
     },

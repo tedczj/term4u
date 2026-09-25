@@ -1,0 +1,9 @@
+{
+  "command": [
+    "python3",
+    "script/lib/l0_verify_tests.py"
+  ],
+  "exit_code": 0,
+  "started_utc": "2026-09-25T07:30:45.768905+00:00",
+  "finished_utc": "2026-09-25T07:30:45.891579+00:00"
+}
